@@ -10,7 +10,7 @@
   -webkit-tap-highlight-color: transparent;
   border-radius: var(--radius);
   transition: transform .06s ease, background .2s ease, border-color .2s ease, color .2s ease;
-  min-height: 44px;                  /* a11y touch-target */
+  min-height: 24px;                  /* a11y touch-target */
   line-height: 1;
   font-weight: 600;                  /* sekundær default – primær overstyrer til 700 */
 }
