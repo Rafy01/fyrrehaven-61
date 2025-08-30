@@ -1,0 +1,216 @@
+import React from "react";
+import { Link } from "react-router-dom";
+import styles from "./Buttons.module.css";
+import { useTranslation } from "react-i18next";
+import type { Lang } from "../../lib/lang";
+
+export type ButtonSize = "sm" | "md" | "lg";
+
+/** Navigation-union: enten to=intern rute, href=ekstern URL, eller ingen (ren onClick) */
+type LinkLike =
+  | { to: string; href?: never; external?: never }
+  | { href: string; to?: never; external?: boolean }
+  | { to?: never; href?: never; external?: never };
+
+/** Label-union: vælg én strategi */
+type LabelByString = {
+  label: string;
+  labelDa?: never;
+  labelEn?: never;
+  i18nKey?: never;
+};
+type LabelByPair = {
+  labelDa: string;
+  labelEn: string;
+  label?: never;
+  i18nKey?: never;
+  lang?: Lang;
+};
+type LabelByKey = {
+  i18nKey: string;
+  label?: never;
+  labelDa?: never;
+  labelEn?: never;
+};
+
+type LabelInput = LabelByString | LabelByPair | LabelByKey;
+
+export type ButtonProps = LinkLike &
+  LabelInput & {
+    variant?: "primary" | "secondary";
+    size?: ButtonSize;
+    fullWidth?: boolean;
+    iconLeft?: React.ReactNode;
+    iconRight?: React.ReactNode;
+    loading?: boolean;
+    disabled?: boolean;
+    onClick?: () => void;
+    ariaLabel?: string;
+    className?: string;
+  };
+
+function classNames(...xs: Array<string | false | undefined>): string {
+  return xs.filter(Boolean).join(" ");
+}
+
+function sizeClass(size: ButtonSize): string {
+  if (size === "sm") return styles["s-sm"];
+  if (size === "lg") return styles["s-lg"];
+  return styles["s-md"];
+}
+
+/** Vælg label ud fra props (+ i18n/lang fallback) */
+function useLabelText(props: LabelInput & { lang?: Lang }) {
+  const { t, i18n } = useTranslation();
+  if ("label" in props) return props.label;
+
+  if ("labelDa" in props && "labelEn" in props) {
+    const current: Lang =
+      props.lang ??
+      (i18n.language && i18n.language.toLowerCase().startsWith("da")
+        ? "da"
+        : "en");
+    return current === "da" ? props.labelDa : props.labelEn;
+  }
+
+  if ("i18nKey" in props) return t(props.i18nKey);
+  // burde aldrig ske pga. union, men returner tom streng for sikkerhed:
+  return "";
+}
+
+function Element({
+  to,
+  href,
+  external,
+  disabled,
+  loading,
+  ariaLabel,
+  onClick,
+  children,
+  className,
+}: {
+  to?: string;
+  href?: string;
+  external?: boolean;
+  disabled?: boolean;
+  loading?: boolean;
+  ariaLabel?: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+  className: string;
+}) {
+  const isDisabled = !!(disabled || loading);
+
+  if (to) {
+    return (
+      <Link
+        to={to}
+        onClick={isDisabled ? (e) => e.preventDefault() : onClick}
+        aria-label={ariaLabel}
+        aria-disabled={isDisabled ? true : undefined}
+        tabIndex={isDisabled ? -1 : undefined}
+        className={className}
+      >
+        {children}
+      </Link>
+    );
+  }
+
+  if (href) {
+    const target = external ? "_blank" : undefined;
+    const rel = external ? "noopener noreferrer" : undefined;
+    return (
+      <a
+        href={isDisabled ? "#" : href}
+        target={target}
+        rel={rel}
+        onClick={isDisabled ? (e) => e.preventDefault() : onClick}
+        aria-label={ariaLabel}
+        aria-disabled={isDisabled ? true : undefined}
+        tabIndex={isDisabled ? -1 : undefined}
+        className={className}
+      >
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      disabled={isDisabled}
+      className={className}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function Buttons(props: ButtonProps) {
+  const {
+    variant = "primary",
+    size = "md",
+    fullWidth,
+    iconLeft,
+    iconRight,
+    loading,
+    className,
+    ariaLabel,
+    ...rest
+  } = props;
+
+  const labelText = useLabelText(rest as LabelInput & { lang?: Lang });
+
+  const cls = classNames(
+    styles.btn,
+    variant === "primary" ? styles.primary : styles.secondary,
+    sizeClass(size),
+    fullWidth && styles.fullWidth,
+    className
+  );
+
+  const computedAria = ariaLabel ?? labelText;
+
+  return (
+    <Element
+      {...rest}
+      className={cls}
+      ariaLabel={computedAria}
+      loading={loading}
+    >
+      {loading ? (
+        <span className={styles.spinner} aria-hidden="true" />
+      ) : iconLeft ? (
+        <span className={styles.icon} aria-hidden="true">
+          {iconLeft}
+        </span>
+      ) : null}
+
+      <span>{labelText}</span>
+
+      {iconRight ? (
+        <span className={styles.icon} aria-hidden="true">
+          {iconRight}
+        </span>
+      ) : null}
+    </Element>
+  );
+}
+
+/* Named helpers hvis du vil skrive <Primary/>/<Secondary/> */
+function cleanNavProps<T extends ButtonProps>(props: T): T {
+  const copy = { ...props };
+  if (copy.to === undefined) delete copy.to;
+  if (copy.href === undefined) delete copy.href;
+  if (copy.external === undefined) delete copy.external;
+  return copy;
+}
+
+export function Primary(p: Omit<ButtonProps, "variant">) {
+  return <Buttons {...cleanNavProps(p)} variant="primary" />;
+}
+export function Secondary(p: Omit<ButtonProps, "variant">) {
+  return <Buttons {...cleanNavProps(p)} variant="secondary" />;
+}

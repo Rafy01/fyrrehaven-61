@@ -1,0 +1,11 @@
+:root{
+  --sand-50:#FAFAF7; --sand-0:#FFFFFF;
+  --ink-900:#1B1B1B; --ink-600:#545454; --divider:#EAEAEA;
+  --gold-500:#918821; --gold-600:#7B721C; --gold-700:#635C17;
+  --forest-500:#4C6B33; --forest-100:#EEF3ED;
+  --coast-500:#2F6F91; --coast-100:#EAF4FA;
+  --success:#2E7D32; --error:#C62828; --focus:#2563EB;
+  --radius: 12px;
+}
+html,body,#root{height:100%;}
+body{background:var(--sand-50); color:var(--ink-900);}

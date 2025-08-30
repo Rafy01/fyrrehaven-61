@@ -1,0 +1,90 @@
+.hero {
+  background: var(--sand-50);
+  padding: 4rem 0 3rem;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+@media (min-width: 960px) {
+  .heroGrid { grid-template-columns: 1.1fr .9fr; align-items: center; }
+}
+
+.badges {
+  display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem;
+}
+.badge {
+  background: var(--forest-100);
+  color: var(--forest-500);
+  padding: .35rem .6rem;
+  border-radius: var(--radius);
+  font-weight: 700; font-size: .9rem;
+}
+
+.btnRow { display:flex; gap:.75rem; flex-wrap:wrap; margin-top: 1.25rem; }
+
+.heroCard {
+  background: var(--sand-0);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  min-height: 260px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.04);
+  overflow: hidden;
+}
+
+.strip {
+  margin-top: 2.5rem;
+  display: grid; gap: .75rem;
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 720px) { .strip { grid-template-columns: repeat(4, 1fr); } }
+.strip img {
+  width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4/3;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--divider);
+  background: var(--sand-0);
+}
+
+.section {
+  margin-top: 3rem;
+}
+.features {
+  display: grid; gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 960px) { .features { grid-template-columns: repeat(4, 1fr); } }
+
+.featureCard {
+  background: var(--sand-0);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  padding: 1rem;
+  height: 100%;
+}
+
+.trust {
+  display: grid; gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 960px) { .trust { grid-template-columns: 1.2fr .8fr; } }
+
+.mapCard {
+  background: var(--sand-0);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.mapFrame {
+  display:block; width:100%; height: 320px; border:0;
+}
+
+.ctaBar {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--sand-0);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  display:flex; gap: .75rem; align-items:center; justify-content: space-between;
+}

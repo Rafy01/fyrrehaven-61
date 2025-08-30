@@ -1,0 +1,66 @@
+/* Base */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.5rem;
+  text-decoration:none;
+  cursor:pointer;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+  border-radius: var(--radius);
+  transition: transform .06s ease, background .2s ease, border-color .2s ease, color .2s ease;
+  min-height: 44px;                  /* a11y touch-target */
+  line-height: 1;
+  font-weight: 600;                  /* sekundær default – primær overstyrer til 700 */
+}
+
+.fullWidth{ width:100%; }
+
+/* Sizes — md matcher din ønskede padding */
+.s-sm{ padding:.45rem .75rem; font-size:.95rem; }
+.s-md{ padding:.55rem .9rem;  font-size:1rem;   }
+.s-lg{ padding:.70rem 1.1rem; font-size:1.05rem; }
+
+/* Icons + spinner */
+.icon{ display:inline-flex; align-items:center; line-height:0; }
+.spinner{
+  width:1em; height:1em; border-radius:50%;
+  border:2px solid currentColor; border-right-color:transparent;
+  animation: spin .75s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* Focus */
+.btn:focus{ outline: none; }
+.btn:focus-visible{ outline:3px solid var(--focus); outline-offset:3px; }
+
+/* Disabled */
+.btn[aria-disabled="true"],
+.btn:disabled{
+  opacity:.55; cursor:not-allowed; transform:none;
+}
+
+/* Hover/active micro */
+.btn:active{ transform: translateY(1px); }
+
+/* === VARIANTER === */
+
+/* Primær – præcis som ønsket */
+.primary{
+  background: var(--gold-500);
+  color: var(--ink-900);
+  font-weight: 700;
+  border: 0;
+}
+.primary:hover{ background: var(--gold-600); }
+.primary:disabled,
+.primary[aria-disabled="true"]{ background: var(--gold-500); }
+
+/* Sekundær – neutral glas/overflade */
+.secondary{
+  background: rgba(0,0,0,.04);
+  border: 1px solid rgba(0,0,0,.12);
+  color: var(--ink-900);
+}
+.secondary:hover{ background: rgba(0,0,0,.06); }
