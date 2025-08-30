@@ -1,0 +1,42 @@
+.header { display: grid; gap: .5rem; }
+
+.section { margin-block: .25rem; }
+
+.group { display: grid; gap: .6rem; margin: .75rem 0 1.25rem; }
+.row { display: flex; gap: .75rem; align-items: flex-start; }
+.row input { margin-top: .25rem; inline-size: 1.05rem; block-size: 1.05rem; }
+.label { display: flex; flex-direction: column; gap: .15rem; }
+.label small { color: #666; }
+
+/* Buttons – matcher dine tokens */
+.btnPrimary {
+  background: var(--gold-500); color: var(--ink-900);
+  padding: .55rem .9rem; border-radius: var(--radius); border: 0; font-weight: 700;
+}
+.btnSoft {
+  background: color-mix(in srgb, white 70%, transparent);
+  border: 1px solid rgba(0,0,0,.12);
+  color: var(--ink-900);
+  padding: .55rem .9rem; border-radius: var(--radius);
+}
+.btnGhost {
+  background: transparent; border: 0; color: var(--ink-900);
+  padding: .55rem .6rem; border-radius: var(--radius);
+}
+.saved { color: #2f7d32; font-weight: 600; align-self: center; }
+
+/* Simple “table” */
+.table {
+  list-style: none; padding: 0; margin: 1rem 0 0;
+  display: grid; gap: .5rem;
+}
+.table > li {
+  display: grid; grid-template-columns: 160px 1fr 150px; gap: .75rem;
+  padding: .65rem .75rem; border: 1px solid rgba(0,0,0,.08); border-radius: 12px;
+  background: color-mix(in srgb, white 80%, transparent);
+}
+.cellHead { font-weight: 700; }
+
+@media (max-width: 700px) {
+  .table > li { grid-template-columns: 1fr; }
+}

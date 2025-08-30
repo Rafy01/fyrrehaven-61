@@ -8,6 +8,7 @@ import Header from "../components/Header";
 import "../theme/tokens.css";
 import Footer from "../components/Footer";
 import { saveLang, type Lang } from "../lib/lang";
+import CookieBanner from "../components/Cookies/CookieBanner";
 
 export default function App({ lang }: { lang: Lang }) {
   const { i18n } = useTranslation();
@@ -32,6 +33,7 @@ export default function App({ lang }: { lang: Lang }) {
         </Container>
       </main>
       <Footer lang={lang} />
+      <CookieBanner lang={lang} />
     </Theme>
   );
 }

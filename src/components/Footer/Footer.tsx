@@ -251,9 +251,12 @@ export default function Footer({
                 </a>
               </li>
               <li>
-                <a className={styles.bottomLink} href="#">
+                <Link
+                  className={styles.bottomLink}
+                  to={pathOf(currentLang, "cookies")}
+                >
                   {t("Cookies", "Cookies")}
-                </a>
+                </Link>
               </li>
               <li>
                 <Link
@@ -272,8 +275,6 @@ export default function Footer({
 }
 
 /* ====== Ikoner (små, inline SVG’er) ====== */
-
-
 
 function InstaIcon() {
   return (

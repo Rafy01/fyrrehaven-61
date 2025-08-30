@@ -14,8 +14,9 @@ import "./i18n";
 
 import App from "./app/App";
 import Home from "./pages/Home";
+import CookiesPage from "./pages/Cookies";
 import { pickInitialLang } from "./lib/lang";
-// import { SLUGS } from "./lib/routes"; 
+import { SLUGS } from "./lib/routes"; 
 
 // Hjælper til at lave child routes pr. sprog
 const langRoutes = (lang: "da" | "en") => [
@@ -27,6 +28,7 @@ const langRoutes = (lang: "da" | "en") => [
   // { path: SLUGS.faq[lang],     element: <Faq     lang={lang} /> },
   // { path: SLUGS.contact[lang], element: <Contact lang={lang} /> },
   // { path: SLUGS.book[lang],    element: <Book    lang={lang} /> },
+  { path: SLUGS.cookies[lang], element: <CookiesPage lang={lang} /> },
 ];
 
 const router = createBrowserRouter([
