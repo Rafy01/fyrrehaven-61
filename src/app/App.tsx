@@ -9,6 +9,7 @@ import "../theme/tokens.css";
 import Footer from "../components/Footer";
 import { saveLang, type Lang } from "../lib/lang";
 import CookieBanner from "../components/Cookies/CookieBanner";
+import ScrollMemory from "./ScrollMemory";
 
 export default function App({ lang }: { lang: Lang }) {
   const { i18n } = useTranslation();
@@ -33,6 +34,7 @@ export default function App({ lang }: { lang: Lang }) {
         </Container>
       </main>
       <Footer lang={lang} />
+      <ScrollMemory />
       <CookieBanner lang={lang} />
     </Theme>
   );
