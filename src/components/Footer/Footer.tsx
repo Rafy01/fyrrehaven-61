@@ -55,7 +55,7 @@ export default function Footer({
               />
               <div>
                 <Text size="5" weight="bold">
-                  Fyrrehaven 61
+                  Fjellerup Strand
                 </Text>
                 <div className={styles.tagline}>
                   <Text size="2" color="gray">
@@ -80,8 +80,11 @@ export default function Footer({
                     "See our Airbnb profile (Superhost)"
                   )}
                 >
-                  <SuperhostIcon />
-                  <span>Airbnb Superhost</span>
+                  <img
+                    className={styles.superhostBadge}
+                    src="superhost.webp"
+                    alt="Airbnb Superhost"
+                  />
                 </a>
               )}
 
@@ -270,22 +273,7 @@ export default function Footer({
 
 /* ====== Ikoner (små, inline SVG’er) ====== */
 
-function SuperhostIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        fill="currentColor"
-        d="M12 2l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 16.8 6.4 19.2 7.5 13 3 8.6l6.2-.9L12 2z"
-      />
-    </svg>
-  );
-}
+
 
 function InstaIcon() {
   return (
