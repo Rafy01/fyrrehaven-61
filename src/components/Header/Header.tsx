@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
@@ -26,6 +26,9 @@ export default function Header({ lang }: { lang: Lang }) {
 
   // Mobile menu
   const [open, setOpen] = useState(false);
+
+  // Language dropdown (for trigger-anim)
+  const [langOpen, setLangOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -102,31 +105,40 @@ export default function Header({ lang }: { lang: Lang }) {
               e.currentTarget.style.display = "none";
             }}
           />
-        
-          
         </Link>
 
         {/* Desktop nav */}
         <nav className={`${styles.nav} ${styles.navPrimary}`} aria-label="Main">
           {navItems.map((item) => (
-            <Link key={item.to} to={item.to} className={styles.link}>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                [styles.link, isActive && styles.linkActive]
+                  .filter(Boolean)
+                  .join(" ")
+              }
+            >
               {item.label}
-            </Link>
+            </NavLink>
           ))}
 
           <Buttons
             labelDa="Book nu"
             labelEn="Book now"
-            href={"https://www.airbnb.dk/h/fyrrehaven-61"}
+            href="https://www.airbnb.dk/h/fyrrehaven-61"
             external
           />
 
           {/* Language dropdown */}
-          <DropdownMenu.Root>
+          <DropdownMenu.Root open={langOpen} onOpenChange={setLangOpen}>
             <DropdownMenu.Trigger asChild>
               <button
                 className={styles.langTrigger}
                 aria-label="Change language"
+                data-state={
+                  langOpen ? "open" : "closed"
+                } /* ← til CSS animation */
               >
                 <span className={styles.flag}>{flag}</span>
                 <ChevronDownIcon />
@@ -189,21 +201,25 @@ export default function Header({ lang }: { lang: Lang }) {
 
             <nav className={styles.panelNav}>
               {navItems.map((item) => (
-                <Link
+                <NavLink
                   key={item.to}
                   to={item.to}
-                  className={styles.panelLink}
+                  className={({ isActive }) =>
+                    [styles.panelLink, isActive && styles.panelLinkActive]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
                   onClick={() => setOpen(false)}
                 >
                   <span>{item.label}</span>
                   <span aria-hidden="true">›</span>
-                </Link>
+                </NavLink>
               ))}
             </nav>
 
             <div className={styles.panelFooter}>
               <a
-                href={"www.airbnb.dk/h/fyrrehaven-61"}
+                href="https://www.airbnb.dk/h/fyrrehaven-61"
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => setOpen(false)}

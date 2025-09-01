@@ -38,7 +38,8 @@ export function defaultConsent(lang: Lang): ConsentState {
   };
 }
 
-export function readConsent(lang: Lang): ConsentState | null {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function readConsent(_lang: Lang): ConsentState | null {
   try {
     const raw = getCookie(COOKIE_NAME) || localStorage.getItem(COOKIE_NAME);
     if (!raw) return null;

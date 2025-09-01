@@ -83,10 +83,10 @@ export default function Home({ lang }: { lang: Lang }) {
         title={heroTitle}
         subtitle={heroSubtitle}
         badges={[
-          t("Plads til 10 personer", "Sleeps 10"),
-          t("Indendørs pool", "Indoor pool"),
-          t("Vildmarksbad", "Hot tub"),
-          t("Tæt på strand", "Near the beach"),
+          t("10 gæster", "10 guests"),
+          t("4 soveværelser", "4 bedrooms"),
+          t("2 badværelser", "2 bathrooms"),
+          t("Pool-Vildmarksbad-Sauna", "Pool-Hottub-Sauna"),
         ]}
         primaryCta={{
           label: t("Book via Airbnb", "Book on Airbnb"),
