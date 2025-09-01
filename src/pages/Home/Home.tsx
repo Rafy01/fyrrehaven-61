@@ -10,6 +10,7 @@ import {
 } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
+import Highlights from "../../components/Highlights"; // ← NYT
 import { pathOf } from "../../lib/routes";
 import { AIRBNB_URL } from "../../lib/links";
 
@@ -108,9 +109,92 @@ export default function Home({ lang }: { lang: Lang }) {
         align="left"
       />
 
-      <Separator size="4" />
+      {/* din eksisterende tekst under CTA-knapperne – lader den stå */}
+      <a> Sikker betaling & kalender via Airbnb</a>
 
-      {/* FEATURES – almindeligt sideindhold, uafhængigt af SEO/Hero */}
+      <Separator size="4" />
+      {/* Højdepunkter / Highlights – opdateret til dine 4 punkter */}
+      <Container size="3">
+        <Highlights
+          title={t("Højdepunkter", "Highlights")}
+          items={[
+            {
+              title: t("Opvarmet udendørs pool", "Heated outdoor pool"),
+              body: t(
+                "Åben 1. maj – 1. oktober. Perfekt efter strandturen.",
+                "Open May 1 – Oct 1. Perfect after a beach day."
+              ),
+              media: {
+                kind: "image",
+                src: "/highlights/outdoor-pool.webp",
+                alt: t(
+                  "Opvarmet udendørs pool – åben 1. maj til 1. oktober",
+                  "Heated outdoor pool – open May 1 to Oct 1"
+                ),
+                aspect: "4 / 3",
+              },
+              ctaLabel: t("Se poolområdet", "See the pool area"),
+              to: pathOf(lang, "house"),
+            },
+            {
+              title: t("Brændefyret vildmarksbad", "Wood-fired hot tub"),
+              body: t(
+                "Autentisk spa-oplevelse med brænde – afslapning under stjernehimlen.",
+                "Authentic wood-fired soak — unwind under the stars."
+              ),
+              media: {
+                kind: "image",
+                src: "/highlights/hot-tub-wood.webp",
+                alt: t(
+                  "Brændefyret vildmarksbad ved Fjellerup Strand",
+                  "Wood-fired hot tub at Fjellerup Strand"
+                ),
+                aspect: "4 / 3",
+              },
+              ctaLabel: t("Se vildmarksbadet", "View the hot tub"),
+              to: pathOf(lang, "house"),
+            },
+            {
+              title: t("Sauna på el", "Electric sauna"),
+              body: t(
+                "Hurtig opvarmning og nem betjening – perfekt efter pool eller hav.",
+                "Heats quickly and easy to use — perfect after pool or sea."
+              ),
+              media: {
+                kind: "image",
+                src: "/highlights/sauna-electric.webp",
+                alt: t(
+                  "El-sauna i sommerhuset",
+                  "Electric sauna in the holiday home"
+                ),
+                aspect: "4 / 3",
+              },
+              ctaLabel: t("Se saunaen", "View the sauna"),
+              to: pathOf(lang, "house"),
+            },
+            {
+              title: t("Fantastisk område", "Fantastic surroundings"),
+              body: t(
+                "Skov og strand tæt på – stier, natur og ro i kort afstand.",
+                "Forest and beach nearby — trails, nature and calm close by."
+              ),
+              media: {
+                kind: "image",
+                src: "/highlights/forest-beach.webp",
+                alt: t(
+                  "Skov og strand tæt på sommerhuset",
+                  "Forest and beach close to the holiday home"
+                ),
+                aspect: "4 / 3",
+              },
+              ctaLabel: t("Se området", "Explore the area"),
+              to: pathOf(lang, "area"),
+            },
+          ]}
+        />
+      </Container>
+
+      {/* Din oprindelige FEATURES-sektion forbliver uændret */}
       <Box asChild>
         <section aria-label={t("Højdepunkter", "Highlights")}>
           <Container size="3">
@@ -149,7 +233,7 @@ export default function Home({ lang }: { lang: Lang }) {
                 />
               </Grid>
 
-              {/* Ekstra CTA under features */}
+              {/* Ekstra CTA under features (du kan tilføje igen her hvis ønsket) */}
             </Box>
           </Container>
         </section>
