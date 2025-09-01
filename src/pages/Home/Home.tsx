@@ -15,6 +15,8 @@ import { pathOf } from "../../lib/routes";
 import { AIRBNB_URL } from "../../lib/links";
 import UspStrip from "../../components/UspStrip";
 import { ClockIcon, LightningBoltIcon, LockClosedIcon, StarFilledIcon } from "@radix-ui/react-icons";
+import GalleryTeaser from "../../components/GalleryTeaser";
+import Reviews from "../../components/Reviews";
 
 type Lang = "da" | "en";
 
@@ -238,8 +240,53 @@ export default function Home({ lang }: { lang: Lang }) {
           ]}
         />
       </Container>
-
+      <Separator size="4" />
+      <GalleryTeaser
+        title={t("Billeder", "Photos")}
+        subtitle={t(
+          "Få et hurtigt indtryk – se stue, pool, vildmarksbad og omgivelser.",
+          "Get a quick feel—see the living room, pool, hot tub and surroundings."
+        )}
+        items={[
+          {
+            src: "/gallery/01.webp",
+            alt: t("Stue med lysindfald", "Living room with daylight"),
+          },
+          {
+            src: "/gallery/02.webp",
+            alt: t("Køkken-alrum", "Kitchen-living area"),
+          },
+          {
+            src: "/gallery/03.webp",
+            alt: t("Opvarmet udendørs pool", "Heated outdoor pool"),
+          },
+          {
+            src: "/gallery/04.webp",
+            alt: t("Brændefyret vildmarksbad", "Wood-fired hot tub"),
+          },
+          {
+            src: "/gallery/05.webp",
+            alt: t("El-sauna", "Electric sauna"),
+          },
+          {
+            src: "/gallery/06.webp",
+            alt: t("Skovsti mod stranden", "Forest path to the beach"),
+          },
+          // du kan have flere – +N overlay vises automatisk hvis items.length > max
+        ]}
+        cta={{
+          label: t("Åbn galleri", "Open gallery"),
+          to: pathOf(lang, "gallery"),
+        }}
+        align="center"
+      />
       {/* Din oprindelige FEATURES-sektion forbliver uændret */}
+      <Separator size="4" />
+      <Reviews
+        lang={lang}
+        title={lang === "da" ? "Gæsterne siger" : "What guests say"}
+        maxCards={8}
+      />
       <Box asChild>
         <section aria-label={t("Højdepunkter", "Highlights")}>
           <Container size="3">
