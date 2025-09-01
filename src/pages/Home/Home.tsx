@@ -13,6 +13,8 @@ import Hero from "../../components/Hero";
 import Highlights from "../../components/Highlights"; // ← NYT
 import { pathOf } from "../../lib/routes";
 import { AIRBNB_URL } from "../../lib/links";
+import UspStrip from "../../components/UspStrip";
+import { ClockIcon, LightningBoltIcon, LockClosedIcon, StarFilledIcon } from "@radix-ui/react-icons";
 
 type Lang = "da" | "en";
 
@@ -78,7 +80,49 @@ export default function Home({ lang }: { lang: Lang }) {
         ogImage="/og-home.jpg"
         jsonLd={jsonLd}
       />
-
+      <UspStrip
+        ariaLabel={t("Hurtige fakta", "Quick facts")}
+        items={[
+          {
+            icon: <LightningBoltIcon />,
+            text: t(
+              "Lynhurtigt svar på henvendelser",
+              "Lightning-fast replies"
+            ),
+            ariaLabel: t(
+              "Vi svarer hurtigt på alle henvendelser",
+              "We reply quickly to all inquiries"
+            ),
+          },
+          {
+            icon: <LockClosedIcon />,
+            text: t(
+              "Nem indtjekning (nøgleboks)",
+              "Easy self check-in (key box)"
+            ),
+            ariaLabel: t(
+              "Gæster modtager kode til nøgleboks og kan tjekke ind uden vært til stede",
+              "Guests receive a key box code and can check in without the host present"
+            ),
+          },
+          {
+            icon: <StarFilledIcon />,
+            text: t("4,8+ stjerner på Airbnb", "4.8+ stars on Airbnb"),
+            ariaLabel: t(
+              "Gæsterne giver os over 4,8 stjerner på Airbnb",
+              "Guests rate us 4.8+ stars on Airbnb"
+            ),
+          },
+          {
+            icon: <ClockIcon />,
+            text: t("+3 års værts erfaring", "+3 years hosting experience"),
+            ariaLabel: t(
+              "Mere end tre års erfaring som værter",
+              "More than three years of hosting experience"
+            ),
+          },
+        ]}
+      />
       {/* HERO – separat visuel titel/undertekst + badges/CTA’er */}
       <Hero
         title={heroTitle}
@@ -113,6 +157,7 @@ export default function Home({ lang }: { lang: Lang }) {
       <a> Sikker betaling & kalender via Airbnb</a>
 
       <Separator size="4" />
+
       {/* Højdepunkter / Highlights – opdateret til dine 4 punkter */}
       <Container size="3">
         <Highlights
