@@ -14,7 +14,12 @@ import Highlights from "../../components/Highlights"; // ← NYT
 import { pathOf } from "../../lib/routes";
 import { AIRBNB_URL } from "../../lib/links";
 import UspStrip from "../../components/UspStrip";
-import { ClockIcon, LightningBoltIcon, LockClosedIcon, StarFilledIcon } from "@radix-ui/react-icons";
+import {
+  ClockIcon,
+  LightningBoltIcon,
+  LockClosedIcon,
+  StarFilledIcon,
+} from "@radix-ui/react-icons";
 import GalleryTeaser from "../../components/GalleryTeaser";
 import Reviews from "../../components/Reviews";
 
@@ -284,8 +289,9 @@ export default function Home({ lang }: { lang: Lang }) {
       <Separator size="4" />
       <Reviews
         lang={lang}
-        title={lang === "da" ? "Gæsterne siger" : "What guests say"}
+        title={lang === "da" ? "Gæsterne siger" : "What our guests say"}
         maxCards={8}
+        average={4.8}
       />
       <Box asChild>
         <section aria-label={t("Højdepunkter", "Highlights")}>
