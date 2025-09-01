@@ -1,10 +1,4 @@
 import {
-  Box,
-  Flex,
-  Grid,
-  Heading,
-  Text,
-  Card,
   Separator,
   Container,
 } from "@radix-ui/themes";
@@ -22,6 +16,7 @@ import {
 } from "@radix-ui/react-icons";
 import GalleryTeaser from "../../components/GalleryTeaser";
 import Reviews from "../../components/Reviews";
+import PracticalInfoTeaser from "../../components/PracticalInfoTeaser";
 
 type Lang = "da" | "en";
 
@@ -293,60 +288,8 @@ export default function Home({ lang }: { lang: Lang }) {
         maxCards={8}
         average={4.8}
       />
-      <Box asChild>
-        <section aria-label={t("Højdepunkter", "Highlights")}>
-          <Container size="3">
-            <Box py="6">
-              <Grid columns={{ initial: "1", md: "2" }} gap="4">
-                <FeatureCard
-                  title={t("Indendørs pool", "Indoor pool")}
-                  body={t(
-                    "Poolen kan bruges året rundt – perfekt til børnefamilier og regnvejrsdage.",
-                    "Heated indoor pool for year-round fun — perfect for families and rainy days."
-                  )}
-                />
-                <FeatureCard
-                  title={t(
-                    "Vildmarksbad under stjernerne",
-                    "Hot tub under the stars"
-                  )}
-                  body={t(
-                    "Slap af i det udendørs vildmarksbad efter en dag på stranden eller i skoven.",
-                    "Unwind in the outdoor hot tub after a day at the beach or in the woods."
-                  )}
-                />
-                <FeatureCard
-                  title={t("Skov og strand tæt på", "Forest & beach nearby")}
-                  body={t(
-                    "Roligt skovområde med stier – og kort cykeltur til stranden.",
-                    "Quiet forest area with trails — and a short bike ride to the beach."
-                  )}
-                />
-                <FeatureCard
-                  title={t("Plads til 10 gæster", "Room for 10 guests")}
-                  body={t(
-                    "Fire soveværelser + hems. God plads til to familier eller tre generationer.",
-                    "Four bedrooms + loft. Great for two families or multi-generational trips."
-                  )}
-                />
-              </Grid>
-
-              {/* Ekstra CTA under features (du kan tilføje igen her hvis ønsket) */}
-            </Box>
-          </Container>
-        </section>
-      </Box>
+      <PracticalInfoTeaser lang={lang} />
     </>
   );
 }
 
-function FeatureCard({ title, body }: { title: string; body: string }) {
-  return (
-    <Card size="3" variant="surface">
-      <Flex direction="column" gap="2">
-        <Heading size="4">{title}</Heading>
-        <Text color="gray">{body}</Text>
-      </Flex>
-    </Card>
-  );
-}
