@@ -198,7 +198,6 @@ export default function Hero({
                     />
                   )}
                 </div>
-                {media.alt ? <figcaption className={styles.caption}>{media.alt}</figcaption> : null}
               </figure>
             )}
           </div>
