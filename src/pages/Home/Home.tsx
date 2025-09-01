@@ -17,6 +17,7 @@ import {
 import GalleryTeaser from "../../components/GalleryTeaser";
 import Reviews from "../../components/Reviews";
 import PracticalInfoTeaser from "../../components/PracticalInfoTeaser";
+import LocationAndDistances from "../../components/LocationAndDistances";
 
 type Lang = "da" | "en";
 
@@ -289,6 +290,20 @@ export default function Home({ lang }: { lang: Lang }) {
         average={4.8}
       />
       <PracticalInfoTeaser lang={lang} />
+      <LocationAndDistances
+        lang={lang}
+        mapEmbedUrl="https://www.google.com/maps/d/embed?mid=144jHAnieVKibH7nlt3mRpmImcWVoKic&ehbc=2E312F"
+        mapLinkUrl="https://www.google.com/maps/d/viewer?mid=144jHAnieVKibH7nlt3mRpmImcWVoKic"
+        directionsTo="Fyrrehaven 61, 8500"
+        title={
+          lang === "da" ? "Beliggenhed & afstande" : "Location & distances"
+        }
+        subtitle={
+          lang === "da"
+            ? "Skovområde med stier – kort tur til stranden."
+            : "Forest area with trails — a short walk to the beach."
+        }
+      />
     </>
   );
 }
