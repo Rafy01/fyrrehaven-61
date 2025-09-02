@@ -244,6 +244,12 @@ export default function LocationAndDistances({
               "Distances are approximate and may vary."
             )}
           </p>
+          <Buttons
+            labelDa={ctaLabelDa ?? "Se området"}
+            labelEn={ctaLabelEn ?? "See the area"}
+            href={`/${lang}/area`}
+            variant="secondary"
+          />
         </div>
       </div>
     </section>
