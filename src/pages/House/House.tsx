@@ -14,6 +14,7 @@ import { AIRBNB_URL } from "../../lib/links";
 import styles from "./House.module.css";
 import PracticalInfo from "../../components/PracticalInfo";
 import Facilities from "../../components/Facilities";
+import GalleryTeaser from "../../components/GalleryTeaser";
 
 type Lang = "da" | "en";
 
@@ -314,6 +315,45 @@ export default function House({ lang }: { lang: Lang }) {
       <Separator size="4" />
       <PracticalInfo lang={lang} variant="full" />
       <Facilities lang={lang} />
+      <GalleryTeaser
+              title={t("Billeder", "Photos")}
+              subtitle={t(
+                "Få et hurtigt indtryk – se hvad alle snakker om",
+                "Get a quick feel—see what everyone is talking about"
+              )}
+              items={[
+                {
+                  src: "/gallery/01.webp",
+                  alt: t("Stue med lysindfald", "Living room with daylight"),
+                },
+                {
+                  src: "/gallery/02.webp",
+                  alt: t("Køkken-alrum", "Kitchen-living area"),
+                },
+                {
+                  src: "/gallery/03.webp",
+                  alt: t("Opvarmet udendørs pool", "Heated outdoor pool"),
+                },
+                {
+                  src: "/gallery/04.webp",
+                  alt: t("Brændefyret vildmarksbad", "Wood-fired hot tub"),
+                },
+                {
+                  src: "/gallery/05.webp",
+                  alt: t("El-sauna", "Electric sauna"),
+                },
+                {
+                  src: "/gallery/06.webp",
+                  alt: t("Skovsti mod stranden", "Forest path to the beach"),
+                },
+                // du kan have flere – +N overlay vises automatisk hvis items.length > max
+              ]}
+              cta={{
+                label: t("Åbn galleri", "Open gallery"),
+                to: pathOf(lang, "gallery"),
+              }}
+              align="center"
+            />
     </>
   );
 }
