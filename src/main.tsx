@@ -15,12 +15,15 @@ import "./i18n";
 import App from "./app/App";
 import Home from "./pages/Home";
 import CookiesPage from "./pages/Cookies";
+import House from "./pages/House";
 import { pickInitialLang } from "./lib/lang";
 import { SLUGS } from "./lib/routes"; 
 
 // Hjælper til at lave child routes pr. sprog
 const langRoutes = (lang: "da" | "en") => [
   { index: true, element: <Home lang={lang} /> },
+
+  { path: SLUGS.house[lang], element: <House lang={lang} /> },
   // Når siderne er klar, fjern kommentaren og peg til komponenter:
   // { path: SLUGS.house[lang],   element: <House   lang={lang} /> },
   // { path: SLUGS.area[lang],    element: <Area    lang={lang} /> },

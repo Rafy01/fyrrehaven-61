@@ -15,7 +15,7 @@ export type PageKey =
  */
 export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   home: { da: "", en: "" },
-  house: { da: "Sommerhuset-fyrrehaven-61", en: "house" },
+  house: { da: "Sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61" },
   area: { da: "området", en: "area" },
   gallery: { da: "galleri", en: "gallery" },
   faq: { da: "faq", en: "faq" },
