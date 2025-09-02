@@ -13,6 +13,7 @@ import { pathOf } from "../../lib/routes";
 import { AIRBNB_URL } from "../../lib/links";
 import styles from "./House.module.css";
 import PracticalInfo from "../../components/PracticalInfo";
+import Facilities from "../../components/Facilities";
 
 type Lang = "da" | "en";
 
@@ -312,6 +313,7 @@ export default function House({ lang }: { lang: Lang }) {
       </Container>
       <Separator size="4" />
       <PracticalInfo lang={lang} variant="full" />
+      <Facilities lang={lang} />
     </>
   );
 }
