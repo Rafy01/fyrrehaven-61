@@ -27,7 +27,7 @@ const ATTRACTION_DATA: Attraction[] = [
       "Scandinavia’s largest amusement park with 60+ rides and water park.",
     tags: ["parks", "kids"],
     href: "https://www.djurssommerland.dk/",
-    image: "/images/area/djurs-sommerland.webp",
+    image: "/area/djurs-sommerland.webp",
     driveMin: 12,
   },
   {
@@ -38,7 +38,7 @@ const ATTRACTION_DATA: Attraction[] = [
     descEn: "Indoor playland: climbing frames, slides and ball pit.",
     tags: ["indoor", "kids", "parks"],
     href: "https://www.lege-revet.dk/",
-    image: "/images/area/legerevet.webp",
+    image: "/area/legerevet.webp",
     driveMin: 25,
   },
   {
@@ -48,9 +48,20 @@ const ATTRACTION_DATA: Attraction[] = [
     descDa: "Stort indendørs legeland med rutsjebaner og trampoliner.",
     descEn: "Large indoor playland with slides and trampolines.",
     tags: ["indoor", "kids", "parks"],
-    href: "https://hermanshule.dk/grenaa/",
-    image: "/images/area/hermans-hule.webp",
+    href: "https://hermanshule.dk/grenaa",
+    image: "/area/hermans-hule.webp",
     driveMin: 25,
+  },
+  {
+    id: "Fjollehaven",
+    titleDa: "Fjollehaven",
+    titleEn: "Fjollehaven",
+    descDa: "Udendørs legeplads",
+    descEn: "Large outdoor playland",
+    tags: ["kids", "parks"],
+    href: "https://maps.app.goo.gl/xNHVtcys49Ne55qo9",
+    image: "/area/fjollehaven.webp",
+    distanceKm: 0.8,
   },
 
   /* ---------- Natur / Strand ---------- */
@@ -61,7 +72,7 @@ const ATTRACTION_DATA: Attraction[] = [
     descDa: "Bred, børnevenlig sandstrand i cykelafstand.",
     descEn: "Wide, family-friendly sandy beach within biking distance.",
     tags: ["beach", "nature", "kids"],
-    image: "/images/area/fjellerup-strand.webp",
+    image: "/area/fjellerup-strand.webp",
     distanceKm: 0.9,
   },
   {
@@ -72,7 +83,7 @@ const ATTRACTION_DATA: Attraction[] = [
     descEn: "Hilly landscapes, great viewpoints and hiking trails.",
     tags: ["nature"],
     href: "https://nationalparkmolsbjerge.dk/",
-    image: "/images/area/mols-bjerge.webp",
+    image: "/area/mols-bjerge.webp",
     driveMin: 35,
   },
 
@@ -85,7 +96,8 @@ const ATTRACTION_DATA: Attraction[] = [
     descEn:
       "Iconic castle ruin in Kalø Bay – scenic walk on the old stone road.",
     tags: ["culture", "nature"],
-    image: "/images/area/kalo.webp",
+    href: "https://maps.app.goo.gl/fqDuc2J1m1hrRwVw7",
+    image: "/area/kalo.webp",
     driveMin: 30,
   },
 
@@ -98,7 +110,7 @@ const ATTRACTION_DATA: Attraction[] = [
     descEn: "Aquarium with sharks and seals – perfect for windy/chilly days.",
     tags: ["indoor", "kids"],
     href: "https://www.kattegatcentret.dk/",
-    image: "/images/area/kattegatcentret.webp",
+    image: "/area/kattegatcentret.webp",
     driveMin: 28,
   },
   {
@@ -109,7 +121,7 @@ const ATTRACTION_DATA: Attraction[] = [
     descEn: "Tropical domes with animals and plants – year-round.",
     tags: ["indoor", "kids", "culture"],
     href: "https://www.randersregnskov.dk/",
-    image: "/images/area/randers-regnskov.webp",
+    image: "/area/randers-regnskov.webp",
     driveMin: 40,
   },
 
@@ -121,7 +133,7 @@ const ATTRACTION_DATA: Attraction[] = [
     descDa: "Berømte vafler ved stranden – sæsonåbent.",
     descEn: "Famous waffles by the beach – seasonal opening.",
     tags: ["food", "beach", "kids"],
-    image: "/area/vaffelbageri.webp",
+    image: "/area/vaffelbageriet.webp",
     distanceKm: 1.6,
   },
   {
@@ -131,7 +143,7 @@ const ATTRACTION_DATA: Attraction[] = [
     descDa: "Is og Fastfood – sæsonåbent.",
     descEn: "Ice cream and fast food – seasonal opening.",
     tags: ["food"],
-    image: "/area/vaffelbageri.webp",
+    image: "/area/vaffelbageriet.webp",
     distanceKm: 1.6,
   },
   {
@@ -151,7 +163,7 @@ const ATTRACTION_DATA: Attraction[] = [
     descDa: "Lokal dagligvarebutik til alt det praktiske.",
     descEn: "Local grocery store for everyday shopping.",
     tags: ["food"],
-    image: "/area/brugsen.webp",
+    image: "/area/brugsen-fjellerup.webp",
     distanceKm: 1.3,
   },
   {
