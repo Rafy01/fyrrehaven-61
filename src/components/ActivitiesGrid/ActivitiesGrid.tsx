@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import styles from "./ActivitiesGrid.module.css";
 import type { Lang } from "../../lib/lang";
 import type { TagId } from "../../lib/tags";
