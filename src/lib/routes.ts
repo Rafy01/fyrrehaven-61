@@ -8,7 +8,8 @@ export type PageKey =
   | "faq"
   | "contact"
   | "book"
-  | "cookies";
+  | "cookies"
+  | "fees";
 
 /** Lokale slugs pr. side pr. sprog.
  *  Tip: vi bruger ASCII (omraadet) for simplicity. Du kan godt bruge diakritiske tegn hvis du ønsker.
@@ -22,6 +23,7 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   contact: { da: "kontakt", en: "contact" },
   book: { da: "book", en: "book" },
   cookies: { da: "cookies", en: "cookies" },
+  fees: { da: "Gebyrer", en: "Fees" },
 };
 
 /** Byg sti for en given side og sprog. */

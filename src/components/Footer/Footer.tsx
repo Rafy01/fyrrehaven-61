@@ -266,6 +266,14 @@ export default function Footer({
                   {t("Kontakt", "Contact")}
                 </Link>
               </li>
+              <li>
+                <Link
+                  className={styles.bottomLink}
+                  to={pathOf(currentLang, "fees")}
+                >
+                  {t("Gebyr", "Fees")}
+                </Link>
+              </li>
             </ul>
           </div>
         </Container>
