@@ -16,8 +16,9 @@ import {
 } from "@radix-ui/react-icons";
 import GalleryTeaser from "../../components/GalleryTeaser";
 import Reviews from "../../components/Reviews";
-import PracticalInfoTeaser from "../../components/PracticalInfoTeaser";
+
 import LocationAndDistances from "../../components/LocationAndDistances";
+import PracticalInfo from "../../components/PracticalInfo";
 
 type Lang = "da" | "en";
 
@@ -289,7 +290,14 @@ export default function Home({ lang }: { lang: Lang }) {
         maxCards={8}
         average={4.8}
       />
-      <PracticalInfoTeaser lang={lang} />
+      <PracticalInfo
+        lang={lang}
+        variant="teaser"
+        maxItems={6}
+        ctaTo={`/${lang}/house`} // valgfrit
+        ctaLabelDa="Læs mere om huset"
+        ctaLabelEn="Read more about the house"
+      />
       <LocationAndDistances
         lang={lang}
         mapEmbedUrl="https://www.google.com/maps/d/embed?mid=144jHAnieVKibH7nlt3mRpmImcWVoKic&ehbc=2E312F"

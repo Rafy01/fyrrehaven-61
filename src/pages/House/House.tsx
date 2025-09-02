@@ -12,6 +12,7 @@ import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
 import { AIRBNB_URL } from "../../lib/links";
 import styles from "./House.module.css";
+import PracticalInfo from "../../components/PracticalInfo";
 
 type Lang = "da" | "en";
 
@@ -167,8 +168,6 @@ export default function House({ lang }: { lang: Lang }) {
           </section>
         </Box>
 
-
-
         {/* Pool & wellness */}
         <Box asChild id="wellness">
           <section className={styles.section}>
@@ -252,7 +251,6 @@ export default function House({ lang }: { lang: Lang }) {
           </section>
         </Box>
 
-
         {/* Køkken & ophold */}
         <Box asChild id="koekken">
           <section className={styles.section}>
@@ -312,6 +310,8 @@ export default function House({ lang }: { lang: Lang }) {
           </section>
         </Box>
       </Container>
+      <Separator size="4" />
+      <PracticalInfo lang={lang} variant="full" />
     </>
   );
 }
