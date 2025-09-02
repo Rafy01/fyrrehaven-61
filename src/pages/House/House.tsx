@@ -90,9 +90,8 @@ export default function House({ lang }: { lang: Lang }) {
           t("4 soveværelser", "4 bedrooms"),
           t("2 badeværelser", "2 bathrooms"),
           t("Udendørs opvarmet pool", "Outdoor heated pool"),
-          t("1. maj – 1. oktober", "May 1 – Oct 1"),
           t("Vildmarksbad", "Hot tub"),
-          t("El-sauna", "Electric sauna"),
+          t("Sauna", "Sauna"),
         ]}
         primaryCta={{
           label: t("Book via Airbnb", "Book on Airbnb"),
