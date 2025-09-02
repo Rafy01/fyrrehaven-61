@@ -178,10 +178,10 @@ function defaultItems(): PracticalInfoItem[] {
     {
       key: "starter-pack",
       icon: "Roll",
-      titleDa: "Startpakke til papir",
-      titleEn: "Paper starter pack",
-      textDa: "Toiletpapir & køkkenrulle ved ankomst",
-      textEn: "Toilet paper & kitchen roll on arrival",
+      titleDa: "Startpakke ",
+      titleEn: "Starter pack",
+      textDa: "Toiletpapir, køkkenrulle, opvaskemiddel, opvasketabs, håndsæbe, diverse klude",
+      textEn: "Toilet paper, kitchen roll, dish soap, dishwasher tablets, hand soap, various cloths",
     },
     {
       key: "floor-heat",
