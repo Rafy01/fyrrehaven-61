@@ -77,7 +77,6 @@ export default function Area({ lang }: { lang: Lang }) {
         ogImage="/og-area.jpg"
         jsonLd={jsonLd}
       />
-
       <Hero
         title={heroTitle}
         subtitle={heroSubtitle}
@@ -88,16 +87,16 @@ export default function Area({ lang }: { lang: Lang }) {
           t("Djurs Sommerland 12 min", "Djurs Sommerland 12 min"),
         ]}
         primaryCta={{
-          label: t("Se kortet", "View the map"),
-          to: `${path}#map`,
+          label: t("Book nu", "Book now"),
+          to: `${path}#book`,
         }}
         secondaryCta={{
-          label: t("Dagsudflugter", "Day trips"),
-          to: `${path}#trips`,
+          label: t("Se området", "View the area"),
+          to: "#filters",
         }}
         media={{
           type: "image",
-          src: "/area-hero.webp",
+          src: "/area/area-hero.webp",
           alt: t(
             "Strand og skov ved Fjellerup",
             "Beach and forest at Fjellerup"
@@ -106,7 +105,6 @@ export default function Area({ lang }: { lang: Lang }) {
         align="left"
         layout="media-right"
       />
-
       {/* Kort */}
       <Container size="3" id="map">
         <Box py="6">
@@ -132,9 +130,8 @@ export default function Area({ lang }: { lang: Lang }) {
           </Box>
         </Box>
       </Container>
-
       {/* Quick filters (single + “Alle”) */}
-      <Container size="3">
+      <Container size="3" id="filters">
         <Box py="3">
           <QuickFilters
             lang={lang} // "da" eller "en"
@@ -147,7 +144,6 @@ export default function Area({ lang }: { lang: Lang }) {
           />
         </Box>
       </Container>
-
       {/* Aktivitetskort */}
       <Container
         size="3"
