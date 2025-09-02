@@ -10,6 +10,7 @@ import Footer from "../components/Footer";
 import { saveLang, type Lang } from "../lib/lang";
 import CookieBanner from "../components/Cookies/CookieBanner";
 import ScrollMemory from "./ScrollMemory";
+import HashScroll from "./HashScroll";
 
 export default function App({ lang }: { lang: Lang }) {
   const { i18n } = useTranslation();
@@ -26,6 +27,7 @@ export default function App({ lang }: { lang: Lang }) {
   return (
     <Theme accentColor="gray" radius="large" appearance="light">
       <Header lang={lang} />
+      <HashScroll />
       <main>
         <Container size="3">
           <Box px="4" py="6">
