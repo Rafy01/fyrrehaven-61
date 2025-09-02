@@ -1,14 +1,24 @@
 // src/pages/Area/area.tsx
+import React from "react";
 import { Container, Box, Heading, Text } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
-import { pathOf, type Lang } from "../../lib/routes";
+import { pathOf } from "../../lib/routes";
+import type { Lang } from "../../lib/lang";
+import QuickFilters from "../../components/QuickFilters";
+import ActivitiesGrid from "../../components/ActivitiesGrid";
+import type { TagId } from "../../lib/tags";
+import type { Activity } from "../../components/ActivitiesGrid/ActivitiesGrid";
+// import { ATTRACTIONS } from "../../lib/attractions"; // ← henter listen
+// import { ATTRACTIONS } from "../../lib/attractions"; // ← henter listen
+import { ATTRACTIONS } from "../../data/attractions"; // ← henter listen
 
 export default function Area({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const path = pathOf(lang, "area");
+  const [selected, setSelected] = React.useState<TagId[]>([]);
 
-  /** ---------- SEO (meta + JSON-LD) ---------- */
+  /** ---------- SEO ---------- */
   const seoTitle = t(
     "Området – skov, strand og oplevelser tæt på",
     "Area – forest, beach and nearby experiences"
@@ -17,7 +27,6 @@ export default function Area({ lang }: { lang: Lang }) {
     "Fra skovsti ved døren til strand på få minutter. Se kortet og vores bedste tips til udflugter på Djursland.",
     "From forest trails at your doorstep to the beach in minutes. See the map and our top tips for day trips on Djursland."
   );
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "TouristDestination",
@@ -49,6 +58,14 @@ export default function Area({ lang }: { lang: Lang }) {
     "Skovsti ved huset, strand i cykelafstand og masser af udflugter for hele familien.",
     "Forest trails from the house, bikeable beach and plenty of family-friendly day trips."
   );
+
+  /** ---------- Filterede data fra ATTRACTIONS ---------- */
+  const items: Activity[] = React.useMemo(() => {
+    // Single-select + “Alle”: tomt array = vis alt
+    if (selected.length === 0) return ATTRACTIONS as Activity[];
+    const tag = selected[0];
+    return (ATTRACTIONS as Activity[]).filter((a) => a.tags.includes(tag));
+  }, [selected]);
 
   return (
     <>
@@ -90,7 +107,7 @@ export default function Area({ lang }: { lang: Lang }) {
         layout="media-right"
       />
 
-      {/* — Kort (anker til CTA) — */}
+      {/* Kort */}
       <Container size="3" id="map">
         <Box py="6">
           <Heading size="6" mb="2">
@@ -116,9 +133,30 @@ export default function Area({ lang }: { lang: Lang }) {
         </Box>
       </Container>
 
-      {/* — Placeholder-anker til “Dagsudflugter” — */}
-      <Container size="3" id="trips">
-        <Box py="2" />
+      {/* Quick filters (single + “Alle”) */}
+      <Container size="3">
+        <Box py="3">
+          <QuickFilters
+            lang={lang} // "da" eller "en"
+            value={selected}
+            onChange={setSelected}
+            syncToUrl
+            dense
+            mode="single"
+            includeAll
+          />
+        </Box>
+      </Container>
+
+      {/* Aktivitetskort */}
+      <Container
+        size="3"
+        id="trips"
+        aria-label={t("Udflugter og aktiviteter", "Trips & activities")}
+      >
+        <Box pb="6">
+          <ActivitiesGrid lang={lang} items={items} selected={selected} />
+        </Box>
       </Container>
     </>
   );
