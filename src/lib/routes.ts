@@ -1,3 +1,4 @@
+export type { Lang } from "./lang"; // ⟵ re-eksportér Lang
 import type { Lang } from "./lang";
 
 export type PageKey =
@@ -17,7 +18,7 @@ export type PageKey =
 export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   home: { da: "", en: "" },
   house: { da: "Sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61" },
-  area: { da: "området", en: "area" },
+  area: { da: "omraadet-skov-og-strand", en: "area-forest-and-beach" },
   gallery: { da: "galleri", en: "gallery" },
   faq: { da: "faq", en: "faq" },
   contact: { da: "kontakt", en: "contact" },
