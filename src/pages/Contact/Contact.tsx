@@ -3,6 +3,7 @@ import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import ContactForm from "../../components/ContactForm";
 import { pathOf, type Lang } from "../../lib/routes";
+import HostsSection from "../../components/HostsSection";
 
 export default function ContactPage({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
@@ -34,6 +35,15 @@ export default function ContactPage({ lang }: { lang: Lang }) {
         media={{ type: "image", src: "/contact-hero.webp", alt: "" }}
         align="left"
       />
+      <HostsSection
+        lang={lang}
+        ctaAnchor="#contact" // ruller tilbage til formularen
+        // (valgfrit) overskrifter på siden:
+        titleDa="Mød værterne"
+        titleEn="Meet your hosts"
+        subtitleDa="Personlig hjælp og hurtige svar – vi er kun en besked væk."
+        subtitleEn="Personal help and quick replies — we’re just a message away."
+      />
 
       <Container size="3">
         <Box py="6">
@@ -41,7 +51,7 @@ export default function ContactPage({ lang }: { lang: Lang }) {
             {t("Skriv til os", "Send us a message")}
           </Heading>
           <Box mt="4">
-            <ContactForm  submitUrl="/api/contact" />
+            <ContactForm submitUrl="/api/contact" />
           </Box>
         </Box>
       </Container>
