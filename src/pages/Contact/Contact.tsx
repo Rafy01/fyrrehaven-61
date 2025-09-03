@@ -1,9 +1,10 @@
+// src/pages/Contact/index.tsx (eller ContactPage.tsx afhængigt af din struktur)
 import { Container, Box, Heading } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import ContactForm from "../../components/ContactForm";
-import { pathOf, type Lang } from "../../lib/routes";
 import HostsSection from "../../components/HostsSection";
+import { pathOf, type Lang } from "../../lib/routes";
 
 export default function ContactPage({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
@@ -26,32 +27,37 @@ export default function ContactPage({ lang }: { lang: Lang }) {
         title={t("Kontakt os", "Contact us")}
         subtitle={t(
           "Vi svarer normalt hurtigt – ofte inden for få timer.",
-          "We usually reply quickly – often within a few hours."
+          "We usually reply quickly — often within a few hours."
         )}
         badges={[
           t("Familievenligt", "Family-friendly"),
           t("Tæt på strand", "Near the beach"),
         ]}
-        media={{ type: "image", src: "/hosts/familien.webp", alt: "Familien der står bag huset" }}
+        media={{
+          type: "image",
+          src: "/hosts/familien.webp",
+          alt: t("Familien bag huset", "The family behind the house"),
+        }}
         align="left"
       />
+
       <HostsSection
         lang={lang}
-        ctaAnchor="#contact" // ruller tilbage til formularen
-        // (valgfrit) overskrifter på siden:
+        ctaAnchor="#contact"
         titleDa="Mød værterne"
         titleEn="Meet your hosts"
         subtitleDa="Personlig hjælp og hurtige svar – vi er kun en besked væk."
         subtitleEn="Personal help and quick replies — we’re just a message away."
       />
 
-      <Container size="3">
+      <Container size="3" id="contact">
         <Box py="6">
           <Heading size="6" mb="2">
             {t("Skriv til os", "Send us a message")}
           </Heading>
           <Box mt="4">
-            <ContactForm submitUrl="/api/contact" />
+            {/* VIGTIGT: giv formen lang, så labels/placeholder skifter sprog */}
+            <ContactForm lang={lang} submitUrl="/api/contact" />
           </Box>
         </Box>
       </Container>
