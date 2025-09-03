@@ -29,21 +29,27 @@ export default function ContactForm({
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const uiLang: UiLang = lang;
 
-  const initialIso: ISO2 = (() => {
-    const saved =
-      (typeof localStorage !== "undefined"
-        ? (localStorage.getItem("cf_country") as ISO2 | null)
-        : null) || defaultCountryFromNavigator();
-    return saved;
-  })();
+  // Robust default land (falder tilbage til DK hvis intet matches)
+  const initialIso: ISO2 =
+    (typeof localStorage !== "undefined"
+      ? (localStorage.getItem("cf_country") as ISO2 | null) ?? null
+      : null) ||
+    defaultCountryFromNavigator() ||
+    ("DK" as ISO2);
 
   const [state, setState] = React.useState<FormState>({
-    name: "",
-    email: "",
+    name:
+      (typeof localStorage !== "undefined"
+        ? localStorage.getItem("cf_name") ?? ""
+        : "") || "",
+    email:
+      (typeof localStorage !== "undefined"
+        ? localStorage.getItem("cf_email") ?? ""
+        : "") || "",
     phone:
-      typeof localStorage !== "undefined"
+      (typeof localStorage !== "undefined"
         ? localStorage.getItem("cf_phone") ?? ""
-        : "",
+        : "") || "",
     countryIso: initialIso,
     message: "",
   });
@@ -54,15 +60,15 @@ export default function ContactForm({
 
   const selectedCountry = findCountry(state.countryIso);
   const dial = selectedCountry?.dial ?? "";
-  const fullPhone = state.phone.trim() ? `${dial} ${state.phone.trim()}` : "";
 
+  // Hjælpere til state + persistence
   function onChange<K extends keyof FormState>(key: K, val: FormState[K]) {
     setState((s) => ({ ...s, [key]: val }));
-    if (key === "countryIso" && typeof localStorage !== "undefined") {
-      localStorage.setItem("cf_country", String(val));
-    }
-    if (key === "phone" && typeof localStorage !== "undefined") {
-      localStorage.setItem("cf_phone", String(val));
+    if (typeof localStorage !== "undefined") {
+      if (key === "countryIso") localStorage.setItem("cf_country", String(val));
+      if (key === "phone") localStorage.setItem("cf_phone", String(val));
+      if (key === "name") localStorage.setItem("cf_name", String(val));
+      if (key === "email") localStorage.setItem("cf_email", String(val));
     }
   }
 
@@ -70,11 +76,19 @@ export default function ContactForm({
     e.preventDefault();
     setError(null);
 
-    if (!state.name.trim() || !state.email.trim() || !state.message.trim()) {
+    const fullPhone = state.phone.trim() ? `${dial} ${state.phone.trim()}` : "";
+
+    // Client-side tjek
+    const missing: string[] = [];
+    if (!state.name.trim()) missing.push(t("navn", "name"));
+    if (!state.email.trim()) missing.push("email");
+    if (!state.message.trim()) missing.push(t("besked", "message"));
+    if (!state.countryIso) missing.push(t("land", "country"));
+    if (missing.length) {
       setError(
         t(
-          "Udfyld venligst navn, e-mail og besked.",
-          "Please fill in your name, email and message."
+          `Udfyld venligst: ${missing.join(", ")}.`,
+          `Please fill: ${missing.join(", ")}.`
         )
       );
       return;
@@ -82,24 +96,48 @@ export default function ContactForm({
 
     setSending(true);
     try {
+      const payload = {
+        lang,
+        name: state.name.trim(),
+        email: state.email.trim(),
+        phone: fullPhone || undefined,
+        countryIso: state.countryIso, // ISO
+        country: countryLabel(state.countryIso, uiLang), // læseligt navn
+        message: state.message.trim(),
+        context: "contact",
+      };
+
       const res = await fetch(submitUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lang,
-          name: state.name.trim(),
-          email: state.email.trim(),
-          phone: fullPhone,
-          countryIso: state.countryIso,
-          message: state.message.trim(),
-          purpose: "contact",
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        // læs evt. tekst for bedre fejl
-        const txt = await res.text().catch(() => "");
-        throw new Error(`HTTP ${res.status}${txt ? ` – ${txt}` : ""}`);
+      const json: unknown = await res
+        .json()
+        .catch(() => ({} as Record<string, unknown>));
+
+      // forventer { ok: true } fra API ved succes
+      const ok =
+        res.ok &&
+        typeof json === "object" &&
+        json !== null &&
+        (json as { ok?: boolean }).ok === true;
+
+      if (!ok) {
+        // Vis evt. præcis serverdetalje
+        let serverDetail = "";
+        if (
+          typeof json === "object" &&
+          json &&
+          "detail" in json &&
+          json.detail
+        ) {
+          serverDetail = ` – ${JSON.stringify(
+            (json as { detail: unknown }).detail
+          )}`;
+        }
+        throw new Error(`HTTP ${res.status}${serverDetail}`);
       }
 
       setSent(true);
@@ -117,6 +155,8 @@ export default function ContactForm({
   }
 
   if (sent) {
+    const fullPhone =
+      state.phone.trim() && dial ? `${dial} ${state.phone.trim()}` : "";
     return (
       <div className={styles.success} role="status" aria-live="polite">
         <h3 className={styles.sTitle}>
