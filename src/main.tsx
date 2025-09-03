@@ -20,6 +20,7 @@ import { pickInitialLang } from "./lib/lang";
 import { SLUGS } from "./lib/routes"; 
 import Area from "./pages/Area";
 import Gallery from "./pages/Gallery";
+import Faq from "./pages/Faq";
 
 // Hjælper til at lave child routes pr. sprog
 const langRoutes = (lang: "da" | "en") => [
@@ -30,7 +31,7 @@ const langRoutes = (lang: "da" | "en") => [
   // { path: SLUGS.house[lang],   element: <House   lang={lang} /> },
   { path: SLUGS.area[lang],    element: <Area    lang={lang} /> },
   { path: SLUGS.gallery[lang], element: <Gallery lang={lang} /> },
-  // { path: SLUGS.faq[lang],     element: <Faq     lang={lang} /> },
+  { path: SLUGS.faq[lang],     element: <Faq     lang={lang} /> },
   // { path: SLUGS.contact[lang], element: <Contact lang={lang} /> },
   // { path: SLUGS.book[lang],    element: <Book    lang={lang} /> },
   { path: SLUGS.cookies[lang], element: <CookiesPage lang={lang} /> },

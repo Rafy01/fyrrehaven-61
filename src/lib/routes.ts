@@ -23,7 +23,7 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
     da: "galleri-fyrrehaven-61-billeder",
     en: "gallery-photos-fyrrehaven-61",
   },
-  faq: { da: "faq", en: "faq" },
+  faq: { da: "ofte-stillede-sporgsmal", en: "faq" },
   contact: { da: "kontakt", en: "contact" },
   book: { da: "book", en: "book" },
   cookies: { da: "cookies", en: "cookies" },
