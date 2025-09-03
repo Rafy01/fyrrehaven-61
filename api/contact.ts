@@ -1,178 +1,241 @@
-// /api/contact.ts
-export const runtime = "nodejs";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import nodemailer, { type Transporter } from "nodemailer";
 
-import nodemailer from "nodemailer";
+type Locale = "da" | "en";
 
-type Lang = "da" | "en";
-type Body = {
-  lang: Lang;
+type ContactPayload = {
   name: string;
   email: string;
   phone?: string;
-  countryIso: string;
+  country: string;
   message: string;
+  // “purpose” kan bruges til at skifte copy (fx “booking”)
   purpose?: "contact" | "booking";
+  lang?: Locale;
 };
 
-const ORIGIN = process.env.SITE_URL ?? "https://fyrrehaven-61.dk";
-const CORS = {
-  "Access-Control-Allow-Origin": ORIGIN,
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
-
-const SMTP_HOST = process.env.SMTP_HOST ?? "mail.simply.com";
-const SMTP_PORT = Number(process.env.SMTP_PORT ?? "465");
-const SMTP_SECURE = SMTP_PORT === 465;
-const SMTP_USER = process.env.SMTP_USER ?? "info@fyrrehaven-61.dk";
-const SMTP_PASS = process.env.SMTP_PASS ?? "";
-const CONTACT_TO = process.env.CONTACT_TO ?? "info@fyrrehaven-61.dk";
-const FROM_NAME = process.env.FROM_NAME ?? "Fyrrehaven 61";
-
-function badReq(msg: string) {
-  return new Response(JSON.stringify({ ok: false, error: msg }), {
-    status: 400,
-    headers: { "Content-Type": "application/json", ...CORS },
-  });
-}
-function serverErr(msg: string) {
-  return new Response(JSON.stringify({ ok: false, error: msg }), {
-    status: 500,
-    headers: { "Content-Type": "application/json", ...CORS },
-  });
-}
-function ok() {
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json", ...CORS },
-  });
+function isNonEmptyString(v: unknown): v is string {
+  return typeof v === "string" && v.trim().length > 0;
 }
 
-export default async function handler(req: Request): Promise<Response> {
+function isContactPayload(v: unknown): v is ContactPayload {
+  if (!v || typeof v !== "object") return false;
+  const o = v as Record<string, unknown>;
+  if (!isNonEmptyString(o.name)) return false;
+  if (!isNonEmptyString(o.email)) return false;
+  if (!isNonEmptyString(o.country)) return false;
+  if (!isNonEmptyString(o.message)) return false;
+  if (o.phone && typeof o.phone !== "string") return false;
+  if (o.purpose && o.purpose !== "contact" && o.purpose !== "booking")
+    return false;
+  if (o.lang && o.lang !== "da" && o.lang !== "en") return false;
+  return true;
+}
+
+function boolFromEnv(v: string | undefined, fallback: boolean): boolean {
+  if (v === undefined) return fallback;
+  return ["1", "true", "yes", "on"].includes(v.toLowerCase());
+}
+
+function numberFromEnv(v: string | undefined, fallback: number): number {
+  const n = v ? Number(v) : NaN;
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function buildTransporter(): Transporter {
+  const host = process.env.SMTP_HOST ?? "";
+  const port = numberFromEnv(process.env.SMTP_PORT, 465);
+  const secure = boolFromEnv(process.env.SMTP_SECURE, port === 465); // 465=>true, 587=>false
+  const user = process.env.SMTP_USER ?? "";
+  const pass = process.env.SMTP_PASS ?? "";
+
+  if (!host || !user || !pass) {
+    throw new Error("CONFIG_MISSING: SMTP_HOST/SMTP_USER/SMTP_PASS");
+  }
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass },
+  });
+}
+
+function siteUrl(): string {
+  return process.env.SITE_URL ?? "https://fyrrehaven-61.dk";
+}
+
+function ownerTo(): string {
+  // hvor du vil modtage henvendelsen
+  return process.env.CONTACT_TO ?? "info@fyrrehaven-61.dk";
+}
+
+function fromIdentity(): string {
+  // VIGTIGT for Simply: “from” skal være din egen mailbox!
+  const fromAddr =
+    process.env.FROM_ADDR ?? process.env.SMTP_USER ?? "info@fyrrehaven-61.dk";
+  const fromName = process.env.FROM_NAME ?? "Fyrrehaven 61";
+  return `"${fromName}" <${fromAddr}>`;
+}
+
+function textForOwner(p: ContactPayload): string {
+  const lines = [
+    `Ny henvendelse fra formularen (${p.purpose ?? "contact"})`,
+    "",
+    `Navn:    ${p.name}`,
+    `Email:   ${p.email}`,
+    `Tlf.:    ${p.phone ?? "-"}`,
+    `Land:    ${p.country}`,
+    "",
+    "Besked:",
+    p.message,
+    "",
+    `Modtaget via: ${siteUrl()}`,
+  ];
+  return lines.join("\n");
+}
+
+function textForSender(p: ContactPayload): {
+  subject: string;
+  text: string;
+  html: string;
+} {
+  const lang: Locale = p.lang ?? "da";
+  const isBooking = p.purpose === "booking";
+
+  const subject =
+    lang === "da"
+      ? isBooking
+        ? "Vi har modtaget din bookingforespørgsel"
+        : "Vi har modtaget din henvendelse"
+      : isBooking
+      ? "We received your booking request"
+      : "We received your message";
+
+  const introDa = isBooking
+    ? "Tak for din bookingforespørgsel – vi vender tilbage hurtigst muligt."
+    : "Tak for din henvendelse – vi vender tilbage hurtigst muligt.";
+  const introEn = isBooking
+    ? "Thanks for your booking request — we’ll get back to you shortly."
+    : "Thanks for your message — we’ll get back to you shortly.";
+
+  const label = (da: string, en: string) => (lang === "da" ? da : en);
+
+  const rows = [
+    [label("Navn", "Name"), p.name],
+    ["Email", p.email],
+    [label("Telefon", "Phone"), p.phone ?? "-"],
+    [label("Land", "Country"), p.country],
+    [label("Formål", "Purpose"), p.purpose ?? "contact"],
+    [label("Besked", "Message"), p.message],
+  ];
+
+  const text =
+    (lang === "da" ? introDa : introEn) +
+    "\n\n" +
+    rows.map(([k, v]) => `${k}: ${v}`).join("\n") +
+    `\n\n${label("Læs mere på", "More info:")} ${siteUrl()}`;
+
+  const html =
+    `<p>${lang === "da" ? introDa : introEn}</p>` +
+    `<table cellpadding="6" cellspacing="0" style="border-collapse:collapse">` +
+    rows
+      .map(
+        ([k, v]) =>
+          `<tr><td style="font-weight:600">${k}</td><td>${String(v).replace(
+            /\n/g,
+            "<br/>"
+          )}</td></tr>`
+      )
+      .join("") +
+    `</table><p><a href="${siteUrl()}">${siteUrl()}</a></p>`;
+
+  return { subject, text, html };
+}
+
+// CORS: tillad kun fra eget website
+function allowCors(req: VercelRequest, res: VercelResponse): boolean {
+  const origin = req.headers.origin ?? "";
+  const allowed = siteUrl();
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS });
+    res.setHeader("Access-Control-Allow-Origin", allowed);
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.status(204).end();
+    return false;
   }
-  if (req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405, headers: CORS });
+  if (origin === allowed) {
+    res.setHeader("Access-Control-Allow-Origin", allowed);
   }
+  return true;
+}
 
-  let data: Body | null = null;
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    data = (await req.json()) as Body;
-  } catch {
-    return badReq("invalid_json");
-  }
+    if (!allowCors(req, res)) return;
 
-  if (
-    !data ||
-    (data.lang !== "da" && data.lang !== "en") ||
-    !data.name?.trim() ||
-    !data.email?.includes("@") ||
-    !data.message?.trim() ||
-    !data.countryIso?.trim()
-  ) {
-    return badReq("invalid_payload");
-  }
+    if (req.method !== "POST") {
+      res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
+      return;
+    }
 
-  if (!SMTP_PASS) {
-    // Manglende secrets på Vercel = klassisk 500
-    console.error("SMTP_PASS is missing");
-    return serverErr("server_misconfigured");
-  }
+    // Body kan være string eller objekt
+    const raw = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    if (!isContactPayload(raw)) {
+      res.status(400).json({ ok: false, error: "INVALID_BODY" });
+      return;
+    }
+    const data: ContactPayload = raw;
 
-  const transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE,
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  });
+    // Byg transporter (kaster hvis config mangler)
+    const transporter = buildTransporter();
 
-  const fullPhone = data.phone?.trim() ?? "";
+    // 1) Mail til ejer
+    const ownerMsg = {
+      from: fromIdentity(), // ← må IKKE være gæstens email
+      to: ownerTo(),
+      replyTo: data.email, // ← så du kan “svar”
+      subject:
+        (data.lang ?? "da") === "da"
+          ? "Ny henvendelse fra formularen"
+          : "New message from contact form",
+      text: textForOwner(data),
+    };
 
-  const adminSubject =
-    data.lang === "da"
-      ? `Ny henvendelse fra ${data.name}`
-      : `New inquiry from ${data.name}`;
-
-  const adminText =
-    data.lang === "da"
-      ? [
-          `Navn: ${data.name}`,
-          `Email: ${data.email}`,
-          `Telefon: ${fullPhone || "-"}`,
-          `Land: ${data.countryIso}`,
-          `Formål: ${data.purpose ?? "contact"}`,
-          "",
-          data.message,
-        ].join("\n")
-      : [
-          `Name: ${data.name}`,
-          `Email: ${data.email}`,
-          `Phone: ${fullPhone || "-"}`,
-          `Country: ${data.countryIso}`,
-          `Purpose: ${data.purpose ?? "contact"}`,
-          "",
-          data.message,
-        ].join("\n");
-
-  const autoSubject =
-    data.lang === "da"
-      ? "Tak for din henvendelse – Fyrrehaven 61"
-      : "Thanks for your message – Fyrrehaven 61";
-
-  const lines =
-    data.lang === "da"
-      ? [
-          "Tak for din henvendelse. Vi vender retur hurtigst muligt.",
-          "",
-          "Du sendte:",
-          `Navn: ${data.name}`,
-          `Email: ${data.email}`,
-          `Telefon: ${fullPhone || "-"}`,
-          `Land: ${data.countryIso}`,
-          `Formål: ${data.purpose ?? "contact"}`,
-          "",
-          data.message,
-          "",
-          `— ${FROM_NAME} • ${ORIGIN}`,
-        ]
-      : [
-          "Thanks for reaching out. We'll get back to you shortly.",
-          "",
-          "You sent:",
-          `Name: ${data.name}`,
-          `Email: ${data.email}`,
-          `Phone: ${fullPhone || "-"}`,
-          `Country: ${data.countryIso}`,
-          `Purpose: ${data.purpose ?? "contact"}`,
-          "",
-          data.message,
-          "",
-          `— ${FROM_NAME} • ${ORIGIN}`,
-        ];
-  const autoText = lines.join("\n");
-
-  try {
-    // til os
-    await transporter.sendMail({
-      from: `"${FROM_NAME}" <${SMTP_USER}>`,
-      to: CONTACT_TO,
-      replyTo: `"${data.name}" <${data.email}>`,
-      subject: adminSubject,
-      text: adminText,
-    });
-
-    // auto-svar til afsender
-    await transporter.sendMail({
-      from: `"${FROM_NAME}" <${SMTP_USER}>`,
+    // 2) Kvittering til afsender
+    const receipt = textForSender(data);
+    const senderMsg = {
+      from: fromIdentity(),
       to: data.email,
-      subject: autoSubject,
-      text: autoText,
+      subject: receipt.subject,
+      text: receipt.text,
+      html: receipt.html,
+    };
+
+    // Send i serie (eller Promise.all)
+    const r1 = await transporter.sendMail(ownerMsg);
+    const r2 = await transporter.sendMail(senderMsg);
+
+    res.status(200).json({
+      ok: true,
+      messageIdOwner: r1.messageId,
+      messageIdSender: r2.messageId,
+    });
+  } catch (err) {
+    // Log ALT til Vercel logs (Deployment → Functions → request → Logs)
+    // Typisk fejl her: “Invalid login”, “Message rejected”, netværk m.m.
+    console.error("CONTACT_API_ERROR", {
+      err,
+      env: {
+        hasHost: !!process.env.SMTP_HOST,
+        hasUser: !!process.env.SMTP_USER,
+        hasPass: !!process.env.SMTP_PASS,
+        port: process.env.SMTP_PORT,
+        secure: process.env.SMTP_SECURE,
+        contactTo: process.env.CONTACT_TO,
+      },
     });
 
-    return ok();
-  } catch (e) {
-    console.error("Mailer error:", e);
-    return serverErr("mailer_failed");
+    res.status(500).json({ ok: false, error: "SERVER_ERROR" });
   }
 }
