@@ -1,5 +1,5 @@
 // src/data/gallery.ts
-import type { GalleryItemInput } from "../components/Gallery/Gallery";
+
 
 export type GalleryDataItem = {
   src: string;
@@ -44,8 +44,16 @@ export const GALLERY_DATA: GalleryDataItem[] = [
   // ... tilføj flere efter behov
 ];
 
+export type GalleryItemInput = {
+  src: string;
+  full: string;
+  altDa?: string;
+  altEn?: string;
+};
+
 /** Hvis du vil have data i komponentens input-format 1:1 */
-export function galleryItems(lang: "da" | "en"): GalleryItemInput[] {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function galleryItems(_lang: "da" | "en"): GalleryItemInput[] {
   return GALLERY_DATA.map((d) => ({
     src: d.src,
     full: d.full ?? d.src,
