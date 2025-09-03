@@ -1,4 +1,4 @@
-import { Container, Box, Heading, Text } from "@radix-ui/themes";
+import { Container, Box, Heading } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import ContactForm from "../../components/ContactForm";
@@ -40,14 +40,8 @@ export default function ContactPage({ lang }: { lang: Lang }) {
           <Heading size="6" mb="2">
             {t("Skriv til os", "Send us a message")}
           </Heading>
-          <Text color="gray">
-            {t(
-              "Alle felter er påkrævet undtagen telefon.",
-              "All fields required except phone."
-            )}
-          </Text>
           <Box mt="4">
-            <ContactForm lang="da" submitUrl="/api/contact" />
+            <ContactForm  submitUrl="/api/contact" />
           </Box>
         </Box>
       </Container>

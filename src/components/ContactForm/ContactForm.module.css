@@ -1,30 +1,201 @@
-.form { display: grid; gap: .8rem; }
-.row { display: grid; gap: .35rem; }
-.rowGroup { display: grid; gap: .8rem; grid-template-columns: 1fr; }
-@media (min-width: 720px){ .rowGroup{ grid-template-columns: 1fr 1fr; } }
+/* Card shell – glassy, playful, “piv fræk” */
+.card {
+  --bg: rgba(255, 255, 255, 0.72);
+  --bd: rgba(0, 0, 0, 0.06);
+  --ring: #6d28d9; /* purple-ish focus */
+  --accent: #ef4444; /* red for required star */
+  --text: #0f172a;
+  --muted: #6b7280;
 
-.label { font-weight: 600; }
-.input, .select, .textarea {
-  width: 100%; padding: .65rem .8rem; border-radius: 10px;
-  border: 1px solid rgba(0,0,0,.12); background: #fff;
+  position: relative;
+  border-radius: 18px;
+  padding: clamp(1rem, 1.2rem + 1.2vw, 2rem);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), var(--bg));
+  border: 1px solid var(--bd);
+  box-shadow: 0 20px 50px rgba(2, 6, 23, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
-.textarea { resize: vertical; }
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #a78bfa22, #22d3ee22, #f472b622);
+  filter: blur(16px);
+  z-index: -1;
+}
 
-.phone { display: grid; grid-template-columns: max-content 1fr; gap: .5rem; align-items: center; }
+/* Header */
+.header {
+  margin-bottom: 0.6rem;
+}
+.kicker {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  font-weight: 800;
+}
+.title {
+  margin: 0.1rem 0 0;
+  color: var(--muted);
+}
+
+/* Layout rows */
+.form {
+  display: grid;
+  gap: 0.9rem;
+}
+.row {
+  display: grid;
+  gap: 0.45rem;
+}
+.rowGroup {
+  display: grid;
+  gap: 0.9rem;
+}
+@media (min-width: 720px) {
+  .rowGroup {
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+  }
+}
+
+/* Labels (+ red asterisk on required) */
+.label {
+  font-weight: 700;
+  color: var(--text);
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.label[data-required="true"]::after {
+  content: "*";
+  color: var(--accent);
+  font-weight: 900;
+}
+.inputphone,
+.phone,
+.select {
+  width: 100%;
+}
+/* Inputs */
+.inputphone,
+.input,
+.select,
+.textarea {
+  
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  padding: 0.85rem 1rem;
+  font: inherit;
+  color: var(--text);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease,
+    transform 0.05s ease;
+}
+.inputphone,
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ring) 22%, transparent);
+}
+
+/* Select styling */
+.selectWrap {
+  position: relative;
+}
+.select {
+  appearance: none;
+  padding-right: 2.2rem;
+}
+.chev {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #475569;
+  font-size: 1rem;
+}
+
+/* Phone composite */
+.phone {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
 .dial {
-  padding: .55rem .7rem; border-radius: 10px; border: 1px solid rgba(0,0,0,.12);
-  background: #fafafa; font-variant-numeric: tabular-nums;
+  flex: 0 0 auto;
+  min-width: 72px;
+  height: 46px;
+  line-height: 46px;
+  text-align: center;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: #0f172a;
+  font-weight: 700;
 }
 
+/* Textarea tweaks */
+.textarea {
+  resize: vertical;
+  min-height: 140px;
+}
+
+/* Error + success */
 .error {
-  padding: .6rem .8rem; border-radius: 10px; background: #fee2e2; color: #7f1d1d;
+  padding: 0.75rem 0.9rem;
   border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #991b1b;
+  border-radius: 12px;
+  font-weight: 600;
 }
-.actions { margin-top: .4rem; }
 
-.success { display: grid; gap: .8rem; padding: .75rem 0; }
-.sTitle { margin: 0; }
-.sLead { margin: 0; color: #555; }
-.echo { display: grid; gap: .5rem; margin: 0; }
-.echo dt { font-weight: 600; }
-.echoMsg dd { white-space: pre-wrap; }
+.success .sTitle {
+  margin: 0 0 0.25rem;
+}
+.success .sLead {
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
+.echo {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+}
+.echo > div {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 0.5rem;
+}
+.echo dt {
+  color: var(--muted);
+}
+.echoMsg dd {
+  white-space: pre-wrap;
+}
+
+/* Actions */
+.actions {
+  margin-top: 0.4rem;
+}
+
+/* Tiny flourish on hover/focus for inputs */
+.input:hover,
+.select:hover,
+.textarea:hover {
+  transform: translateY(-1px);
+}
+
+/* Use system fonts for crispness */
+:where(.input, .select, .textarea) {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}

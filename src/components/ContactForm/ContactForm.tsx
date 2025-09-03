@@ -3,6 +3,7 @@ import React from "react";
 import Buttons from "../Buttons";
 import styles from "./ContactForm.module.css";
 import type { Lang } from "../../lib/lang";
+import { useTranslation } from "react-i18next";
 
 import type { ISO2, UiLang } from "../../lib/countryCodes";
 import {
@@ -12,7 +13,7 @@ import {
   defaultCountryFromNavigator,
 } from "../../lib/countryCodes";
 
-type Props = { lang: Lang; submitUrl?: string };
+type Props = { lang?: Lang; submitUrl?: string };
 
 type FormState = {
   name: string;
@@ -22,34 +23,46 @@ type FormState = {
   message: string;
 };
 
+const DIGITS_RE = /[^\d]/g;
+
+/** Resolve current UI language.
+ * Priority: explicit prop -> i18next -> 'da' fallback
+ */
+function useUiLang(explicit?: Lang): Lang {
+  const { i18n } = useTranslation();
+  const i18nLang =
+    i18n?.language && i18n.language.toLowerCase().startsWith("da")
+      ? ("da" as Lang)
+      : ("en" as Lang);
+
+  // If prop provided, follow it; else follow i18n (hook re-renders on change)
+  return explicit ?? i18nLang ?? "da";
+}
+
 export default function ContactForm({
-  lang,
+  lang: langProp,
   submitUrl = "/api/contact",
 }: Props) {
+  const ui = useUiLang(langProp);
+  const lang: Lang = ui; // normalize type
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const uiLang: UiLang = lang;
 
-  // Robust default land (falder tilbage til DK hvis intet matches)
-  const initialIso: ISO2 =
-    (typeof localStorage !== "undefined"
-      ? (localStorage.getItem("cf_country") as ISO2 | null) ?? null
-      : null) ||
-    defaultCountryFromNavigator() ||
-    ("DK" as ISO2);
+  const initialIso: ISO2 = (() => {
+    const saved =
+      (typeof localStorage !== "undefined"
+        ? (localStorage.getItem("cf_country") as ISO2 | null)
+        : null) || defaultCountryFromNavigator();
+    return saved;
+  })();
 
   const [state, setState] = React.useState<FormState>({
-    name:
-      (typeof localStorage !== "undefined"
-        ? localStorage.getItem("cf_name") ?? ""
-        : "") || "",
-    email:
-      (typeof localStorage !== "undefined"
-        ? localStorage.getItem("cf_email") ?? ""
-        : "") || "",
+    name: "",
+    email: "",
     phone:
-      (typeof localStorage !== "undefined"
+      typeof localStorage !== "undefined"
         ? localStorage.getItem("cf_phone") ?? ""
-        : "") || "",
+        : "",
     countryIso: initialIso,
     message: "",
   });
@@ -60,35 +73,46 @@ export default function ContactForm({
 
   const selectedCountry = findCountry(state.countryIso);
   const dial = selectedCountry?.dial ?? "";
+  const fullPhone = state.phone.trim() ? `${dial} ${state.phone.trim()}` : "";
 
-  // Hjælpere til state + persistence
   function onChange<K extends keyof FormState>(key: K, val: FormState[K]) {
     setState((s) => ({ ...s, [key]: val }));
-    if (typeof localStorage !== "undefined") {
-      if (key === "countryIso") localStorage.setItem("cf_country", String(val));
-      if (key === "phone") localStorage.setItem("cf_phone", String(val));
-      if (key === "name") localStorage.setItem("cf_name", String(val));
-      if (key === "email") localStorage.setItem("cf_email", String(val));
+    if (key === "countryIso" && typeof localStorage !== "undefined") {
+      localStorage.setItem("cf_country", String(val));
     }
+    if (key === "phone" && typeof localStorage !== "undefined") {
+      localStorage.setItem("cf_phone", String(val));
+    }
+  }
+
+  // Only digits in phone
+  function onPhoneKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    const allowed = [
+      "Backspace",
+      "Delete",
+      "Tab",
+      "ArrowLeft",
+      "ArrowRight",
+      "Home",
+      "End",
+    ];
+    if (allowed.includes(e.key)) return;
+    if (!/^\d$/.test(e.key)) e.preventDefault();
+  }
+  function onPhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const digits = e.target.value.replace(DIGITS_RE, "");
+    onChange("phone", digits);
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
-    const fullPhone = state.phone.trim() ? `${dial} ${state.phone.trim()}` : "";
-
-    // Client-side tjek
-    const missing: string[] = [];
-    if (!state.name.trim()) missing.push(t("navn", "name"));
-    if (!state.email.trim()) missing.push("email");
-    if (!state.message.trim()) missing.push(t("besked", "message"));
-    if (!state.countryIso) missing.push(t("land", "country"));
-    if (missing.length) {
+    if (!state.name.trim() || !state.email.trim() || !state.message.trim()) {
       setError(
         t(
-          `Udfyld venligst: ${missing.join(", ")}.`,
-          `Please fill: ${missing.join(", ")}.`
+          "Udfyld venligst navn, e-mail og besked.",
+          "Please fill in your name, email and message."
         )
       );
       return;
@@ -96,50 +120,24 @@ export default function ContactForm({
 
     setSending(true);
     try {
-      const payload = {
-        lang,
-        name: state.name.trim(),
-        email: state.email.trim(),
-        phone: fullPhone || undefined,
-        countryIso: state.countryIso, // ISO
-        country: countryLabel(state.countryIso, uiLang), // læseligt navn
-        message: state.message.trim(),
-        context: "contact",
-      };
-
       const res = await fetch(submitUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          lang,
+          name: state.name.trim(),
+          email: state.email.trim(),
+          phone: fullPhone,
+          countryIso: state.countryIso,
+          message: state.message.trim(),
+          purpose: "contact",
+        }),
       });
 
-      const json: unknown = await res
-        .json()
-        .catch(() => ({} as Record<string, unknown>));
-
-      // forventer { ok: true } fra API ved succes
-      const ok =
-        res.ok &&
-        typeof json === "object" &&
-        json !== null &&
-        (json as { ok?: boolean }).ok === true;
-
-      if (!ok) {
-        // Vis evt. præcis serverdetalje
-        let serverDetail = "";
-        if (
-          typeof json === "object" &&
-          json &&
-          "detail" in json &&
-          json.detail
-        ) {
-          serverDetail = ` – ${JSON.stringify(
-            (json as { detail: unknown }).detail
-          )}`;
-        }
-        throw new Error(`HTTP ${res.status}${serverDetail}`);
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status}${txt ? ` – ${txt}` : ""}`);
       }
-
       setSent(true);
     } catch (e) {
       console.error("ContactForm submit failed:", e);
@@ -155,10 +153,12 @@ export default function ContactForm({
   }
 
   if (sent) {
-    const fullPhone =
-      state.phone.trim() && dial ? `${dial} ${state.phone.trim()}` : "";
     return (
-      <div className={styles.success} role="status" aria-live="polite">
+      <div
+        className={`${styles.card} ${styles.success}`}
+        role="status"
+        aria-live="polite"
+      >
         <h3 className={styles.sTitle}>
           {t("Tak for din henvendelse!", "Thanks for your message!")}
         </h3>
@@ -202,9 +202,17 @@ export default function ContactForm({
   }
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
+    <form
+      className={`${styles.card} ${styles.form}`}
+      onSubmit={onSubmit}
+      noValidate
+    >
+      <div className={styles.header}>
+        <div className={styles.kicker}>{t("Skriv til os", "Write to us")}</div>
+      </div>
+
       <div className={styles.row}>
-        <label className={styles.label} htmlFor="cf-name">
+        <label className={styles.label} htmlFor="cf-name" data-required="true">
           {t("Navn", "Name")}
         </label>
         <input
@@ -221,7 +229,7 @@ export default function ContactForm({
       </div>
 
       <div className={styles.row}>
-        <label className={styles.label} htmlFor="cf-email">
+        <label className={styles.label} htmlFor="cf-email" data-required="true">
           E-mail
         </label>
         <input
@@ -233,51 +241,66 @@ export default function ContactForm({
           autoComplete="email"
           value={state.email}
           onChange={(e) => onChange("email", e.target.value)}
-          placeholder="you@example.com"
+          placeholder={t("din@adresse.dk", "your@email.com")}
         />
       </div>
 
       <div className={styles.rowGroup}>
         <div className={styles.row}>
-          <label className={styles.label} htmlFor="cf-country">
+          <label
+            className={styles.label}
+            htmlFor="cf-country"
+            data-required="true"
+          >
             {t("Land", "Country")}
           </label>
-          <select
-            id="cf-country"
-            className={styles.select}
-            value={state.countryIso}
-            onChange={(e) => onChange("countryIso", e.target.value as ISO2)}
-          >
-            {allCountries().map((c) => (
-              <option key={c.iso} value={c.iso}>
-                {countryLabel(c.iso, uiLang)} {c.dial ? `(${c.dial})` : ""}
-              </option>
-            ))}
-          </select>
+          <div className={styles.selectWrap}>
+            <select
+              id="cf-country"
+              className={styles.select}
+              value={state.countryIso}
+              onChange={(e) => onChange("countryIso", e.target.value as ISO2)}
+              required
+            >
+              {allCountries().map((c) => (
+                <option key={c.iso} value={c.iso}>
+                  {countryLabel(c.iso, uiLang)} {c.dial ? `(${c.dial})` : ""}
+                </option>
+              ))}
+            </select>
+            <span className={styles.chev} aria-hidden>
+              ▾
+            </span>
+          </div>
         </div>
 
         <div className={styles.row}>
           <label className={styles.label} htmlFor="cf-phone">
-            {t("Telefon (valgfrit)", "Phone (optional)")}
+            {t("Telefon", "Phone")}
           </label>
           <div className={styles.phone}>
-            <span className={styles.dial}>{dial}</span>
+            <span className={styles.dial} aria-hidden="true">
+              {dial}
+            </span>
             <input
               id="cf-phone"
-              className={styles.input}
+              className={styles.inputphone}
               type="tel"
               name="phone"
+              inputMode="numeric"
+              pattern="[0-9]*"
               autoComplete="tel-national"
               value={state.phone}
-              onChange={(e) => onChange("phone", e.target.value)}
-              placeholder={t("Dit nummer", "Your number")}
+              onKeyDown={onPhoneKeyDown}
+              onChange={onPhoneChange}
+              placeholder={t("Telefonnummer", "Phone number")}
             />
           </div>
         </div>
       </div>
 
       <div className={styles.row}>
-        <label className={styles.label} htmlFor="cf-msg">
+        <label className={styles.label} htmlFor="cf-msg" data-required="true">
           {t("Besked", "Message")}
         </label>
         <textarea
