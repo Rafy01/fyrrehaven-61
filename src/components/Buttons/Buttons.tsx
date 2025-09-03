@@ -47,6 +47,8 @@ export type ButtonProps = LinkLike &
     onClick?: () => void;
     ariaLabel?: string;
     className?: string;
+    /** Sæt til "submit" når knappen skal indsende en form */
+    buttonType?: "button" | "submit" | "reset";
   };
 
 function cx(...xs: Array<string | false | undefined>): string {
@@ -87,6 +89,7 @@ function Element({
   onClick,
   children,
   className,
+  buttonType,
 }: {
   to?: string;
   href?: string;
@@ -97,6 +100,7 @@ function Element({
   onClick?: () => void;
   children: React.ReactNode;
   className: string;
+  buttonType?: "button" | "submit" | "reset";
 }) {
   const isDisabled = !!(disabled || loading);
 
@@ -136,7 +140,7 @@ function Element({
 
   return (
     <button
-      type="button"
+      type={buttonType ?? "button"}
       onClick={onClick}
       aria-label={ariaLabel}
       disabled={isDisabled}
@@ -157,6 +161,7 @@ export default function Buttons(props: ButtonProps) {
     loading,
     className,
     ariaLabel,
+    buttonType,
     ...rest
   } = props;
 
@@ -178,6 +183,7 @@ export default function Buttons(props: ButtonProps) {
       className={classes}
       ariaLabel={computedAria}
       loading={loading}
+      buttonType={buttonType}
     >
       {loading ? (
         <span className={styles.spinner} aria-hidden="true" />
@@ -198,15 +204,12 @@ export default function Buttons(props: ButtonProps) {
   );
 }
 
-/* ===== Named helpers (uden overload-konflikter) ===== */
-
-/** Brug den som <Primary .../> i stedet for at sætte variant hver gang. */
+/* ===== Named helpers ===== */
 export type PrimaryProps = Omit<ButtonProps, "variant">;
 export function Primary(p: PrimaryProps) {
   return <Buttons {...(p as ButtonProps)} variant="primary" />;
 }
 
-/** Brug den som <Secondary .../> */
 export type SecondaryProps = Omit<ButtonProps, "variant">;
 export function Secondary(p: SecondaryProps) {
   return <Buttons {...(p as ButtonProps)} variant="secondary" />;

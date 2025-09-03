@@ -1,0 +1,30 @@
+.form { display: grid; gap: .8rem; }
+.row { display: grid; gap: .35rem; }
+.rowGroup { display: grid; gap: .8rem; grid-template-columns: 1fr; }
+@media (min-width: 720px){ .rowGroup{ grid-template-columns: 1fr 1fr; } }
+
+.label { font-weight: 600; }
+.input, .select, .textarea {
+  width: 100%; padding: .65rem .8rem; border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.12); background: #fff;
+}
+.textarea { resize: vertical; }
+
+.phone { display: grid; grid-template-columns: max-content 1fr; gap: .5rem; align-items: center; }
+.dial {
+  padding: .55rem .7rem; border-radius: 10px; border: 1px solid rgba(0,0,0,.12);
+  background: #fafafa; font-variant-numeric: tabular-nums;
+}
+
+.error {
+  padding: .6rem .8rem; border-radius: 10px; background: #fee2e2; color: #7f1d1d;
+  border: 1px solid #fecaca;
+}
+.actions { margin-top: .4rem; }
+
+.success { display: grid; gap: .8rem; padding: .75rem 0; }
+.sTitle { margin: 0; }
+.sLead { margin: 0; color: #555; }
+.echo { display: grid; gap: .5rem; margin: 0; }
+.echo dt { font-weight: 600; }
+.echoMsg dd { white-space: pre-wrap; }
