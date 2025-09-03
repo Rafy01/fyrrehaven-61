@@ -10,6 +10,11 @@ export type GalleryDataItem = {
 
 export const GALLERY_DATA: GalleryDataItem[] = [
   {
+    src: "/gallery/plantegning.webp",
+    altDa: "Plantegning",
+    altEn: "Floor plan",
+  },
+  {
     src: "/gallery/area-hero.webp",
     altDa: "Stue med lysindfald",
     altEn: "Living room with daylight",
