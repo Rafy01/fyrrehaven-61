@@ -1,241 +1,184 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import nodemailer, { type Transporter } from "nodemailer";
+import nodemailer from "nodemailer";
 
-type Locale = "da" | "en";
+/** ––––– Konfig – læses fra env på Vercel ––––– */
+const SMTP_HOST = process.env.SMTP_HOST ?? "smtp.simply.com";
+const SMTP_PORT = Number(process.env.SMTP_PORT ?? 587);
+const SMTP_USER = process.env.SMTP_USER ?? "contact@fyrrehaven-61.dk";
+const SMTP_PASS = process.env.SMTP_PASSWORD ?? process.env.SMTP_PASS ?? "";
+const MAIL_FROM = process.env.MAIL_FROM ?? "contact@fyrrehaven-61.dk";
+const MAIL_TO = process.env.MAIL_TO ?? "contact@fyrrehaven-61.dk";
+const SITE_NAME = process.env.SITE_NAME ?? "Fyrrehaven 61";
 
-type ContactPayload = {
+/** Genbrug én transporter (Vercel kører funktionen koldt/varmt) */
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: false, // STARTTLS på 587
+  auth: { user: SMTP_USER, pass: SMTP_PASS },
+});
+
+/** Simple valideringer */
+function isEmail(x: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x);
+}
+
+type Payload = {
   name: string;
   email: string;
   phone?: string;
   country: string;
   message: string;
-  // “purpose” kan bruges til at skifte copy (fx “booking”)
-  purpose?: "contact" | "booking";
-  lang?: Locale;
+  context?: "contact" | "booking" | string;
 };
-
-function isNonEmptyString(v: unknown): v is string {
-  return typeof v === "string" && v.trim().length > 0;
-}
-
-function isContactPayload(v: unknown): v is ContactPayload {
-  if (!v || typeof v !== "object") return false;
-  const o = v as Record<string, unknown>;
-  if (!isNonEmptyString(o.name)) return false;
-  if (!isNonEmptyString(o.email)) return false;
-  if (!isNonEmptyString(o.country)) return false;
-  if (!isNonEmptyString(o.message)) return false;
-  if (o.phone && typeof o.phone !== "string") return false;
-  if (o.purpose && o.purpose !== "contact" && o.purpose !== "booking")
-    return false;
-  if (o.lang && o.lang !== "da" && o.lang !== "en") return false;
-  return true;
-}
-
-function boolFromEnv(v: string | undefined, fallback: boolean): boolean {
-  if (v === undefined) return fallback;
-  return ["1", "true", "yes", "on"].includes(v.toLowerCase());
-}
-
-function numberFromEnv(v: string | undefined, fallback: number): number {
-  const n = v ? Number(v) : NaN;
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function buildTransporter(): Transporter {
-  const host = process.env.SMTP_HOST ?? "";
-  const port = numberFromEnv(process.env.SMTP_PORT, 465);
-  const secure = boolFromEnv(process.env.SMTP_SECURE, port === 465); // 465=>true, 587=>false
-  const user = process.env.SMTP_USER ?? "";
-  const pass = process.env.SMTP_PASS ?? "";
-
-  if (!host || !user || !pass) {
-    throw new Error("CONFIG_MISSING: SMTP_HOST/SMTP_USER/SMTP_PASS");
-  }
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: { user, pass },
-  });
-}
-
-function siteUrl(): string {
-  return process.env.SITE_URL ?? "https://fyrrehaven-61.dk";
-}
-
-function ownerTo(): string {
-  // hvor du vil modtage henvendelsen
-  return process.env.CONTACT_TO ?? "info@fyrrehaven-61.dk";
-}
-
-function fromIdentity(): string {
-  // VIGTIGT for Simply: “from” skal være din egen mailbox!
-  const fromAddr =
-    process.env.FROM_ADDR ?? process.env.SMTP_USER ?? "info@fyrrehaven-61.dk";
-  const fromName = process.env.FROM_NAME ?? "Fyrrehaven 61";
-  return `"${fromName}" <${fromAddr}>`;
-}
-
-function textForOwner(p: ContactPayload): string {
-  const lines = [
-    `Ny henvendelse fra formularen (${p.purpose ?? "contact"})`,
-    "",
-    `Navn:    ${p.name}`,
-    `Email:   ${p.email}`,
-    `Tlf.:    ${p.phone ?? "-"}`,
-    `Land:    ${p.country}`,
-    "",
-    "Besked:",
-    p.message,
-    "",
-    `Modtaget via: ${siteUrl()}`,
-  ];
-  return lines.join("\n");
-}
-
-function textForSender(p: ContactPayload): {
-  subject: string;
-  text: string;
-  html: string;
-} {
-  const lang: Locale = p.lang ?? "da";
-  const isBooking = p.purpose === "booking";
-
-  const subject =
-    lang === "da"
-      ? isBooking
-        ? "Vi har modtaget din bookingforespørgsel"
-        : "Vi har modtaget din henvendelse"
-      : isBooking
-      ? "We received your booking request"
-      : "We received your message";
-
-  const introDa = isBooking
-    ? "Tak for din bookingforespørgsel – vi vender tilbage hurtigst muligt."
-    : "Tak for din henvendelse – vi vender tilbage hurtigst muligt.";
-  const introEn = isBooking
-    ? "Thanks for your booking request — we’ll get back to you shortly."
-    : "Thanks for your message — we’ll get back to you shortly.";
-
-  const label = (da: string, en: string) => (lang === "da" ? da : en);
-
-  const rows = [
-    [label("Navn", "Name"), p.name],
-    ["Email", p.email],
-    [label("Telefon", "Phone"), p.phone ?? "-"],
-    [label("Land", "Country"), p.country],
-    [label("Formål", "Purpose"), p.purpose ?? "contact"],
-    [label("Besked", "Message"), p.message],
-  ];
-
-  const text =
-    (lang === "da" ? introDa : introEn) +
-    "\n\n" +
-    rows.map(([k, v]) => `${k}: ${v}`).join("\n") +
-    `\n\n${label("Læs mere på", "More info:")} ${siteUrl()}`;
-
-  const html =
-    `<p>${lang === "da" ? introDa : introEn}</p>` +
-    `<table cellpadding="6" cellspacing="0" style="border-collapse:collapse">` +
-    rows
-      .map(
-        ([k, v]) =>
-          `<tr><td style="font-weight:600">${k}</td><td>${String(v).replace(
-            /\n/g,
-            "<br/>"
-          )}</td></tr>`
-      )
-      .join("") +
-    `</table><p><a href="${siteUrl()}">${siteUrl()}</a></p>`;
-
-  return { subject, text, html };
-}
-
-// CORS: tillad kun fra eget website
-function allowCors(req: VercelRequest, res: VercelResponse): boolean {
-  const origin = req.headers.origin ?? "";
-  const allowed = siteUrl();
-  if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", allowed);
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    res.status(204).end();
-    return false;
-  }
-  if (origin === allowed) {
-    res.setHeader("Access-Control-Allow-Origin", allowed);
-  }
-  return true;
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    if (!allowCors(req, res)) return;
-
     if (req.method !== "POST") {
-      res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
-      return;
+      res.setHeader("Allow", "POST");
+      return res.status(405).json({ ok: false, error: "Method Not Allowed" });
     }
 
-    // Body kan være string eller objekt
-    const raw = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    if (!isContactPayload(raw)) {
-      res.status(400).json({ ok: false, error: "INVALID_BODY" });
-      return;
+    const bodyRaw = (req.body ?? {}) as unknown;
+    const data: Payload =
+      typeof bodyRaw === "string" ? JSON.parse(bodyRaw) : (bodyRaw as Payload);
+
+    const { name, email, phone, country, message, context } = data;
+
+    if (!name || !email || !country || !message) {
+      return res
+        .status(400)
+        .json({ ok: false, error: "Missing required fields" });
     }
-    const data: ContactPayload = raw;
+    if (!isEmail(email)) {
+      return res.status(400).json({ ok: false, error: "Invalid email" });
+    }
 
-    // Byg transporter (kaster hvis config mangler)
-    const transporter = buildTransporter();
+    const stamp = new Date()
+      .toISOString()
+      .replace("T", " ")
+      .replace("Z", " UTC");
+    const subjectOwner =
+      (context === "booking"
+        ? `Bookingforespørgsel fra ${name}`
+        : `Ny henvendelse fra ${name}`) + ` – ${SITE_NAME}`;
 
-    // 1) Mail til ejer
-    const ownerMsg = {
-      from: fromIdentity(), // ← må IKKE være gæstens email
-      to: ownerTo(),
-      replyTo: data.email, // ← så du kan “svar”
-      subject:
-        (data.lang ?? "da") === "da"
-          ? "Ny henvendelse fra formularen"
-          : "New message from contact form",
-      text: textForOwner(data),
-    };
+    const textOwner = `${SITE_NAME} – ${subjectOwner}
+Tid: ${stamp}
 
-    // 2) Kvittering til afsender
-    const receipt = textForSender(data);
-    const senderMsg = {
-      from: fromIdentity(),
-      to: data.email,
-      subject: receipt.subject,
-      text: receipt.text,
-      html: receipt.html,
-    };
+Navn: ${name}
+Email: ${email}
+Telefon: ${phone ?? "-"}
+Land: ${country}
 
-    // Send i serie (eller Promise.all)
-    const r1 = await transporter.sendMail(ownerMsg);
-    const r2 = await transporter.sendMail(senderMsg);
+Besked:
+${message}
+`;
 
-    res.status(200).json({
-      ok: true,
-      messageIdOwner: r1.messageId,
-      messageIdSender: r2.messageId,
+    const htmlOwner = `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5">
+        <h2 style="margin:0 0 8px">${SITE_NAME} – ${subjectOwner}</h2>
+        <p style="margin:0 0 12px;color:#555">Tid: ${stamp}</p>
+        <table style="border-collapse:collapse;margin-bottom:12px">
+          <tr><td style="padding:4px 8px;color:#666">Navn</td><td style="padding:4px 8px;font-weight:600">${escapeHtml(
+            name
+          )}</td></tr>
+          <tr><td style="padding:4px 8px;color:#666">Email</td><td style="padding:4px 8px">${escapeHtml(
+            email
+          )}</td></tr>
+          <tr><td style="padding:4px 8px;color:#666">Telefon</td><td style="padding:4px 8px">${escapeHtml(
+            phone ?? "-"
+          )}</td></tr>
+          <tr><td style="padding:4px 8px;color:#666">Land</td><td style="padding:4px 8px">${escapeHtml(
+            country
+          )}</td></tr>
+          <tr><td style="padding:4px 8px;color:#666">Type</td><td style="padding:4px 8px">${escapeHtml(
+            context ?? "contact"
+          )}</td></tr>
+        </table>
+        <div style="padding:12px;border:1px solid #eee;border-radius:8px;background:#fafafa;white-space:pre-wrap">${escapeHtml(
+          message
+        )}</div>
+      </div>
+    `;
+
+    // 1) Mail til dig
+    await transporter.sendMail({
+      from: `"${SITE_NAME}" <${MAIL_FROM}>`,
+      to: MAIL_TO,
+      replyTo: email,
+      subject: subjectOwner,
+      text: textOwner,
+      html: htmlOwner,
     });
+
+    // 2) Auto-kvittering til afsender
+    const subjectAck = "Tak for din henvendelse / Thanks for your message";
+    const textAck = `Hej ${name},
+
+Tak for din henvendelse til ${SITE_NAME}. Vi vender tilbage hurtigst muligt.
+Her er en kopi af din besked:
+
+${message}
+
+— ${SITE_NAME}
+contact@fyrrehaven-61.dk
+
+—
+
+Hi ${name},
+
+Thanks for contacting ${SITE_NAME}. We'll get back to you as soon as possible.
+Here’s a copy of your message:
+
+${message}
+
+— ${SITE_NAME}
+contact@fyrrehaven-61.dk
+`;
+
+    const htmlAck = `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6">
+        <p>Hej ${escapeHtml(name)},</p>
+        <p>Tak for din henvendelse til <strong>${SITE_NAME}</strong>. Vi vender tilbage hurtigst muligt.</p>
+        <p><em>Her er en kopi af din besked:</em></p>
+        <blockquote style="margin:0;padding:12px;border-left:4px solid #ddd;background:#fafafa;border-radius:6px;white-space:pre-wrap">${escapeHtml(
+          message
+        )}</blockquote>
+        <p style="margin-top:16px">— ${SITE_NAME}<br/>contact@fyrrehaven-61.dk</p>
+        <hr style="margin:20px 0;border:0;border-top:1px solid #eee"/>
+        <p>Hi ${escapeHtml(name)},</p>
+        <p>Thanks for contacting <strong>${SITE_NAME}</strong>. We'll get back to you as soon as possible.</p>
+        <p><em>Here’s a copy of your message:</em></p>
+        <blockquote style="margin:0;padding:12px;border-left:4px solid #ddd;background:#fafafa;border-radius:6px;white-space:pre-wrap">${escapeHtml(
+          message
+        )}</blockquote>
+        <p style="margin-top:16px">— ${SITE_NAME}<br/>contact@fyrrehaven-61.dk</p>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: `"${SITE_NAME}" <${MAIL_FROM}>`,
+      to: email,
+      replyTo: MAIL_FROM,
+      subject: subjectAck,
+      text: textAck,
+      html: htmlAck,
+    });
+
+    return res.status(200).json({ ok: true });
   } catch (err) {
-    // Log ALT til Vercel logs (Deployment → Functions → request → Logs)
-    // Typisk fejl her: “Invalid login”, “Message rejected”, netværk m.m.
-    console.error("CONTACT_API_ERROR", {
-      err,
-      env: {
-        hasHost: !!process.env.SMTP_HOST,
-        hasUser: !!process.env.SMTP_USER,
-        hasPass: !!process.env.SMTP_PASS,
-        port: process.env.SMTP_PORT,
-        secure: process.env.SMTP_SECURE,
-        contactTo: process.env.CONTACT_TO,
-      },
-    });
-
-    res.status(500).json({ ok: false, error: "SERVER_ERROR" });
+    console.error("Contact API error:", err);
+    return res.status(500).json({ ok: false, error: "Server error" });
   }
+}
+
+/** Lille HTML-escape helper */
+function escapeHtml(str: string): string {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
