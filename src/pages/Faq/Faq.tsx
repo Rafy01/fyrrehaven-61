@@ -65,6 +65,10 @@ export default function Faq({ lang }: { lang: Lang }) {
             "Detaljer & svar for dit ophold",
             "Details & answers for your stay"
           ),
+          title: t(
+            "Fyrrehaven 61 – FAQ",
+            "Fyrrehaven 61 – FAQ"
+          ),
         }}
         align="left"
       />

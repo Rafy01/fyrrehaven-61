@@ -70,6 +70,10 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
           type: "image",
           src: "/gallery/hero-cover.webp",
           alt: t("Udklip fra galleriet", "Gallery cover collage"),
+          title: t(
+            "Fyrrehaven 61 – feriehus ved Fjellerup Strand",
+            "Fyrrehaven 61 – holiday home by Fjellerup Beach"
+          ),
         }}
         align="left"
         layout="media-right"

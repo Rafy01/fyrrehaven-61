@@ -20,6 +20,7 @@ type ImageMedia = {
   type?: "image";
   src: string;
   alt?: string; // brug "" hvis rent dekorativt
+  title?: string; // valgfrit title-attribut
 };
 
 type VideoMedia = {
@@ -194,6 +195,7 @@ export default function Hero({
                       className={styles.mediaEl}
                       src={media.src}
                       alt={media.alt ?? ""}
+                      title={media.title ?? ""}
                       loading="eager"
                     />
                   )}

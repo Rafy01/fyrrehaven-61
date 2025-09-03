@@ -149,6 +149,7 @@ export default function Home({ lang }: { lang: Lang }) {
         media={{
           type: "image",
           src: "/Fyrrehaven hero.webp",
+          title: t("Fyrrehaven 61 – feriehus ved Fjellerup Strand", "Fyrrehaven 61 – holiday home by Fjellerup Beach"),
           alt: t(
             "Skov og strand ved sommerhuset",
             "Forest and beach near the house"

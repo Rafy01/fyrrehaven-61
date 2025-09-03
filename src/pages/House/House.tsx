@@ -108,6 +108,7 @@ export default function House({ lang }: { lang: Lang }) {
             "Udendørs poolområde ved sommerhuset",
             "Outdoor pool area at the house"
           ),
+          title: t("Fyrrehaven 61 – feriehus ved Fjellerup Strand", "Fyrrehaven 61 – holiday home by Fjellerup Beach"),
         }}
         align="left"
       />
