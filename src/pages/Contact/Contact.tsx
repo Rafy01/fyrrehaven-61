@@ -32,7 +32,7 @@ export default function ContactPage({ lang }: { lang: Lang }) {
           t("Familievenligt", "Family-friendly"),
           t("Tæt på strand", "Near the beach"),
         ]}
-        media={{ type: "image", src: "/hosts/familien.webp", alt: "" }}
+        media={{ type: "image", src: "/hosts/familien.webp", alt: "Familien der står bag huset" }}
         align="left"
       />
       <HostsSection
