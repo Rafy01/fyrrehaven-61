@@ -1,4 +1,3 @@
-import React from "react";
 import styles from "./Facilities.module.css";
 
 type Lang = "da" | "en";
