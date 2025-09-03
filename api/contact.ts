@@ -76,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     host,
     port,
     secure: port === 465, // Simply: 465 = SSL, 587 = STARTTLS
-    auth: { user, pass },
+    auth: { user, pass }, 
   });
 
   // Admin-mail (til jer)
