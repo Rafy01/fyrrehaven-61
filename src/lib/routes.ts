@@ -19,7 +19,10 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   home: { da: "", en: "" },
   house: { da: "Sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61" },
   area: { da: "omraadet-skov-og-strand", en: "area-forest-and-beach" },
-  gallery: { da: "galleri", en: "gallery" },
+  gallery: {
+    da: "galleri-fyrrehaven-61-billeder",
+    en: "gallery-photos-fyrrehaven-61",
+  },
   faq: { da: "faq", en: "faq" },
   contact: { da: "kontakt", en: "contact" },
   book: { da: "book", en: "book" },
