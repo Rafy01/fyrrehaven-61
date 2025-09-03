@@ -68,6 +68,7 @@ export default function Gallery({
   maxItems,
   fit = "cover",
 }: GalleryProps) {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const all = items ?? [];
   const visibleItems = useMemo(
     () => (typeof maxItems === "number" ? all.slice(0, maxItems) : all),
