@@ -207,9 +207,7 @@ export default function ContactForm({
       onSubmit={onSubmit}
       noValidate
     >
-      <div className={styles.header}>
-        <div className={styles.kicker}>{t("Skriv til os", "Write to us")}</div>
-      </div>
+
 
       <div className={styles.row}>
         <label className={styles.label} htmlFor="cf-name" data-required="true">
