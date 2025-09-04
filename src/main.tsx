@@ -22,6 +22,7 @@ import Area from "./pages/Area";
 import Gallery from "./pages/Gallery";
 import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
+import ChatDebug from "./pages/ChatDebug";
 
 // Hjælper til at lave child routes pr. sprog
 const langRoutes = (lang: "da" | "en") => [
@@ -42,6 +43,7 @@ const router = createBrowserRouter([
   { path: "/", loader: () => redirect(`/${pickInitialLang()}`) },
   { path: "/da", element: <App lang="da" />, children: langRoutes("da") },
   { path: "/en", element: <App lang="en" />, children: langRoutes("en") },
+  { path: "/debug/chat", element: <ChatDebug /> },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 
