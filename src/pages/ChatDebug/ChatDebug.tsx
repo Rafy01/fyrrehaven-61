@@ -1,4 +1,3 @@
-// src/pages/ChatDebug/ChatDebug.tsx
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import styles from "./ChatDebug.module.css";
@@ -15,7 +14,13 @@ export type UnknownItem = {
 };
 
 const LS_KEY = "chat_unknowns_v1";
+const SESSION_KEY = "chat_debug_ok_v1";
 
+// Læses fra Vite env (client-side)
+const PASS_HASH = (import.meta.env.VITE_CHAT_DEBUG_SHA256 || "").trim();
+const PASS_HINT = (import.meta.env.VITE_CHAT_DEBUG_HINT || "").trim();
+
+/* ---------- Utils ---------- */
 function loadUnknowns(): UnknownItem[] {
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -33,7 +38,6 @@ function saveUnknowns(list: UnknownItem[]): void {
     /* ignore */
   }
 }
-
 function fmtDate(ts: number): string {
   try {
     const d = new Date(ts);
@@ -47,7 +51,6 @@ function fmtDate(ts: number): string {
     return String(ts);
   }
 }
-
 function toCSV(rows: UnknownItem[]): string {
   const header = ["id", "lang", "ts_iso", "page", "done", "question"];
   const lines = rows.map((r) => {
@@ -64,15 +67,65 @@ function toCSV(rows: UnknownItem[]): string {
   return [header.join(","), ...lines].join("\n");
 }
 
+async function sha256Hex(input: string): Promise<string> {
+  const enc = new TextEncoder().encode(input);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  const arr = Array.from(new Uint8Array(buf));
+  return arr.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/* ---------- Password Gate (client only) ---------- */
+function useGate() {
+  const [allowed, setAllowed] = React.useState<boolean>(false);
+  const [checking, setChecking] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    // hvis ingen hash sat, så giv adgang (men det er ikke sikkert)
+    if (!PASS_HASH) {
+      setAllowed(true);
+      setChecking(false);
+      return;
+    }
+    const ok = sessionStorage.getItem(SESSION_KEY) === "1";
+    setAllowed(ok);
+    setChecking(false);
+  }, []);
+
+  const login = React.useCallback(async (pwd: string) => {
+    if (!PASS_HASH) {
+      setAllowed(true);
+      sessionStorage.setItem(SESSION_KEY, "1");
+      return true;
+    }
+    const hex = await sha256Hex(pwd);
+    const ok = hex.toLowerCase() === PASS_HASH.toLowerCase();
+    if (ok) {
+      sessionStorage.setItem(SESSION_KEY, "1");
+      setAllowed(true);
+    }
+    return ok;
+  }, []);
+
+  const logout = React.useCallback(() => {
+    sessionStorage.removeItem(SESSION_KEY);
+    setAllowed(false);
+  }, []);
+
+  return { allowed, checking, login, logout };
+}
+
 export default function ChatDebug() {
+  const { allowed, checking, login, logout } = useGate();
+
   const [all, setAll] = React.useState<UnknownItem[]>([]);
   const [search, setSearch] = React.useState<string>("");
   const [onlyOpen, setOnlyOpen] = React.useState<boolean>(false);
   const [langFilter, setLangFilter] = React.useState<Lang | "all">("all");
 
   React.useEffect(() => {
+    if (!allowed) return;
     setAll(loadUnknowns());
-  }, []);
+  }, [allowed]);
 
   function update(mutator: (xs: UnknownItem[]) => UnknownItem[]) {
     setAll((prev) => {
@@ -124,23 +177,36 @@ export default function ChatDebug() {
     .filter((r) => (q ? r.q.toLowerCase().includes(q) : true))
     .sort((a, b) => b.ts - a.ts);
 
+  /* ---------- Helmet ---------- */
+  const robots =
+    "noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai";
+
+  /* ---------- Gate overlay ---------- */
+  if (checking) {
+    return (
+      <div className={styles.gate}>
+        <div className={styles.gateCard}>
+          <div className={styles.gateTitle}>Indlæser…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!allowed) {
+    return <GateScreen onLogin={login} />;
+  }
+
+  /* ---------- Debug UI ---------- */
   return (
     <div className={styles.page}>
-      {/* Helmet: noindex, nofollow, noarchive, nosnippet, noimageindex */}
       <Helmet>
         <title>Chat Debug · Admin</title>
         <meta
           name="description"
           content="Intern debug-side for chat (ukendte spørgsmål)."
         />
-        <meta
-          name="robots"
-          content="noindex, nofollow, noarchive, nosnippet, noimageindex"
-        />
-        <meta
-          name="googlebot"
-          content="noindex, nofollow, noarchive, nosnippet, noimageindex"
-        />
+        <meta name="robots" content={robots} />
+        <meta name="googlebot" content={robots} />
       </Helmet>
 
       <header className={styles.header}>
@@ -189,6 +255,10 @@ export default function ChatDebug() {
           <button className={styles.btnDanger} onClick={clearAll}>
             Tøm alt
           </button>
+
+          <button className={styles.btnGhost} onClick={logout} title="Log ud">
+            Log ud
+          </button>
         </div>
       </header>
 
@@ -202,8 +272,8 @@ export default function ChatDebug() {
                 <th style={{ width: "110px" }}>Tid</th>
                 <th style={{ width: "70px" }}>Sprog</th>
                 <th>Spørgsmål</th>
-                <th>Side</th>
-                <th style={{ width: "160px" }}>Handlinger</th>
+                <th style={{ width: "70px" }}>Side</th>
+                <th style={{ width: "300px" }}>Handlinger</th>
               </tr>
             </thead>
             <tbody>
@@ -252,6 +322,73 @@ export default function ChatDebug() {
           </table>
         )}
       </section>
+    </div>
+  );
+}
+
+/* ---------- Gate screen component ---------- */
+function GateScreen({
+  onLogin,
+}: {
+  onLogin: (pwd: string) => Promise<boolean>;
+}) {
+  const [pwd, setPwd] = React.useState<string>("");
+  const [err, setErr] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState<boolean>(false);
+
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setErr(null);
+    setBusy(true);
+    try {
+      const ok = await onLogin(pwd);
+      if (!ok) setErr("Forkert kode. Prøv igen.");
+    } catch {
+      setErr("Noget gik galt. Prøv igen.");
+    } finally {
+      setBusy(false);
+      setPwd("");
+    }
+  }
+
+  return (
+    <div className={styles.gate}>
+      <div className={styles.gateCard}>
+        <div className={styles.gateTitle}>Adgang påkrævet</div>
+        <p className={styles.gateText}>
+          Denne side er kun for værter/admin. Indtast adgangskoden for at
+          fortsætte.
+        </p>
+        {PASS_HINT && <p className={styles.gateHint}>{PASS_HINT}</p>}
+
+        <form onSubmit={submit} className={styles.gateForm}>
+          <input
+            type="password"
+            className={styles.gateInput}
+            placeholder="Adgangskode"
+            value={pwd}
+            onChange={(e) => setPwd(e.target.value)}
+            autoFocus
+            autoComplete="current-password"
+          />
+          <button className={styles.gateBtn} disabled={busy || !pwd}>
+            {busy ? "Tjekker…" : "Åbn"}
+          </button>
+        </form>
+
+        {err && (
+          <div className={styles.gateErr} role="alert" aria-live="assertive">
+            {err}
+          </div>
+        )}
+
+        {!PASS_HASH && (
+          <p className={styles.gateWarn}>
+            (Advarsel: Der er ikke sat nogen kode. Sæt{" "}
+            <code>VITE_CHAT_DEBUG_SHA256</code>.)
+          </p>
+        )}
+      </div>
     </div>
   );
 }
