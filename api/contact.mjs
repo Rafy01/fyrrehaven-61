@@ -171,8 +171,8 @@ export default async function handler(req_, res) {
     /** ---- Mail til jer (internt) ---- */
     const subjectAdmin =
       lang === "da"
-        ? `Ny henvendelse (${context})`
-        : `New message (${context})`;
+        ? `Fyrrehaven 61 | (${name}) har en forespørgsel (${context})`
+        : `Fyrrehaven 61 | (${name}) has an inquiry (${context})`;
 
     const introAdmin =
       lang === "da"
