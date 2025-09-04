@@ -176,3 +176,9 @@
   padding:8px 10px; border-radius:10px; cursor:pointer;
 }
 .ghostBtn:hover{ background:#f7f9ff; }
+.msgBody strong {
+  font-weight: 800; /* or 700 */
+}
+
+/* if you had a too-broad weight somewhere, this wins */
+.botBubble .msgBody strong { font-weight: 800; }

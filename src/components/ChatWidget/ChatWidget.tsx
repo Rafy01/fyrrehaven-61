@@ -2,7 +2,7 @@
 import React from "react";
 import styles from "./ChatWidget.module.css";
 import type { Lang } from "../../lib/lang";
-import { SNIPPETS, type Snippet, type Link } from "../../data/chat/knowledge";
+import { SNIPPETS, type Snippet } from "../../data/chat/knowledge";
 
 /* -------- helpers -------- */
 function rid(): string {
@@ -47,6 +47,17 @@ function bestMatch(q: string): { snippet: Snippet | null; confidence: number } {
     }
   }
   return { snippet: best, confidence: score };
+}
+
+/** Mini “markdown” → HTML: kun **bold** + dobbelt newline -> <br/> (med escape) */
+function mdToHtml(s: string): string {
+  const esc = String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return esc
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\n{2,}/g, "<br/>");
 }
 
 /* -------- ukendt-store (localStorage) -------- */
@@ -147,8 +158,8 @@ export default function ChatWidget({ lang }: Props) {
         const linksBlock =
           (snippet.links ?? []).length > 0
             ? "\n\n" +
-              (snippet.links as Link[])
-                .map((l: Link) => {
+              (snippet.links as { labelDa: string; labelEn: string; to?: string; href?: string }[])
+                .map((l) => {
                   const label = lang === "da" ? l.labelDa : l.labelEn;
                   const url = l.to ?? l.href ?? "#";
                   return `• ${label} → ${url}`;
@@ -280,18 +291,20 @@ export default function ChatWidget({ lang }: Props) {
 
     const isUser = m.role === "user";
     const text = m.text ?? "";
+
     return (
       <div className={isUser ? styles.msgUser : styles.msgBot}>
         <div className={styles.bubble}>
-          {text
-            .split("\n")
-            .map((line, i) =>
-              line.startsWith("**") && line.endsWith("**") ? (
-                <strong key={i}>{line.slice(2, -2)}</strong>
-              ) : (
-                <p key={i}>{line}</p>
-              )
-            )}
+          {isUser ? (
+            // USER: ren tekst
+            text.split("\n").map((line, i) => <p key={i}>{line}</p>)
+          ) : (
+            // BOT: tillad bold + <br/> via vores mini-markdown
+            <div
+              className={styles.msgBody}
+              dangerouslySetInnerHTML={{ __html: mdToHtml(text) }}
+            />
+          )}
         </div>
       </div>
     );
@@ -383,9 +396,7 @@ export default function ChatWidget({ lang }: Props) {
               setInput(e.target.value)
             }
             placeholder={
-              lang === "da"
-                ? "Skriv et spørgsmål…"
-                : "Ask a question… "
+              lang === "da" ? "Skriv et spørgsmål…" : "Ask a question… "
             }
             aria-label={lang === "da" ? "Din besked" : "Your message"}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
