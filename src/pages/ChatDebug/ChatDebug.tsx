@@ -77,14 +77,12 @@ export default function ChatDebug() {
 
   React.useEffect(() => {
     // første load
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
     // reload ved filter-ændring
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [langFilter, onlyOpen]);
@@ -116,7 +114,6 @@ export default function ChatDebug() {
         body: JSON.stringify({ id }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       load();
     } catch (e: unknown) {
       alert(String(e instanceof Error ? e.message : e));
@@ -136,7 +133,6 @@ export default function ChatDebug() {
         }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       load();
     } catch (e: unknown) {
       alert(String(e instanceof Error ? e.message : e));
@@ -180,7 +176,6 @@ export default function ChatDebug() {
             }
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
                 load();
               }
             }}
