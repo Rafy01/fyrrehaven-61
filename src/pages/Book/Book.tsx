@@ -60,9 +60,6 @@ export default function Book({ lang }: { lang: Lang }) {
   const contactTo = `${pathOf(lang, "contact")}#contact`;
 
   // Aktuel måned til kalenderen
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth() + 1; // 1-12
 
   return (
     <>
