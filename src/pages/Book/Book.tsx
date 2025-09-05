@@ -1,4 +1,3 @@
-import React from "react";
 import { Container, Box, Heading, Text } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
