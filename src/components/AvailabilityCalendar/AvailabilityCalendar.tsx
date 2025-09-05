@@ -2,14 +2,13 @@ import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
 
-/* ---------- API typer ---------- */
 type ApiEvent = {
   id: string;
   title: string;
   description?: string;
   location?: string;
-  start: string; // ISO
-  end: string; // ISO
+  start: string;
+  end: string;
   allDay?: boolean;
 };
 type ApiResp =
@@ -18,13 +17,12 @@ type ApiResp =
 
 type Booking = {
   id: string;
-  start: Date; // UTC ISO → Date
+  start: Date;
   end: Date; // checkout
   title: string;
   allDay: boolean;
 };
 
-/* ---------- helpers ---------- */
 const TZ = "Europe/Copenhagen";
 
 const fmtParts = new Intl.DateTimeFormat("en-CA", {
@@ -33,7 +31,6 @@ const fmtParts = new Intl.DateTimeFormat("en-CA", {
   month: "2-digit",
   day: "2-digit",
 });
-
 function ymdInTz(d: Date): string {
   const ps = fmtParts.formatToParts(d);
   const y = ps.find((p) => p.type === "year")?.value ?? "0000";
@@ -41,15 +38,12 @@ function ymdInTz(d: Date): string {
   const dd = ps.find((p) => p.type === "day")?.value ?? "00";
   return `${y}-${m}-${dd}`;
 }
-
 function addDays(d: Date, n: number): Date {
   const x = new Date(d.getTime());
   x.setUTCDate(x.getUTCDate() + n);
   return x;
 }
-
 function daysBetween(aUtc: Date, bUtc: Date): number {
-  // Sammenlign rene datoer (UTC midnat)
   const MS = 24 * 3600 * 1000;
   const a = Date.UTC(
     aUtc.getUTCFullYear(),
@@ -64,7 +58,6 @@ function daysBetween(aUtc: Date, bUtc: Date): number {
   return Math.round((b - a) / MS);
 }
 
-/** heuristik: filtrér frem rengøring/møder etc. */
 function isLikelyStay(e: ApiEvent): boolean {
   if (e.allDay) return true;
   const t = (e.title || "").toLowerCase();
@@ -78,11 +71,9 @@ function isLikelyStay(e: ApiEvent): boolean {
     "reserved",
   ];
   if (vendors.some((v) => t.includes(v))) return true;
-
   const durH = (new Date(e.end).getTime() - new Date(e.start).getTime()) / 36e5;
-  return durH >= 18; // ca. 1 nat
+  return durH >= 18;
 }
-
 function normalizeBookings(events: ApiEvent[]): Booking[] {
   return events
     .filter(isLikelyStay)
@@ -95,28 +86,27 @@ function normalizeBookings(events: ApiEvent[]): Booking[] {
     }))
     .sort((a, b) => a.start.getTime() - b.start.getTime());
 }
-
-/** “Airbnb - Fornavn Efternavn” -> “Fornavn” */
 function firstNameFromTitle(title: string): string {
   let t = title.trim();
   const dash = t.indexOf("-");
   if (dash >= 0) t = t.slice(dash + 1);
-  t = t.replace(/\(.*?\)/g, ""); // fjern parantes
+  t = t.replace(/\(.*?\)/g, "");
   t = t.replace(/\bairbnb\b/gi, "").trim();
   const word = t.split(/\s+/)[0] || "";
   return word.slice(0, 1).toUpperCase() + word.slice(1);
 }
 
-/* ---------- komponent ---------- */
 type Props = { lang: Lang; apiUrl?: string };
 
 export default function AvailabilityCalendar({
   lang,
   apiUrl = "/api/ical",
 }: Props) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = React.useCallback(
+    (da: string, en: string) => (lang === "da" ? da : en),
+    [lang]
+  );
 
-  // cursor = 1. i måneden (UTC)
   const today = new Date();
   const [cursor, setCursor] = React.useState<Date>(
     new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))
@@ -133,7 +123,7 @@ export default function AvailabilityCalendar({
       .then((r) => r.json() as Promise<ApiResp>)
       .then((data) => {
         if (dead) return;
-        if (!data.ok) throw new Error("API");
+        if (!("ok" in data) || !data.ok) throw new Error("API");
         setBookings(normalizeBookings(data.events));
       })
       .catch(
@@ -147,7 +137,6 @@ export default function AvailabilityCalendar({
     };
   }, [apiUrl, t]);
 
-  /* ------ grid (6 uger) ------ */
   const y = cursor.getUTCFullYear();
   const m = cursor.getUTCMonth();
   const firstOfMonth = new Date(Date.UTC(y, m, 1));
@@ -187,26 +176,23 @@ export default function AvailabilityCalendar({
     );
   }
 
-  /* ----- Segmenter pr. uge ----- */
   type WeekSeg = {
     id: string;
-    row: number; // 0..5
+    row: number;
     colStart: number; // 1..7
-    colEnd: number; // 2..8 (exclusive)
-    isFirst: boolean; // første uge af bookingen
-    isLast: boolean; // sidste uge af bookingen
-    label: string; // fornavn (kun vist på første uge-del)
+    colEnd: number; // exclusive
+    isFirst: boolean;
+    isLast: boolean;
+    label: string;
   };
 
   const weekSegs: WeekSeg[] = React.useMemo(() => {
     if (!bookings) return [];
-
     const segs: WeekSeg[] = [];
     for (const b of bookings) {
-      const startIdx = daysBetween(gridStart, b.start); // celleindeks for check-in dato
-      const endIdx = daysBetween(gridStart, b.end); // celleindeks for check-out dato
-
-      if (endIdx < 0 || startIdx > 41) continue; // helt udenfor
+      const startIdx = daysBetween(gridStart, b.start);
+      const endIdx = daysBetween(gridStart, b.end);
+      if (endIdx < 0 || startIdx > 41) continue;
 
       const clampS = Math.max(0, startIdx);
       const clampE = Math.min(41, endIdx);
@@ -215,7 +201,6 @@ export default function AvailabilityCalendar({
       while (i <= clampE) {
         const week = Math.floor(i / 7);
         const weekEndIdx = week * 7 + 6;
-
         const segStart = i;
         const segEnd = Math.min(clampE, weekEndIdx);
 
@@ -223,7 +208,7 @@ export default function AvailabilityCalendar({
           id: `${b.id}:${week}`,
           row: week,
           colStart: (segStart % 7) + 1,
-          colEnd: (segEnd % 7) + 2, // exclusive
+          colEnd: (segEnd % 7) + 2,
           isFirst: segStart === startIdx,
           isLast: segEnd === endIdx,
           label: firstNameFromTitle(b.title),
@@ -235,7 +220,6 @@ export default function AvailabilityCalendar({
     return segs;
   }, [bookings, gridStart]);
 
-  /* ----- Gør uge-segmenter til visuelle “stykker” ----- */
   type Piece = {
     key: string;
     row: number;
@@ -249,12 +233,10 @@ export default function AvailabilityCalendar({
   const pieces: Piece[] = React.useMemo(() => {
     const out: Piece[] = [];
     for (const s of weekSegs) {
-      const len = s.colEnd - s.colStart; // kolonner i denne uge-del
+      const len = s.colEnd - s.colStart;
 
-      // Booking helt inden for én uge
       if (s.isFirst && s.isLast) {
         if (len === 1) {
-          // (edge case: check-in=check-out samme dato)
           out.push({
             key: `${s.id}:one`,
             row: s.row,
@@ -265,7 +247,6 @@ export default function AvailabilityCalendar({
             label: s.label,
           });
         } else {
-          // start-halv
           out.push({
             key: `${s.id}:start`,
             row: s.row,
@@ -275,8 +256,7 @@ export default function AvailabilityCalendar({
             showLabel: true,
             label: s.label,
           });
-          // midterstykke hvis > 2 kolonner
-          if (len > 2) {
+          if (len > 2)
             out.push({
               key: `${s.id}:mid`,
               row: s.row,
@@ -285,8 +265,6 @@ export default function AvailabilityCalendar({
               kind: "mid",
               showLabel: false,
             });
-          }
-          // slut-halv
           out.push({
             key: `${s.id}:end`,
             row: s.row,
@@ -299,9 +277,7 @@ export default function AvailabilityCalendar({
         continue;
       }
 
-      // Første uge-del
       if (s.isFirst) {
-        // start-halv i første celle
         out.push({
           key: `${s.id}:start`,
           row: s.row,
@@ -311,34 +287,28 @@ export default function AvailabilityCalendar({
           showLabel: true,
           label: s.label,
         });
-        // resten fuld bredde
-        if (s.colStart + 1 < s.colEnd) {
+        if (s.colStart + 1 < s.colEnd)
           out.push({
-            key: `${s.id}:full-after-start`,
+            key: `${s.id}:full-after`,
             row: s.row,
             colStart: s.colStart + 1,
             colEnd: s.colEnd,
             kind: "full",
             showLabel: false,
           });
-        }
         continue;
       }
 
-      // Sidste uge-del
       if (s.isLast) {
-        // fuld bredde frem til sidste celle
-        if (s.colStart < s.colEnd - 1) {
+        if (s.colStart < s.colEnd - 1)
           out.push({
-            key: `${s.id}:full-before-end`,
+            key: `${s.id}:full-before`,
             row: s.row,
             colStart: s.colStart,
             colEnd: s.colEnd - 1,
             kind: "full",
             showLabel: false,
           });
-        }
-        // slut-halv i sidste celle
         out.push({
           key: `${s.id}:end`,
           row: s.row,
@@ -350,7 +320,6 @@ export default function AvailabilityCalendar({
         continue;
       }
 
-      // Midt-uge-del (hverken første eller sidste) – fuld bredde
       out.push({
         key: `${s.id}:full`,
         row: s.row,
@@ -362,6 +331,30 @@ export default function AvailabilityCalendar({
     }
     return out;
   }, [weekSegs]);
+
+  /* ---- lane allocation: stack pills vertically per week ---- */
+  type PieceWithLane = Piece & { lane: number };
+  const layered: PieceWithLane[] = React.useMemo(() => {
+    const byRow = new Map<number, Piece[]>();
+    pieces.forEach((p) => {
+      const arr = byRow.get(p.row) ?? [];
+      arr.push(p);
+      byRow.set(p.row, arr);
+    });
+
+    const out: PieceWithLane[] = [];
+    for (const [, arr] of byRow) {
+      arr.sort((a, b) => a.colStart - b.colStart || a.colEnd - b.colEnd);
+      const laneEnds: number[] = []; // last colEnd per lane
+      for (const p of arr) {
+        let lane = 0;
+        while (lane < laneEnds.length && p.colStart < laneEnds[lane]) lane++;
+        laneEnds[lane] = p.colEnd;
+        out.push({ ...p, lane });
+      }
+    }
+    return out;
+  }, [pieces]);
 
   return (
     <div className={styles.wrap}>
@@ -385,11 +378,20 @@ export default function AvailabilityCalendar({
 
       <div className={styles.dowGrid}>
         {(lang === "da"
-          ? ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"]
-          : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+          ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((s) =>
+              s
+                .replace("Mon", "Mon.")
+                .replace("Tue", "Tue.")
+                .replace("Wed", "Wed.")
+                .replace("Thu", "Thu.")
+                .replace("Fri", "Fri.")
+                .replace("Sat", "Sat.")
+                .replace("Sun", "Sun.")
+            )
+          : ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.", "Sun."]
         ).map((d) => (
           <div key={d} className={styles.dow}>
-            {d}.
+            {d}
           </div>
         ))}
       </div>
@@ -406,9 +408,8 @@ export default function AvailabilityCalendar({
           ))}
         </div>
 
-        {/* overlayede piller */}
         <div className={styles.eventsGrid} aria-hidden="true">
-          {pieces.map((p) => (
+          {layered.map((p) => (
             <div
               key={p.key}
               className={[
@@ -419,6 +420,8 @@ export default function AvailabilityCalendar({
               style={{
                 gridRow: p.row + 1,
                 gridColumn: `${p.colStart} / ${p.colEnd}`,
+                // lane spacing: keep within 1 grid row height
+                marginTop: `calc(6px + ${p.lane} * 30px)`,
               }}
             >
               {p.showLabel && (
