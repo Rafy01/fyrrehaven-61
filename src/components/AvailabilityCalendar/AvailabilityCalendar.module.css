@@ -40,7 +40,8 @@
   grid-auto-rows: var(--cell-h); gap: var(--gap);
 }
 
-/* pills are grid items (NOT absolute) */
+/* ---- booking pills ----
+   - Bridge gap mellem kolonner, så segmenter hænger sammen. */
 .pill {
   position: relative;
   height:28px; background: var(--pill); color:#fff;
@@ -49,8 +50,23 @@
   box-shadow: 0 2px 6px rgba(0,0,0,.15);
 }
 
-.pillStart { margin-left:50%; }   /* check-in: render on second half of day */
-.pillEnd   { margin-right:50%; }  /* check-out: render on first half of day */
+/* Mid/fulde stykker: overlap begge sider af grid-gap */
+.pillBridge {
+  margin-left: calc(-1 * var(--gap) / 2);
+  margin-right: calc(-1 * var(--gap) / 2);
+}
+
+/* Start: halv dags bredde – men overlapper højre gap */
+.pillStart {
+  margin-left: calc(50% - var(--gap) / 2);
+  margin-right: calc(-1 * var(--gap) / 2);
+}
+
+/* Slut: halv dags bredde – men overlapper venstre gap */
+.pillEnd {
+  margin-left: calc(-1 * var(--gap) / 2);
+  margin-right: calc(50% - var(--gap) / 2);
+}
 
 .avatar {
   width:22px; height:22px; border-radius:999px;

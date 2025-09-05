@@ -2,13 +2,14 @@ import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
 
+/* ---------- API types ---------- */
 type ApiEvent = {
   id: string;
   title: string;
   description?: string;
   location?: string;
-  start: string;
-  end: string;
+  start: string; // ISO
+  end: string; // ISO (checkout)
   allDay?: boolean;
 };
 type ApiResp =
@@ -18,13 +19,14 @@ type ApiResp =
 type Booking = {
   id: string;
   start: Date;
-  end: Date; // checkout
+  end: Date;
   title: string;
   allDay: boolean;
 };
 
 const TZ = "Europe/Copenhagen";
 
+/* ---------- date helpers ---------- */
 const fmtParts = new Intl.DateTimeFormat("en-CA", {
   timeZone: TZ,
   year: "numeric",
@@ -44,7 +46,7 @@ function addDays(d: Date, n: number): Date {
   return x;
 }
 function daysBetween(aUtc: Date, bUtc: Date): number {
-  const MS = 24 * 3600 * 1000;
+  const MS = 86400000;
   const a = Date.UTC(
     aUtc.getUTCFullYear(),
     aUtc.getUTCMonth(),
@@ -58,6 +60,7 @@ function daysBetween(aUtc: Date, bUtc: Date): number {
   return Math.round((b - a) / MS);
 }
 
+/* ---------- normalize bookings ---------- */
 function isLikelyStay(e: ApiEvent): boolean {
   if (e.allDay) return true;
   const t = (e.title || "").toLowerCase();
@@ -96,6 +99,7 @@ function firstNameFromTitle(title: string): string {
   return word.slice(0, 1).toUpperCase() + word.slice(1);
 }
 
+/* ---------- component ---------- */
 type Props = { lang: Lang; apiUrl?: string };
 
 export default function AvailabilityCalendar({
@@ -165,17 +169,16 @@ export default function AvailabilityCalendar({
     }
   ).format(cursor);
 
-  function prevMonth() {
+  const prevMonth = () =>
     setCursor(
       (c) => new Date(Date.UTC(c.getUTCFullYear(), c.getUTCMonth() - 1, 1))
     );
-  }
-  function nextMonth() {
+  const nextMonth = () =>
     setCursor(
       (c) => new Date(Date.UTC(c.getUTCFullYear(), c.getUTCMonth() + 1, 1))
     );
-  }
 
+  /* ---------- segmentering af bookinger pr. uge ---------- */
   type WeekSeg = {
     id: string;
     row: number;
@@ -220,6 +223,7 @@ export default function AvailabilityCalendar({
     return segs;
   }, [bookings, gridStart]);
 
+  /* ---------- oversæt til stykker (start/mid/slut) ---------- */
   type Piece = {
     key: string;
     row: number;
@@ -332,7 +336,7 @@ export default function AvailabilityCalendar({
     return out;
   }, [weekSegs]);
 
-  /* ---- lane allocation: stack pills vertically per week ---- */
+  /* ---------- lanes (stakning i en uge) ---------- */
   type PieceWithLane = Piece & { lane: number };
   const layered: PieceWithLane[] = React.useMemo(() => {
     const byRow = new Map<number, Piece[]>();
@@ -345,7 +349,7 @@ export default function AvailabilityCalendar({
     const out: PieceWithLane[] = [];
     for (const [, arr] of byRow) {
       arr.sort((a, b) => a.colStart - b.colStart || a.colEnd - b.colEnd);
-      const laneEnds: number[] = []; // last colEnd per lane
+      const laneEnds: number[] = [];
       for (const p of arr) {
         let lane = 0;
         while (lane < laneEnds.length && p.colStart < laneEnds[lane]) lane++;
@@ -356,6 +360,7 @@ export default function AvailabilityCalendar({
     return out;
   }, [pieces]);
 
+  /* ---------- render ---------- */
   return (
     <div className={styles.wrap}>
       <div className={styles.bar}>
@@ -378,16 +383,7 @@ export default function AvailabilityCalendar({
 
       <div className={styles.dowGrid}>
         {(lang === "da"
-          ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((s) =>
-              s
-                .replace("Mon", "Mon.")
-                .replace("Tue", "Tue.")
-                .replace("Wed", "Wed.")
-                .replace("Thu", "Thu.")
-                .replace("Fri", "Fri.")
-                .replace("Sat", "Sat.")
-                .replace("Sun", "Sun.")
-            )
+          ? ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.", "Sun."]
           : ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.", "Sun."]
         ).map((d) => (
           <div key={d} className={styles.dow}>
@@ -414,13 +410,13 @@ export default function AvailabilityCalendar({
               key={p.key}
               className={[
                 styles.pill,
+                p.kind === "mid" || p.kind === "full" ? styles.pillBridge : "",
                 p.kind === "start" ? styles.pillStart : "",
                 p.kind === "end" ? styles.pillEnd : "",
               ].join(" ")}
               style={{
                 gridRow: p.row + 1,
                 gridColumn: `${p.colStart} / ${p.colEnd}`,
-                // lane spacing: keep within 1 grid row height
                 marginTop: `calc(6px + ${p.lane} * 30px)`,
               }}
             >
