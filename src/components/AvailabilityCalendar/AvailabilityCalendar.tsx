@@ -39,13 +39,13 @@ type Segment = {
 export type SelectionMode = "none" | "single" | "range";
 export type Selection =
   | { kind: "single"; date: Date }
-  | { kind: "range"; start: Date; end?: Date }; // end kan mangle mens man "trækker"
+  | { kind: "range"; start: Date; end?: Date };
 
 /** Pris for valgt periode som sendes til parent */
 export type SelectionPrice = {
   kind: "none" | "single" | "range";
-  start?: Date; // inklusiv
-  endExclusive?: Date; // eksklusiv (checkout)
+  start?: Date;
+  endExclusive?: Date;
   nights?: number;
   total?: number | null;
   breakdown?: Array<{ date: Date; price: number | null }>;
@@ -59,7 +59,7 @@ type Props = {
   selectionMode?: SelectionMode; // default "range"
   disablePastSelection?: boolean; // default true
   onSelectionChange?: (sel: Selection | null) => void;
-  onSelectionPrice?: (p: SelectionPrice) => void; // ← callback med pris for valgt periode
+  onSelectionPrice?: (p: SelectionPrice) => void;
 };
 
 /* ─── Date utils ─── */
@@ -85,7 +85,7 @@ function clampDate(x: Date, lo: Date, hi: Date): Date {
 }
 function startOfWeek(d: Date, weekStartsOn: number): Date {
   const sd = startOfDay(d);
-  const w = sd.getDay(); // 0..6, 0=Sun
+  const w = sd.getDay();
   const diff = (w - weekStartsOn + 7) % 7;
   return addDays(sd, -diff);
 }
@@ -185,7 +185,7 @@ function splitIntoSegments(
   };
 
   while (cursor < lastIxEx) {
-    const row = Math.floor(cursor / 7); // 0..4
+    const row = Math.floor(cursor / 7);
     const rowEndEx = (row + 1) * 7;
 
     const segStartIx = cursor;
@@ -206,13 +206,27 @@ function splitIntoSegments(
   return segs;
 }
 
+/** Tjek om alle nætter i [start, endExclusive) er ledige */
+function rangeIsFree(
+  start: Date,
+  endExclusive: Date,
+  bookedDays: Set<string>
+): boolean {
+  if (endExclusive <= start) return false;
+  for (let d = startOfDay(start); d < endExclusive; d = addDays(d, 1)) {
+    const ymd = d.toISOString().slice(0, 10);
+    if (bookedDays.has(ymd)) return false;
+  }
+  return true;
+}
+
 /* ─── Component ─── */
 type CSSVars = React.CSSProperties & { ["--weeks"]?: number };
 
 export default function AvailabilityCalendar({
   lang,
   apiPath = "/api/ical",
-  weekStartsOn = 1, // Monday
+  weekStartsOn = 1,
   selectionMode = "range",
   disablePastSelection = true,
   onSelectionChange,
@@ -223,7 +237,7 @@ export default function AvailabilityCalendar({
   const minMonth = startOfMonth(today);
 
   const WEEKS = 5;
-  const WEEKNUM_COL = 40; // px – bredde til uge-kolonnen
+  const WEEKNUM_COL = 40; // px
 
   const [monthBase, setMonthBase] = React.useState<Date>(minMonth);
   const gridStart = React.useMemo(
@@ -237,7 +251,6 @@ export default function AvailabilityCalendar({
   // --- Selection state ---
   const [sel, setSel] = React.useState<Selection | null>(null);
 
-  // notify parent when selection changes
   const emitSelection = React.useCallback(
     (next: Selection | null) => {
       setSel(next);
@@ -286,7 +299,7 @@ export default function AvailabilityCalendar({
     setMonthBase((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
   }
 
-  // cells (5 weeks)
+  // cells (5 uger)
   const weekStarts: Date[] = React.useMemo(
     () => Array.from({ length: WEEKS }, (_, r) => addDays(gridStart, r * 7)),
     [gridStart]
@@ -309,7 +322,7 @@ export default function AvailabilityCalendar({
     return segs;
   }, [bookings, gridStart]);
 
-  /* 1) bookedDays: alle datoer (YYYY-MM-DD) der er booket i de 5 uger (endDay eksklusiv) */
+  /* 1) bookedDays: alle datoer (YYYY-MM-DD) der er booket i viewporten */
   const bookedDays = React.useMemo(() => {
     const set = new Set<string>();
     if (!bookings) return set;
@@ -325,7 +338,7 @@ export default function AvailabilityCalendar({
     return set;
   }, [bookings, gridStart]);
 
-  // selection segments (only for range when both ends exist)
+  // selection overlay segments
   const selSegments = React.useMemo(() => {
     if (selectionMode !== "range") return [];
     if (!sel || sel.kind !== "range" || !sel.end) return [];
@@ -340,14 +353,13 @@ export default function AvailabilityCalendar({
   const monthTitle = formatMonthTitle(monthBase, lang);
   const reservedLabel = t("Reserveret", "Reserved");
 
-  // Weekday labels rotated from Sun..Sat base
+  // ugedage
   const WD_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const WD_DA = ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"];
   const wd = (lang === "da" ? WD_DA : WD_EN)
     .slice(weekStartsOn)
     .concat((lang === "da" ? WD_DA : WD_EN).slice(0, weekStartsOn));
 
-  const weekColTemplate = `${WEEKNUM_COL}px repeat(7, 1fr)`;
 
   const fmtPrice = React.useMemo(
     () =>
@@ -359,7 +371,7 @@ export default function AvailabilityCalendar({
     [lang]
   );
 
-  // Beregn pris for valgt periode og emit til parent
+  // beregn + emit pris for valgt periode
   const computeAndEmitPrice = React.useCallback(
     (current: Selection | null) => {
       const send = (payload: SelectionPrice) => {
@@ -436,39 +448,53 @@ export default function AvailabilityCalendar({
     computeAndEmitPrice(sel);
   }, [sel, computeAndEmitPrice]);
 
-  // Click handling
+  // Klik-håndtering med bookingvalidering
   function handleDayClick(d: Date) {
     if (selectionMode === "none") return;
-    if (disablePastSelection && startOfDay(d) < today) return;
+    const day = startOfDay(d);
+
+    if (disablePastSelection && day < today) return;
+
+    const ymd = day.toISOString().slice(0, 10);
+    const isBooked = bookedDays.has(ymd);
 
     if (selectionMode === "single") {
+      if (isBooked) return; // single må ikke være booket
       const current =
-        sel && sel.kind === "single" && sel.date.getTime() === d.getTime()
+        sel && sel.kind === "single" && sel.date.getTime() === day.getTime()
           ? null
-          : ({ kind: "single", date: startOfDay(d) } as Selection);
+          : ({ kind: "single", date: day } as Selection);
       emitSelection(current);
       return;
     }
 
-    // range mode
-    if (!sel || sel.kind !== "range" || (sel.kind === "range" && sel.end)) {
-      // Start a ny range
-      emitSelection({ kind: "range", start: startOfDay(d) });
+    // range
+    if (!sel || sel.kind !== "range" || sel.end) {
+      // starten må ikke være booket
+      if (isBooked) return;
+      emitSelection({ kind: "range", start: day });
       return;
     }
-    // We have a start, set/replace end
-    const start = sel.start;
-    const clicked = startOfDay(d);
-    if (clicked.getTime() === start.getTime()) {
+
+    // vi har en start og mangler slut (checkout)
+    const start = startOfDay(sel.start);
+
+    if (day.getTime() === start.getTime()) {
       emitSelection(null);
-    } else if (clicked < start) {
-      emitSelection({ kind: "range", start: clicked, end: start });
+      return;
+    }
+
+    // Kun tilladt hvis alle nætter [start, day) er ledige
+    if (!rangeIsFree(start, day, bookedDays)) return;
+
+    if (day < start) {
+      emitSelection({ kind: "range", start: day, end: start });
     } else {
-      emitSelection({ kind: "range", start, end: clicked });
+      emitSelection({ kind: "range", start, end: day });
     }
   }
 
-  // helpers for cell selected styling
+  // helpers til selected styling
   function isSingleSelected(d: Date): boolean {
     return sel?.kind === "single" && sel.date.getTime() === d.getTime();
   }
@@ -513,11 +539,11 @@ export default function AvailabilityCalendar({
         style={
           {
             ["--weeks"]: WEEKS,
-            gridTemplateColumns: weekColTemplate,
+            gridTemplateColumns: `${WEEKNUM_COL}px repeat(7, 1fr)`,
           } as CSSVars
         }
       >
-        {/* Week header row (tom uge-kolonne + 7 ugedage) */}
+        {/* Header: tom uge-kolonne + ugedage */}
         <div aria-hidden="true" />
         {wd.map((label) => (
           <div key={label} className={styles.weekday}>
@@ -537,17 +563,44 @@ export default function AvailabilityCalendar({
               {cells[r].map((d) => {
                 const isToday = d.getTime() === today.getTime();
                 const inMonth = d.getMonth() === monthBase.getMonth();
-                const disabled =
-                  selectionMode === "none" ||
-                  (disablePastSelection && d < today);
 
-                const selectedSingle = isSingleSelected(d);
-                const edge = isRangeEdge(d); // "start" | "end" | ""
-
-                /* 2) Skjul pris for bookede dage */
                 const ymd = d.toISOString().slice(0, 10);
                 const isBooked = bookedDays.has(ymd);
 
+                const awaitingEnd =
+                  selectionMode === "range" &&
+                  sel?.kind === "range" &&
+                  sel.start &&
+                  !sel.end;
+
+                // Klikbarhed for knappen
+                let canClick = selectionMode !== "none";
+                if (disablePastSelection && d < today) canClick = false;
+
+                if (selectionMode === "single") {
+                  if (isBooked) canClick = false;
+                } else if (selectionMode === "range") {
+                  if (!awaitingEnd) {
+                    // start må ikke være booket
+                    if (isBooked) canClick = false;
+                  } else {
+                    // vælger slut (checkout): hele [start, d) skal være fri
+                    const start = startOfDay(sel!.start);
+                    const endEx = startOfDay(d);
+                    if (
+                      !(endEx > start && rangeIsFree(start, endEx, bookedDays))
+                    ) {
+                      canClick = false;
+                    }
+                  }
+                }
+
+                const disabled = !canClick;
+
+                const selectedSingle = isSingleSelected(d);
+                const edge = isRangeEdge(d);
+
+                // 2) Skjul pris for bookede dage
                 const price = !isBooked && inMonth ? getPriceForDate(d) : null;
                 const priceLabel =
                   price != null ? fmtPrice.format(price) : null;
@@ -586,10 +639,10 @@ export default function AvailabilityCalendar({
           );
         })}
 
-        {/* Booking bars (8 kolonner pga uge-kolonnen) */}
+        {/* Booking bars (8 kolonner pga. uge-kolonnen) */}
         <div
           className={styles.bars}
-          style={{ gridTemplateColumns: weekColTemplate }}
+          style={{ gridTemplateColumns: `${WEEKNUM_COL}px repeat(7, 1fr)` }}
         >
           {segments.map((s) => (
             <div
@@ -607,11 +660,11 @@ export default function AvailabilityCalendar({
           ))}
         </div>
 
-        {/* Selection overlay (på toppen) */}
+        {/* Valgt periode (overlay) */}
         {selectionMode === "range" && selSegments.length > 0 && (
           <div
             className={styles.selBars}
-            style={{ gridTemplateColumns: weekColTemplate }}
+            style={{ gridTemplateColumns: `${WEEKNUM_COL}px repeat(7, 1fr)` }}
             aria-hidden="true"
           >
             {selSegments.map((s) => (
