@@ -57,7 +57,11 @@ export default function ContactPage({ lang }: { lang: Lang }) {
           </Heading>
           <Box mt="4">
             {/* VIGTIGT: giv formen lang, så labels/placeholder skifter sprog */}
-            <ContactForm lang={lang} submitUrl="/api/contact" />
+            <ContactForm
+              lang={lang}
+              submitUrl="/api/contact"
+              variant="contact"
+            />
           </Box>
         </Box>
       </Container>

@@ -13,7 +13,20 @@ import {
   defaultCountryFromNavigator,
 } from "../../lib/countryCodes";
 
-type Props = { lang?: Lang; submitUrl?: string };
+import AvailabilityCalendar, {
+  type Selection,
+  type SelectionMode,
+  type SelectionPrice,
+} from "../AvailabilityCalendar/AvailabilityCalendar";
+
+type Purpose = "inquiry" | "booking" | "other";
+
+type Props = {
+  lang?: Lang;
+  submitUrl?: string;
+  /** Hvor formularen bruges: 'contact' uden kalender, eller 'booking' med kalender+dropdown. */
+  variant?: "contact" | "booking";
+};
 
 type FormState = {
   name: string;
@@ -21,33 +34,32 @@ type FormState = {
   phone: string; // national del (uden +kode)
   countryIso: ISO2;
   message: string;
+  consent: boolean;
 };
 
 const DIGITS_RE = /[^\d]/g;
 
-/** Resolve current UI language.
- * Priority: explicit prop -> i18next -> 'da' fallback
- */
+/** Resolve current UI language. */
 function useUiLang(explicit?: Lang): Lang {
   const { i18n } = useTranslation();
   const i18nLang =
     i18n?.language && i18n.language.toLowerCase().startsWith("da")
       ? ("da" as Lang)
       : ("en" as Lang);
-
-  // If prop provided, follow it; else follow i18n (hook re-renders on change)
   return explicit ?? i18nLang ?? "da";
 }
 
 export default function ContactForm({
   lang: langProp,
   submitUrl = "/api/contact",
+  variant = "contact",
 }: Props) {
   const ui = useUiLang(langProp);
-  const lang: Lang = ui; // normalize type
+  const lang: Lang = ui;
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const uiLang: UiLang = lang;
 
+  // init land/telefon fra localStorage
   const initialIso: ISO2 = (() => {
     const saved =
       (typeof localStorage !== "undefined"
@@ -65,6 +77,19 @@ export default function ContactForm({
         : "",
     countryIso: initialIso,
     message: "",
+    consent: false,
+  });
+
+  // Formål (kun synligt i booking-variant, men vi holder state alligevel)
+  const [purpose, setPurpose] = React.useState<Purpose>(
+    variant === "booking" ? "booking" : "inquiry"
+  );
+  const effectivePurpose: Purpose = variant === "booking" ? purpose : "inquiry";
+
+  // Kalender-valg/pris (kun relevant i booking-varianten)
+  const [, setSel] = React.useState<Selection | null>(null);
+  const [selPrice, setSelPrice] = React.useState<SelectionPrice>({
+    kind: "none",
   });
 
   const [sending, setSending] = React.useState(false);
@@ -85,7 +110,7 @@ export default function ContactForm({
     }
   }
 
-  // Only digits in phone
+  // Kun cifre i telefon
   function onPhoneKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     const allowed = [
       "Backspace",
@@ -104,15 +129,81 @@ export default function ContactForm({
     onChange("phone", digits);
   }
 
+  const fmtDate = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }),
+    [lang]
+  );
+  const fmtMoney = React.useMemo(
+    () =>
+      new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
+        style: "currency",
+        currency: "DKK",
+        maximumFractionDigits: 0,
+      }),
+    [lang]
+  );
+
+  // Submit
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
+    // Basal validering
     if (!state.name.trim() || !state.email.trim() || !state.message.trim()) {
       setError(
         t(
           "Udfyld venligst navn, e-mail og besked.",
           "Please fill in your name, email and message."
+        )
+      );
+      return;
+    }
+
+    // Booking-variant kræver gyldig periode
+    type SelectionPayload = {
+      start: string;
+      endExclusive: string;
+      nights: number;
+      totalDKK: number | null;
+      breakdown?: { date: string; price: number }[];
+    };
+    let selectionPayload: SelectionPayload | null = null;
+    if (variant === "booking") {
+      const startISO = selPrice.start?.toISOString().slice(0, 10) ?? "";
+      const endISO = selPrice.endExclusive?.toISOString().slice(0, 10) ?? "";
+      if (!startISO || !endISO || !selPrice.nights || selPrice.nights <= 0) {
+        setError(
+          t(
+            "Vælg venligst en periode i kalenderen (ankomst og afrejse).",
+            "Please select a period in the calendar (check-in and check-out)."
+          )
+        );
+        return;
+      }
+      selectionPayload = {
+        start: startISO,
+        endExclusive: endISO,
+        nights: selPrice.nights,
+        totalDKK: selPrice.total ?? null,
+        breakdown: selPrice.breakdown
+          ?.filter((b) => b.price !== null)
+          .map((b) => ({
+            date: b.date.toISOString().slice(0, 10),
+            price: b.price as number,
+          })),
+      };
+    }
+
+    if (!state.consent) {
+      setError(
+        t(
+          "Sæt venligst flueben for samtykke til behandling af dine oplysninger.",
+          "Please check the consent box to allow us to process your information."
         )
       );
       return;
@@ -125,12 +216,14 @@ export default function ContactForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lang,
+          purpose: effectivePurpose, // "inquiry" | "booking" | "other"
           name: state.name.trim(),
           email: state.email.trim(),
           phone: fullPhone,
           countryIso: state.countryIso,
           message: state.message.trim(),
-          purpose: "contact",
+          consent: state.consent,
+          selection: selectionPayload, // kun udfyldt i booking-variant
         }),
       });
 
@@ -139,8 +232,8 @@ export default function ContactForm({
         throw new Error(`HTTP ${res.status}${txt ? ` – ${txt}` : ""}`);
       }
       setSent(true);
-    } catch (e) {
-      console.error("ContactForm submit failed:", e);
+    } catch (err) {
+      console.error("ContactForm submit failed:", err);
       setError(
         t(
           "Kunne ikke sende beskeden. Prøv igen om lidt.",
@@ -168,6 +261,7 @@ export default function ContactForm({
             "We'll get back to you as soon as possible. Here's a copy of what you sent:"
           )}
         </p>
+
         <dl className={styles.echo}>
           <div>
             <dt>{t("Navn", "Name")}</dt>
@@ -187,11 +281,27 @@ export default function ContactForm({
             <dt>{t("Land", "Country")}</dt>
             <dd>{countryLabel(state.countryIso, uiLang)}</dd>
           </div>
+
+          {variant === "booking" && selPrice.start && selPrice.endExclusive && (
+            <div>
+              <dt>{t("Periode", "Period")}</dt>
+              <dd>
+                {fmtDate.format(selPrice.start)} –{" "}
+                {fmtDate.format(selPrice.endExclusive)} · {selPrice.nights}{" "}
+                {t("nætter", "nights")}
+                {selPrice.total != null
+                  ? ` · ${fmtMoney.format(selPrice.total)}`
+                  : ""}
+              </dd>
+            </div>
+          )}
+
           <div className={styles.echoMsg}>
             <dt>{t("Besked", "Message")}</dt>
             <dd>{state.message}</dd>
           </div>
         </dl>
+
         <Buttons
           to="/"
           variant="secondary"
@@ -207,8 +317,131 @@ export default function ContactForm({
       onSubmit={onSubmit}
       noValidate
     >
+      {/* Formål — KUN i booking-varianten */}
+      {variant === "booking" && (
+        <div className={styles.row}>
+          <label
+            className={styles.label}
+            htmlFor="cf-purpose"
+            data-required="true"
+          >
+            {t("Formål", "Purpose")}
+          </label>
+          <div className={styles.selectWrap}>
+            <select
+              id="cf-purpose"
+              className={styles.select}
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value as Purpose)}
+              required
+            >
+              <option value="booking">{t("Booking", "Booking")}</option>
+              <option value="inquiry">{t("Forspørgsel", "Inquiry")}</option>
+              <option value="other">{t("Andet", "Other")}</option>
+            </select>
+            <span className={styles.chev} aria-hidden>
+              ▾
+            </span>
+          </div>
+        </div>
+      )}
 
+      {/* Kalender og dato-opsummering — KUN i booking-varianten */}
+      {variant === "booking" && (
+        <>
+          <div className={styles.row}>
+            <label className={styles.label}>
+              {t("Vælg datoer", "Select dates")}
+            </label>
+            <div className={styles.calendarWrap}>
+              <AvailabilityCalendar
+                lang={lang}
+                weekStartsOn={1}
+                selectionMode={"range" as SelectionMode}
+                disablePastSelection
+                onSelectionChange={(s) => setSel(s)}
+                onSelectionPrice={(p) => setSelPrice(p)}
+              />
+            </div>
+          </div>
 
+          <div className={styles.rowGroup}>
+            <div className={styles.row}>
+              <label
+                className={styles.label}
+                htmlFor="cf-checkin"
+                data-required="true"
+              >
+                {t("Ankomst", "Check-in")}
+              </label>
+              <input
+                id="cf-checkin"
+                className={styles.input}
+                type="text"
+                readOnly
+                required
+                value={selPrice.start ? fmtDate.format(selPrice.start) : ""}
+                placeholder={t("Vælg i kalenderen", "Pick in the calendar")}
+              />
+            </div>
+            <div className={styles.row}>
+              <label
+                className={styles.label}
+                htmlFor="cf-checkout"
+                data-required="true"
+              >
+                {t("Afrejse", "Check-out")}
+              </label>
+              <input
+                id="cf-checkout"
+                className={styles.input}
+                type="text"
+                readOnly
+                required
+                value={
+                  selPrice.endExclusive
+                    ? fmtDate.format(selPrice.endExclusive)
+                    : ""
+                }
+                placeholder={t("Vælg i kalenderen", "Pick in the calendar")}
+              />
+            </div>
+          </div>
+
+          <div className={styles.rowGroup}>
+            <div className={styles.row}>
+              <label className={styles.label} htmlFor="cf-nights">
+                {t("Nætter", "Nights")}
+              </label>
+              <input
+                id="cf-nights"
+                className={styles.input}
+                type="text"
+                readOnly
+                value={selPrice.nights ?? ""}
+                placeholder="—"
+              />
+            </div>
+            <div className={styles.row}>
+              <label className={styles.label} htmlFor="cf-total">
+                {t("Estimeret pris", "Estimated price")}
+              </label>
+              <input
+                id="cf-total"
+                className={styles.input}
+                type="text"
+                readOnly
+                value={
+                  selPrice.total != null ? fmtMoney.format(selPrice.total) : ""
+                }
+                placeholder="—"
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ——— Kontaktfelter ——— */}
       <div className={styles.row}>
         <label className={styles.label} htmlFor="cf-name" data-required="true">
           {t("Navn", "Name")}
@@ -316,6 +549,24 @@ export default function ContactForm({
         />
       </div>
 
+      {/* Samtykke */}
+      <div className={styles.row}>
+        <label className={styles.checkbox}>
+          <input
+            type="checkbox"
+            checked={state.consent}
+            onChange={(e) => onChange("consent", e.target.checked)}
+            required
+          />
+          <span>
+            {t(
+              "Jeg giver samtykke til, at mine oplysninger må gemmes og bruges til at behandle min henvendelse.",
+              "I consent to my information being stored and used to process my inquiry."
+            )}
+          </span>
+        </label>
+      </div>
+
       {error && (
         <div className={styles.error} role="alert" aria-live="assertive">
           {error}
@@ -327,7 +578,11 @@ export default function ContactForm({
           buttonType="submit"
           loading={sending}
           variant="primary"
-          label={t("Send besked", "Send message")}
+          label={
+            variant === "booking"
+              ? t("Send booking", "Send booking")
+              : t("Send besked", "Send message")
+          }
           ariaLabel={t("Send formularen", "Submit the form")}
           fullWidth
         />

@@ -10,7 +10,7 @@ import styles from "./Book.module.css";
 // Hvis du har en index-barrel for AvailabilityCalendar, kan du bruge
 //  import AvailabilityCalendar from "../../components/AvailabilityCalendar";
 // men denne direkte sti virker altid:
-import AvailabilityCalendar from "../../components/AvailabilityCalendar/AvailabilityCalendar";
+import ContactForm from "../../components/ContactForm";
 
 export default function Book({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
@@ -205,25 +205,9 @@ export default function Book({ lang }: { lang: Lang }) {
             </Text>
           </div>
         </Box>
-
-        {/* ——— Kalender ——— */}
-        <Box mt="3">
-          <AvailabilityCalendar
-            lang={lang}
-            // view-only:
-            // selectionMode="none"
-            // single-dato:
-            // selectionMode="single"
-            // range (default):
-            selectionMode="range"
-            onSelectionChange={(sel) => {
-              // sel === null | {kind:"single", date} | {kind:"range", start, end?}
-              // Når end er sat i range-mode, har du et færdigt interval (check-in -> check-out)
-              console.log("selection:", sel);
-            }}
-          />
-        </Box>
       </Container>
+
+      <ContactForm lang={lang} submitUrl="/api/contact" variant="booking" />
     </>
   );
 }
