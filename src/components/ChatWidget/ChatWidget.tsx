@@ -3,6 +3,14 @@ import styles from "./ChatWidget.module.css";
 import type { Lang } from "../../lib/lang";
 import { SNIPPETS, type Snippet } from "../../data/chat/knowledge";
 
+// Define the Link type if not imported from elsewhere
+type Link = {
+  labelDa: string;
+  labelEn: string;
+  to?: string;
+  href?: string;
+};
+
 /* -------- helpers -------- */
 function rid(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID)
