@@ -1,102 +1,124 @@
 .wrap {
-  --weeks: 5;
-  --head-h: 28px;         /* fast headerhøjde */
-  --cell-h: 82px;         /* dagcellernes højde */
-  --gap: 12px;
-  --radius: 12px;
-  --ink: #111;
-  --muted: #9aa0a6;
-  --bar: #1f1f1f;
-  --today: #e3003c;       /* rød cirkel for i dag */
+  --gap: 14px;
+  --cell-h: 96px;
+  --bar-h: 26px;
+  --lane-gap: 6px;
+  --bar-bg: #1e1e1e;
+  position: relative;
 }
 
-.head {
+.header {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
-.month { font-weight: 600; }
-.navBtn {
-  width: 28px; height: 28px;
-  border-radius: 8px;
-  border: 1px solid #e6e6e6;
-  background: #fff;
-  color: var(--ink);
-}
-.navBtn:disabled { opacity: .4; cursor: not-allowed; }
 
-/* Grid: 1 header-række + 5 uger */
+.navBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.1);
+  background: #fff;
+  cursor: pointer;
+}
+.navBtn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.monthTitle {
+  font-weight: 600;
+}
+
 .grid {
-  position: relative;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: var(--head-h) repeat(var(--weeks), var(--cell-h));
   gap: var(--gap);
 }
 
-/* Ugedage (øverste række) */
-.weekday {
-  display: flex;
-  align-items: center;
-  padding-left: 6px;
+.dow {
   font-size: 12px;
-  color: var(--muted);
+  color: #6b7280;
+  padding: 0 4px 6px;
+  text-align: center;
 }
 
-/* Dato-celler */
 .cell {
-  background: #fff;
-  border: 1px solid #efefef;
-  border-radius: var(--radius);
   position: relative;
+  height: var(--cell-h);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
 }
-.cell[data-dim="1"] { opacity: .45; }
 
 .dayNum {
   position: absolute;
-  top: 8px; right: 10px;
-  font-size: 13px;
+  top: 10px;
+  left: 12px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--ink);
-}
-.dot {
-  position: absolute;
-  width: 22px; height: 22px;
+  z-index: 2; /* over bars */
+  line-height: 22px;
+  min-width: 22px;
+  text-align: center;
   border-radius: 999px;
-  background: var(--today);
-  z-index: -1;
-  top: -3px; right: -6px;
 }
 
-/* Bars-lag: præcis 5 rækker, samme kolonner og gap */
-.bars {
-  pointer-events: none;
+.dayNumToday {
+  background: #e51046;   /* rød cirkel som på Airbnb */
+  color: #fff;
+  padding: 0 6px;
+}
+
+/* ——— uge-lag til barerne ——— */
+/* Et overlay nederst i hver uge-række hvor vi lægger bars, så datoen ikke dækkes */
+.week {
+  position: relative;
+}
+
+.laneLayer {
   position: absolute;
-  /* skip header-rækken + gap, læg sig over de 5 uger */
-  top: calc(var(--head-h) + var(--gap));
-  left: 0; right: 0; bottom: 0;
+  left: 0;
+  right: 0;
+  bottom: 6px;            /* afstand fra cellernes bund */
+  pointer-events: none;   /* ingen klik */
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(var(--weeks), var(--cell-h));
   gap: var(--gap);
 }
 
-.bar {
-  background: var(--bar);
-  border-radius: 20px;
-  height: 36px;
-  margin-top: 6px; /* lidt luft i cellen */
-  display: flex;
-  align-items: center;
-}
-.barLabel {
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 0 14px;
+/* hver “rille” kan stakke flere baner, men typisk 1 */
+.lane {
+  grid-column: 1 / -1;    /* strækker sig over hele ugen som container */
+  position: relative;
+  height: calc(var(--bar-h) * var(--lanes, 1) + var(--lane-gap) * (var(--lanes, 1) - 1));
 }
 
-.loading, .error { margin-top: 10px; font-size: 14px; }
-.error { color: #c00; }
+/* selve booking-baren */
+.bar {
+  position: absolute;
+  height: var(--bar-h);
+  background: var(--bar-bg);
+  color: #fff;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* lille overlap ind i udtjek-dagen – uden at dække datoen, fordi baren ligger i bunden */
+.bar.nibbleRight::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -8px;            /* stik 8px ind i næste celle */
+  width: 14px;
+  background: var(--bar-bg);
+  border-radius: 999px;
+}
