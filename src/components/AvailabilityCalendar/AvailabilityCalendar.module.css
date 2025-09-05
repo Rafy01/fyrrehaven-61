@@ -413,3 +413,14 @@
   color: var(--muted);
   background: #fff;
 }
+
+.price {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  z-index: 3;               /* over bars (z=2) */
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+  opacity: 0.9;
+}

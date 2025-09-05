@@ -1,6 +1,8 @@
+// src/components/AvailabilityCalendar/AvailabilityCalendar.tsx
 import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
+import { getPriceForDate, PRICES } from "../../data/pricing"; // ← NYT
 
 /* ─── Types ─── */
 type ApiEvent = {
@@ -178,6 +180,13 @@ function splitIntoSegments(
   return segs;
 }
 
+/* ─── Pris helper ─── */
+function formatDKK(value: number, lang: Lang): string {
+  return lang === "da"
+    ? `${value.toLocaleString("da-DK")} kr`
+    : `DKK ${value.toLocaleString("en-GB")}`;
+}
+
 /* ─── Component ─── */
 type CSSVars = React.CSSProperties & { ["--weeks"]?: number };
 
@@ -242,7 +251,7 @@ export default function AvailabilityCalendar({
     setMonthBase((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
   }
 
-  // cells (5 weeks)
+  // week starts (5 rows)
   const weekStarts: Date[] = React.useMemo(
     () => Array.from({ length: WEEKS }, (_, r) => addDays(gridStart, r * 7)),
     [gridStart]
@@ -305,11 +314,11 @@ export default function AvailabilityCalendar({
         style={
           {
             ["--weeks"]: WEEKS,
-            gridTemplateColumns: weekColTemplate, // ← ekstra uge-kolonne
+            gridTemplateColumns: weekColTemplate, // ← uge-kolonne
           } as CSSVars
         }
       >
-        {/* Week header row (først uge-etiket, så 7 hverdage) */}
+        {/* Header-række: tom uge-kolonne + 7 ugedage */}
         <div className={styles.weeknumHead} aria-hidden="true" />
         {wd.map((label) => (
           <div key={label} className={styles.weekday}>
@@ -322,15 +331,17 @@ export default function AvailabilityCalendar({
           const iso = getISOWeek(ws);
           return (
             <React.Fragment key={`row-${r}-${iso}`}>
-              {/* uge-nummer-celle */}
               <div className={styles.weeknumCell} aria-label={`Uge ${iso}`}>
                 {iso}
               </div>
 
-              {/* 7 datoer i ugen */}
               {cells[r].map((d) => {
                 const isToday = d.getTime() === today.getTime();
                 const inMonth = d.getMonth() === monthBase.getMonth();
+
+                // ← Hent pris (kan være null → så viser vi ikke noget)
+                const price = getPriceForDate(d, PRICES);
+
                 return (
                   <div
                     key={d.toISOString()}
@@ -339,6 +350,12 @@ export default function AvailabilityCalendar({
                     data-today={isToday ? "1" : undefined}
                   >
                     <div className={styles.dayNum}>{d.getDate()}</div>
+
+                    {price != null && (
+                      <div className={styles.price}>
+                        {formatDKK(price, lang)}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -346,7 +363,7 @@ export default function AvailabilityCalendar({
           );
         })}
 
-        {/* Bars layer – nu med 8 kolonner (uge + 7 dage) */}
+        {/* Bars: grid har 8 kolonner (uge + 7 dage) */}
         <div
           className={styles.bars}
           style={{ gridTemplateColumns: weekColTemplate }}
@@ -356,7 +373,7 @@ export default function AvailabilityCalendar({
               key={s.id}
               className={styles.bar}
               style={{
-                gridRow: s.row + 1, // samme række
+                gridRow: s.row + 1,
                 gridColumn: `${s.colStart + 1} / ${s.colEnd + 1}`, // +1 pga. uge-kolonnen
               }}
             >
