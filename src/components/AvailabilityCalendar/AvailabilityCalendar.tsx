@@ -1,8 +1,7 @@
-// src/components/AvailabilityCalendar/AvailabilityCalendar.tsx
 import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
-import { getPriceForDate, PRICES } from "../../data/pricing"; // ← NYT
+import { getPriceForDate } from "../../data/pricing";
 
 /* ─── Types ─── */
 type ApiEvent = {
@@ -36,10 +35,31 @@ type Segment = {
   labelHere: boolean;
 };
 
+/** Brugerens valg */
+export type SelectionMode = "none" | "single" | "range";
+export type Selection =
+  | { kind: "single"; date: Date }
+  | { kind: "range"; start: Date; end?: Date }; // end kan mangle mens man "trækker"
+
+/** Pris for valgt periode som sendes til parent */
+export type SelectionPrice = {
+  kind: "none" | "single" | "range";
+  start?: Date; // inklusiv
+  endExclusive?: Date; // eksklusiv (checkout)
+  nights?: number;
+  total?: number | null;
+  breakdown?: Array<{ date: Date; price: number | null }>;
+  hasMissing?: boolean;
+};
+
 type Props = {
   lang: Lang;
   apiPath?: string; // default "/api/ical"
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Sun .. 6=Sat
+  selectionMode?: SelectionMode; // default "range"
+  disablePastSelection?: boolean; // default true
+  onSelectionChange?: (sel: Selection | null) => void;
+  onSelectionPrice?: (p: SelectionPrice) => void; // ← callback med pris for valgt periode
 };
 
 /* ─── Date utils ─── */
@@ -75,22 +95,31 @@ function formatMonthTitle(d: Date, lang: Lang): string {
     year: "numeric",
   });
 }
-
-/** ISO-uge (ISO 8601, mandag=uge-start). Behold weekStartsOn=1 for korrekt ISO. */
+/** ISO-uge (mandag som uge-start) */
 function getISOWeek(d: Date): number {
   const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const day = dt.getUTCDay() || 7; // 1..7, hvor 1=Mon
-  dt.setUTCDate(dt.getUTCDate() + 4 - day); // til torsdag i samme uge
+  const day = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - day);
   const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
   const diffDays =
     Math.floor((dt.getTime() - yearStart.getTime()) / 86400000) + 1;
   return Math.ceil(diffDays / 7);
 }
+/** Iterér dag-for-dag [start, endExclusive) */
+function eachDay(start: Date, endExclusive: Date): Date[] {
+  const out: Date[] = [];
+  let d = startOfDay(start);
+  const end = startOfDay(endExclusive);
+  while (d < end) {
+    out.push(d);
+    d = addDays(d, 1);
+  }
+  return out;
+}
 
 /* ─── API → bookings ─── */
 function looksLikeBooking(ev: ApiEvent): boolean {
   const t = ev.title.toLowerCase();
-
   const positive =
     t.includes("airbnb") ||
     t.includes("dancenter") ||
@@ -100,14 +129,12 @@ function looksLikeBooking(ev: ApiEvent): boolean {
     t.includes("privat") ||
     t.includes("reserved") ||
     t.includes("not available");
-
   if (!positive) return false;
 
   const start = new Date(ev.start);
   const end = new Date(ev.end);
   const durMs = end.getTime() - start.getTime();
-
-  if (!ev.allDay && durMs < 20 * 3600 * 1000) return false; // short meeting
+  if (!ev.allDay && durMs < 20 * 3600 * 1000) return false;
 
   const neg =
     t.includes("rengøring") ||
@@ -116,7 +143,6 @@ function looksLikeBooking(ev: ApiEvent): boolean {
     t.includes("meeting") ||
     t.includes("fotograf") ||
     t.includes("levering");
-
   return !neg;
 }
 function toBooking(ev: ApiEvent): Booking {
@@ -136,7 +162,7 @@ function normalizeBookingsFromApi(payload: ApiResponse): Booking[] {
   return bs;
 }
 
-/* ─── Segments ─── */
+/* ─── Segment helper ─── */
 function splitIntoSegments(
   b: Booking,
   gridStart: Date,
@@ -180,13 +206,6 @@ function splitIntoSegments(
   return segs;
 }
 
-/* ─── Pris helper ─── */
-function formatDKK(value: number, lang: Lang): string {
-  return lang === "da"
-    ? `${value.toLocaleString("da-DK")} kr`
-    : `DKK ${value.toLocaleString("en-GB")}`;
-}
-
 /* ─── Component ─── */
 type CSSVars = React.CSSProperties & { ["--weeks"]?: number };
 
@@ -194,6 +213,10 @@ export default function AvailabilityCalendar({
   lang,
   apiPath = "/api/ical",
   weekStartsOn = 1, // Monday
+  selectionMode = "range",
+  disablePastSelection = true,
+  onSelectionChange,
+  onSelectionPrice,
 }: Props) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const today = startOfDay(new Date());
@@ -210,6 +233,18 @@ export default function AvailabilityCalendar({
 
   const [bookings, setBookings] = React.useState<Booking[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+
+  // --- Selection state ---
+  const [sel, setSel] = React.useState<Selection | null>(null);
+
+  // notify parent when selection changes
+  const emitSelection = React.useCallback(
+    (next: Selection | null) => {
+      setSel(next);
+      onSelectionChange?.(next);
+    },
+    [onSelectionChange]
+  );
 
   React.useEffect(() => {
     let alive = true;
@@ -251,7 +286,7 @@ export default function AvailabilityCalendar({
     setMonthBase((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
   }
 
-  // week starts (5 rows)
+  // cells (5 weeks)
   const weekStarts: Date[] = React.useMemo(
     () => Array.from({ length: WEEKS }, (_, r) => addDays(gridStart, r * 7)),
     [gridStart]
@@ -265,7 +300,7 @@ export default function AvailabilityCalendar({
     [weekStarts]
   );
 
-  // segments
+  // booking segments
   const segments = React.useMemo(() => {
     if (!bookings) return [];
     const segs: Segment[] = [];
@@ -273,6 +308,18 @@ export default function AvailabilityCalendar({
       segs.push(...splitIntoSegments(b, gridStart, WEEKS));
     return segs;
   }, [bookings, gridStart]);
+
+  // selection segments (only for range when both ends exist)
+  const selSegments = React.useMemo(() => {
+    if (selectionMode !== "range") return [];
+    if (!sel || sel.kind !== "range" || !sel.end) return [];
+    const b: Booking = {
+      id: "__selection__",
+      startDay: startOfDay(sel.start),
+      endDay: startOfDay(sel.end),
+    };
+    return splitIntoSegments(b, gridStart, WEEKS);
+  }, [sel, gridStart, selectionMode]);
 
   const monthTitle = formatMonthTitle(monthBase, lang);
   const reservedLabel = t("Reserveret", "Reserved");
@@ -286,8 +333,151 @@ export default function AvailabilityCalendar({
 
   const weekColTemplate = `${WEEKNUM_COL}px repeat(7, 1fr)`;
 
+  const fmtPrice = React.useMemo(
+    () =>
+      new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
+        style: "currency",
+        currency: "DKK",
+        maximumFractionDigits: 0,
+      }),
+    [lang]
+  );
+
+  // Beregn pris for valgt periode og emit til parent
+  // ↓ erstatter din eksisterende computeAndEmitPrice
+  const computeAndEmitPrice = React.useCallback(
+    (current: Selection | null) => {
+      const send = (payload: SelectionPrice) => {
+        // emit til parent hvis sat
+        onSelectionPrice?.(payload);
+
+        // console-log samlet pris + detaljer
+        try {
+          const totalTxt =
+            payload.total != null ? fmtPrice.format(payload.total) : "—";
+          console.log("[Calendar] Samlet pris:", totalTxt, payload);
+        } catch {
+          // fallback hvis formatter fejler
+          console.log(
+            "[Calendar] Samlet pris:",
+            payload.total ?? null,
+            payload
+          );
+        }
+      };
+
+      if (!current) {
+        send({ kind: "none" });
+        return;
+      }
+
+      if (current.kind === "single") {
+        const day = startOfDay(current.date);
+        const price = getPriceForDate(day);
+        send({
+          kind: "single",
+          start: day,
+          endExclusive: addDays(day, 1),
+          nights: 1,
+          total: price ?? null,
+          breakdown: [{ date: day, price }],
+          hasMissing: price == null,
+        });
+        return;
+      }
+
+      const start = startOfDay(current.start);
+      const endEx = current.end ? startOfDay(current.end) : undefined;
+      if (!endEx || endEx <= start) {
+        send({
+          kind: "range",
+          start,
+          endExclusive: endEx,
+          nights: endEx ? daysBetween(start, endEx) : undefined,
+          total: null,
+          breakdown: [],
+          hasMissing: true,
+        });
+        return;
+      }
+
+      const days = eachDay(start, endEx);
+      const breakdown = days.map((d) => ({
+        date: d,
+        price: getPriceForDate(d),
+      }));
+      const total = breakdown.reduce((sum, it) => sum + (it.price ?? 0), 0);
+      const hasMissing = breakdown.some((it) => it.price == null);
+
+      send({
+        kind: "range",
+        start,
+        endExclusive: endEx,
+        nights: days.length,
+        total: hasMissing && total === 0 ? null : total,
+        breakdown,
+        hasMissing,
+      });
+    },
+    [onSelectionPrice, fmtPrice]
+  );
+  React.useEffect(() => {
+    computeAndEmitPrice(sel);
+  }, [sel, computeAndEmitPrice]);
+
+  // Click handling
+  function handleDayClick(d: Date) {
+    if (selectionMode === "none") return;
+    if (disablePastSelection && startOfDay(d) < today) return;
+
+    if (selectionMode === "single") {
+      const current =
+        sel && sel.kind === "single" && sel.date.getTime() === d.getTime()
+          ? null
+          : ({ kind: "single", date: startOfDay(d) } as Selection);
+      emitSelection(current);
+      return;
+    }
+
+    // range mode
+    if (!sel || sel.kind !== "range" || (sel.kind === "range" && sel.end)) {
+      // Start a new range
+      emitSelection({ kind: "range", start: startOfDay(d) });
+      return;
+    }
+    // We have a start, set/replace end
+    const start = sel.start;
+    const clicked = startOfDay(d);
+    if (clicked.getTime() === start.getTime()) {
+      // same day -> cancel selection
+      emitSelection(null);
+    } else if (clicked < start) {
+      // swap so start <= end
+      emitSelection({ kind: "range", start: clicked, end: start });
+    } else {
+      emitSelection({ kind: "range", start, end: clicked });
+    }
+  }
+
+  // helpers for cell selected styling
+  function isSingleSelected(d: Date): boolean {
+    return sel?.kind === "single" && sel.date.getTime() === d.getTime();
+  }
+  function isRangeEdge(d: Date): "start" | "end" | "" {
+    if (sel?.kind !== "range") return "";
+    const t = d.getTime();
+    if (sel.start && t === startOfDay(sel.start).getTime()) return "start";
+    if (sel.end && t === startOfDay(sel.end).getTime()) return "end";
+    return "";
+  }
+
   return (
-    <div className={styles.wrap}>
+    <div
+      className={styles.wrap}
+      data-mode={selectionMode}
+      aria-live="polite"
+      aria-label={t("Tilgængelighedskalender", "Availability calendar")}
+    >
       <div className={styles.head}>
         <button
           type="button"
@@ -314,12 +504,12 @@ export default function AvailabilityCalendar({
         style={
           {
             ["--weeks"]: WEEKS,
-            gridTemplateColumns: weekColTemplate, // ← uge-kolonne
+            gridTemplateColumns: weekColTemplate,
           } as CSSVars
         }
       >
-        {/* Header-række: tom uge-kolonne + 7 ugedage */}
-        <div className={styles.weeknumHead} aria-hidden="true" />
+        {/* Week header row (tom uge-kolonne + 7 ugedage) */}
+        <div aria-hidden="true" />
         {wd.map((label) => (
           <div key={label} className={styles.weekday}>
             {label}
@@ -338,9 +528,15 @@ export default function AvailabilityCalendar({
               {cells[r].map((d) => {
                 const isToday = d.getTime() === today.getTime();
                 const inMonth = d.getMonth() === monthBase.getMonth();
+                const disabled =
+                  selectionMode === "none" ||
+                  (disablePastSelection && d < today);
 
-                // ← Hent pris (kan være null → så viser vi ikke noget)
-                const price = getPriceForDate(d, PRICES);
+                const selectedSingle = isSingleSelected(d);
+                const edge = isRangeEdge(d); // "start" | "end" | ""
+                const price = inMonth ? getPriceForDate(d) : null;
+                const priceLabel =
+                  price != null ? fmtPrice.format(price) : null;
 
                 return (
                   <div
@@ -348,14 +544,27 @@ export default function AvailabilityCalendar({
                     className={styles.cell}
                     data-dim={!inMonth ? "1" : undefined}
                     data-today={isToday ? "1" : undefined}
+                    data-selected={selectedSingle ? "1" : undefined}
+                    data-edge={edge || undefined}
                   >
                     <div className={styles.dayNum}>{d.getDate()}</div>
-
-                    {price != null && (
-                      <div className={styles.price}>
-                        {formatDKK(price, lang)}
+                    {priceLabel && (
+                      <div className={styles.price} aria-hidden="true">
+                        {priceLabel}
                       </div>
                     )}
+                    <button
+                      type="button"
+                      className={styles.cellBtn}
+                      aria-label={d.toLocaleDateString(
+                        lang === "da" ? "da-DK" : "en-GB"
+                      )}
+                      aria-pressed={
+                        selectionMode === "single" ? selectedSingle : undefined
+                      }
+                      disabled={disabled}
+                      onClick={() => handleDayClick(d)}
+                    />
                   </div>
                 );
               })}
@@ -363,7 +572,7 @@ export default function AvailabilityCalendar({
           );
         })}
 
-        {/* Bars: grid har 8 kolonner (uge + 7 dage) */}
+        {/* Booking bars (8 kolonner pga uge-kolonnen) */}
         <div
           className={styles.bars}
           style={{ gridTemplateColumns: weekColTemplate }}
@@ -374,7 +583,7 @@ export default function AvailabilityCalendar({
               className={styles.bar}
               style={{
                 gridRow: s.row + 1,
-                gridColumn: `${s.colStart + 1} / ${s.colEnd + 1}`, // +1 pga. uge-kolonnen
+                gridColumn: `${s.colStart + 1} / ${s.colEnd + 1}`,
               }}
             >
               {s.labelHere && (
@@ -383,6 +592,28 @@ export default function AvailabilityCalendar({
             </div>
           ))}
         </div>
+
+        {/* Selection overlay (på toppen) */}
+        {selectionMode === "range" && selSegments.length > 0 && (
+          <div
+            className={styles.selBars}
+            style={{ gridTemplateColumns: weekColTemplate }}
+            aria-hidden="true"
+          >
+            {selSegments.map((s) => (
+              <div
+                key={`sel-${s.id}`}
+                className={`${styles.selBar} ${
+                  s.isLast ? styles.nibbleRight : ""
+                }`}
+                style={{
+                  gridRow: s.row + 1,
+                  gridColumn: `${s.colStart + 1} / ${s.colEnd + 1}`,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {!bookings && (

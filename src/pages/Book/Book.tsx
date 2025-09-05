@@ -208,7 +208,20 @@ export default function Book({ lang }: { lang: Lang }) {
 
         {/* ——— Kalender ——— */}
         <Box mt="3">
-          <AvailabilityCalendar lang={lang} />
+          <AvailabilityCalendar
+            lang={lang}
+            // view-only:
+            // selectionMode="none"
+            // single-dato:
+            // selectionMode="single"
+            // range (default):
+            selectionMode="range"
+            onSelectionChange={(sel) => {
+              // sel === null | {kind:"single", date} | {kind:"range", start, end?}
+              // Når end er sat i range-mode, har du et færdigt interval (check-in -> check-out)
+              console.log("selection:", sel);
+            }}
+          />
         </Box>
       </Container>
     </>

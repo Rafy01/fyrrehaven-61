@@ -15,7 +15,6 @@
   --today: #e3003c; /* rød cirkel for i dag */
 }
 
-
 .head {
   display: flex;
   align-items: center;
@@ -418,9 +417,90 @@
   position: absolute;
   left: 10px;
   bottom: 8px;
-  z-index: 3;               /* over bars (z=2) */
+  z-index: 3; /* over bars (z=2) */
   font-size: 12px;
   font-weight: 600;
   color: #111;
   opacity: 0.9;
 }
+
+
+
+/* Klikbart lag i hver dagcelle (uden at dække tallet visuelt) */
+.cellBtn {
+  position: absolute;
+  inset: 0;
+  z-index: 1; /* under .dayNum (z=3), over cell-baggrund */
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.wrap[data-mode="none"] .cellBtn {
+  pointer-events: none;
+}
+.cellBtn:focus-visible {
+  outline: 2px solid rgba(17, 17, 17, 0.6);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}
+
+/* Single-day selection highlight */
+.cell[data-selected="1"] {
+  box-shadow: inset 0 0 0 2px #0ea5e9; /* blå ring */
+  background: #f0f9ff;
+}
+
+/* Markér start/slut (hvis du vil, kan du holde dem ens) */
+.cell[data-edge="start"] .dayNum,
+.cell[data-edge="end"] .dayNum {
+  background: var(--gold-500);
+  color: #fff;
+  padding: 0 6px;
+  border-radius: 999px;
+}
+
+/* Overlay til valgt interval (range) – over booking bars */
+.selBars {
+  pointer-events: none;
+  position: absolute;
+  top: calc(var(--head-h) + var(--gap));
+  left: 0;
+  right: 0px;
+  bottom: 0;
+  display: grid;
+  grid-template-rows: repeat(var(--weeks), var(--cell-h));
+  gap: var(--gap);
+  z-index: 3; /* over .bars (default stacking) */
+}
+.selBar {
+  align-self: center;
+  margin-left: 30px;
+  height: 28px;
+  /* --gold-500 */
+  background: var(--gold-500);
+  opacity: 0.3; /* transparent så man ser kalender under */
+  /* forskellige runding */
+  border-top-left-radius: 999px;
+  border-top-right-radius: 0px;
+  border-bottom-left-radius: 999px;
+  border-bottom-right-radius: 0px;
+}
+.selBar.nibbleRight {
+  position: relative;
+}
+.selBar.nibbleRight::after {
+  content: "";
+  position: absolute;
+  right: -50px;
+  top: 0;
+  bottom: 0;
+  width: 141px;
+  background: var(--gold-500);
+  border-top-left-radius: 0px;
+  border-top-right-radius: 999px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 999px;
+}
+
+/* I forvejen har du .cell[data-today="1"] der giver rød kant på dagen */
