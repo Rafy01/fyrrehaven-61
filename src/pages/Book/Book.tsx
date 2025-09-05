@@ -6,6 +6,7 @@ import Buttons from "../../components/Buttons";
 import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
+import AvailabilityCalendar from "../../components/AvailabilityCalendar";
 
 export default function Book({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
@@ -205,6 +206,9 @@ export default function Book({ lang }: { lang: Lang }) {
               )}
             </Text>
           </div>
+        </Box>
+        <Box mt="3">
+          <AvailabilityCalendar lang={lang} />
         </Box>
       </Container>
     </>
