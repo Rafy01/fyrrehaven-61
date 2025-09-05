@@ -430,7 +430,7 @@ export default function ContactForm({
             </div>
           </div>
 
-          {/* Nu dropdown EFTER kalenderen */}
+          {/* Dropdown EFTER kalenderen (kun i booking) */}
           <div className={styles.row}>
             <label
               className={styles.label}
@@ -501,15 +501,8 @@ export default function ContactForm({
             </div>
           </div>
 
-          {/* Gæsteantal — på linje (3 kolonner) */}
-          <div
-            className={styles.rowGroup}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 12,
-            }}
-          >
+          {/* Gæsteantal — responsivt (stack → 2 kol → 3 kol) */}
+          <div className={`${styles.rowGroup} ${styles.cols3}`}>
             <div className={styles.row}>
               <label
                 className={styles.label}
@@ -766,6 +759,39 @@ export default function ContactForm({
         />
       </div>
 
+      {/* Gebyr-liste accept (obligatorisk — KUN i booking-variant) */}
+      {variant === "booking" && (
+        <div className={styles.row}>
+          <label className={styles.checkbox}>
+            <input
+              type="checkbox"
+              checked={state.feesAccepted}
+              onChange={(e) => onChange("feesAccepted", e.target.checked)}
+              required
+            />
+            <span>
+              {lang === "da" ? (
+                <>
+                  Jeg har læst og accepterer{" "}
+                  <a href={feesUrl} target="_blank" rel="noreferrer">
+                    gebyroversigten
+                  </a>
+                  .
+                </>
+              ) : (
+                <>
+                  I have read and accept the{" "}
+                  <a href={feesUrl} target="_blank" rel="noreferrer">
+                    fee list
+                  </a>
+                  .
+                </>
+              )}
+            </span>
+          </label>
+        </div>
+      )}
+
       {/* GDPR — behandling (obligatorisk) */}
       <div className={styles.row}>
         <label className={styles.checkbox}>
@@ -783,36 +809,7 @@ export default function ContactForm({
           </span>
         </label>
       </div>
-      {/* Gebyr-liste accept (obligatorisk) — KUN booking */}
-      <div className={styles.row}>
-        <label className={styles.checkbox}>
-          <input
-            type="checkbox"
-            checked={state.feesAccepted}
-            onChange={(e) => onChange("feesAccepted", e.target.checked)}
-            required
-          />
-          <span>
-            {lang === "da" ? (
-              <>
-                Jeg har læst og accepterer{" "}
-                <a href={feesUrl} target="_blank" rel="noreferrer">
-                  gebyroversigten
-                </a>
-                .
-              </>
-            ) : (
-              <>
-                I have read and accept the{" "}
-                <a href={feesUrl} target="_blank" rel="noreferrer">
-                  fee list
-                </a>
-                .
-              </>
-            )}
-          </span>
-        </label>
-      </div>
+
       {error && (
         <div className={styles.error} role="alert" aria-live="assertive">
           {error}

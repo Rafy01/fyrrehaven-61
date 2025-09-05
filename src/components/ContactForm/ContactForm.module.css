@@ -200,3 +200,26 @@
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
     Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
+
+/* --- Responsive 3-kolonne helper til booking-gæster --- */
+.rowGroup.cols3 {
+  /* mobil: stack (samme som contact) */
+  grid-template-columns: 1fr;
+}
+
+/* små/mellem skærme: 2 kolonner */
+@media (min-width: 540px) {
+  .rowGroup.cols3 {
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+  }
+}
+
+/* brede skærme: 3 kolonner */
+@media (min-width: 900px) {
+  .rowGroup.cols3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Kalender-wrap så kortet ikke “sprænger” på mobil */
