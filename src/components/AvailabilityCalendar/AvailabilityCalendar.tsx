@@ -1,312 +1,273 @@
+// src/components/AvailabilityCalendar/AvailabilityCalendar.tsx
 import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 
-/* ===== Types ===== */
 export type Booking = {
-  id: string;
-  start: string; // YYYY-MM-DD (inclusive)
-  end: string; // YYYY-MM-DD (exclusive)
-  guest: string;
-  avatarUrl?: string;
+  start: string; // ISO dag: "2025-09-05" (check-in, inkl.)
+  end: string; // ISO dag: "2025-09-12" (check-out, ekskl.)
+  title?: string;
 };
 
-export type AvailabilityCalendarProps = {
-  year: number;
+type Props = {
+  year: number; // fx 2025
   month: number; // 1-12
-  bookings?: Booking[] | Record<string, Booking> | null;
-  loadFromIcal?: boolean; // when true → fetch from /api/ical
-  weekStartsOn?: 0 | 1; // default 1 (Mon)
-  className?: string;
+  weekStartsOn?: 0 | 1; // 0=søndag, 1=mandag (default)
+  loadFromIcal?: boolean; // hvis true henter vi /api/ical
+  bookings?: Booking[]; // alternativt kan du selv levere bookinger
 };
 
-/* ===== Date utils ===== */
-const pad = (n: number) => String(n).padStart(2, "0");
-const toISO = (d: Date) =>
-  `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const addDays = (d: Date, n: number) => {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-};
-const diffDays = (a: Date, b: Date) => {
-  const ms =
-    Date.UTC(a.getFullYear(), a.getMonth(), a.getDate()) -
-    Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
-  return Math.round(ms / 86400000);
-};
-function startOfGrid(y: number, m: number, weekStartsOn: 0 | 1) {
-  const first = new Date(y, m - 1, 1);
-  const dow = first.getDay(); // 0..6 (Sun..Sat)
-  const shift = (dow - weekStartsOn + 7) % 7;
-  return addDays(first, -shift);
-}
-
-type DayCell = { iso: string; date: Date; inMonth: boolean };
-function buildGrid(y: number, m: number, weekStartsOn: 0 | 1) {
-  const gridStart = startOfGrid(y, m, weekStartsOn);
-  const cells: DayCell[] = [];
-  for (let i = 0; i < 42; i++) {
-    const d = addDays(gridStart, i);
-    cells.push({ iso: toISO(d), date: d, inMonth: d.getMonth() === m - 1 });
-  }
-  const weeks: DayCell[][] = [];
-  for (let r = 0; r < 6; r++) weeks.push(cells.slice(r * 7, r * 7 + 7));
-  return { gridStart, gridEnd: addDays(gridStart, 42), weeks };
-}
-
-/* ===== Layout bookings to segments ===== */
-type Segment = {
-  id: string;
-  row: number;
-  colStart: number;
-  colSpan: number;
-  lane: number;
-  guest: string;
-  avatarUrl?: string;
-  startsHere: boolean;
-  endsHere: boolean;
-};
-function normalizeInput(
-  input: AvailabilityCalendarProps["bookings"]
-): Booking[] {
-  if (Array.isArray(input)) return input;
-  if (input && typeof input === "object") return Object.values(input);
-  return [];
-}
-function layoutSegments(
-  y: number,
-  m: number,
-  weekStartsOn: 0 | 1,
-  bookings: Booking[]
-) {
-  const { gridStart, gridEnd } = buildGrid(y, m, weekStartsOn);
-  const segments: Segment[] = [];
-  const checkIn = new Set<string>();
-  const checkOut = new Set<string>();
-
-  bookings.forEach((b) => {
-    checkIn.add(b.start);
-    checkOut.add(b.end);
-  });
-
-  for (const b of bookings) {
-    const s = new Date(b.start + "T00:00:00");
-    const e = new Date(b.end + "T00:00:00"); // exclusive
-    const sClamp = s < gridStart ? gridStart : s;
-    const eClamp = e > gridEnd ? gridEnd : e;
-
-    const dayStart = diffDays(sClamp, gridStart);
-    const dayEnd = diffDays(eClamp, gridStart);
-    if (dayEnd <= dayStart) continue;
-
-    let cur = dayStart;
-    while (cur < dayEnd) {
-      const row = Math.floor(cur / 7);
-      const rowStart = row * 7;
-      const rowEnd = rowStart + 7;
-      const segStart = cur;
-      const segEnd = Math.min(dayEnd, rowEnd);
-
-      segments.push({
-        id: `${b.id}:${row}`,
-        row,
-        colStart: segStart - rowStart,
-        colSpan: Math.max(1, segEnd - segStart),
-        lane: 0,
-        guest: b.guest,
-        avatarUrl: b.avatarUrl,
-        startsHere: segStart === dayStart,
-        endsHere: segEnd === dayEnd,
-      });
-
-      cur = segEnd;
-    }
-  }
-
-  // lane allocation
-  const byRow = new Map<number, Segment[]>();
-  segments.forEach((s) => {
-    if (!byRow.has(s.row)) byRow.set(s.row, []);
-    byRow.get(s.row)!.push(s);
-  });
-  byRow.forEach((rowSegs) => {
-    rowSegs.sort((a, b) => a.colStart - b.colStart || b.colSpan - a.colSpan);
-    const lanes: Segment[][] = [];
-    rowSegs.forEach((seg) => {
-      let placed = false;
-      for (let i = 0; i < lanes.length; i++) {
-        const last = lanes[i][lanes[i].length - 1];
-        if (seg.colStart >= last.colStart + last.colSpan) {
-          seg.lane = i;
-          lanes[i].push(seg);
-          placed = true;
-          break;
-        }
-      }
-      if (!placed) {
-        seg.lane = lanes.length;
-        lanes.push([seg]);
-      }
-    });
-  });
-
-  return { segments, checkIn, checkOut, gridStart, gridEnd };
-}
-
-/* ===== Labels ===== */
-const WD_DA = ["S", "M", "T", "O", "T", "F", "L"];
-const WD_DA_MON = ["M", "T", "O", "T", "F", "L", "S"];
-
-/* ===== Component ===== */
 export default function AvailabilityCalendar({
   year,
   month,
-  bookings,
-  loadFromIcal = false,
   weekStartsOn = 1,
-  className,
-}: AvailabilityCalendarProps) {
-  const [icalBookings, setIcalBookings] = React.useState<Booking[] | null>(
-    loadFromIcal ? [] : null
-  );
-  const [error, setError] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState<boolean>(!!loadFromIcal);
+  loadFromIcal = false,
+  bookings: bookingsProp,
+}: Props) {
+  // indre state for navigation
+  const [{ y, m }, setYM] = React.useState({ y: year, m: month });
+
+  const [bookings, setBookings] = React.useState<Booking[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(false);
+
+  React.useEffect(() => setYM({ y: year, m: month }), [year, month]);
 
   React.useEffect(() => {
-    let cancelled = false;
-    async function go() {
-      if (!loadFromIcal) return;
+    let active = true;
+    async function load() {
+      if (!loadFromIcal) {
+        setBookings(bookingsProp ?? []);
+        return;
+      }
       setLoading(true);
-      setError(null);
       try {
-        const r = await fetch("/api/ical", { cache: "no-store" });
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const json = await r.json();
-        if (!json || !json.ok) throw new Error("Bad JSON");
-        if (!cancelled) setIcalBookings(json.bookings ?? []);
-      } catch (e) {
-        if (!cancelled) setError(String(e instanceof Error ? e.message : e));
+        const from = iso(y, m, 1);
+        const to = iso(nextYearMonth(y, m).y, nextYearMonth(y, m).m, 1);
+        const res = await fetch(`/api/ical?from=${from}&to=${to}`);
+        const j = (await res.json()) as { ok: boolean; bookings?: Booking[] };
+        if (active && j.ok && j.bookings) setBookings(j.bookings);
+      } catch {
+        if (active) setBookings([]);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (active) setLoading(false);
       }
     }
-    go();
+    load();
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, [loadFromIcal]);
+  }, [y, m, loadFromIcal, bookingsProp]);
 
-  const inputBookings =
-    loadFromIcal && icalBookings !== null
-      ? icalBookings
-      : normalizeInput(bookings);
-
-  const { weeks } = buildGrid(year, month, weekStartsOn);
-  const { segments, checkIn, checkOut } = React.useMemo(
-    () => layoutSegments(year, month, weekStartsOn, inputBookings),
-    [year, month, weekStartsOn, inputBookings]
-  );
-
-  const wd = weekStartsOn === 1 ? WD_DA_MON : WD_DA;
+  const days = buildMonthGrid(y, m, weekStartsOn);
+  const perDay = annotateDays(days, bookings);
 
   return (
-    <div className={`${styles.wrap} ${className ?? ""}`}>
-      <div className={styles.header}>
-        <div className={styles.monthLabel}>
-          {new Date(year, month - 1, 1).toLocaleDateString("da-DK", {
-            month: "long",
-            year: "numeric",
-          })}
-        </div>
-        <div className={styles.weekdays}>
-          {wd.map((d, i) => (
-            <div key={i} className={styles.wd}>
-              {d}
-            </div>
-          ))}
-        </div>
+    <div className={styles.wrap}>
+      <div className={styles.head}>
+        <button
+          className={styles.nav}
+          onClick={() => setYM((prev) => prevMonth(prev.y, prev.m))}
+          aria-label="Previous month"
+        >
+          ‹
+        </button>
+        <div className={styles.title}>{monthLabel(y, m)}</div>
+        <button
+          className={styles.nav}
+          onClick={() => setYM((prev) => nextMonth(prev.y, prev.m))}
+          aria-label="Next month"
+        >
+          ›
+        </button>
       </div>
 
-      {error ? (
-        <div style={{ color: "#b91c1c", fontWeight: 600 }}>
-          Fejl ved indlæsning af kalender: {error}
-        </div>
-      ) : (
-        <div className={styles.grid} aria-busy={loading || undefined}>
-          {weeks.map((row, r) => (
-            <div key={r} className={styles.weekRow}>
-              {row.map((cell) => {
-                const iso = cell.iso;
-                const isIn = checkIn.has(iso);
-                const isOut = checkOut.has(iso);
+      <div className={styles.grid} data-wso={weekStartsOn}>
+        {weekdayLabels(weekStartsOn).map((lab) => (
+          <div key={lab} className={styles.wd}>
+            {lab}
+          </div>
+        ))}
 
-                return (
-                  <div
-                    key={iso}
-                    className={[
-                      styles.day,
-                      cell.inMonth ? "" : styles.outside,
-                    ].join(" ")}
-                  >
-                    <div className={styles.dayTop}>
-                      <span className={styles.dayNum}>
-                        {cell.date.getDate()}
-                      </span>
-                      <div className={styles.markers}>
-                        {isIn && (
-                          <span
-                            className={`${styles.dot} ${styles.in}`}
-                            title="Check-in"
-                          />
-                        )}
-                        {isOut && (
-                          <span
-                            className={`${styles.dot} ${styles.out}`}
-                            title="Check-out"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+        {perDay.map((d) => (
+          <div
+            key={d.key}
+            className={styles.cell}
+            data-dim={d.inMonth ? "1" : "0"}
+          >
+            <div className={styles.dayNum}>{d.day}</div>
 
-              <div className={styles.segsLayer}>
-                {segments
-                  .filter((s) => s.row === r)
-                  .map((s) => (
-                    <div
-                      key={s.id}
-                      className={[
-                        styles.seg,
-                        s.startsHere ? styles.start : "",
-                        s.endsHere ? styles.end : "",
-                      ].join(" ")}
-                      style={{
-                        gridColumn: `${s.colStart + 1} / span ${s.colSpan}`,
-                        top: `calc(${s.lane} * (var(--seg-h) + 4px))`,
-                      }}
-                      title={s.guest}
-                    >
-                      {s.avatarUrl ? (
-                        <img
-                          className={styles.avatar}
-                          src={s.avatarUrl}
-                          alt=""
-                        />
-                      ) : (
-                        <span className={styles.initial}>
-                          {s.guest.trim().slice(0, 1).toUpperCase()}
-                        </span>
-                      )}
-                      <span className={styles.segText}>{s.guest}</span>
-                    </div>
-                  ))}
+            {/* 2 tynde striber ved samme-dag check-out & check-in */}
+            {d.hasCheckout && d.hasCheckin ? (
+              <div className={styles.stack2}>
+                <div
+                  className={`${styles.mini} ${styles.endCap}`}
+                  title="Checkout"
+                />
+                <div
+                  className={`${styles.mini} ${styles.startCap}`}
+                  title="Checkin"
+                />
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ) : d.segment ? (
+              <div
+                className={
+                  d.segment.type === "single"
+                    ? `${styles.bar} ${styles.startCap} ${styles.endCap}`
+                    : d.segment.type === "start"
+                    ? `${styles.bar} ${styles.startCap}`
+                    : d.segment.type === "end"
+                    ? `${styles.bar} ${styles.endCap}`
+                    : styles.bar
+                }
+                title={d.segment.title ?? ""}
+              />
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      {loading && <div className={styles.loading}>Loading…</div>}
     </div>
   );
+}
+
+/* ---------- helpers ---------- */
+
+function monthLabel(y: number, m: number): string {
+  return new Date(y, m - 1, 1).toLocaleDateString(undefined, {
+    month: "long",
+    year: "numeric",
+  });
+}
+function weekdayLabels(wso: 0 | 1): string[] {
+  const base = ["S", "M", "T", "O", "T", "F", "L"]; // dansk: Søn-Man…
+  if (wso === 1) return base.slice(1).concat(base[0]); // Man først
+  return base; // Søndag først
+}
+function firstWeekday(y: number, m: number) {
+  return new Date(y, m - 1, 1).getDay(); // 0=søndag..6=lørdag
+}
+function buildMonthGrid(y: number, m: number, wso: 0 | 1) {
+  const first = firstWeekday(y, m); // 0..6 med søndag=0
+  const leading = (first - wso + 7) % 7;
+  const cells = 42; // 6 uger, fast grid
+  const out: {
+    y: number;
+    m: number;
+    d: number;
+    inMonth: boolean;
+    key: string;
+  }[] = [];
+  // start dato som første felt
+  const start = new Date(y, m - 1, 1 - leading);
+  for (let i = 0; i < cells; i++) {
+    const dt = new Date(start);
+    dt.setDate(start.getDate() + i);
+    const inMonth = dt.getMonth() === m - 1;
+    out.push({
+      y: dt.getFullYear(),
+      m: dt.getMonth() + 1,
+      d: dt.getDate(),
+      inMonth,
+      key: `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(dt.getDate()).padStart(2, "0")}`,
+    });
+  }
+  return out;
+}
+function iso(y: number, m: number, d: number) {
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+function nextMonth(y: number, m: number) {
+  const mm = m + 1;
+  return mm === 13 ? { y: y + 1, m: 1 } : { y, m: mm };
+}
+function prevMonth(y: number, m: number) {
+  const mm = m - 1;
+  return mm === 0 ? { y: y - 1, m: 12 } : { y, m: mm };
+}
+function nextYearMonth(y: number, m: number) {
+  return m === 12 ? { y: y + 1, m: 1 } : { y, m: m + 1 };
+}
+
+type DaySeg = {
+  type: "start" | "mid" | "end" | "single";
+  title?: string;
+} | null;
+
+function annotateDays(
+  cells: ReturnType<typeof buildMonthGrid>,
+  bookings: Booking[]
+) {
+  // lav opslag på datoer (start/end samt fuld interval)
+  const map = new Map<
+    string,
+    {
+      hasCheckin: boolean;
+      hasCheckout: boolean;
+      segment: DaySeg;
+    }
+  >();
+
+  for (const c of cells) {
+    map.set(c.key, { hasCheckin: false, hasCheckout: false, segment: null });
+  }
+
+  for (const b of bookings) {
+    // event dækker [start, end) — end er eksklusiv
+    const start = new Date(`${b.start}T00:00:00Z`);
+    const end = new Date(`${b.end}T00:00:00Z`);
+    const title = b.title;
+
+    // markér start+slut
+    const sKey = b.start;
+    const eKey = b.end; // checkout-dag (selve dagen er IKKE inkluderet i udfyldningen)
+    if (map.has(sKey)) map.get(sKey)!.hasCheckin = true;
+    if (map.has(eKey)) map.get(eKey)!.hasCheckout = true;
+
+    // udfyld alle dage i [start, end)
+    for (let d = new Date(start); d < end; d.setUTCDate(d.getUTCDate() + 1)) {
+      const key = toIso(d);
+      if (!map.has(key)) continue;
+      const isStart = key === b.start;
+      const isEndPrev = addDays(end, -1);
+      const isEnd = key === isEndPrev;
+
+      map.get(key)!.segment = {
+        type:
+          isStart && isEnd
+            ? "single"
+            : isStart
+            ? "start"
+            : isEnd
+            ? "end"
+            : "mid",
+        title,
+      };
+    }
+  }
+
+  return cells.map((c) => {
+    const a = map.get(c.key)!;
+    return {
+      key: c.key,
+      day: c.d,
+      inMonth: c.inMonth,
+      hasCheckin: a.hasCheckin,
+      hasCheckout: a.hasCheckout,
+      segment: a.segment,
+    };
+  });
+}
+function toIso(d: Date) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+function addDays(d: Date, n: number): string {
+  const c = new Date(d);
+  c.setUTCDate(c.getUTCDate() + n);
+  return toIso(c);
 }

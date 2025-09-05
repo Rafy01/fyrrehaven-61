@@ -1,150 +1,49 @@
-.wrap {
-  --seg-h: 28px;
-  --pill-bg: #111;    /* sort/grå som i screenshot */
-  --pill-fg: #fff;
-  --pill-border: rgba(255,255,255,.22);
-  --cell-border: #e9e9e9;
-
-  display: grid;
-  gap: .5rem;
+/* src/components/AvailabilityCalendar/AvailabilityCalendar.module.css */
+.wrap { width: 100%; }
+.head {
+  display:flex; align-items:center; justify-content:center;
+  gap:.5rem; margin-bottom:.75rem;
 }
-
-.header {
-  display: grid;
-  gap: .5rem;
+.title { font-weight:750; font-size:1.25rem; }
+.nav {
+  appearance:none; border:0; background:var(--gray-3,#eee);
+  width:32px; height:32px; border-radius:8px; cursor:pointer;
 }
-.monthLabel {
-  font-weight: 700;
-  font-size: clamp(1.1rem, 1rem + .6vw, 1.5rem);
-  letter-spacing: -.01em;
-  text-transform: capitalize; /* 'september' */
-}
-.weekdays {
-  display: grid;
+.grid {
+  display:grid;
   grid-template-columns: repeat(7, 1fr);
-  font-size: .85rem;
-  color: #666;
+  gap: .5rem;
 }
 .wd {
-  text-align: right;
-  padding-right: .25rem;
+  font-size:.8rem; color:var(--gray-9,#666);
+  text-align:center; padding:.25rem 0;
 }
-
-.grid {
-  display: grid;
-  gap: .5rem;
+.cell {
+  position:relative;
+  background:var(--gray-1,#fafafa);
+  border:1px solid rgba(0,0,0,.06);
+  border-radius:12px; height:80px;
+  overflow:hidden;
 }
-.weekRow {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: .5rem;
-}
-
-.day {
-  position: relative;
-  border: 1px solid var(--cell-border);
-  border-radius: 12px;
-  padding: .35rem .4rem .9rem;
-  background: #fff;
-  min-height: 74px;
-  display: grid;
-  grid-template-rows: auto 1fr;
-}
-.outside {
-  opacity: .45;
-  background: #fafafa;
-}
-.dayTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
+.cell[data-dim="0"]{ opacity:.45; }
 .dayNum {
-  font-weight: 600;
-  font-size: .95rem;
-}
-.markers {
-  display: flex;
-  gap: 4px;
-}
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
-.in  { background: #2ecc71; } /* grøn */
-.out { background: #e67e22; } /* orange */
-
-/* Layer til pillerne – eget grid for bred understøttelse */
-.segsLayer {
-  position: absolute;
-  left: 0; right: 0; bottom: 4px;
-  pointer-events: none;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: .5rem;
-  padding: 0 .0rem; /* matcher weekRow-gap visuelt */
+  position:absolute; top:.35rem; left:.45rem;
+  font-size:.8rem; color:var(--gray-10,#444);
 }
 
-/* Selve pillen */
-.seg {
-  position: relative;
-  height: var(--seg-h);
-  background: var(--pill-bg);
-  color: var(--pill-fg);
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-  padding: 0 .6rem 0 .35rem;
-  box-shadow: 0 6px 14px rgba(0,0,0,.18);
-  overflow: hidden;
-  border: 1px solid var(--pill-border);
+/* booking-bar der fylder feltet på tværs */
+.bar {
+  position:absolute; left:6px; right:6px; top:35px; height:16px;
+  background: #181;  /* grøn, justér tema */
 }
+.startCap { border-top-left-radius:12px; border-bottom-left-radius:12px; }
+.endCap   { border-top-right-radius:12px; border-bottom-right-radius:12px; }
 
-.seg::before,
-.seg::after {
-  content: "";
-  position: absolute;
-  top: 0; bottom: 0;
-  width: 10px;
-  background: var(--pill-bg);
-  border: 1px solid var(--pill-border);
+/* samme-dag checkin/checkout: to tynde striber */
+.stack2 {
+  position:absolute; left:8px; right:8px; top:30px; display:grid; gap:6px;
 }
-.start::before { left: -6px; border-radius: 999px 0 0 999px; }
-.end::after   { right: -6px; border-radius: 0 999px 999px 0; }
-
-.avatar {
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  object-fit: cover;
-  flex: 0 0 auto;
-  border: 1px solid var(--pill-border);
-  background: #222;
+.mini {
+  height:6px; background:#181; border-radius:8px;
 }
-.initial {
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: #222;
-  color: #fff;
-  font-weight: 700;
-  font-size: .8rem;
-  border: 1px solid var(--pill-border);
-}
-.segText {
-  font-weight: 600;
-  font-size: .9rem;
-  white-space: nowrap;
-}
-
-/* Small screens */
-@media (max-width: 640px) {
-  .day { min-height: 64px; }
-  .seg { height: 26px; }
-}
+.loading { margin-top:.5rem; color:var(--gray-10,#555); font-size:.9rem; }
