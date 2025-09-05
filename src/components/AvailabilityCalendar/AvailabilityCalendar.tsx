@@ -2,308 +2,247 @@ import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
 
-/* ───────── Types ───────── */
+/** ----- API typer ----- */
 type ApiEvent = {
-  id?: string;
-  title?: string;
+  id: string;
+  title: string;
   description?: string;
   location?: string;
-  start: string; // ISO
-  end: string; // ISO
+  start: string; // ISO (UTC) fra backend
+  end: string; // ISO (UTC)
   allDay?: boolean;
-  status?: string;
-  transp?: string;
 };
+type ApiResp =
+  | { ok: true; updatedAt?: string; count?: number; events: ApiEvent[] }
+  | { ok: false; error: string };
 
-
+/** En “booking” vi tegner i kalenderen */
 type Booking = {
-  start: string; // YYYY-MM-DD (check-in, inkl.)
-  end: string; // YYYY-MM-DD (check-out, ekskl.)
-  title?: string;
+  id: string;
+  start: Date; // UTC Date-objekter
+  end: Date;
+  allDay: boolean;
+  title: string;
 };
 
-/* ───────── Date utils ───────── */
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
+/** Fast tidszone vi tolker kalenderen i (CET/CEST) */
+const TZ = "Europe/Copenhagen";
+
+/** Hvilke events er “rigtige ophold” og ikke møder/rengøring */
+function isLikelyStay(e: ApiEvent): boolean {
+  const title = (e.title || "").toLowerCase();
+
+  // 1) All-day blokeringer tæller
+  if (e.allDay) return true;
+
+  // 2) Klassiske distributører / nøgleord
+  const vendorHints = [
+    "airbnb",
+    "dancenter",
+    "sol og strand",
+    "campaya",
+    "privat",
+    "udlejning",
+    "reserved",
+  ];
+  if (vendorHints.some((v) => title.includes(v))) return true;
+
+  // 3) Varigheds-heuristik — typisk > 18 timer (min. 1 nat)
+  const start = new Date(e.start);
+  const end = new Date(e.end);
+  const hours = (end.getTime() - start.getTime()) / 36e5;
+  if (hours >= 18) return true;
+
+  return false;
 }
-function isoDate(d: Date): string {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
-function parseISODate(s: string): Date {
-  // fortolk YYYY-MM-DD som lokal midnat (nem rendering i grid)
-  const [y, m, d] = s.split("-").map(Number);
-  return new Date(y, m - 1, d);
+
+/** Formatér til Y-M-D i CZ tidszone */
+const fmtParts = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+function ymdInTz(d: Date): string {
+  const parts = fmtParts.formatToParts(d);
+  const y = parts.find((p) => p.type === "year")?.value ?? "0000";
+  const m = parts.find((p) => p.type === "month")?.value ?? "00";
+  const dd = parts.find((p) => p.type === "day")?.value ?? "00";
+  return `${y}-${m}-${dd}`;
 }
 function addDays(d: Date, n: number): Date {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
+  const x = new Date(d.getTime());
+  x.setUTCDate(x.getUTCDate() + n);
   return x;
 }
-function cmpDate(a: Date, b: Date): number {
-  const aa = new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
-  const bb = new Date(b.getFullYear(), b.getMonth(), b.getDate()).getTime();
-  return aa - bb;
+
+/** Gør API events til interne “bookings” */
+function normalizeBookings(events: ApiEvent[]): Booking[] {
+  return events
+    .filter(isLikelyStay)
+    .map((e) => ({
+      id: e.id,
+      start: new Date(e.start),
+      end: new Date(e.end),
+      allDay: !!e.allDay,
+      title: e.title,
+    }))
+    .sort((a, b) => a.start.getTime() - b.start.getTime());
 }
 
-function firstWeekdayMonday(y: number, m: number): number {
-  // 0=Mon … 6=Sun
-  const d = new Date(y, m, 1).getDay(); // 0=Sun … 6=Sat
-  return (d + 6) % 7;
-}
+type Props = { lang: Lang; apiUrl?: string };
 
-/* ───────── API parsing (no any) ───────── */
-function isObject(x: unknown): x is Record<string, unknown> {
-  return typeof x === "object" && x !== null;
-}
-function isApiEvent(x: unknown): x is ApiEvent {
-  if (!isObject(x)) return false;
-  return typeof x.start === "string" && typeof x.end === "string";
-}
-function looksLikeStay(ev: ApiEvent): boolean {
-  const title = (ev.title || "").toLowerCase();
-  // frasorter åbenlyse ikke-overnatninger
-  if (
-    /rengøring|clean|møde|meeting|fotograf|levering|entrepren|bank|nordea|work|arbejde|fest/.test(
-      title
-    )
-  )
-    return false;
-
-  const durMs = new Date(ev.end).getTime() - new Date(ev.start).getTime();
-  const minStayMs = 20 * 60 * 60 * 1000; // ≥ ~20 timer
-  return ev.allDay === true || durMs >= minStayMs;
-}
-function normalizeBookings(xs: Booking[]): Booking[] {
-  // sortér + fjern ugyldige
-  const arr = xs
-    .filter((b) => {
-      const s = parseISODate(b.start);
-      const e = parseISODate(b.end);
-      return cmpDate(s, e) < 0;
-    })
-    .sort((a, b) => cmpDate(parseISODate(a.start), parseISODate(b.start)));
-
-  // (valgfrit) merge overlap
-  const out: Booking[] = [];
-  for (const b of arr) {
-    if (out.length === 0) {
-      out.push(b);
-      continue;
-    }
-    const last = out[out.length - 1];
-    const lastEnd = parseISODate(last.end);
-    const curStart = parseISODate(b.start);
-    if (cmpDate(curStart, lastEnd) <= 0) {
-      // overlap eller rører – forlæng
-      if (cmpDate(parseISODate(b.end), lastEnd) > 0) {
-        last.end = b.end;
-      }
-    } else {
-      out.push(b);
-    }
-  }
-  return out;
-}
-
-function toBookingsFromApi(payload: unknown): Booking[] {
-  // { bookings: [...] }
-  if (isObject(payload) && Array.isArray(payload.bookings)) {
-    const xs = (payload.bookings as unknown[]).flatMap((b) => {
-      if (!isObject(b)) return [];
-      const s = typeof b.start === "string" ? b.start : null;
-      const e = typeof b.end === "string" ? b.end : null;
-      if (!s || !e) return [];
-      return [{ start: s, end: e } as Booking];
-    });
-    return normalizeBookings(xs);
-  }
-
-  // { ok, updatedAt, count, events: ApiEvent[] }
-  if (isObject(payload) && Array.isArray(payload.events)) {
-    const events = payload.events as unknown[];
-    const out: Booking[] = [];
-    for (const raw of events) {
-      if (!isApiEvent(raw)) continue;
-      if (!looksLikeStay(raw)) continue;
-
-      const s = new Date(raw.start);
-      const e = new Date(raw.end);
-      if (Number.isNaN(+s) || Number.isNaN(+e)) continue;
-
-      const start = isoDate(s);
-      const end = isoDate(e); // checkout (eksklusiv)
-      if (cmpDate(parseISODate(start), parseISODate(end)) >= 0) continue;
-
-      out.push({ start, end, title: raw.title });
-    }
-    return normalizeBookings(out);
-  }
-
-  return [];
-}
-
-/* ───────── Segmentering pr. uge ───────── */
-type Seg = {
-  row: number; // uge 0..5
-  colStart: number; // 1..7  (grid-column start)
-  colEnd: number; // 1..8   (grid-column end)
-  isStart: boolean; // er dette segmentets faktiske check-in dag?
-  isEnd: boolean; // ender segmentet ved bookingens faktiske check-out-1?
-  title?: string;
-};
-
-function buildGrid(y: number, m: number) {
-  const first = new Date(y, m, 1);
-  const firstColMon0 = firstWeekdayMonday(y, m); // 0..6
-  const gridStart = addDays(first, -firstColMon0);
-  const cells: Date[] = [];
-  for (let i = 0; i < 42; i++) cells.push(addDays(gridStart, i));
-  const gridEnd = addDays(gridStart, 42); // ekskl.
-
-  return { cells, gridStart, gridEnd };
-}
-
-function bookingsToSegments(
-  bookings: Booking[],
-  cells: Date[]
-): { segs: Seg[]; checkIn: Set<string>; checkOut: Set<string> } {
-  const indexByDate = new Map<string, number>();
-  cells.forEach((d, i) => indexByDate.set(isoDate(d), i));
-
-  const checkIn = new Set<string>();
-  const checkOut = new Set<string>();
-  const segs: Seg[] = [];
-
-  for (const b of bookings) {
-    checkIn.add(b.start);
-    checkOut.add(b.end);
-
-    // find inklusiv dag-indeks i gridden
-    const sIdx = indexByDate.get(b.start) ?? -Infinity; // kan være udenfor
-    const eIdxExclusive = indexByDate.get(b.end) ?? Infinity;
-    const lastIdx = (eIdxExclusive as number) - 1;
-
-    // Clip til 0..41
-    const from = Math.max(0, Math.min(41, sIdx));
-    const to = Math.max(0, Math.min(41, lastIdx));
-    if (!(from <= 41 && to >= 0 && from <= to)) continue;
-
-    // Uge-for-uge segmenter
-    const firstRow = Math.floor(from / 7);
-    const lastRow = Math.floor(to / 7);
-
-    for (let row = firstRow; row <= lastRow; row++) {
-      const rowStart = row * 7;
-      const rowEnd = rowStart + 6;
-
-      const segStartIdx = Math.max(from, rowStart);
-      const segEndIdx = Math.min(to, rowEnd);
-
-      const colStart = (segStartIdx % 7) + 1; // 1..7
-      const colEnd = (segEndIdx % 7) + 1 + 1; // grid end er ekskl.
-
-      segs.push({
-        row,
-        colStart,
-        colEnd,
-        isStart: segStartIdx === sIdx,
-        isEnd: segEndIdx === lastIdx,
-        title: b.title,
-      });
-    }
-  }
-
-  return { segs, checkIn, checkOut };
-}
-
-/* ───────── UI ───────── */
-type Props = { lang: Lang };
-
-export default function AvailabilityCalendar({ lang }: Props) {
+export default function AvailabilityCalendar({
+  lang,
+  apiUrl = "/api/ical",
+}: Props) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
   const today = new Date();
-  const [ym, setYm] = React.useState<{ y: number; m: number }>({
-    y: today.getFullYear(),
-    m: today.getMonth(),
-  });
-
+  const [cursor, setCursor] = React.useState<Date>(
+    new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1))
+  );
   const [bookings, setBookings] = React.useState<Booking[] | null>(null);
+  const [loading, setLoading] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
 
+  // Hent bookinger én gang
   React.useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setErr(null);
-        const res = await fetch("/api/ical", {
-          headers: { Accept: "application/json" },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json: unknown = await res.json();
-        const bs = toBookingsFromApi(json);
-        if (!cancelled) setBookings(bs);
-      } catch (e) {
-        if (!cancelled) setErr(String(e instanceof Error ? e.message : e));
-      }
-    })();
+    let dead = false;
+    setLoading(true);
+    setErr(null);
+    fetch(apiUrl, { headers: { Accept: "application/json" } })
+      .then((r) => r.json() as Promise<ApiResp>)
+      .then((data) => {
+        if (dead) return;
+        if (!data.ok) throw new Error("API error");
+        setBookings(normalizeBookings(data.events));
+      })
+      .catch(
+        () =>
+          !dead &&
+          setErr(t("Kunne ikke hente kalender.", "Failed to load calendar."))
+      )
+      .finally(() => !dead && setLoading(false));
     return () => {
-      cancelled = true;
+      dead = true;
     };
-  }, []);
+  }, [apiUrl, t]); // én gang
 
-  const { cells } = React.useMemo(() => buildGrid(ym.y, ym.m), [ym.y, ym.m]);
+  /** Opgør markeringer (start/slut/overnatning) for den viste måned */
+  const marks = React.useMemo(() => {
+    if (!bookings) return null;
 
-  const monthName = new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(ym.y, ym.m, 1));
+    const y = cursor.getUTCFullYear();
+    const m = cursor.getUTCMonth(); // 0-11
+    const firstOfMonth = new Date(Date.UTC(y, m, 1));
+    const firstShownWeekday = (firstOfMonth.getUTCDay() + 6) % 7; // mandag=0
+    const gridStart = addDays(firstOfMonth, -firstShownWeekday); // mandag i uge 1
 
-  const { segs, checkIn, checkOut } = React.useMemo(() => {
-    if (!bookings)
-      return {
-        segs: [] as Seg[],
-        checkIn: new Set<string>(),
-        checkOut: new Set<string>(),
-      };
-    return bookingsToSegments(bookings, cells);
-  }, [bookings, cells]);
+    const startSet = new Set<string>();
+    const endSet = new Set<string>();
+    const nightSet = new Set<string>();
+
+    // Hjælper der går én dag ad gangen i CZ tidszone
+    function forEachYmd(
+      startUtc: Date,
+      endUtc: Date,
+      fn: (ymd: string) => void
+    ) {
+      // gå fra lokal-dato til lokal-dato
+      let d = new Date(startUtc.getTime());
+      // start på lokal dato
+      let ymd = ymdInTz(d);
+      let guard = 0;
+      while (true) {
+        fn(ymd);
+        // stop hvis vi har nået (lokal) dagen før end
+        const next = addDays(d, 1);
+        const nextYmd = ymdInTz(next);
+        if (new Date(next.getTime()) >= endUtc) break;
+        d = next;
+        ymd = nextYmd;
+        if (++guard > 4000) break;
+      }
+    }
+
+    for (const b of bookings) {
+      const startY = ymdInTz(b.start);
+      const endY = ymdInTz(b.end); // check-out-dag (kl. 10)
+      startSet.add(startY);
+      endSet.add(endY);
+
+      // Overnatninger = fra start-dag (inkl.) til dagen før check-out
+      const lastNightUtc = addDays(b.end, -1);
+      if (lastNightUtc >= b.start) {
+        forEachYmd(b.start, b.end, (ymd) => {
+          // udfyld ikke check-out dagen
+          if (ymd !== endY) nightSet.add(ymd);
+        });
+      }
+    }
+
+    return { startSet, endSet, nightSet, gridStart };
+  }, [bookings, cursor]);
+
+  /** Byg gitteret: 6 uger × 7 dage */
+  const cells = React.useMemo(() => {
+    const result: {
+      ymd: string;
+      inMonth: boolean;
+      day: number;
+    }[] = [];
+
+    const y = cursor.getUTCFullYear();
+    const m = cursor.getUTCMonth();
+    const firstOfMonth = new Date(Date.UTC(y, m, 1));
+    const firstShownWeekday = (firstOfMonth.getUTCDay() + 6) % 7;
+    const gridStart = addDays(firstOfMonth, -firstShownWeekday);
+
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(gridStart, i);
+      const inMonth = d.getUTCMonth() === m;
+      // dag i CZ
+      const parts = fmtParts.formatToParts(d);
+      const dayNum = Number(parts.find((p) => p.type === "day")?.value ?? "0");
+      result.push({ ymd: ymdInTz(d), inMonth, day: dayNum });
+    }
+    return result;
+  }, [cursor]);
 
   function prevMonth() {
-    setYm((p) => {
-      const d = new Date(p.y, p.m, 1);
-      d.setMonth(d.getMonth() - 1);
-      return { y: d.getFullYear(), m: d.getMonth() };
-    });
+    setCursor(
+      (c) => new Date(Date.UTC(c.getUTCFullYear(), c.getUTCMonth() - 1, 1))
+    );
   }
   function nextMonth() {
-    setYm((p) => {
-      const d = new Date(p.y, p.m, 1);
-      d.setMonth(d.getMonth() + 1);
-      return { y: d.getFullYear(), m: d.getMonth() };
-    });
+    setCursor(
+      (c) => new Date(Date.UTC(c.getUTCFullYear(), c.getUTCMonth() + 1, 1))
+    );
   }
 
-  const weekdayLabels =
-    lang === "da"
-      ? ["M", "T", "O", "T", "F", "L", "S"]
-      : ["M", "T", "W", "T", "F", "S", "S"];
+  const monthLabel = new Intl.DateTimeFormat(
+    lang === "da" ? "da-DK" : "en-GB",
+    {
+      timeZone: TZ,
+      year: "numeric",
+      month: "long",
+    }
+  ).format(cursor);
 
   return (
     <div className={styles.wrap}>
       <div className={styles.bar}>
         <button
-          className={styles.navBtn}
+          className={styles.nav}
           onClick={prevMonth}
           aria-label={t("Forrige måned", "Previous month")}
         >
           ‹
         </button>
-        <div className={styles.month}>
-          {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
-        </div>
+        <div className={styles.title}>{monthLabel}</div>
         <button
-          className={styles.navBtn}
+          className={styles.nav}
           onClick={nextMonth}
           aria-label={t("Næste måned", "Next month")}
         >
@@ -311,79 +250,52 @@ export default function AvailabilityCalendar({ lang }: Props) {
         </button>
       </div>
 
-      <div className={styles.headerGrid}>
-        {weekdayLabels.map((w) => (
-          <div key={w} className={styles.wd}>
-            {w}
+      <div
+        className={styles.grid}
+        role="grid"
+        aria-label={t("Tilgængelighedskalender", "Availability calendar")}
+      >
+        {["M", "T", "O", "T", "F", "L", "S"].map((d) => (
+          <div key={d} className={styles.dow}>
+            {
+              lang === "da"
+                ? d
+                : "MTWTFSS"["MTWTFSS".indexOf(d)] /* bare vis DK-kolonner */
+            }
           </div>
         ))}
-      </div>
 
-      <div className={styles.grid}>
-        {/* Dage */}
-        {cells.map((d, i) => {
-          const isCurMonth = d.getMonth() === ym.m;
-          const ds = isoDate(d);
-          const inMark = checkIn.has(ds);
-          const outMark = checkOut.has(ds);
+        {cells.map((c) => {
+          const busy = marks?.nightSet.has(c.ymd) ?? false;
+          const isStart = marks?.startSet.has(c.ymd) ?? false;
+          const isEnd = marks?.endSet.has(c.ymd) ?? false;
 
           return (
             <div
-              key={i}
-              className={`${styles.cell} ${isCurMonth ? "" : styles.dim}`}
-              aria-label={ds}
+              key={c.ymd}
+              className={[
+                styles.cell,
+                c.inMonth ? "" : styles.dim,
+                busy ? styles.busy : "",
+                isStart ? styles.start : "",
+                isEnd ? styles.end : "",
+              ].join(" ")}
+              role="gridcell"
+              aria-label={`${c.ymd}${
+                busy ? (lang === "da" ? " optaget" : " booked") : ""
+              }`}
             >
-              <div className={styles.dayNum}>{d.getDate()}</div>
-
-              {/* Check-in/out-markører i kanten af cellen */}
-              <div className={styles.flags}>
-                {inMark && (
-                  <span
-                    className={`${styles.flag} ${styles.in}`}
-                    title={t("Check-in", "Check-in")}
-                  />
-                )}
-                {outMark && (
-                  <span
-                    className={`${styles.flag} ${styles.out}`}
-                    title={t("Check-out", "Check-out")}
-                  />
-                )}
-              </div>
+              <span className={styles.day}>{c.day}</span>
+              {/* Trekanter tegnes med CSS via .start/.end */}
             </div>
           );
         })}
-
-        {/* Booking-segmenter (pile/barer) */}
-        {segs.map((s, i) => (
-          <div
-            key={i}
-            className={`${styles.seg} ${s.isStart ? styles.segStart : ""} ${
-              s.isEnd ? styles.segEnd : ""
-            }`}
-            style={
-              {
-                gridRow: s.row + 1, // rækker er 1..6
-                gridColumn: `${s.colStart} / ${s.colEnd}`,
-              } as React.CSSProperties
-            }
-            title={s.title || ""}
-          >
-            <div className={styles.segBody} />
-          </div>
-        ))}
       </div>
 
-      {bookings === null && !err && (
-        <div className={styles.loading}>
-          {t("Henter kalender…", "Loading calendar…")}
-        </div>
+      {loading && (
+        <div className={styles.note}>{t("Indlæser…", "Loading…")}</div>
       )}
-      {err && (
-        <div className={styles.error}>
-          {t("Kunne ikke hente kalenderen:", "Failed to load calendar:")} {err}
-        </div>
-      )}
+      {err && <div className={styles.err}>{err}</div>}
     </div>
   );
 }
