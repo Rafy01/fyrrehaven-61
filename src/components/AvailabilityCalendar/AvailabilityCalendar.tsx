@@ -233,7 +233,7 @@ export default function AvailabilityCalendar({
   onSelectionPrice,
 }: Props) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
-  const today = startOfDay(new Date());
+const today = React.useMemo(() => startOfDay(new Date()), []);
   const minMonth = startOfMonth(today);
 
   const WEEKS = 5;
