@@ -211,12 +211,7 @@ export default function Book({ lang }: { lang: Lang }) {
 
         {/* ——— Kalender ——— */}
         <Box mt="3">
-          <AvailabilityCalendar
-            year={year}
-            month={month}
-            loadFromIcal
-            weekStartsOn={1} // mandag
-          />
+          <AvailabilityCalendar lang={lang} />
         </Box>
       </Container>
     </>
