@@ -18,8 +18,8 @@ type ApiPayload =
 
 type Booking = {
   id: string;
-  startDay: Date; // local midnight of check-in day
-  endDay: Date; // local midnight of check-out day (same as calendar “date”)
+  startDay: Date; // local midnight (check-in day)
+  endDay: Date; // local midnight (check-out day)
 };
 
 /* ---------------- Date helpers ---------------- */
@@ -31,20 +31,16 @@ function atMidnightLocal(d: Date): Date {
   x.setHours(0, 0, 0, 0);
   return x;
 }
-
 function addDays(d: Date, n: number): Date {
   const x = new Date(d);
   x.setDate(x.getDate() + n);
   return x;
 }
-
 function daysDiff(a: Date, b: Date): number {
-  // whole-day difference: a - b
   return Math.round(
     (atMidnightLocal(a).getTime() - atMidnightLocal(b).getTime()) / MS
   );
 }
-
 function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
@@ -52,45 +48,40 @@ function isSameDay(a: Date, b: Date): boolean {
     a.getDate() === b.getDate()
   );
 }
-
 function firstMondayOnOrBefore(d: Date): Date {
   const x = atMidnightLocal(d);
-  const dow = (x.getDay() + 6) % 7; // 0..6 (Mon=0)
+  const dow = (x.getDay() + 6) % 7; // Mon=0
   return addDays(x, -dow);
 }
 
 /* ---------------- API → bookings ---------------- */
 
-function isLikelyStay(ev: ApiEvent): boolean {
-  // Heuristics: real stays are multi-day (>= 18h) and not allDay placeholders.
-  const dur = new Date(ev.end).getTime() - new Date(ev.start).getTime();
-  if (ev.allDay) return false;
-  if (dur < 18 * 60 * 60 * 1000) return false;
-  return true;
-}
-
 /** Normalize events into “bookings” (check-in day → check-out day). */
 function toBookings(payload: ApiPayload): Booking[] {
   if (!("ok" in payload) || !payload.ok) return [];
-  const events = payload.events || [];
-
-  const stays = events.filter(isLikelyStay);
+  const events = payload.events ?? [];
 
   const out: Booking[] = [];
-  for (const ev of stays) {
+  for (const ev of events) {
     const s = new Date(ev.start);
     const e = new Date(ev.end);
+    if (isNaN(s.getTime()) || isNaN(e.getTime())) continue;
 
-    // Calendar uses whole days; keep local dates.
+    const durMs = e.getTime() - s.getTime();
+    const spansAtLeastOneDate =
+      atMidnightLocal(e).getTime() > atMidnightLocal(s).getTime();
+
+    // Bliv meget mere tolerant: enten ≥8 timer, eller allDay der spænder over mindst én dato
+    const looksLikeStay =
+      durMs >= 8 * 60 * 60 * 1000 || (ev.allDay && spansAtLeastOneDate);
+    if (!looksLikeStay) continue;
+
     const startDay = atMidnightLocal(s);
     const endDay = atMidnightLocal(e);
-
-    // Guard: ignore nonsense
     if (endDay.getTime() <= startDay.getTime()) continue;
 
     out.push({ id: ev.id, startDay, endDay });
   }
-  // Sort by start
   out.sort((a, b) => a.startDay.getTime() - b.startDay.getTime());
   return out;
 }
@@ -99,12 +90,11 @@ function toBookings(payload: ApiPayload): Booking[] {
 
 type WeekSeg = {
   id: string;
-  // columns are 1..7 within the week grid; endCol is exclusive like CSS grid
-  startCol: number;
-  endCol: number;
-  halfLeft: boolean; // draw from middle of first cell (check-in)
-  halfRight: boolean; // end in middle of last cell (check-out)
-  lane: number; // vertical lane within the week (0,1,2…)
+  startCol: number; // 1..7
+  endCol: number; // exclusive (1..8)
+  halfLeft: boolean;
+  halfRight: boolean;
+  lane: number; // 0,1,2…
 };
 
 function segmentsForWeek(
@@ -112,23 +102,19 @@ function segmentsForWeek(
   weekEndExclusive: Date,
   bookings: Booking[]
 ): WeekSeg[] {
-  // Find bookings intersecting [weekStart, weekEnd)
   const segs: Omit<WeekSeg, "lane">[] = [];
 
   for (const b of bookings) {
-    // Booking visually spans from startDay (half-left) to endDay (half-right)
-    // Intersect with week
     const segStart = new Date(
       Math.max(b.startDay.getTime(), weekStart.getTime())
     );
     const segEndExclusive = new Date(
       Math.min(b.endDay.getTime(), weekEndExclusive.getTime())
     );
-
     if (segEndExclusive.getTime() <= segStart.getTime()) continue;
 
     const startCol = 1 + daysDiff(segStart, weekStart);
-    const endCol = 1 + daysDiff(segEndExclusive, weekStart); // exclusive
+    const endCol = 1 + daysDiff(segEndExclusive, weekStart);
 
     const halfLeft = isSameDay(segStart, b.startDay) && segStart >= weekStart;
     const halfRight =
@@ -144,11 +130,9 @@ function segmentsForWeek(
     });
   }
 
-  // Assign lanes greedily to avoid vertical overlap.
-  const lanesEnd: number[] = []; // per lane, the last occupied column (exclusive)
+  // lane-pakning
+  const lanesEnd: number[] = [];
   const withLanes: WeekSeg[] = [];
-
-  // Sort by startCol, then width
   segs.sort((a, b) => a.startCol - b.startCol || b.endCol - a.endCol);
 
   for (const s of segs) {
@@ -158,7 +142,6 @@ function segmentsForWeek(
     }
     if (lane === lanesEnd.length) lanesEnd.push(s.endCol);
     else lanesEnd[lane] = s.endCol;
-
     withLanes.push({ ...s, lane });
   }
   return withLanes;
@@ -168,8 +151,7 @@ function segmentsForWeek(
 
 type Props = {
   lang: Lang;
-  /** Override API endpoint if needed. Defaults to "/api/ical". */
-  api?: string;
+  api?: string; // default: /api/ical
 };
 
 export default function AvailabilityCalendar({
@@ -180,7 +162,7 @@ export default function AvailabilityCalendar({
 
   const [ym, setYm] = React.useState(() => {
     const now = new Date();
-    return { y: now.getFullYear(), m: now.getMonth() + 1 }; // 1..12
+    return { y: now.getFullYear(), m: now.getMonth() + 1 };
   });
 
   const [bookings, setBookings] = React.useState<Booking[] | null>(null);
@@ -188,22 +170,20 @@ export default function AvailabilityCalendar({
 
   React.useEffect(() => {
     let alive = true;
-    (async () => {
+    (async (): Promise<void> => {
       setLoading(true);
       try {
         const res = await fetch(api);
         const json = (await res.json()) as ApiPayload;
-        if (alive) {
-          setBookings(toBookings(json));
-        }
+        if (!alive) return;
+        setBookings(toBookings(json));
       } catch {
-        if (alive) {
-          setBookings([]);
-        }
+        if (!alive) return;
+        setBookings([]);
       } finally {
-        if (alive) {
-          setLoading(false);
-        }
+        // eslint-disable-next-line no-unsafe-finally
+        if (!alive) return;
+        setLoading(false);
       }
     })();
     return () => {
@@ -211,10 +191,10 @@ export default function AvailabilityCalendar({
     };
   }, [api]);
 
-  // Build a 5-week (35 cells) grid for the chosen month
-  const { title, weeks, weekRows } = React.useMemo(() => {
+  // 5 uger (35 celler)
+  const { title, days, weekRows } = React.useMemo(() => {
     const monthStart = atMidnightLocal(new Date(ym.y, ym.m - 1, 1));
-    const monthName = monthStart.toLocaleDateString(
+    const title = monthStart.toLocaleDateString(
       lang === "da" ? "da-DK" : "en-GB",
       {
         month: "long",
@@ -222,16 +202,12 @@ export default function AvailabilityCalendar({
       }
     );
     const gridStart = firstMondayOnOrBefore(monthStart);
-    const days: Date[] = Array.from({ length: 35 }, (_, i) =>
-      addDays(gridStart, i)
-    );
-
-    const weeksMeta = Array.from({ length: 5 }, (_, w) => ({
+    const days = Array.from({ length: 35 }, (_, i) => addDays(gridStart, i));
+    const weekRows = Array.from({ length: 5 }, (_, w) => ({
       start: addDays(gridStart, w * 7),
       endExclusive: addDays(gridStart, w * 7 + 7),
     }));
-
-    return { title: monthName, weeks: days, weekRows: weeksMeta };
+    return { title, days, weekRows };
   }, [ym, lang]);
 
   const today = atMidnightLocal(new Date());
@@ -249,8 +225,7 @@ export default function AvailabilityCalendar({
     });
   }
 
-  // Pre-compute week segments
-  const allSegs = React.useMemo(() => {
+  const weekSegs = React.useMemo(() => {
     if (!bookings) return [] as WeekSeg[][];
     return weekRows.map((w) =>
       segmentsForWeek(w.start, w.endExclusive, bookings)
@@ -278,22 +253,22 @@ export default function AvailabilityCalendar({
       </div>
 
       <div className={styles.dow}>
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((s, i) => (
-          <div key={i} className={styles.dowCell}>
-            {lang === "da"
-              ? ["Man.", "Tir.", "Ons.", "Tor.", "Fre.", "Lør.", "Søn."][i]
-              : s}
-          </div>
-        ))}
+        {["Man.", "Tir.", "Ons.", "Tor.", "Fre.", "Lør.", "Søn."].map(
+          (s, i) => (
+            <div key={i} className={styles.dowCell}>
+              {lang === "da"
+                ? s
+                : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i]}
+            </div>
+          )
+        )}
       </div>
 
-      {/* Five week rows */}
-      {[0, 1, 2, 3, 4].map((wIdx) => {
-        const rowDays = weeks.slice(wIdx * 7, wIdx * 7 + 7);
-        const segs = allSegs[wIdx] || [];
+      {[0, 1, 2, 3, 4].map((w) => {
+        const rowDays = days.slice(w * 7, w * 7 + 7);
+        const segs = weekSegs[w] || [];
         return (
-          <div key={wIdx} className={styles.weekRow}>
-            {/* grid of day cells */}
+          <div key={w} className={styles.weekRow}>
             {rowDays.map((d, i) => {
               const inMonth = d.getMonth() + 1 === ym.m;
               const isTodayFlag = isSameDay(d, today);
@@ -313,14 +288,11 @@ export default function AvailabilityCalendar({
               );
             })}
 
-            {/* overlay bars */}
             <div className={styles.overlay}>
               {segs.map((s) => {
-                // CSS grid columns: start / end
                 const style: React.CSSProperties = {
                   gridColumn: `${s.startCol} / ${s.endCol}`,
                   transform: `translateY(calc(var(--lane-gap) * ${s.lane}))`,
-                  // Use clip-path to create half caps when start/stop falls inside this week
                   clipPath: clipForSeg(s),
                 };
                 return (
@@ -347,21 +319,12 @@ export default function AvailabilityCalendar({
   );
 }
 
-/** Half-cap logic via clip-path */
 function clipForSeg(s: {
-  startCol: number;
-  endCol: number;
   halfLeft: boolean;
   halfRight: boolean;
 }): string | undefined {
-  // full width
   if (!s.halfLeft && !s.halfRight) return undefined;
-
-  // inset(top right bottom left)
-  if (s.halfLeft && s.halfRight) {
-    // one-day stay entirely inside the week → show “half on both sides”
-    return "inset(0 50% 0 50%)";
-  }
+  if (s.halfLeft && s.halfRight) return "inset(0 50% 0 50%)";
   if (s.halfLeft) return "inset(0 0 0 50%)";
   if (s.halfRight) return "inset(0 50% 0 0)";
   return undefined;
