@@ -1,39 +1,211 @@
-// /api/chat-unknown.mjs (ESM)
-import { kv } from "@vercel/kv";
+// /api/chat-unknown.mjs  (ESM, Vercel serverless)
+import { google } from "googleapis";
 
-/* Keys */
-const ZSET = "chat:unknown:ids"; // sorted set over ids (score = ts)
-const HKEY = (id) => `chat:unknown:${id}`; // hash pr. id
+/* ---------- Sheets client ---------- */
+function getSheetsClient() {
+  const sheetId = process.env.GSHEET_ID || "";
+  const tab = process.env.GSHEET_TAB || "Unknowns";
+  if (!sheetId) throw new Error("GSHEET_ID missing");
 
-/* Admin auth */
+  let clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL || "";
+  let privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY || "";
+  const json = process.env.GOOGLE_SHEETS_CREDENTIALS_JSON || "";
+
+  if (json) {
+    try {
+      const parsed = JSON.parse(json);
+      clientEmail = parsed.client_email || clientEmail;
+      privateKey = parsed.private_key || privateKey;
+    } catch {
+      // ignore, fall back to individual envs
+    }
+  }
+  if (!clientEmail || !privateKey) {
+    throw new Error("GOOGLE_SHEETS credentials missing");
+  }
+  privateKey = privateKey.replace(/\\n/g, "\n");
+
+  const auth = new google.auth.JWT({
+    email: clientEmail,
+    key: privateKey,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+  const sheets = google.sheets({ version: "v4", auth });
+  return { sheets, sheetId, tab };
+}
+
+/* ---------- Helpers ---------- */
+const ok = (res, data) => res.status(200).json({ ok: true, ...data });
+const bad = (res, code, error, detail) =>
+  res.status(code).json({ ok: false, error, ...(detail ? { detail } : {}) });
+
 function isAdmin(req) {
   const want = process.env.ADMIN_TOKEN || "";
   const got = req.headers?.authorization || "";
   return want && got === `Bearer ${want}`;
 }
 
-/* Small helpers */
-const ok = (res, data) => res.status(200).json({ ok: true, ...data });
-const bad = (res, code, error, detail) =>
-  res.status(code).json({ ok: false, error, ...(detail ? { detail } : {}) });
+function rid() {
+  return (
+    (typeof crypto !== "undefined" && crypto.randomUUID?.()) ||
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  );
+}
 
+/* Find data-rækker + deres rowIndex (2-baseret pga. header) */
+async function readAll({ q = "", lang = "", onlyOpen = false, limit = 500 }) {
+  const { sheets, sheetId, tab } = getSheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: sheetId,
+    range: `${tab}!A:H`,
+    majorDimension: "ROWS",
+  });
+
+  const rows = res.data.values || [];
+  if (rows.length === 0) return [];
+
+  const [header, ...data] = rows;
+  // header: ts_iso | id | lang | question | page | user_agent | ip | status
+  const ix = {
+    ts_iso: header.indexOf("ts_iso"),
+    id: header.indexOf("id"),
+    lang: header.indexOf("lang"),
+    question: header.indexOf("question"),
+    page: header.indexOf("page"),
+    user_agent: header.indexOf("user_agent"),
+    ip: header.indexOf("ip"),
+    status: header.indexOf("status"),
+  };
+
+  const qlc = q.toLowerCase().trim();
+
+  const parsed = data
+    .map((r, i) => {
+      const rowIndex = i + 2; // data starter i række 2
+      const tsStr = (r[ix.ts_iso] || "").toString();
+      const ts = Date.parse(tsStr) || Date.now();
+      const status = ((r[ix.status] || "") + "").toLowerCase();
+      return {
+        rowIndex,
+        id: (r[ix.id] || "").toString(),
+        lang: (r[ix.lang] || "da").toString(),
+        q: (r[ix.question] || "").toString(),
+        page: (r[ix.page] || "").toString(),
+        ua: (r[ix.user_agent] || "").toString(),
+        ip: (r[ix.ip] || "").toString(),
+        ts,
+        done: status.startsWith("done"),
+      };
+    })
+    .filter((x) => x.id && x.q);
+
+  const filtered = parsed
+    .filter((r) => (lang ? r.lang === lang : true))
+    .filter((r) => (onlyOpen ? !r.done : true))
+    .filter((r) => (qlc ? r.q.toLowerCase().includes(qlc) : true))
+    .sort((a, b) => b.ts - a.ts)
+    .slice(0, Math.min(limit, 1000));
+
+  return filtered;
+}
+
+async function appendRow(item) {
+  const { sheets, sheetId, tab } = getSheetsClient();
+  const values = [
+    [
+      new Date(item.ts).toISOString(), // ts_iso
+      item.id, // id
+      item.lang, // lang
+      item.q, // question
+      item.page || "", // page
+      item.ua || "", // user_agent
+      item.ip || "", // ip
+      item.done ? "done" : "open", // status
+    ],
+  ];
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: sheetId,
+    range: `${tab}!A:A`,
+    valueInputOption: "USER_ENTERED",
+    insertDataOption: "INSERT_ROWS",
+    requestBody: { values },
+  });
+}
+
+async function updateStatusById(id, nextStatus /* "open" | "done" */) {
+  const items = await readAll({ limit: 2000 });
+  const hit = items.find((x) => x.id === id);
+  if (!hit) return false;
+
+  const { sheets, sheetId, tab } = getSheetsClient();
+  // status er kolonne H
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: sheetId,
+    range: `${tab}!H${hit.rowIndex}:H${hit.rowIndex}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values: [[nextStatus]] },
+  });
+  return true;
+}
+
+async function deleteById(id) {
+  const items = await readAll({ limit: 2000 });
+  const hit = items.find((x) => x.id === id);
+  if (!hit) return false;
+
+  const { sheets, sheetId, tab } = getSheetsClient();
+
+  // Slet selve rækken
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: sheetId,
+    requestBody: {
+      requests: [
+        {
+          deleteDimension: {
+            range: {
+              sheetId: await getSheetGid(sheets, sheetId, tab),
+              dimension: "ROWS",
+              startIndex: hit.rowIndex - 1,
+              endIndex: hit.rowIndex,
+            },
+          },
+        },
+      ],
+    },
+  });
+  return true;
+}
+
+async function getSheetGid(sheets, spreadsheetId, tabName) {
+  const meta = await sheets.spreadsheets.get({ spreadsheetId });
+  const sheet = (meta.data.sheets || []).find(
+    (s) => s.properties?.title === tabName
+  );
+  if (!sheet || typeof sheet.properties?.sheetId !== "number") {
+    throw new Error(`Tab '${tabName}' not found`);
+  }
+  return sheet.properties.sheetId;
+}
+
+/* ---------- API handler ---------- */
 export default async function handler(req, res) {
   try {
     if (req.method === "POST") {
-      // Create new unknown
       const { q, lang = "da", page = "" } = req.body || {};
       if (!q || typeof q !== "string") {
         return bad(res, 400, "VALIDATION_ERROR", "Missing 'q'");
       }
-      const id =
-        (typeof crypto !== "undefined" && crypto.randomUUID?.()) ||
-        `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+      const id = rid();
       const ts = Date.now();
-      const item = { id, q, lang, page, ts, done: false };
 
-      await kv.hset(HKEY(id), item);
-      await kv.zadd(ZSET, { score: ts, member: id });
+      const ip =
+        (req.headers["x-forwarded-for"] || "")
+          .toString()
+          .split(",")[0]
+          .trim() || "";
+      const ua = (req.headers["user-agent"] || "").toString();
 
+      await appendRow({ id, q, lang, page, ts, ip, ua, done: false });
       return ok(res, { id });
     }
 
@@ -44,73 +216,38 @@ export default async function handler(req, res) {
         Number(url.searchParams.get("limit") || 500),
         1000
       );
-      const lang = url.searchParams.get("lang") || ""; // "da" | "en" | ""
+      const lang = url.searchParams.get("lang") || "";
       const onlyOpen = url.searchParams.get("onlyOpen") === "1";
-      const q = (url.searchParams.get("q") || "").toLowerCase().trim();
+      const q = (url.searchParams.get("q") || "").trim();
 
-      const ids = await kv.zrange(ZSET, -limit, -1); // newest last → vi sorterer efterfølgende
-      const items = await Promise.all(
-        ids.map(async (id) => (await kv.hgetall(HKEY(id))) || null)
-      );
-
-      const filtered = (items.filter(Boolean) || [])
-        .filter((r) => (lang ? r.lang === lang : true))
-        .filter((r) => (onlyOpen ? !r.done : true))
-        .filter((r) => (q ? String(r.q).toLowerCase().includes(q) : true))
-        .sort((a, b) => Number(b.ts) - Number(a.ts));
-
-      return ok(res, { items: filtered });
+      const items = await readAll({ q, lang, onlyOpen, limit });
+      return ok(res, { items, source: "sheets" });
     }
 
     if (req.method === "PATCH") {
       if (!isAdmin(req)) return bad(res, 401, "UNAUTHORIZED");
       const { id, done } = req.body || {};
       if (!id) return bad(res, 400, "VALIDATION_ERROR", "Missing 'id'");
-
-      const key = HKEY(id);
-      const item = await kv.hgetall(key);
-      if (!item) return bad(res, 404, "NOT_FOUND");
-
-      const next = {
-        ...item,
-        done: typeof done === "boolean" ? done : !item.done,
-      };
-      await kv.hset(key, next);
-      return ok(res, { item: next });
+      const next =
+        typeof done === "boolean" ? (done ? "done" : "open") : "done";
+      const okUpd = await updateStatusById(id, next);
+      if (!okUpd) return bad(res, 404, "NOT_FOUND");
+      return ok(res, { id, status: next });
     }
 
     if (req.method === "DELETE") {
       if (!isAdmin(req)) return bad(res, 401, "UNAUTHORIZED");
       const url = new URL(req.url, "https://x");
       const id = url.searchParams.get("id");
-      const all = url.searchParams.get("all") === "1";
-
-      if (id) {
-        await kv.del(HKEY(id));
-        await kv.zrem(ZSET, id);
-        return ok(res, { removed: id });
-      }
-
-      if (all) {
-        const ids = await kv.zrange(ZSET, 0, -1);
-        if (ids.length) {
-          await Promise.all(ids.map((x) => kv.del(HKEY(x))));
-          await kv.zremrangebyrank(ZSET, 0, -1);
-        }
-        return ok(res, { removedAll: ids.length });
-      }
-
-      return bad(res, 400, "VALIDATION_ERROR", "Provide ?id=... or ?all=1");
+      if (!id) return bad(res, 400, "VALIDATION_ERROR", "Missing ?id");
+      const okDel = await deleteById(id);
+      if (!okDel) return bad(res, 404, "NOT_FOUND");
+      return ok(res, { removed: id });
     }
 
     return bad(res, 405, "METHOD_NOT_ALLOWED");
   } catch (err) {
-    console.error("CHAT_UNKNOWN_API_ERROR", err);
-    return bad(
-      res,
-      500,
-      "SERVER_ERROR",
-      String(err && err.message ? err.message : err)
-    );
+    console.error("CHAT_SHEETS_API_ERROR", err);
+    return bad(res, 500, "SERVER_ERROR", String(err?.message || err));
   }
 }

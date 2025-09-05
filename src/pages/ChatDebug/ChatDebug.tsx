@@ -1,4 +1,3 @@
-// src/pages/ChatDebug/ChatDebug.tsx
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import styles from "./ChatDebug.module.css";
@@ -13,9 +12,6 @@ export type UnknownItem = {
   done?: boolean;
 };
 
-const TOKEN_KEY = "chat_admin_token";
-const API = "/api/chat-unknown";
-
 function fmtDate(ts: number): string {
   try {
     const d = new Date(ts);
@@ -29,6 +25,7 @@ function fmtDate(ts: number): string {
     return String(ts);
   }
 }
+
 function toCSV(rows: UnknownItem[]): string {
   const header = ["id", "lang", "ts_iso", "page", "done", "question"];
   const lines = rows.map((r) => {
@@ -46,105 +43,109 @@ function toCSV(rows: UnknownItem[]): string {
 }
 
 export default function ChatDebug() {
-  const [token, setToken] = React.useState<string>(
-    typeof localStorage !== "undefined"
-      ? localStorage.getItem(TOKEN_KEY) || ""
-      : ""
-  );
   const [all, setAll] = React.useState<UnknownItem[]>([]);
   const [search, setSearch] = React.useState<string>("");
   const [onlyOpen, setOnlyOpen] = React.useState<boolean>(false);
   const [langFilter, setLangFilter] = React.useState<Lang | "all">("all");
   const [loading, setLoading] = React.useState<boolean>(false);
-  const [err, setErr] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string>("");
 
-  function saveToken(v: string) {
-    setToken(v);
-    try {
-      localStorage.setItem(TOKEN_KEY, v);
-    } catch { /* empty */ }
-  }
+  const ADMIN_TOKEN = import.meta.env.VITE_ADMIN_TOKEN as string | undefined;
 
-  async function fetchAll() {
-    if (!token) return;
+  async function load() {
     setLoading(true);
-    setErr(null);
+    setError("");
     try {
       const params = new URLSearchParams();
-      if (onlyOpen) params.set("onlyOpen", "1");
+      params.set("limit", "500");
       if (langFilter !== "all") params.set("lang", langFilter);
+      if (onlyOpen) params.set("onlyOpen", "1");
       if (search.trim()) params.set("q", search.trim());
-      const res = await fetch(`${API}?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
+
+      const res = await fetch(`/api/chat-unknown?${params.toString()}`, {
+        headers: ADMIN_TOKEN ? { Authorization: `Bearer ${ADMIN_TOKEN}` } : {},
       });
-      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-      const json = (await res.json()) as { ok: boolean; items: UnknownItem[] };
-      setAll((json.items || []).sort((a, b) => b.ts - a.ts));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setAll(Array.isArray(json.items) ? json.items : []);
     } catch (e: unknown) {
-      setErr(String(e));
+      setError(String(e instanceof Error ? e.message : e));
     } finally {
       setLoading(false);
     }
   }
 
-  async function toggleDone(id: string, to?: boolean) {
-    if (!token) return;
-    try {
-      const res = await fetch(API, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ id, done: to }),
-      });
-      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-      await fetchAll();
-    } catch (e: unknown) {
-      alert(`Kunne ikke opdatere: ${String(e)}`);
-    }
-  }
-  async function remove(id: string) {
-    if (!token) return;
-    try {
-      const res = await fetch(`${API}?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-      await fetchAll();
-    } catch (e: unknown) {
-      alert(`Kunne ikke slette: ${String(e)}`);
-    }
-  }
-  async function clearAll() {
-    if (!token) return;
-    // eslint-disable-next-line no-alert
-    if (!confirm("Slet ALLE ukendte spørgsmål fra serveren?")) return;
-    try {
-      const res = await fetch(`${API}?all=1`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
-      await fetchAll();
-    } catch (e: unknown) {
-      alert(`Kunne ikke tømme: ${String(e)}`);
-    }
-  }
+  React.useEffect(() => {
+    // første load
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  React.useEffect(() => {
+    // reload ved filter-ændring
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [langFilter, onlyOpen]);
+
+  const q = search.trim().toLowerCase();
+  const filtered = all
+    .filter((r) => (q ? r.q.toLowerCase().includes(q) : true))
+    .sort((a, b) => b.ts - a.ts);
+
   function exportCSV() {
     const csv = toCSV(filtered);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `chat-unknowns-${Date.now()}.csv`;
+    a.download = `chat-unknowns-sheets-${Date.now()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  async function toggleDone(id: string) {
+    try {
+      const res = await fetch(`/api/chat-unknown`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(ADMIN_TOKEN ? { Authorization: `Bearer ${ADMIN_TOKEN}` } : {}),
+        },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      load();
+    } catch (e: unknown) {
+      alert(String(e instanceof Error ? e.message : e));
+    }
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Slet denne række i arket?")) return;
+    try {
+      const res = await fetch(
+        `/api/chat-unknown?id=${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          headers: ADMIN_TOKEN
+            ? { Authorization: `Bearer ${ADMIN_TOKEN}` }
+            : {},
+        }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      load();
+    } catch (e: unknown) {
+      alert(String(e instanceof Error ? e.message : e));
+    }
+  }
+
   function emailAll() {
     const to = "kontakt@fyrrehaven-61.dk";
-    const subject = `Ukendte chatspørgsmål (${filtered.length})`;
+    const subject = `Ukendte chatspørgsmål (${filtered.length}) – Sheets`;
     const body =
       filtered
         .map(
@@ -158,22 +159,10 @@ export default function ChatDebug() {
     window.location.href = href;
   }
 
-  const q = search.trim().toLowerCase();
-  const filtered = all
-    .filter((r) => (langFilter === "all" ? true : r.lang === langFilter))
-    .filter((r) => (onlyOpen ? !r.done : true))
-    .filter((r) => (q ? r.q.toLowerCase().includes(q) : true))
-    .sort((a, b) => b.ts - a.ts);
-
-  React.useEffect(() => {
-    fetchAll(); // ved mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
-
   return (
     <div className={styles.page}>
       <Helmet>
-        <title>Chat Debug · Ukendte spørgsmål</title>
+        <title>Chat · Admin debug</title>
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -186,71 +175,62 @@ export default function ChatDebug() {
             type="search"
             placeholder="Søg i spørgsmål…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && fetchAll()}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setSearch(e.target.value)
+            }
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                load();
+              }
+            }}
           />
+
           <select
             className={styles.select}
             value={langFilter}
-            onChange={(e) => setLangFilter(e.target.value as Lang | "all")}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setLangFilter(e.target.value as Lang | "all")
+            }
+            title="Sprog"
           >
             <option value="all">Alle sprog</option>
             <option value="da">Dansk</option>
             <option value="en">English</option>
           </select>
+
           <label className={styles.chk}>
             <input
               type="checkbox"
               checked={onlyOpen}
-              onChange={(e) => setOnlyOpen(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setOnlyOpen(e.target.checked)
+              }
             />
             Kun åbne
           </label>
 
+          <button className={styles.btn} onClick={() => load()}>
+            Opdater
+          </button>
+
           <div className={styles.spacer} />
 
-          <input
-            className={styles.token}
-            type="password"
-            placeholder="Admin token"
-            value={token}
-            onChange={(e) => saveToken(e.target.value)}
-          />
-          <button
-            className={styles.btn}
-            onClick={fetchAll}
-            disabled={!token || loading}
-          >
-            {loading ? "Henter…" : "Opdatér"}
-          </button>
-          <button
-            className={styles.btn}
-            onClick={emailAll}
-            disabled={!filtered.length}
-          >
+          <button className={styles.btn} onClick={emailAll}>
             Åbn mail med liste
           </button>
-          <button
-            className={styles.btn}
-            onClick={exportCSV}
-            disabled={!filtered.length}
-          >
+          <button className={styles.btn} onClick={exportCSV}>
             Eksportér CSV
           </button>
-          <button
-            className={styles.btnDanger}
-            onClick={clearAll}
-            disabled={!filtered.length}
-          >
-            Tøm alt
-          </button>
         </div>
-
-        {err ? <div className={styles.error}>Fejl: {err}</div> : null}
       </header>
 
       <section className={styles.listWrap}>
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className={styles.empty}>Henter…</div>
+        ) : error ? (
+          <div className={styles.errorBox}>Fejl: {error}</div>
+        ) : filtered.length === 0 ? (
           <div className={styles.empty}>Ingen poster.</div>
         ) : (
           <table className={styles.table}>
@@ -281,7 +261,7 @@ export default function ChatDebug() {
                   <td className={styles.actions}>
                     <button
                       className={styles.btnGhost}
-                      onClick={() => toggleDone(r.id, !r.done)}
+                      onClick={() => toggleDone(r.id)}
                       title={r.done ? "Markér som åben" : "Markér som løst"}
                     >
                       {r.done ? "↺ Åbn" : "✓ Løst"}

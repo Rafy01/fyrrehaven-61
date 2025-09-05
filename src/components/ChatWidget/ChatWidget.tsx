@@ -1,4 +1,3 @@
-// src/components/ChatWidget/ChatWidget.tsx
 import React from "react";
 import styles from "./ChatWidget.module.css";
 import type { Lang } from "../../lib/lang";
@@ -49,47 +48,6 @@ function bestMatch(q: string): { snippet: Snippet | null; confidence: number } {
   return { snippet: best, confidence: score };
 }
 
-/** Mini “markdown” → HTML: kun **bold** + dobbelt newline -> <br/> (med escape) */
-function mdToHtml(s: string): string {
-  const esc = String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return esc
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\n{2,}/g, "<br/>");
-}
-
-/* -------- ukendt-store (localStorage) -------- */
-type UnknownItem = {
-  id: string;
-  q: string;
-  lang: Lang;
-  page: string;
-  ts: number;
-};
-const LS_KEY = "chat_unknowns_v1";
-
-function loadUnknowns(): UnknownItem[] {
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (!raw) return [];
-    const arr = JSON.parse(raw) as UnknownItem[];
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
-function saveUnknown(u: UnknownItem): void {
-  try {
-    const arr = loadUnknowns();
-    arr.push(u);
-    localStorage.setItem(LS_KEY, JSON.stringify(arr.slice(-200))); // cap liste
-  } catch {
-    /* ignore */
-  }
-}
-
 /* -------- types -------- */
 type Msg = {
   id: string;
@@ -106,7 +64,6 @@ type Msg = {
 
 type Props = { lang: Lang };
 
-/* -------- component -------- */
 export default function ChatWidget({ lang }: Props) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
@@ -154,12 +111,11 @@ export default function ChatWidget({ lang }: Props) {
       if (snippet && confidence >= 0.6) {
         const title = lang === "da" ? snippet.titleDa : snippet.titleEn;
         const body = lang === "da" ? snippet.bodyDa : snippet.bodyEn;
-
         const linksBlock =
           (snippet.links ?? []).length > 0
             ? "\n\n" +
-              (snippet.links as { labelDa: string; labelEn: string; to?: string; href?: string }[])
-                .map((l) => {
+              (snippet.links as Link[])
+                .map((l: Link) => {
                   const label = lang === "da" ? l.labelDa : l.labelEn;
                   const url = l.to ?? l.href ?? "#";
                   return `• ${label} → ${url}`;
@@ -178,46 +134,50 @@ export default function ChatWidget({ lang }: Props) {
           },
         ]);
       } else {
-        // 1) gem lokalt
-        const unknown: UnknownItem = {
-          id: rid(),
-          q,
-          lang,
-          page: typeof window !== "undefined" ? window.location.href : "",
-          ts: Date.now(),
-        };
-        saveUnknown(unknown);
-
-        // 2) best effort: send til serverless mail (kan slås fra)
+        const page = typeof window !== "undefined" ? window.location.href : "";
+        // Kun Google Sheets: POST ukendt
         try {
-          void fetch("/api/chat-unknown", {
+          const res = await fetch("/api/chat-unknown", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ q, lang, page: unknown.page }),
+            body: JSON.stringify({ q, lang, page }),
           });
-        } catch {
-          /* ignore */
-        }
+          const json = await res.json().catch(() => ({}));
+          const unknownId = json?.id || undefined;
 
-        // 3) svar + action-card
-        setMsgs((m) => [
-          ...m,
-          {
-            id: rid(),
-            role: "bot",
-            lang,
-            text: t(
-              "Det ved jeg ikke endnu — jeg giver beskeden videre, så vi kan lære det til næste gang.",
-              "I don’t know that yet — I’ll pass it along so we can learn it for next time."
-            ),
-          },
-          {
-            id: rid(),
-            role: "card",
-            lang,
-            meta: { unknownId: unknown.id, q },
-          },
-        ]);
+          // Svar + card
+          setMsgs((m) => [
+            ...m,
+            {
+              id: rid(),
+              role: "bot",
+              lang,
+              text: t(
+                "Det ved jeg ikke endnu — jeg giver beskeden videre, så vi kan lære det til næste gang.",
+                "I don’t know that yet — I’ll pass it along so we can learn it for next time."
+              ),
+            },
+            {
+              id: rid(),
+              role: "card",
+              lang,
+              meta: { unknownId, q },
+            },
+          ]);
+        } catch {
+          setMsgs((m) => [
+            ...m,
+            {
+              id: rid(),
+              role: "bot",
+              lang,
+              text: t(
+                "Det ved jeg ikke endnu — og jeg kunne ikke gemme dit spørgsmål. Prøv igen om lidt.",
+                "I don’t know that yet — and I couldn’t save your question. Please try again."
+              ),
+            },
+          ]);
+        }
       }
     } catch {
       setMsgs((m) => [
@@ -291,21 +251,16 @@ export default function ChatWidget({ lang }: Props) {
 
     const isUser = m.role === "user";
     const text = m.text ?? "";
-
+    // Simpel **bold** og afsnit
+    const html = text
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n\n/g, "<br/>");
     return (
       <div className={isUser ? styles.msgUser : styles.msgBot}>
-        <div className={styles.bubble}>
-          {isUser ? (
-            // USER: ren tekst
-            text.split("\n").map((line, i) => <p key={i}>{line}</p>)
-          ) : (
-            // BOT: tillad bold + <br/> via vores mini-markdown
-            <div
-              className={styles.msgBody}
-              dangerouslySetInnerHTML={{ __html: mdToHtml(text) }}
-            />
-          )}
-        </div>
+        <div
+          className={styles.bubble}
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
       </div>
     );
   }
