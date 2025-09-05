@@ -1,135 +1,126 @@
-:root {
-  --gap: 10px;
-  --cellH: 88px;
-  --ink: #0b0b0c;
-  --muted: #9aa0a6;
-  --bg: #ffffff;
-  --cell-bg: #f6f7f8;
-  --pill: #1e1f20;
-}
-
 .wrap {
-  width: 100%;
+  --gap: 10px;
+  --cell-h: 84px;
+  --bar-h: 32px;
+  --lane-gap: 36px; /* vertical stacking distance */
+  color: var(--sand-900, #111);
 }
 
 .head {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 8px;
 }
 
-.title {
+.month {
   font-weight: 600;
-  font-size: 18px;
-  letter-spacing: 0.2px;
+  letter-spacing: .2px;
 }
 
-.navBtn {
+.nav {
+  appearance: none;
   border: 0;
-  background: var(--cell-bg);
+  background: #f1f1f1;
+  color: #111;
   width: 28px;
   height: 28px;
   border-radius: 8px;
   cursor: pointer;
-  line-height: 1;
+}
+.nav:hover { background: #e9e9e9; }
+
+.dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--gap);
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #777;
+}
+.dowCell {
+  height: 18px;
+  display: flex;
+  align-items: center;
 }
 
-.grid {
+.weekRow {
   position: relative;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: var(--cellH);
   gap: var(--gap);
-}
-
-.wd {
-  height: 28px;
-  line-height: 28px;
-  font-size: 12px;
-  color: var(--muted);
-  text-align: center;
+  margin-bottom: 8px;
+  min-height: calc(var(--cell-h) + var(--lane-gap) * 2); /* space for up to 3 lanes */
 }
 
 .cell {
-  background: var(--bg);
+  height: var(--cell-h);
+  background: #fff;
+  border: 1px solid #eee;
   border-radius: 14px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03) inset;
+  padding: 10px 12px;
+}
+.cell[data-dim="1"] {
+  opacity: .45;
+}
+
+.dayN {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   position: relative;
 }
 
-.dim {
-  opacity: 0.45;
-}
-
-.today {
-  box-shadow: inset 0 0 0 2px #d00;
-}
-
-.date {
+/* today = little red circle under the number */
+.todayDot {
   position: absolute;
-  top: 8px;
-  left: 10px;
-  font-size: 12px;
-  color: var(--ink);
+  left: 2px;
+  bottom: -8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #e11d48; /* rose-600-ish */
 }
 
-/* Overlay grid til piller (lægger sig ovenpå cellerne) */
+/* overlay with grid for bars */
 .overlay {
-  pointer-events: none;
   position: absolute;
-  left: 0; right: 0; top: 0; bottom: 0;
+  inset: 0;
+  pointer-events: none;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: var(--cellH);
   gap: var(--gap);
+  align-content: center; /* vertically center the first lane */
 }
 
-/* --- PILL STYLES --- */
-.pill {
-  position: relative;
-  height: 28px;
-  background: var(--pill);
-  color: #fff;
+.bar {
+  height: var(--bar-h);
+  background: #1e1e1e;
+  border-radius: 999px;
+  align-self: center;
   display: flex;
   align-items: center;
-  border-radius: 999px; /* hvis alene */
-  padding: 0 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.15);
-}
-
-/* flade ender når stykket spænder over flere kolonner */
-.pillBridge {
-  margin-left: calc(-1 * var(--gap) / 2);
-  margin-right: calc(-1 * var(--gap) / 2);
-  border-radius: 0;
-}
-
-/* start: rund kun venstre, flad mod højre + start i højre halvdel */
-.pillStart {
-  margin-left: calc(50% - var(--gap) / 2);
-  margin-right: calc(-1 * var(--gap) / 2);
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-/* slut: rund kun højre, flad mod venstre + slutter i venstre halvdel */
-.pillEnd {
-  margin-left: calc(-1 * var(--gap) / 2);
-  margin-right: calc(50% - var(--gap) / 2);
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-}
-
-.label {
+  justify-content: center;
+  color: #fff;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  pointer-events: none;
+  /* “airbnb-like” slight shadow */
+  box-shadow: 0 1px 0 rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.08);
 }
 
-/* footer */
+.barLabel {
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
 .loading {
-  margin-top: 8px;
-  font-size: 12px;
-  color: var(--muted);
+  margin-top: 6px;
+  font-size: 13px;
+  color: #777;
 }

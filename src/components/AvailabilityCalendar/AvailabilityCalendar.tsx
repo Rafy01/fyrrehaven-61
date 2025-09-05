@@ -1,268 +1,275 @@
-import React from "react";
+import * as React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
 
 /* ---------------- Types ---------------- */
+
 type ApiEvent = {
   id: string;
   title: string;
-  description?: string;
-  location?: string;
   start: string; // ISO
   end: string; // ISO
   allDay?: boolean;
 };
 
 type ApiPayload =
-  | { ok: true; updatedAt?: string; count?: number; events: ApiEvent[] }
+  | { ok: true; events: ApiEvent[]; updatedAt?: string }
   | { ok: false; error: string };
 
 type Booking = {
   id: string;
-  start: Date; // check-in
-  end: Date; // check-out (exclusive)
+  startDay: Date; // local midnight of check-in day
+  endDay: Date; // local midnight of check-out day (same as calendar “date”)
 };
 
-type PieceKind = "start" | "mid" | "end" | "full";
-type Piece = {
-  key: string;
-  row: number; // 0..5 (6 uger)
-  colStart: number; // 1..7 (grid column)
-  colEnd: number; // 2..8
-  kind: PieceKind;
-  lane: number; // stakning inden for samme uge
-  showLabel: boolean;
-};
+/* ---------------- Date helpers ---------------- */
 
-/* -------------- Helpers: dates -------------- */
-// klippe tider til “dato”-logik i lokal tid
-const dayStart = (d: Date) =>
-  new Date(d.getFullYear(), d.getMonth(), d.getDate());
-const addDays = (d: Date, n: number) =>
-  new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
-const diffDays = (a: Date, b: Date) =>
-  Math.round((dayStart(b).getTime() - dayStart(a).getTime()) / 86400000);
+const MS = 24 * 60 * 60 * 1000;
 
-function gridBase(y: number, m: number) {
-  // startdato for 6x7 gitteret (mandag som første dag)
-  const first = new Date(y, m - 1, 1);
-  const wd = first.getDay() || 7; // 1..7
-  const delta = wd - 1; // hvor mange tilbage til mandag
-  return addDays(first, -delta);
+function atMidnightLocal(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
 }
 
-/* --------- Heuristik: vælg kun “booking” events --------- */
-const POSITIVE = [
-  "airbnb",
-  "campaya",
-  "dancenter",
-  "sol og strand",
-  "udlejning",
-  "booking",
-  "privat",
-  "guest",
-  "reserved",
-];
-const NEGATIVE = [
-  "rengøring",
-  "clean",
-  "møde",
-  "meeting",
-  "fotograf",
-  "deliver",
-  "generalforsamling",
-];
+function addDays(d: Date, n: number): Date {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
 
-function looksLikeBooking(ev: ApiEvent): boolean {
-  const t = (ev.title || "").toLowerCase();
-  if (NEGATIVE.some((k) => t.includes(k))) return false;
-  if (POSITIVE.some((k) => t.includes(k))) return true;
+function daysDiff(a: Date, b: Date): number {
+  // whole-day difference: a - b
+  return Math.round(
+    (atMidnightLocal(a).getTime() - atMidnightLocal(b).getTime()) / MS
+  );
+}
 
-  // fallback: events der starter sen eftermiddag og slutter næste formiddag
-  try {
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function firstMondayOnOrBefore(d: Date): Date {
+  const x = atMidnightLocal(d);
+  const dow = (x.getDay() + 6) % 7; // 0..6 (Mon=0)
+  return addDays(x, -dow);
+}
+
+/* ---------------- API → bookings ---------------- */
+
+function isLikelyStay(ev: ApiEvent): boolean {
+  // Heuristics: real stays are multi-day (>= 18h) and not allDay placeholders.
+  const dur = new Date(ev.end).getTime() - new Date(ev.start).getTime();
+  if (ev.allDay) return false;
+  if (dur < 18 * 60 * 60 * 1000) return false;
+  return true;
+}
+
+/** Normalize events into “bookings” (check-in day → check-out day). */
+function toBookings(payload: ApiPayload): Booking[] {
+  if (!("ok" in payload) || !payload.ok) return [];
+  const events = payload.events || [];
+
+  const stays = events.filter(isLikelyStay);
+
+  const out: Booking[] = [];
+  for (const ev of stays) {
     const s = new Date(ev.start);
     const e = new Date(ev.end);
-    const hoursS = s.getHours(),
-      hoursE = e.getHours();
-    const span = (e.getTime() - s.getTime()) / 36e5;
-    if (span >= 12 && hoursS >= 14 && hoursE <= 12) return true;
-  } catch { /* empty */ }
-  return false;
-}
 
-/* --------- API payload → bookings --------- */
-function payloadToBookings(payload: ApiPayload): Booking[] {
-  if (!("ok" in payload) || !payload.ok) return [];
-  const xs = payload.events ?? [];
-  const kept = xs.filter(looksLikeBooking);
+    // Calendar uses whole days; keep local dates.
+    const startDay = atMidnightLocal(s);
+    const endDay = atMidnightLocal(e);
 
-  const bookings: Booking[] = [];
-  for (const ev of kept) {
-    try {
-      const s = new Date(ev.start);
-      const e = new Date(ev.end);
-      if (isNaN(+s) || isNaN(+e)) continue;
-      if (e <= s) continue;
+    // Guard: ignore nonsense
+    if (endDay.getTime() <= startDay.getTime()) continue;
 
-      // Nogle feeds giver allDay-reservationer → normaliser til døgn
-      const start = new Date(s);
-      const end = new Date(e);
-
-      bookings.push({ id: ev.id, start, end });
-    } catch { /* empty */ }
+    out.push({ id: ev.id, startDay, endDay });
   }
-  return bookings;
+  // Sort by start
+  out.sort((a, b) => a.startDay.getTime() - b.startDay.getTime());
+  return out;
 }
 
-/* --------- Booking → “stykker” hen over månedens gitter --------- */
-function piecesForMonth(bookings: Booking[], y: number, m: number): Piece[] {
-  // gitterdatoer (6 uger)
-  const base = gridBase(y, m);
-  const gridStart = dayStart(base);
-  const gridEnd = addDays(gridStart, 42);
+/* ---------------- Lay out bars per week (lanes) ---------------- */
 
-  // per uge
-  const pieces: Piece[] = [];
+type WeekSeg = {
+  id: string;
+  // columns are 1..7 within the week grid; endCol is exclusive like CSS grid
+  startCol: number;
+  endCol: number;
+  halfLeft: boolean; // draw from middle of first cell (check-in)
+  halfRight: boolean; // end in middle of last cell (check-out)
+  lane: number; // vertical lane within the week (0,1,2…)
+};
+
+function segmentsForWeek(
+  weekStart: Date,
+  weekEndExclusive: Date,
+  bookings: Booking[]
+): WeekSeg[] {
+  // Find bookings intersecting [weekStart, weekEnd)
+  const segs: Omit<WeekSeg, "lane">[] = [];
 
   for (const b of bookings) {
-    // klip til gitterets periode
-    const Bstart = new Date(
-      Math.max(dayStart(b.start).getTime(), gridStart.getTime())
+    // Booking visually spans from startDay (half-left) to endDay (half-right)
+    // Intersect with week
+    const segStart = new Date(
+      Math.max(b.startDay.getTime(), weekStart.getTime())
     );
-    const Bend = new Date(
-      Math.min(dayStart(b.end).getTime(), gridEnd.getTime())
+    const segEndExclusive = new Date(
+      Math.min(b.endDay.getTime(), weekEndExclusive.getTime())
     );
 
-    if (Bend <= Bstart) continue;
+    if (segEndExclusive.getTime() <= segStart.getTime()) continue;
 
-    // gennem 6 uger
-    for (let row = 0; row < 6; row++) {
-      const rowStart = addDays(gridStart, row * 7);
-      const rowEnd = addDays(rowStart, 7);
+    const startCol = 1 + daysDiff(segStart, weekStart);
+    const endCol = 1 + daysDiff(segEndExclusive, weekStart); // exclusive
 
-      // skæringsmængde
-      const a = new Date(Math.max(Bstart.getTime(), rowStart.getTime()));
-      const bEnd = new Date(Math.min(Bend.getTime(), rowEnd.getTime()));
-      if (bEnd <= a) continue;
+    const halfLeft = isSameDay(segStart, b.startDay) && segStart >= weekStart;
+    const halfRight =
+      isSameDay(addDays(segEndExclusive, -1), addDays(b.endDay, -1)) &&
+      segEndExclusive <= weekEndExclusive;
 
-      const colStart = diffDays(rowStart, a) + 1; // 1..7
-      const colEnd = diffDays(rowStart, bEnd) + 1; // 2..8 (exclusive)
-
-      // bestemme “kind”
-      const touchesStart = a.getTime() === dayStart(b.start).getTime();
-      const touchesEnd = bEnd.getTime() === dayStart(b.end).getTime();
-      let kind: PieceKind;
-      if (!touchesStart && !touchesEnd && colStart === 1 && colEnd === 8)
-        kind = "full";
-      else if (touchesStart && !touchesEnd) kind = "start";
-      else if (!touchesStart && touchesEnd) kind = "end";
-      else if (touchesStart && touchesEnd) {
-        // hele booking ligger inde i denne uge – brug 'mid' men vi flader enderne
-        kind = "mid";
-      } else {
-        kind = "mid";
-      }
-
-      pieces.push({
-        key: `${b.id}-${row}-${colStart}-${colEnd}`,
-        row,
-        colStart,
-        colEnd,
-        kind,
-        lane: 0, // lanes tilføjes senere
-        showLabel: touchesStart, // label kun hvor booking starter (indenfor gitteret)
-      });
-    }
+    segs.push({
+      id: b.id,
+      startCol: Math.max(1, startCol),
+      endCol: Math.min(8, endCol),
+      halfLeft,
+      halfRight,
+    });
   }
 
-  // Lanes pr. uge: simple kollisionsdetektion
-  for (let row = 0; row < 6; row++) {
-    const inRow = pieces
-      .filter((p) => p.row === row)
-      .sort((a, b) => a.colStart - b.colStart);
-    const lanes: number[] = []; // sidste colEnd for lane i
-    for (const p of inRow) {
-      let lane = 0;
-      while (lane < lanes.length && p.colStart <= lanes[lane]) lane++;
-      p.lane = lane;
-      lanes[lane] = p.colEnd - 0.001; // lidt overlap-bias
-    }
-  }
+  // Assign lanes greedily to avoid vertical overlap.
+  const lanesEnd: number[] = []; // per lane, the last occupied column (exclusive)
+  const withLanes: WeekSeg[] = [];
 
-  return pieces;
+  // Sort by startCol, then width
+  segs.sort((a, b) => a.startCol - b.startCol || b.endCol - a.endCol);
+
+  for (const s of segs) {
+    let lane = 0;
+    for (; lane < lanesEnd.length; lane++) {
+      if (s.startCol >= lanesEnd[lane]) break;
+    }
+    if (lane === lanesEnd.length) lanesEnd.push(s.endCol);
+    else lanesEnd[lane] = s.endCol;
+
+    withLanes.push({ ...s, lane });
+  }
+  return withLanes;
 }
 
 /* ---------------- Component ---------------- */
-type Props = { lang: Lang };
 
-export default function AvailabilityCalendar({ lang }: Props) {
+type Props = {
+  lang: Lang;
+  /** Override API endpoint if needed. Defaults to "/api/ical". */
+  api?: string;
+};
+
+export default function AvailabilityCalendar({
+  lang,
+  api = "/api/ical",
+}: Props) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
-  const today = new Date();
-  const [ym, setYm] = React.useState<{ y: number; m: number }>(() => ({
-    y: today.getFullYear(),
-    m: today.getMonth() + 1, // 1..12
-  }));
-  const [loading, setLoading] = React.useState(false);
-  const [bookings, setBookings] = React.useState<Booking[]>([]);
+  const [ym, setYm] = React.useState(() => {
+    const now = new Date();
+    return { y: now.getFullYear(), m: now.getMonth() + 1 }; // 1..12
+  });
 
-  // hent én gang (hele feedet)
+  const [bookings, setBookings] = React.useState<Booking[] | null>(null);
+  const [loading, setLoading] = React.useState<boolean>(false);
+
   React.useEffect(() => {
-    let cancelled = false;
+    let alive = true;
     (async () => {
       setLoading(true);
       try {
-        const res = await fetch("/api/ical");
-        const json: ApiPayload = await res.json();
-        if (!cancelled) setBookings(payloadToBookings(json));
+        const res = await fetch(api);
+        const json = (await res.json()) as ApiPayload;
+        if (alive) {
+          setBookings(toBookings(json));
+        }
       } catch {
-        if (!cancelled) setBookings([]);
+        if (alive) {
+          setBookings([]);
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (alive) {
+          setLoading(false);
+        }
       }
     })();
     return () => {
-      cancelled = true;
+      alive = false;
     };
-  }, []);
+  }, [api]);
 
-  const { y, m } = ym;
-  const monthName = new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(y, m - 1, 1));
+  // Build a 5-week (35 cells) grid for the chosen month
+  const { title, weeks, weekRows } = React.useMemo(() => {
+    const monthStart = atMidnightLocal(new Date(ym.y, ym.m - 1, 1));
+    const monthName = monthStart.toLocaleDateString(
+      lang === "da" ? "da-DK" : "en-GB",
+      {
+        month: "long",
+        year: "numeric",
+      }
+    );
+    const gridStart = firstMondayOnOrBefore(monthStart);
+    const days: Date[] = Array.from({ length: 35 }, (_, i) =>
+      addDays(gridStart, i)
+    );
 
-  const base = gridBase(y, m);
-  const cells = Array.from({ length: 42 }, (_, i) => addDays(base, i));
-  const weekdayLabels =
-    lang === "da"
-      ? ["Man.", "Tir.", "Ons.", "Tor.", "Fre.", "Lør.", "Søn."]
-      : ["Mon.", "Tue.", "Wed.", "Thu.", "Fri.", "Sat.", "Sun."];
+    const weeksMeta = Array.from({ length: 5 }, (_, w) => ({
+      start: addDays(gridStart, w * 7),
+      endExclusive: addDays(gridStart, w * 7 + 7),
+    }));
 
-  const pcs = piecesForMonth(bookings, y, m);
+    return { title: monthName, weeks: days, weekRows: weeksMeta };
+  }, [ym, lang]);
+
+  const today = atMidnightLocal(new Date());
 
   function prevMonth() {
-    setYm(({ y, m }) => (m === 1 ? { y: y - 1, m: 12 } : { y, m: m - 1 }));
+    setYm(({ y, m }) => {
+      const d = new Date(y, m - 2, 1);
+      return { y: d.getFullYear(), m: d.getMonth() + 1 };
+    });
   }
   function nextMonth() {
-    setYm(({ y, m }) => (m === 12 ? { y: y + 1, m: 1 } : { y, m: m + 1 }));
+    setYm(({ y, m }) => {
+      const d = new Date(y, m, 1);
+      return { y: d.getFullYear(), m: d.getMonth() + 1 };
+    });
   }
+
+  // Pre-compute week segments
+  const allSegs = React.useMemo(() => {
+    if (!bookings) return [] as WeekSeg[][];
+    return weekRows.map((w) =>
+      segmentsForWeek(w.start, w.endExclusive, bookings)
+    );
+  }, [bookings, weekRows]);
 
   return (
     <div className={styles.wrap}>
       <div className={styles.head}>
         <button
-          className={styles.navBtn}
+          className={styles.nav}
           onClick={prevMonth}
           aria-label={t("Forrige måned", "Previous month")}
         >
           ‹
         </button>
-        <div className={styles.title}>
-          {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
-        </div>
+        <div className={styles.month}>{title}</div>
         <button
-          className={styles.navBtn}
+          className={styles.nav}
           onClick={nextMonth}
           aria-label={t("Næste måned", "Next month")}
         >
@@ -270,77 +277,92 @@ export default function AvailabilityCalendar({ lang }: Props) {
         </button>
       </div>
 
-      <div
-        className={styles.grid}
-        style={{ "--gap": "10px" } as React.CSSProperties}
-      >
-        {weekdayLabels.map((w) => (
-          <div key={w} className={styles.wd}>
-            {w}
+      <div className={styles.dow}>
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((s, i) => (
+          <div key={i} className={styles.dowCell}>
+            {lang === "da"
+              ? ["Man.", "Tir.", "Ons.", "Tor.", "Fre.", "Lør.", "Søn."][i]
+              : s}
           </div>
         ))}
-        {cells.map((d) => {
-          const inMonth = d.getMonth() + 1 === m;
-          const isToday =
-            d.getFullYear() === today.getFullYear() &&
-            d.getMonth() === today.getMonth() &&
-            d.getDate() === today.getDate();
-          return (
-            <div
-              key={d.toISOString()}
-              className={[
-                styles.cell,
-                inMonth ? "" : styles.dim,
-                isToday ? styles.today : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              <span className={styles.date}>{d.getDate()}</span>
-            </div>
-          );
-        })}
-
-        {/* overlay til “pills” */}
-        <div className={styles.overlay}>
-          {pcs.map((p) => {
-            const span = p.colEnd - p.colStart;
-            const cls = [
-              styles.pill,
-              span > 1 && (p.kind === "mid" || p.kind === "full")
-                ? styles.pillBridge
-                : "",
-              p.kind === "start" ? styles.pillStart : "",
-              p.kind === "end" ? styles.pillEnd : "",
-            ]
-              .filter(Boolean)
-              .join(" ");
-            return (
-              <div
-                key={p.key}
-                className={cls}
-                style={{
-                  gridRow: p.row + 3, // +2 for ugedage + 1 fordi gridRow starter fra 1
-                  gridColumn: `${p.colStart} / ${p.colEnd}`,
-                  marginTop: `calc(6px + ${p.lane} * 30px)`,
-                }}
-                aria-label={t("Reserveret", "Reserved")}
-                title={t("Reserveret", "Reserved")}
-              >
-                {p.showLabel && (
-                  <span className={styles.label}>
-                    {t("Reserveret", "Reserved")}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
       </div>
+
+      {/* Five week rows */}
+      {[0, 1, 2, 3, 4].map((wIdx) => {
+        const rowDays = weeks.slice(wIdx * 7, wIdx * 7 + 7);
+        const segs = allSegs[wIdx] || [];
+        return (
+          <div key={wIdx} className={styles.weekRow}>
+            {/* grid of day cells */}
+            {rowDays.map((d, i) => {
+              const inMonth = d.getMonth() + 1 === ym.m;
+              const isTodayFlag = isSameDay(d, today);
+              return (
+                <div
+                  key={i}
+                  className={styles.cell}
+                  data-dim={!inMonth ? "1" : undefined}
+                >
+                  <div className={styles.dayN}>
+                    {d.getDate()}
+                    {isTodayFlag && (
+                      <span className={styles.todayDot} aria-hidden="true" />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* overlay bars */}
+            <div className={styles.overlay}>
+              {segs.map((s) => {
+                // CSS grid columns: start / end
+                const style: React.CSSProperties = {
+                  gridColumn: `${s.startCol} / ${s.endCol}`,
+                  transform: `translateY(calc(var(--lane-gap) * ${s.lane}))`,
+                  // Use clip-path to create half caps when start/stop falls inside this week
+                  clipPath: clipForSeg(s),
+                };
+                return (
+                  <div
+                    key={`${s.id}-${s.startCol}-${s.endCol}-${s.lane}`}
+                    className={styles.bar}
+                    style={style}
+                  >
+                    <span className={styles.barLabel}>
+                      {lang === "da" ? "Reserveret" : "Reserved"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
 
       {loading && (
         <div className={styles.loading}>{t("Indlæser…", "Loading…")}</div>
       )}
     </div>
   );
+}
+
+/** Half-cap logic via clip-path */
+function clipForSeg(s: {
+  startCol: number;
+  endCol: number;
+  halfLeft: boolean;
+  halfRight: boolean;
+}): string | undefined {
+  // full width
+  if (!s.halfLeft && !s.halfRight) return undefined;
+
+  // inset(top right bottom left)
+  if (s.halfLeft && s.halfRight) {
+    // one-day stay entirely inside the week → show “half on both sides”
+    return "inset(0 50% 0 50%)";
+  }
+  if (s.halfLeft) return "inset(0 0 0 50%)";
+  if (s.halfRight) return "inset(0 50% 0 0)";
+  return undefined;
 }
