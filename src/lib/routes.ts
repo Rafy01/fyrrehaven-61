@@ -26,7 +26,7 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   },
   faq: { da: "ofte-stillede-sporgsmal", en: "faq" },
   contact: { da: "kontakt", en: "contact" },
-  book: { da: "book", en: "book" },
+  book: { da: "booking", en: "book" },
   cookies: { da: "cookies", en: "cookies" },
   fees: { da: "Gebyrer", en: "Fees" },
   chat: { da: "chat-ukendte-sporgsmal", en: "chat-unknown-questions" },
