@@ -1,11 +1,14 @@
 .wrap {
   --gap: 10px;
   --cell-h: 74px;
-  --pill: #1e1e1e;
+  --pill: #1f1f1f;
   --ink-muted: #80848a;
 }
 
-.bar { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px; }
+.bar {
+  display:flex; align-items:center; justify-content:center; gap:12px;
+  margin-bottom: 8px;
+}
 .title { font-weight:600; }
 .nav {
   appearance:none; border:0; background:#eee; border-radius:8px;
@@ -14,58 +17,87 @@
 .nav:hover { background:#e3e3e3; }
 
 .dowGrid {
-  display:grid; grid-template-columns: repeat(7, 1fr);
-  gap: var(--gap); margin-bottom:6px;
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--gap);
+  margin-bottom: 6px;
 }
-.dow { text-align:center; font-size:12px; color: var(--ink-muted); }
+.dow {
+  text-align:center;
+  font-size:12px;
+  color: var(--ink-muted);
+}
 
-.cellsWrap { position: relative; }
+.cellsWrap {
+  position: relative;
+}
 
 .cellsGrid {
-  display:grid; grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: var(--cell-h); gap: var(--gap);
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--cell-h);
+  gap: var(--gap);
 }
 .cell {
   position: relative;
-  background:#fff; border:1px solid #eee; border-radius:12px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.02);
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02);
 }
-.cell.dim { opacity:.5; }
-.day { position:absolute; top:6px; left:8px; font-size:12px; }
+.cell.dim { opacity: .5; }
+.day {
+  position:absolute; top:6px; left:8px; font-size:12px;
+}
 
+/* Overlay lag til piller – samme gitter som cellerne (6 rækker) */
 .eventsGrid {
   pointer-events:none;
   position:absolute; inset:0;
-  display:grid; grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: var(--cell-h); gap: var(--gap);
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--cell-h);
+  gap: var(--gap);
 }
 
-/* piller */
+/* Segment placeres som grid item; selve pillen er et indre element */
+.seg { position: relative; }
+
 .pill {
   position:absolute;
-  left:0; right:0; top:10px;
-  height:36px; background: var(--pill); color:#fff;
+  left:0; right:0; top:10px; /* lidt nede, så dagsnummer kan ses */
+  height: 36px;
+  background: var(--pill);
+  color: #fff;
   display:flex; align-items:center;
-  border-radius:999px; padding:0 14px 0 12px;
+  border-radius: 999px;
+  padding: 0 14px 0 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,.15);
 }
 
-/* halv bredde i kanten */
-.pill.pillStart { margin-left:50%; }
-.pill.pillEnd   { margin-right:50%; }
+/* Check-in dag: start i “slutningen” af cellen */
+.pillStart { margin-left: 50%; }
+.pillEnd   { margin-right: 50%; }
+/* midte-segmenter fjerner ikke radius i enderne */
+.pillMid {}
+
+/* Hvis ikke første/ikke sidste – firkantede ender mod nabosegmenter */
+[data-first="0"] { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+[data-last="0"]  { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
 
 .avatar {
-  width:24px; height:24px; border-radius:999px;
-  background:#2b2b2b; display:inline-flex; align-items:center; justify-content:center;
-  font-size:12px; text-transform:lowercase; margin-right:8px;
-  border:2px solid rgba(255,255,255,.25);
+  width: 24px; height: 24px; border-radius: 999px;
+  background: #2b2b2b; display:inline-flex; align-items:center; justify-content:center;
+  font-size: 12px; text-transform: lowercase;
+  border: 2px solid rgba(255,255,255,.25);
+  margin-right: 8px;
 }
-.label { font-weight:600; font-size:14px; }
+.label { font-weight: 600; font-size: 14px; }
 
 .note { margin-top:8px; font-size:14px; color:#666; }
 .err  { margin-top:8px; font-size:14px; color:#b00020; }
 
 @media (max-width: 640px) {
   .cellsGrid, .eventsGrid { --cell-h: 64px; }
-  .pill { height:32px; }
+  .pill { height: 32px; }
 }
