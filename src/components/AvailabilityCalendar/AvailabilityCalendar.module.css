@@ -475,7 +475,6 @@
 }
 .selBar {
   align-self: center;
-  margin-left: 30px;
   height: 28px;
   /* --gold-500 */
   background: var(--gold-500);
