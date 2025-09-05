@@ -2,335 +2,340 @@ import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
 
-/* ---------- typer ---------- */
-
+/* ─── Types ─── */
 type ApiEvent = {
   id: string;
   title: string;
-  description?: string;
-  location?: string;
-  start: string; // ISO
-  end: string; // ISO
-  allDay?: boolean;
-  status?: string;
-  transp?: string;
+  description: string;
+  location: string;
+  start: string;
+  end: string;
+  allDay: boolean;
+  status: string;
+  transp: string;
 };
-type ApiResponse = {
-  ok: boolean;
-  updatedAt: string;
-  count?: number;
-  events: ApiEvent[];
-};
+type ApiResponse =
+  | { ok: true; updatedAt?: string; count?: number; events: ApiEvent[] }
+  | { ok: false; error: string; detail?: string };
 
 type Booking = {
   id: string;
-  start: Date; // faktisk tid
-  end: Date; // faktisk tid
-  startDay: Date; // kl. 00 lokal
-  endDay: Date; // kl. 00 lokal (udtjek-dag)
+  startDay: Date; // local midnight (check-in day)
+  endDay: Date; // local midnight (check-out day, exclusive)
 };
 
-type Slice = {
+type Segment = {
   id: string;
-  startCol: number; // 0..6
-  spanDays: number; // antal nætter i denne uge-del
-  nibbleRight: boolean; // om baren skal nikke ind i udtjek-dag
+  row: number; // 0..4
+  colStart: number; // 1..7
+  colEnd: number; // 2..8 (8 = end-of-week)
+  isFirst: boolean;
+  isLast: boolean;
+  labelHere: boolean;
 };
 
-/* ---------- utils ---------- */
+type Props = {
+  lang: Lang;
+  apiPath?: string; // default "/api/ical"
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Sun .. 6=Sat
+};
 
-const DAY = 24 * 60 * 60 * 1000;
-
-function atMidnightLocal(d: Date): Date {
+/* ─── Date utils ─── */
+function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function diffDays(a: Date, b: Date): number {
-  const aa = atMidnightLocal(a).getTime();
-  const bb = atMidnightLocal(b).getTime();
-  return Math.round((aa - bb) / DAY);
 }
 function addDays(d: Date, n: number): Date {
   const x = new Date(d);
   x.setDate(x.getDate() + n);
   return x;
 }
-function mondayOfWeek(d: Date): Date {
-  const wd = (d.getDay() + 6) % 7; // man=0
-  return addDays(atMidnightLocal(d), -wd);
+function daysBetween(a: Date, b: Date): number {
+  const ms = startOfDay(b).getTime() - startOfDay(a).getTime();
+  return Math.round(ms / 86400000);
 }
-function clamp(n: number, lo: number, hi: number) {
-  return Math.max(lo, Math.min(hi, n));
+function startOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
 }
-function monthLabel(lang: Lang, d: Date): string {
+function clampDate(x: Date, lo: Date, hi: Date): Date {
+  if (x < lo) return lo;
+  if (x > hi) return hi;
+  return x;
+}
+function startOfWeek(d: Date, weekStartsOn: number): Date {
+  const sd = startOfDay(d);
+  const w = sd.getDay(); // 0..6, 0=Sun
+  const diff = (w - weekStartsOn + 7) % 7;
+  return addDays(sd, -diff);
+}
+function formatMonthTitle(d: Date, lang: Lang): string {
   return d.toLocaleDateString(lang === "da" ? "da-DK" : "en-GB", {
     month: "long",
     year: "numeric",
   });
 }
-function dowNames(lang: Lang): string[] {
-  const base = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const da = ["Man", "Tir", "Ons", "Tor", "Fre", "Lør", "Søn"];
-  return lang === "da" ? da : base;
+
+/* ─── API → bookings ─── */
+function looksLikeBooking(ev: ApiEvent): boolean {
+  const t = ev.title.toLowerCase();
+
+  const positive =
+    t.includes("airbnb") ||
+    t.includes("dancenter") ||
+    t.includes("campaya") ||
+    t.includes("sol og strand") ||
+    t.includes("udlejning") ||
+    t.includes("privat") ||
+    t.includes("reserved") ||
+    t.includes("not available");
+
+  if (!positive) return false;
+
+  const start = new Date(ev.start);
+  const end = new Date(ev.end);
+  const durMs = end.getTime() - start.getTime();
+
+  if (!ev.allDay && durMs < 20 * 3600 * 1000) return false; // short meeting
+
+  const neg =
+    t.includes("rengøring") ||
+    t.includes("rengoring") ||
+    t.includes("møde") ||
+    t.includes("meeting") ||
+    t.includes("fotograf") ||
+    t.includes("levering");
+
+  return !neg;
 }
-
-/* ---------- API → bookings (nætter) ---------- */
-
-function normalizeBookings(payload: ApiResponse): Booking[] {
-  const now = new Date();
-  const result: Booking[] = [];
-
-  for (const e of payload.events) {
-    const s = new Date(e.start);
-    const t = new Date(e.end);
-
-    // vis kun kommende eller igangværende
-    if (t.getTime() < now.getTime()) continue;
-
-    const sDay = atMidnightLocal(s);
-    const eDay = atMidnightLocal(t); // udtjek-dag kl 00
-    const nights = diffDays(eDay, sDay);
-    if (nights <= 0) continue;
-
-    result.push({
-      id: e.id,
-      start: s,
-      end: t,
-      startDay: sDay,
-      endDay: eDay, // udtjek-dag (bar slutter dagen før)
-    });
+function toBooking(ev: ApiEvent): Booking {
+  const s = startOfDay(new Date(ev.start));
+  const e = startOfDay(new Date(ev.end)); // exclusive
+  return { id: ev.id, startDay: s, endDay: e };
+}
+function normalizeBookingsFromApi(payload: ApiResponse): Booking[] {
+  if (!("ok" in payload) || !payload.ok) return [];
+  const bs: Booking[] = [];
+  for (const ev of payload.events ?? []) {
+    if (!looksLikeBooking(ev)) continue;
+    const b = toBooking(ev);
+    if (b.endDay > b.startDay) bs.push(b);
   }
-
-  // sortér efter start
-  result.sort((a, b) => a.start.getTime() - b.start.getTime());
-  return result;
+  bs.sort((a, b) => a.startDay.getTime() - b.startDay.getTime());
+  return bs;
 }
 
-/* ---------- komponent ---------- */
+/* ─── Segments ─── */
+function splitIntoSegments(
+  b: Booking,
+  gridStart: Date,
+  weeks: number
+): Segment[] {
+  const gridEnd = addDays(gridStart, weeks * 7); // exclusive
+  const visStart = clampDate(b.startDay, gridStart, gridEnd);
+  const visEnd = clampDate(b.endDay, gridStart, gridEnd);
+  if (visStart >= visEnd) return [];
 
-type Props = { lang: Lang };
+  const firstIx = daysBetween(gridStart, visStart);
+  const lastIxEx = daysBetween(gridStart, visEnd);
 
-export default function AvailabilityCalendar({ lang }: Props) {
-  const today = new Date();
-  const [cursor, setCursor] = React.useState<Date>(
-    new Date(today.getFullYear(), today.getMonth(), 1)
+  const segs: Segment[] = [];
+  let cursor = firstIx;
+
+  const endColLine = (ixEx: number): number => {
+    const mod = ixEx % 7;
+    return mod === 0 ? 8 : mod + 1;
+  };
+
+  while (cursor < lastIxEx) {
+    const row = Math.floor(cursor / 7); // 0..4
+    const rowEndEx = (row + 1) * 7;
+
+    const segStartIx = cursor;
+    const segEndIx = Math.min(lastIxEx, rowEndEx);
+
+    segs.push({
+      id: `${b.id}:${row}:${segStartIx}-${segEndIx}`,
+      row,
+      colStart: (segStartIx % 7) + 1,
+      colEnd: endColLine(segEndIx),
+      isFirst: segStartIx === firstIx,
+      isLast: segEndIx === lastIxEx,
+      labelHere: segStartIx === firstIx,
+    });
+
+    cursor = segEndIx;
+  }
+  return segs;
+}
+
+/* ─── Component ─── */
+export default function AvailabilityCalendar({
+  lang,
+  apiPath = "/api/ical",
+  weekStartsOn = 1, // Monday
+}: Props) {
+  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const today = startOfDay(new Date());
+  const minMonth = startOfMonth(today);
+
+  const WEEKS = 5;
+
+  const [monthBase, setMonthBase] = React.useState<Date>(minMonth);
+  const gridStart = React.useMemo(
+    () => startOfWeek(startOfMonth(monthBase), weekStartsOn),
+    [monthBase, weekStartsOn]
   );
-  const [bookings, setBookings] = React.useState<Booking[]>([]);
-  const [loading, setLoading] = React.useState<boolean>(true);
 
-  // hent ical-api
+  const [bookings, setBookings] = React.useState<Booking[] | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     let alive = true;
+    const ctrl = new AbortController();
+
     (async () => {
+      setError(null);
       try {
-        setLoading(true);
-        const res = await fetch("/api/ical");
+        const res = await fetch(apiPath, { signal: ctrl.signal });
+        if (!res.ok) throw new Error(res.statusText);
         const json = (await res.json()) as ApiResponse;
+
+        const all = normalizeBookingsFromApi(json);
+        const filtered = all.filter((b) => b.endDay >= today);
         if (!alive) return;
-        setBookings(normalizeBookings(json));
-      } catch {
-        if (alive) setBookings([]);
-      } finally {
-        if (alive) setLoading(false);
+        setBookings(filtered);
+      } catch (e) {
+        if (!alive) return;
+        setError((e as Error).message || "Fetch error");
+        setBookings([]);
       }
     })();
+
     return () => {
       alive = false;
+      ctrl.abort();
     };
-  }, []);
+  }, [apiPath, today]);
 
-  /* --- grid med præcis 5 uger (35 dage) fra månedens mandag --- */
-
-  const firstOfMonth = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-  const monthStartMonday = mondayOfWeek(firstOfMonth);
-  const weeks: Date[][] = [];
-  for (let w = 0; w < 5; w++) {
-    const row: Date[] = [];
-    for (let d = 0; d < 7; d++) row.push(addDays(monthStartMonday, w * 7 + d));
-    weeks.push(row);
-  }
-
-  // Disable tilbage-knap når cursor er før denne måned
-  const minMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const canGoPrev = cursor.getTime() > minMonth.getTime();
+  const canPrev = React.useMemo(() => {
+    return startOfMonth(monthBase).getTime() > startOfMonth(minMonth).getTime();
+  }, [monthBase, minMonth]);
 
   function prevMonth() {
-    if (!canGoPrev) return;
-    setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
+    if (!canPrev) return;
+    setMonthBase((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
   }
   function nextMonth() {
-    setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
+    setMonthBase((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
   }
 
-  /* --- slices pr. uge --- */
+  // cells (5 weeks)
+  const cells = React.useMemo(() => {
+    const arr: Date[] = [];
+    for (let i = 0; i < WEEKS * 7; i++) arr.push(addDays(gridStart, i));
+    return arr;
+  }, [gridStart]);
 
-  function slicesForWeek(rowStart: Date): Slice[] {
-    const rowEnd = addDays(rowStart, 6); // sidste dag i ugen
-    const out: Slice[] = [];
+  // segments
+  const segments = React.useMemo(() => {
+    if (!bookings) return [];
+    const segs: Segment[] = [];
+    for (const b of bookings)
+      segs.push(...splitIntoSegments(b, gridStart, WEEKS));
+    return segs;
+  }, [bookings, gridStart]);
 
-    for (const b of bookings) {
-      // bar dækker nætter: startDay .. endDay-1
-      const sliceStart = new Date(
-        Math.max(atMidnightLocal(b.startDay).getTime(), rowStart.getTime())
-      );
-      const sliceEnd = new Date(
-        Math.min(addDays(b.endDay, -1).getTime(), rowEnd.getTime())
-      );
+  const monthTitle = formatMonthTitle(monthBase, lang);
+  const reservedLabel = t("Reserveret", "Reserved");
 
-      if (sliceEnd < sliceStart) continue;
-
-      const startCol = clamp(diffDays(sliceStart, rowStart), 0, 6);
-      const spanDays = diffDays(addDays(sliceEnd, 1), sliceStart); // inkl sidste
-      const isLastWeekOfBooking =
-        sliceEnd.getTime() === addDays(b.endDay, -1).getTime();
-
-      out.push({
-        id: b.id,
-        startCol,
-        spanDays,
-        nibbleRight: isLastWeekOfBooking,
-      });
-    }
-
-    // simple lane-pakning hvis flere overlapper
-    out.sort((a, b) => a.startCol - b.startCol);
-    return out;
-  }
-
-  /* --- render --- */
+  // Weekday labels rotated from Sun..Sat base
+  const WD_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const WD_DA = ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"];
+  const wd = (lang === "da" ? WD_DA : WD_EN)
+    .slice(weekStartsOn)
+    .concat((lang === "da" ? WD_DA : WD_EN).slice(0, weekStartsOn));
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.header}>
+      <div className={styles.head}>
         <button
+          type="button"
           className={styles.navBtn}
           onClick={prevMonth}
-          disabled={!canGoPrev}
-          aria-label="Forrige måned"
-          title="Forrige måned"
+          disabled={!canPrev}
+          aria-label={t("Forrige måned", "Previous month")}
         >
           ‹
         </button>
-        <div className={styles.monthTitle}>{monthLabel(lang, cursor)}</div>
+        <div className={styles.month}>{monthTitle}</div>
         <button
+          type="button"
           className={styles.navBtn}
           onClick={nextMonth}
-          aria-label="Næste måned"
-          title="Næste måned"
+          aria-label={t("Næste måned", "Next month")}
         >
           ›
         </button>
       </div>
 
-      <div className={styles.grid}>
-        {dowNames(lang).map((d, i) => (
-          <div key={i} className={styles.dow}>
-            {d}
+      <div
+        className={styles.grid}
+        style={
+          {
+            ["--weeks"]: WEEKS,
+          } as React.CSSProperties & Record<string, number>
+        }
+      >
+        {/* Weekday header row */}
+        {wd.map((label) => (
+          <div key={label} className={styles.weekday}>
+            {label}
           </div>
         ))}
 
-        {weeks.map((row, wi) => {
-          const weekStart = row[0];
-          const weekSlices = slicesForWeek(weekStart);
-
-          // Hvor mange “baner” behøves (meget sjældent >1)
-          const lanes: Slice[][] = [];
-          for (const s of weekSlices) {
-            let placed = false;
-            for (const lane of lanes) {
-              const last = lane[lane.length - 1];
-              const lastEnd = last.startCol + last.spanDays - 1;
-              if (s.startCol > lastEnd) {
-                lane.push(s);
-                placed = true;
-                break;
-              }
-            }
-            if (!placed) lanes.push([s]);
-          }
-
+        {/* Day cells */}
+        {cells.map((d) => {
+          const isToday = d.getTime() === today.getTime();
+          const inMonth = d.getMonth() === monthBase.getMonth();
           return (
-            <div key={wi} className={styles.week}>
-              {/* celler */}
-              {row.map((day) => {
-                const inMonth = day.getMonth() === cursor.getMonth();
-                const isToday =
-                  day.getFullYear() === today.getFullYear() &&
-                  day.getMonth() === today.getMonth() &&
-                  day.getDate() === today.getDate();
-                return (
-                  <div
-                    key={day.toISOString()}
-                    className={styles.cell}
-                    aria-hidden={!inMonth}
-                  >
-                    <div
-                      className={
-                        isToday
-                          ? `${styles.dayNum} ${styles.dayNumToday}`
-                          : styles.dayNum
-                      }
-                    >
-                      {day.getDate()}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* lane overlay nederst */}
+            <div
+              key={d.toISOString()}
+              className={styles.cell}
+              data-dim={!inMonth ? "1" : undefined}
+            >
               <div
-                className={styles.laneLayer}
-                style={
-                  {
-                    // reserver højde til alle lanes i denne uge
-                    "--lanes": Math.max(lanes.length, 1),
-                  } as React.CSSProperties
-                }
+                className={styles.dayNum}
+                data-today={isToday ? "1" : undefined}
               >
-                <div
-                  className={styles.lane}
-                  style={
-                    {
-                      "--lanes": Math.max(lanes.length, 1),
-                    } as React.CSSProperties
-                  }
-                >
-                  {lanes.map((lane, li) =>
-                    lane.map((s) => {
-                      const leftPct = (s.startCol / 7) * 100;
-                      const widthPct = (s.spanDays / 7) * 100;
-                      const topPx = li * (26 /*bar*/ + 6) /*gap*/;
-
-                      return (
-                        <div
-                          key={`${s.id}-${wi}-${s.startCol}`}
-                          className={`${styles.bar} ${
-                            s.nibbleRight ? " " + styles.nibbleRight : ""
-                          }`}
-                          style={{
-                            left: `calc(${leftPct}% + ${s.startCol * 1}px)`, // lille kompensation for gaps
-                            width: `calc(${widthPct}% - ${
-                              (7 - (s.startCol + s.spanDays)) * 0
-                            }px)`,
-                            top: topPx,
-                          }}
-                        >
-                          {lang === "da" ? "Reserved" : "Reserved"}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                {d.getDate()}
+                {isToday && <span className={styles.dot} aria-hidden />}
               </div>
             </div>
           );
         })}
+
+        {/* Bars layer – perfectly aligned to 5 week rows */}
+        <div className={styles.bars}>
+          {segments.map((s) => (
+            <div
+              key={s.id}
+              className={styles.bar}
+              style={{
+                gridRow: s.row + 1,
+                gridColumn: `${s.colStart} / ${s.colEnd}`,
+              }}
+            >
+              {s.labelHere && (
+                <span className={styles.barLabel}>{reservedLabel}</span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {loading && (
-        <div style={{ marginTop: 12, color: "#6b7280", fontSize: 12 }}>
-          {lang === "da" ? "Indlæser…" : "Loading…"}
-        </div>
+      {!bookings && (
+        <div className={styles.loading}>{t("Henter…", "Loading…")}</div>
       )}
+      {error && <div className={styles.error}>{error}</div>}
     </div>
   );
 }
