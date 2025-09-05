@@ -24,7 +24,7 @@ type Purpose = "inquiry" | "booking" | "other";
 type Props = {
   lang?: Lang;
   submitUrl?: string;
-  /** Hvor formularen bruges: 'contact' uden kalender, eller 'booking' med kalender+dropdown. */
+  /** 'contact' = ingen kalender; 'booking' = kalender + bookingfelter */
   variant?: "contact" | "booking";
 };
 
@@ -34,9 +34,16 @@ type FormState = {
   phone: string; // national del (uden +kode)
   countryIso: ISO2;
   message: string;
-  consent: boolean;
+  consent: boolean; // nødvendig (GDPR behandling)
+  feesAccepted: boolean; // nødvendig i booking-varianten
+  // Kun i booking-varianten
+  adults: number;
+  children: number;
+  babies: number;
+  stayPurpose: string; // hvad vil man bruge opholdet til
 };
 
+const CLEANING_FEE_DKK = 1200;
 const DIGITS_RE = /[^\d]/g;
 
 /** Resolve current UI language. */
@@ -59,6 +66,11 @@ export default function ContactForm({
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const uiLang: UiLang = lang;
 
+  const feesUrl =
+    lang === "da"
+      ? "http://localhost:5173/da/Gebyrer"
+      : "http://localhost:5173/en/fees";
+
   // init land/telefon fra localStorage
   const initialIso: ISO2 = (() => {
     const saved =
@@ -78,9 +90,14 @@ export default function ContactForm({
     countryIso: initialIso,
     message: "",
     consent: false,
+    feesAccepted: false,
+    adults: 2,
+    children: 0,
+    babies: 0,
+    stayPurpose: "",
   });
 
-  // Formål (kun synligt i booking-variant, men vi holder state alligevel)
+  // Formål (kun synligt i booking-varianten, men vi holder state alligevel)
   const [purpose, setPurpose] = React.useState<Purpose>(
     variant === "booking" ? "booking" : "inquiry"
   );
@@ -148,6 +165,13 @@ export default function ContactForm({
     [lang]
   );
 
+  // Udregn total inkl. rengøring (kun hvis der er nætter)
+  const baseNightsTotal = selPrice.total ?? 0;
+  const includeCleaning = !!(selPrice.nights && selPrice.nights > 0);
+  const totalWithCleaning = includeCleaning
+    ? baseNightsTotal + CLEANING_FEE_DKK
+    : baseNightsTotal;
+
   // Submit
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -164,15 +188,17 @@ export default function ContactForm({
       return;
     }
 
-    // Booking-variant kræver gyldig periode
-    type SelectionPayload = {
-      start: string;
-      endExclusive: string;
-      nights: number;
-      totalDKK: number | null;
-      breakdown?: { date: string; price: number }[];
-    };
-    let selectionPayload: SelectionPayload | null = null;
+    if (!state.consent) {
+      setError(
+        t(
+          "Sæt venligst flueben for samtykke til behandling af dine oplysninger.",
+          "Please check the consent box to allow us to process your information."
+        )
+      );
+      return;
+    }
+
+    // Booking-variant: ekstra krav
     if (variant === "booking") {
       const startISO = selPrice.start?.toISOString().slice(0, 10) ?? "";
       const endISO = selPrice.endExclusive?.toISOString().slice(0, 10) ?? "";
@@ -185,32 +211,57 @@ export default function ContactForm({
         );
         return;
       }
-      selectionPayload = {
-        start: startISO,
-        endExclusive: endISO,
-        nights: selPrice.nights,
-        totalDKK: selPrice.total ?? null,
-        breakdown: selPrice.breakdown
-          ?.filter((b) => b.price !== null)
-          .map((b) => ({
-            date: b.date.toISOString().slice(0, 10),
-            price: b.price as number,
-          })),
-      };
-    }
-
-    if (!state.consent) {
-      setError(
-        t(
-          "Sæt venligst flueben for samtykke til behandling af dine oplysninger.",
-          "Please check the consent box to allow us to process your information."
-        )
-      );
-      return;
+      if (!state.feesAccepted) {
+        setError(
+          t(
+            "Bekræft venligst at du har læst og accepterer gebyroversigten.",
+            "Please confirm that you have read and accept the fee list."
+          )
+        );
+        return;
+      }
+      if (!state.stayPurpose.trim()) {
+        setError(
+          t(
+            "Fortæl os venligst kort, hvad opholdet skal bruges til.",
+            "Please briefly tell us the purpose of your stay."
+          )
+        );
+        return;
+      }
+      if (state.adults < 1) {
+        setError(
+          t(
+            "Angiv venligst antal voksne (mindst 1).",
+            "Please enter number of adults (at least 1)."
+          )
+        );
+        return;
+      }
     }
 
     setSending(true);
     try {
+      const selectionPayload =
+        variant === "booking"
+          ? {
+              start: selPrice.start?.toISOString().slice(0, 10) ?? null,
+              endExclusive:
+                selPrice.endExclusive?.toISOString().slice(0, 10) ?? null,
+              nights: selPrice.nights ?? null,
+              baseNightsTotalDKK: selPrice.total ?? null,
+              cleaningFeeDKK: includeCleaning ? CLEANING_FEE_DKK : 0,
+              totalWithCleaningDKK: includeCleaning
+                ? (selPrice.total ?? 0) + CLEANING_FEE_DKK
+                : selPrice.total ?? null,
+              breakdown:
+                selPrice.breakdown?.map((b) => ({
+                  date: b.date.toISOString().slice(0, 10),
+                  price: b.price,
+                })) ?? [],
+            }
+          : null;
+
       const res = await fetch(submitUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -223,6 +274,17 @@ export default function ContactForm({
           countryIso: state.countryIso,
           message: state.message.trim(),
           consent: state.consent,
+          feesAccepted: variant === "booking" ? state.feesAccepted : undefined,
+          guests:
+            variant === "booking"
+              ? {
+                  adults: state.adults,
+                  children: state.children,
+                  babies: state.babies,
+                }
+              : undefined,
+          stayPurpose:
+            variant === "booking" ? state.stayPurpose.trim() : undefined,
           selection: selectionPayload, // kun udfyldt i booking-variant
         }),
       });
@@ -283,17 +345,48 @@ export default function ContactForm({
           </div>
 
           {variant === "booking" && selPrice.start && selPrice.endExclusive && (
-            <div>
-              <dt>{t("Periode", "Period")}</dt>
-              <dd>
-                {fmtDate.format(selPrice.start)} –{" "}
-                {fmtDate.format(selPrice.endExclusive)} · {selPrice.nights}{" "}
-                {t("nætter", "nights")}
-                {selPrice.total != null
-                  ? ` · ${fmtMoney.format(selPrice.total)}`
-                  : ""}
-              </dd>
-            </div>
+            <>
+              <div>
+                <dt>{t("Periode", "Period")}</dt>
+                <dd>
+                  {fmtDate.format(selPrice.start)} –{" "}
+                  {fmtDate.format(selPrice.endExclusive)} · {selPrice.nights}{" "}
+                  {t("nætter", "nights")}
+                </dd>
+              </div>
+              <div>
+                <dt>{t("Pris (overnatninger)", "Price (nights)")}</dt>
+                <dd>
+                  {selPrice.total != null
+                    ? fmtMoney.format(selPrice.total)
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt>{t("Rengøring", "Cleaning")}</dt>
+                <dd>{fmtMoney.format(CLEANING_FEE_DKK)}</dd>
+              </div>
+              <div>
+                <dt>{t("Estimeret total", "Estimated total")}</dt>
+                <dd>{fmtMoney.format(totalWithCleaning)}</dd>
+              </div>
+              <div>
+                <dt>{t("Gæster", "Guests")}</dt>
+                <dd>
+                  {t("Voksne", "Adults")}: {state.adults}
+                  {", "}
+                  {t("Børn", "Children")}: {state.children}
+                  {", "}
+                  {t("Babyer", "Babies")}: {state.babies}
+                </dd>
+              </div>
+              {state.stayPurpose && (
+                <div>
+                  <dt>{t("Formål med opholdet", "Purpose of stay")}</dt>
+                  <dd>{state.stayPurpose}</dd>
+                </div>
+              )}
+            </>
           )}
 
           <div className={styles.echoMsg}>
@@ -317,38 +410,10 @@ export default function ContactForm({
       onSubmit={onSubmit}
       noValidate
     >
-      {/* Formål — KUN i booking-varianten */}
-      {variant === "booking" && (
-        <div className={styles.row}>
-          <label
-            className={styles.label}
-            htmlFor="cf-purpose"
-            data-required="true"
-          >
-            {t("Formål", "Purpose")}
-          </label>
-          <div className={styles.selectWrap}>
-            <select
-              id="cf-purpose"
-              className={styles.select}
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value as Purpose)}
-              required
-            >
-              <option value="booking">{t("Booking", "Booking")}</option>
-              <option value="inquiry">{t("Forspørgsel", "Inquiry")}</option>
-              <option value="other">{t("Andet", "Other")}</option>
-            </select>
-            <span className={styles.chev} aria-hidden>
-              ▾
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Kalender og dato-opsummering — KUN i booking-varianten */}
+      {/* ——— KUN i booking-varianten ——— */}
       {variant === "booking" && (
         <>
+          {/* Kalender først (vises uafhængigt af dropdown-valget) */}
           <div className={styles.row}>
             <label className={styles.label}>
               {t("Vælg datoer", "Select dates")}
@@ -365,6 +430,34 @@ export default function ContactForm({
             </div>
           </div>
 
+          {/* Nu dropdown EFTER kalenderen */}
+          <div className={styles.row}>
+            <label
+              className={styles.label}
+              htmlFor="cf-purpose"
+              data-required="true"
+            >
+              {t("Formål", "Purpose")}
+            </label>
+            <div className={styles.selectWrap}>
+              <select
+                id="cf-purpose"
+                className={styles.select}
+                value={purpose}
+                onChange={(e) => setPurpose(e.target.value as Purpose)}
+                required
+              >
+                <option value="booking">{t("Booking", "Booking")}</option>
+                <option value="inquiry">{t("Forspørgsel", "Inquiry")}</option>
+                <option value="other">{t("Andet", "Other")}</option>
+              </select>
+              <span className={styles.chev} aria-hidden>
+                ▾
+              </span>
+            </div>
+          </div>
+
+          {/* Ankomst/Afrejse visning */}
           <div className={styles.rowGroup}>
             <div className={styles.row}>
               <label
@@ -408,6 +501,94 @@ export default function ContactForm({
             </div>
           </div>
 
+          {/* Gæsteantal — på linje (3 kolonner) */}
+          <div
+            className={styles.rowGroup}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 12,
+            }}
+          >
+            <div className={styles.row}>
+              <label
+                className={styles.label}
+                htmlFor="cf-adults"
+                data-required="true"
+              >
+                {t("Voksne", "Adults")}
+              </label>
+              <input
+                id="cf-adults"
+                className={styles.input}
+                type="number"
+                min={1}
+                step={1}
+                required
+                value={state.adults}
+                onChange={(e) =>
+                  onChange("adults", Math.max(1, Number(e.target.value || 0)))
+                }
+              />
+            </div>
+            <div className={styles.row}>
+              <label className={styles.label} htmlFor="cf-children">
+                {t("Børn", "Children")}
+              </label>
+              <input
+                id="cf-children"
+                className={styles.input}
+                type="number"
+                min={0}
+                step={1}
+                value={state.children}
+                onChange={(e) =>
+                  onChange("children", Math.max(0, Number(e.target.value || 0)))
+                }
+              />
+            </div>
+            <div className={styles.row}>
+              <label className={styles.label} htmlFor="cf-babies">
+                {t("Babyer", "Babies")}
+              </label>
+              <input
+                id="cf-babies"
+                className={styles.input}
+                type="number"
+                min={0}
+                step={1}
+                value={state.babies}
+                onChange={(e) =>
+                  onChange("babies", Math.max(0, Number(e.target.value || 0)))
+                }
+              />
+            </div>
+          </div>
+
+          {/* Formål med opholdet */}
+          <div className={styles.row}>
+            <label
+              className={styles.label}
+              htmlFor="cf-staypurpose"
+              data-required="true"
+            >
+              {t(
+                "Hvad er grunden til opholdet?",
+                "What is the purpose of your stay?"
+              )}
+            </label>
+            <textarea
+              id="cf-staypurpose"
+              className={styles.textarea}
+              required
+              rows={3}
+              value={state.stayPurpose}
+              onChange={(e) => onChange("stayPurpose", e.target.value)}
+              placeholder={t("Kort beskrivelse…", "Brief description…")}
+            />
+          </div>
+
+          {/* Prisopsummering */}
           <div className={styles.rowGroup}>
             <div className={styles.row}>
               <label className={styles.label} htmlFor="cf-nights">
@@ -423,11 +604,11 @@ export default function ContactForm({
               />
             </div>
             <div className={styles.row}>
-              <label className={styles.label} htmlFor="cf-total">
-                {t("Estimeret pris", "Estimated price")}
+              <label className={styles.label} htmlFor="cf-base-total">
+                {t("Pris (overnatninger)", "Price (nights)")}
               </label>
               <input
-                id="cf-total"
+                id="cf-base-total"
                 className={styles.input}
                 type="text"
                 readOnly
@@ -438,10 +619,46 @@ export default function ContactForm({
               />
             </div>
           </div>
+
+          <div className={styles.rowGroup}>
+            <div className={styles.row}>
+              <label className={styles.label} htmlFor="cf-cleaning">
+                {t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}
+              </label>
+              <input
+                id="cf-cleaning"
+                className={styles.input}
+                type="text"
+                readOnly
+                value={
+                  includeCleaning ? fmtMoney.format(CLEANING_FEE_DKK) : "—"
+                }
+              />
+            </div>
+            <div className={styles.row}>
+              <label className={styles.label} htmlFor="cf-total">
+                {t("Estimeret total", "Estimated total")}
+              </label>
+              <input
+                id="cf-total"
+                className={styles.input}
+                type="text"
+                readOnly
+                value={
+                  includeCleaning
+                    ? fmtMoney.format(totalWithCleaning)
+                    : selPrice.total != null
+                    ? fmtMoney.format(selPrice.total)
+                    : ""
+                }
+                placeholder="—"
+              />
+            </div>
+          </div>
         </>
       )}
 
-      {/* ——— Kontaktfelter ——— */}
+      {/* ——— Kontaktfelter (begge varianter) ——— */}
       <div className={styles.row}>
         <label className={styles.label} htmlFor="cf-name" data-required="true">
           {t("Navn", "Name")}
@@ -549,7 +766,37 @@ export default function ContactForm({
         />
       </div>
 
-      {/* Samtykke */}
+      {/* Gebyr-liste accept (obligatorisk) */}
+      <div className={styles.row}>
+        <label className={styles.checkbox}>
+          <input
+            type="checkbox"
+            checked={state.feesAccepted}
+            onChange={(e) => onChange("feesAccepted", e.target.checked)}
+            required
+          />
+          <span>
+            {lang === "da" ? (
+              <>
+                Jeg har læst og accepterer{" "}
+                <a href={feesUrl} target="_blank" rel="noreferrer">
+                  gebyroversigten
+                </a>
+                .
+              </>
+            ) : (
+              <>
+                I have read and accept the{" "}
+                <a href={feesUrl} target="_blank" rel="noreferrer">
+                  fee list
+                </a>
+                .
+              </>
+            )}
+          </span>
+        </label>
+      </div>
+      {/* GDPR — behandling (obligatorisk) */}
       <div className={styles.row}>
         <label className={styles.checkbox}>
           <input
@@ -560,8 +807,8 @@ export default function ContactForm({
           />
           <span>
             {t(
-              "Jeg giver samtykke til, at mine oplysninger må gemmes og bruges til at behandle min henvendelse.",
-              "I consent to my information being stored and used to process my inquiry."
+              "Jeg giver samtykke til, at mine oplysninger må gemmes og bruges til at behandle min henvendelse i overensstemmelse med privatlivspolitikken.",
+              "I consent to my information being stored and used to process my inquiry in accordance with the privacy policy."
             )}
           </span>
         </label>
