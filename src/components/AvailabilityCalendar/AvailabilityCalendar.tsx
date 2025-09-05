@@ -376,16 +376,9 @@ export default function AvailabilityCalendar({
     (current: Selection | null) => {
       const send = (payload: SelectionPrice) => {
         onSelectionPrice?.(payload);
-        try {
-          const totalTxt =
-            payload.total != null ? fmtPrice.format(payload.total) : "—";
-          console.log("[Calendar] Samlet pris:", totalTxt, payload);
-        } catch {
-          console.log(
-            "[Calendar] Samlet pris:",
-            payload.total ?? null,
-            payload
-          );
+        try {       // test rendering (kan fejle hvis datoer er invalide)
+        } catch {   
+            // ignore formatting errors
         }
       };
 
@@ -442,7 +435,7 @@ export default function AvailabilityCalendar({
         hasMissing,
       });
     },
-    [onSelectionPrice, fmtPrice]
+    [onSelectionPrice]
   );
   React.useEffect(() => {
     computeAndEmitPrice(sel);
