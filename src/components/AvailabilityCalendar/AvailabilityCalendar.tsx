@@ -301,14 +301,9 @@ export default function AvailabilityCalendar({
               key={d.toISOString()}
               className={styles.cell}
               data-dim={!inMonth ? "1" : undefined}
+              data-today={isToday ? "1" : undefined} // ← flyt attributten herop
             >
-              <div
-                className={styles.dayNum}
-                data-today={isToday ? "1" : undefined}
-              >
-                {d.getDate()}
-                {isToday && <span className={styles.dot} aria-hidden />}
-              </div>
+              <div className={styles.dayNum}>{d.getDate()}</div>
             </div>
           );
         })}
@@ -330,7 +325,8 @@ export default function AvailabilityCalendar({
             </div>
           ))}
         </div>
-      </div>
+          </div>
+          
 
       {!bookings && (
         <div className={styles.loading}>{t("Henter…", "Loading…")}</div>
