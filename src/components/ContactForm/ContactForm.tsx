@@ -766,7 +766,24 @@ export default function ContactForm({
         />
       </div>
 
-      {/* Gebyr-liste accept (obligatorisk) */}
+      {/* GDPR — behandling (obligatorisk) */}
+      <div className={styles.row}>
+        <label className={styles.checkbox}>
+          <input
+            type="checkbox"
+            checked={state.consent}
+            onChange={(e) => onChange("consent", e.target.checked)}
+            required
+          />
+          <span>
+            {t(
+              "Jeg giver samtykke til, at mine oplysninger må gemmes og bruges til at behandle min henvendelse i overensstemmelse med privatlivspolitikken.",
+              "I consent to my information being stored and used to process my inquiry in accordance with the privacy policy."
+            )}
+          </span>
+        </label>
+      </div>
+      {/* Gebyr-liste accept (obligatorisk) — KUN booking */}
       <div className={styles.row}>
         <label className={styles.checkbox}>
           <input
@@ -796,24 +813,6 @@ export default function ContactForm({
           </span>
         </label>
       </div>
-      {/* GDPR — behandling (obligatorisk) */}
-      <div className={styles.row}>
-        <label className={styles.checkbox}>
-          <input
-            type="checkbox"
-            checked={state.consent}
-            onChange={(e) => onChange("consent", e.target.checked)}
-            required
-          />
-          <span>
-            {t(
-              "Jeg giver samtykke til, at mine oplysninger må gemmes og bruges til at behandle min henvendelse i overensstemmelse med privatlivspolitikken.",
-              "I consent to my information being stored and used to process my inquiry in accordance with the privacy policy."
-            )}
-          </span>
-        </label>
-      </div>
-
       {error && (
         <div className={styles.error} role="alert" aria-live="assertive">
           {error}
