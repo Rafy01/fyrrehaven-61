@@ -1,3 +1,4 @@
+// src/pages/Book/Book.tsx
 import { Container, Box, Heading, Text } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
@@ -5,7 +6,11 @@ import Buttons from "../../components/Buttons";
 import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
-import AvailabilityCalendar from "../../components/AvailabilityCalendar";
+
+// Hvis du har en index-barrel for AvailabilityCalendar, kan du bruge
+//  import AvailabilityCalendar from "../../components/AvailabilityCalendar";
+// men denne direkte sti virker altid:
+import AvailabilityCalendar from "../../components/AvailabilityCalendar/AvailabilityCalendar";
 
 export default function Book({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
@@ -21,7 +26,7 @@ export default function Book({ lang }: { lang: Lang }) {
     "Send a direct booking request or book via Airbnb. Outdoor heated pool (May 1 – Oct 1), sleeps 10."
   );
 
-  // Sæt din rigtige Airbnb-URL her (eller lad den være tom for at skjule knappen)
+  // Sæt din rigtige Airbnb-URL her
   const AIRBNB_URL = "https://www.airbnb.com/rooms/your-listing-id";
 
   // Struktureret data
@@ -38,16 +43,6 @@ export default function Book({ lang }: { lang: Lang }) {
       addressLocality: "Glesborg",
       addressCountry: "DK",
     },
-    makesOffer: [
-      {
-        "@type": "Offer",
-        availabilityStarts: "2025-01-01",
-        priceCurrency: "DKK",
-        // pris varierer – vi viser bare at der findes en tilbudsmulighed
-        eligibleRegion: "DK",
-        url: `https://fyrrehaven-61.dk${path}`,
-      },
-    ],
     potentialAction: {
       "@type": "ReserveAction",
       target: `https://fyrrehaven-61.dk${path}`,
@@ -63,6 +58,11 @@ export default function Book({ lang }: { lang: Lang }) {
 
   // Link til kontaktformularen med “booking-intent”
   const contactTo = `${pathOf(lang, "contact")}#contact`;
+
+  // Aktuel måned til kalenderen
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1; // 1-12
 
   return (
     <>
@@ -90,11 +90,13 @@ export default function Book({ lang }: { lang: Lang }) {
           label: t("Anmod om booking", "Request booking"),
           to: contactTo,
         }}
+        // Brug ekstern href til Airbnb for at undgå router-redirects
         secondaryCta={
           AIRBNB_URL
             ? {
                 label: t("Se kalender på Airbnb", "View calendar on Airbnb"),
-                to: AIRBNB_URL, // hvis din <Hero> kun kan interne links, fjern denne og brug knap i sektionen nedenfor
+                href: AIRBNB_URL,
+                external: true,
               }
             : undefined
         }
@@ -206,8 +208,15 @@ export default function Book({ lang }: { lang: Lang }) {
             </Text>
           </div>
         </Box>
+
+        {/* ——— Kalender ——— */}
         <Box mt="3">
-          <AvailabilityCalendar lang={lang} />
+          <AvailabilityCalendar
+            year={year}
+            month={month}
+            loadFromIcal
+            weekStartsOn={1} // mandag
+          />
         </Box>
       </Container>
     </>
