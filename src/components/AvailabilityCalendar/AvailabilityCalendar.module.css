@@ -1,132 +1,13 @@
 .wrap {
-  --gap: 14px;
-  --cell-radius: 12px;
-  --ink: #0d0e10;
-  --muted: #a7abb3;
-  --bar: #191919;
-  --today: #e20d43;
-  color: var(--ink);
-}
-
-.head {
-  display: grid;
-  grid-template-columns: 40px 1fr 40px;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.title {
-  text-align: center;
-  font-weight: 600;
-  font-size: 18px;
-}
-.nav {
-  height: 32px;
-  width: 32px;
-  border-radius: 8px;
-  border: 1px solid #e7e8ec;
-  background: #fff;
-  cursor: pointer;
-}
-.nav:disabled {
-  opacity: .4;
-  cursor: default;
-}
-
-.weekheads {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: var(--gap);
-  margin-bottom: 6px;
-  padding: 0 2px;
-}
-.wd {
-  font-size: 12px;
-  color: var(--muted);
-  text-align: left;
-}
-
-/* Main grid (5 uger) */
-.grid {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(5, 100px);
-  gap: var(--gap);
-}
-
-/* Overlay: brug samme repeat(...) i stedet for subgrid (bedre kompatibilitet) */
-.overlay {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(5, 100px);
-  gap: var(--gap);
-  z-index: 2;
-}
-
-.cell {
-  background: #fff;
-  border: 1px solid #eceef2;
-  border-radius: var(--cell-radius);
-  position: relative;
-  overflow: hidden;
-}
-.cell[data-dim="1"] { opacity: .45; }
-
-.dayWrap {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-}
-.dayNum { font-weight: 600; font-size: 14px; }
-.todayBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px; height: 26px;
-  border-radius: 9999px;
-  background: var(--today);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.bar {
-  align-self: center;
-  height: 20px;
-  background: var(--bar);
-  border-radius: 12px;
-  box-shadow: 0 1px 0 rgba(0,0,0,.12);
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-}
-.barLabel {
-  pointer-events: none;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.status {
-  margin-top: 10px;
-  font-size: 12px;
-  color: var(--muted);
-}
-.error { color: #c0183a; }
-
-
-.wrap {
-  --cell-h: 82px;
+  --weeks: 5;
+  --head-h: 28px;         /* fast headerhøjde */
+  --cell-h: 82px;         /* dagcellernes højde */
   --gap: 12px;
   --radius: 12px;
   --ink: #111;
-  --muted: #a0a0a0;
+  --muted: #9aa0a6;
   --bar: #1f1f1f;
-  --today: #e3003c; /* rød cirkel */
+  --today: #e3003c;       /* rød cirkel for i dag */
 }
 
 .head {
@@ -136,93 +17,80 @@
   gap: 8px;
   margin-bottom: 12px;
 }
-
-.month {
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
+.month { font-weight: 600; }
 .navBtn {
-  width: 28px;
-  height: 28px;
+  width: 28px; height: 28px;
   border-radius: 8px;
   border: 1px solid #e6e6e6;
   background: #fff;
   color: var(--ink);
-  line-height: 1;
 }
-.navBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+.navBtn:disabled { opacity: .4; cursor: not-allowed; }
 
+/* Grid: 1 header-række + 5 uger */
 .grid {
   position: relative;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: var(--cell-h);
+  grid-template-rows: var(--head-h) repeat(var(--weeks), var(--cell-h));
   gap: var(--gap);
 }
 
-/* ugedags-overskrift (øverste række) */
+/* Ugedage (øverste række) */
 .weekday {
-  color: var(--muted);
-  font-size: 12px;
   display: flex;
   align-items: center;
-  padding: 0 6px;
+  padding-left: 6px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
-/* dato-celler */
+/* Dato-celler */
 .cell {
   background: #fff;
   border: 1px solid #efefef;
   border-radius: var(--radius);
   position: relative;
 }
-.cell[data-dim="1"] {
-  opacity: 0.45;
-}
+.cell[data-dim="1"] { opacity: .45; }
 
 .dayNum {
   position: absolute;
-  top: 8px;
-  right: 10px;
+  top: 8px; right: 10px;
   font-size: 13px;
   font-weight: 600;
   color: var(--ink);
 }
 .dot {
   position: absolute;
-  width: 22px;
-  height: 22px;
+  width: 22px; height: 22px;
   border-radius: 999px;
   background: var(--today);
   z-index: -1;
-  top: -3px;
-  right: -6px;
+  top: -3px; right: -6px;
 }
 
-/* bars-lag ovenpå grid */
+/* Bars-lag: præcis 5 rækker, samme kolonner og gap */
 .bars {
   pointer-events: none;
   position: absolute;
-  inset: calc(var(--cell-h) + var(--gap)) 0 0 0; /* under ugedagsrække */
+  /* skip header-rækken + gap, læg sig over de 5 uger */
+  top: calc(var(--head-h) + var(--gap));
+  left: 0; right: 0; bottom: 0;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: var(--cell-h);
+  grid-template-rows: repeat(var(--weeks), var(--cell-h));
   gap: var(--gap);
 }
 
 .bar {
   background: var(--bar);
   border-radius: 20px;
+  height: 36px;
+  margin-top: 6px; /* lidt luft i cellen */
   display: flex;
   align-items: center;
-  height: 36px;
-  margin-top: 6px;        /* lidt luft fra top af celler */
 }
-
 .barLabel {
   color: #fff;
   font-size: 13px;
@@ -230,9 +98,5 @@
   padding: 0 14px;
 }
 
-/* helper tekster */
-.loading, .error {
-  margin-top: 10px;
-  font-size: 14px;
-}
+.loading, .error { margin-top: 10px; font-size: 14px; }
 .error { color: #c00; }
