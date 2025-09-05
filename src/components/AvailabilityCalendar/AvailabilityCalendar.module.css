@@ -117,3 +117,122 @@
   color: var(--muted);
 }
 .error { color: #c0183a; }
+
+
+.wrap {
+  --cell-h: 82px;
+  --gap: 12px;
+  --radius: 12px;
+  --ink: #111;
+  --muted: #a0a0a0;
+  --bar: #1f1f1f;
+  --today: #e3003c; /* rød cirkel */
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.month {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.navBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  color: var(--ink);
+  line-height: 1;
+}
+.navBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--cell-h);
+  gap: var(--gap);
+}
+
+/* ugedags-overskrift (øverste række) */
+.weekday {
+  color: var(--muted);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+}
+
+/* dato-celler */
+.cell {
+  background: #fff;
+  border: 1px solid #efefef;
+  border-radius: var(--radius);
+  position: relative;
+}
+.cell[data-dim="1"] {
+  opacity: 0.45;
+}
+
+.dayNum {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.dot {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--today);
+  z-index: -1;
+  top: -3px;
+  right: -6px;
+}
+
+/* bars-lag ovenpå grid */
+.bars {
+  pointer-events: none;
+  position: absolute;
+  inset: calc(var(--cell-h) + var(--gap)) 0 0 0; /* under ugedagsrække */
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--cell-h);
+  gap: var(--gap);
+}
+
+.bar {
+  background: var(--bar);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  margin-top: 6px;        /* lidt luft fra top af celler */
+}
+
+.barLabel {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 14px;
+}
+
+/* helper tekster */
+.loading, .error {
+  margin-top: 10px;
+  font-size: 14px;
+}
+.error { color: #c00; }

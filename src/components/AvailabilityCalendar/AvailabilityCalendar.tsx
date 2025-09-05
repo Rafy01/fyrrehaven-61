@@ -1,103 +1,145 @@
-import * as React from "react";
+import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
 
-/* ========== Date helpers (UTC, Mon–Sun) ========== */
-const MS_DAY = 24 * 60 * 60 * 1000;
-const addDays = (d: Date, n: number) => new Date(d.getTime() + n * MS_DAY);
-const dUTC = (y: number, m: number, d: number) => new Date(Date.UTC(y, m, d));
-const dateOnlyUTC = (d: Date | string) => {
-  const x = typeof d === "string" ? new Date(d) : d;
-  return dUTC(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate());
-};
-const daysBetween = (a: Date, b: Date) =>
-  Math.round((dateOnlyUTC(b).getTime() - dateOnlyUTC(a).getTime()) / MS_DAY);
-const mondayIndex = (utcDay: number) => (utcDay + 6) % 7;
-function startOfMonthGridUTC(y: number, m: number) {
-  const first = dUTC(y, m, 1);
-  const wd = mondayIndex(first.getUTCDay());
-  return addDays(first, -wd); // Monday before/at month start
-}
-function clampDate(d: Date, lo: Date, hi: Date) {
-  if (d < lo) return lo;
-  if (d > hi) return hi;
-  return d;
-}
-function sameYM(a: { y: number; m: number }, b: { y: number; m: number }) {
-  return a.y === b.y && a.m === b.m;
-}
+/* ────────────────────────── Types ────────────────────────── */
 
-/* ========== API types ========== */
 type ApiEvent = {
   id: string;
   title: string;
-  description?: string;
+  description: string;
+  location: string;
   start: string; // ISO
   end: string; // ISO
-  allDay?: boolean;
+  allDay: boolean;
+  status: string;
+  transp: string;
 };
-type ApiOk = {
-  ok: true;
-  events: ApiEvent[];
-  updatedAt?: string;
-  count?: number;
-};
-type ApiErr = { ok: false; error: string };
-type ApiPayload = ApiOk | ApiErr;
 
-/* ========== Booking model (nætter) ========== */
+type ApiResponse =
+  | { ok: true; updatedAt?: string; count?: number; events: ApiEvent[] }
+  | { ok: false; error: string; detail?: string };
+
 type Booking = {
   id: string;
-  startDay: Date; // check-in dag (inkl.)
-  endDay: Date; // check-out dag (ekskl.)
+  /** Lokal dato ved midnat (check-in-dagen). */
+  startDay: Date;
+  /** Lokal dato ved midnat (check-out-dagen, eksklusiv). */
+  endDay: Date;
 };
 
-function isReservationEvent(ev: ApiEvent): boolean {
-  const t = (ev.title || "").toLowerCase();
-  const d = (ev.description || "").toLowerCase();
-  const positive =
-    /(airbnb|campaya|dancenter|sol\s*og\s*strand|udlejning|reservation|reserved|not available|privat|familien|ohana)/i.test(
-      t + " " + d
-    );
-  const negative =
-    /(rengøring|rengoering|clean|møde|moede|meeting|fotograf|levering|generalforsamling|refsix|arbejde)/i.test(
-      t + " " + d
-    );
-  if (negative) return false;
-  if (positive) return true;
-
-  // fallback: 2+ døgn antages at være et ophold
-  try {
-    const dur = new Date(ev.end).getTime() - new Date(ev.start).getTime();
-    return dur >= 2 * MS_DAY - 60 * 60 * 1000;
-  } catch {
-    return false;
-  }
-}
-
-function toBookings(events: ApiEvent[]): Booking[] {
-  const out: Booking[] = [];
-  for (const ev of events) {
-    if (!isReservationEvent(ev)) continue;
-    const sDay = dateOnlyUTC(ev.start);
-    const eDay = dateOnlyUTC(ev.end); // eksklusiv
-    if (daysBetween(sDay, eDay) <= 0) continue;
-    out.push({ id: ev.id, startDay: sDay, endDay: eDay });
-  }
-  out.sort((a, b) => a.startDay.getTime() - b.startDay.getTime());
-  return out;
-}
-
-/* ========== Split til “week segments” ========== */
 type Segment = {
   id: string;
   row: number; // 0..4
   colStart: number; // 1..7
-  colEnd: number; // 2..8 (exclusive)
+  colEnd: number; // 2..8 (8 betyder “til slutningen af ugen”)
   isFirst: boolean;
   isLast: boolean;
-  labelHere: boolean; // kun på første synlige segment
+  labelHere: boolean;
 };
+
+type Props = {
+  lang: Lang; // "da" | "en"
+  /** API-path der returnerer JSON som i dit eksempel. */
+  apiPath?: string; // default: "/api/ical"
+  /** Uge-start (0=søn … 6=lør). Airbnb-stilen bruger mandag=1. */
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+};
+
+/* ────────────────────────── Date utils ────────────────────────── */
+
+// lokal midnat (fjerner klokkeslæt)
+function startOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+function addDays(d: Date, days: number): Date {
+  const x = new Date(d);
+  x.setDate(x.getDate() + days);
+  return x;
+}
+function daysBetween(a: Date, b: Date): number {
+  // hele dage fra a til b (b - a)
+  const ms = startOfDay(b).getTime() - startOfDay(a).getTime();
+  return Math.round(ms / 86400000);
+}
+function startOfMonth(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+function clampDate(x: Date, lo: Date, hi: Date): Date {
+  if (x < lo) return lo;
+  if (x > hi) return hi;
+  return x;
+}
+function startOfWeek(d: Date, weekStartsOn: number): Date {
+  const sd = startOfDay(d);
+  const w = sd.getDay(); // 0..6, søn=0
+  const diff = (w - weekStartsOn + 7) % 7;
+  return addDays(sd, -diff);
+}
+function formatMonthTitle(d: Date, lang: Lang): string {
+  return d.toLocaleDateString(lang === "da" ? "da-DK" : "en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/* ────────────────────────── API → Bookings ────────────────────────── */
+
+function looksLikeBooking(ev: ApiEvent): boolean {
+  // positiv whitelist i titlen
+  const t = ev.title.toLowerCase();
+  const positive =
+    t.includes("airbnb") ||
+    t.includes("dancenter") ||
+    t.includes("campaya") ||
+    t.includes("sol og strand") ||
+    t.includes("udlejning") ||
+    t.includes("privat") ||
+    t.includes("reserved") ||
+    t.includes("not available");
+
+  if (!positive) return false;
+
+  // hold korte “møder” ude
+  const start = new Date(ev.start);
+  const end = new Date(ev.end);
+  const durMs = end.getTime() - start.getTime();
+  if (!ev.allDay && durMs < 20 * 3600 * 1000) return false; // < 20h
+
+  // udeluk oplagte rengøringer/møder
+  const neg =
+    t.includes("rengøring") ||
+    t.includes("rengoring") ||
+    t.includes("møde") ||
+    t.includes("meeting") ||
+    t.includes("fotograf") ||
+    t.includes("levering");
+
+  return !neg;
+}
+
+function toBooking(ev: ApiEvent): Booking {
+  // vi viser dagsniveau; brug lokal kalenderdag
+  const s = startOfDay(new Date(ev.start));
+  const e = startOfDay(new Date(ev.end)); // eksklusiv
+  return { id: ev.id, startDay: s, endDay: e };
+}
+
+function normalizeBookingsFromApi(payload: ApiResponse): Booking[] {
+  if (!("ok" in payload) || !payload.ok) return [];
+  const events = payload.events ?? [];
+  const bs: Booking[] = [];
+  for (const ev of events) {
+    if (!looksLikeBooking(ev)) continue;
+    const b = toBooking(ev);
+    if (b.endDay > b.startDay) bs.push(b);
+  }
+  // sortér efter start
+  bs.sort((a, b) => a.startDay.getTime() - b.startDay.getTime());
+  return bs;
+}
+
+/* ────────────────────────── Grid & segments ────────────────────────── */
 
 function splitIntoSegments(
   b: Booking,
@@ -114,9 +156,17 @@ function splitIntoSegments(
 
   const segs: Segment[] = [];
   let cursor = firstIx;
+
+  // kolonnelinje-udregning: 1..7, og 8 = “til slutningen af ugen”
+  const endColLine = (ixEx: number): number => {
+    const mod = ixEx % 7;
+    return mod === 0 ? 8 : mod + 1;
+  };
+
   while (cursor < lastIxEx) {
-    const row = Math.floor(cursor / 7);
+    const row = Math.floor(cursor / 7); // 0..4
     const rowEndEx = (row + 1) * 7;
+
     const segStartIx = cursor;
     const segEndIx = Math.min(lastIxEx, rowEndEx);
 
@@ -124,7 +174,7 @@ function splitIntoSegments(
       id: `${b.id}:${row}:${segStartIx}-${segEndIx}`,
       row,
       colStart: (segStartIx % 7) + 1,
-      colEnd: (segEndIx % 7) + 1,
+      colEnd: endColLine(segEndIx),
       isFirst: segStartIx === firstIx,
       isLast: segEndIx === lastIxEx,
       labelHere: segStartIx === firstIx,
@@ -135,202 +185,197 @@ function splitIntoSegments(
   return segs;
 }
 
-/* ========== Component ========== */
-type Props = { lang: Lang };
+/* ────────────────────────── Component ────────────────────────── */
 
-export default function AvailabilityCalendar({ lang }: Props) {
-  const now = new Date();
-  const nowYM = { y: now.getUTCFullYear(), m: now.getUTCMonth() };
+export default function AvailabilityCalendar({
+  lang,
+  apiPath = "/api/ical",
+  weekStartsOn = 1, // mandag
+}: Props) {
+  const t = (da: string, en: string) => (lang === "da" ? da : en);
 
-  // Måned kan aldrig gå bagud før nu
-  const [ym, setYm] = React.useState<{ y: number; m: number }>(nowYM);
+  const today = startOfDay(new Date());
+  const minMonth = startOfMonth(today);
+
+  // vi viser 5 uger fast
+  const WEEKS = 5;
+
+  // aktuel måned i state (1. dag)
+  const [monthBase, setMonthBase] = React.useState<Date>(minMonth);
+
+  const gridStart = React.useMemo(
+    () => startOfWeek(startOfMonth(monthBase), weekStartsOn),
+    [monthBase, weekStartsOn]
+  );
 
   // data
   const [bookings, setBookings] = React.useState<Booking[] | null>(null);
-  const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let alive = true;
+    const ctrl = new AbortController();
+
     async function load() {
-      setLoading(true);
       setError(null);
       try {
-        const fetchJson = async (url: string): Promise<ApiPayload> => {
-          const r = await fetch(url);
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          return (await r.json()) as ApiPayload;
-        };
+        const res = await fetch(apiPath, { signal: ctrl.signal });
+        if (!res.ok) throw new Error(res.statusText);
+        const json = (await res.json()) as ApiResponse;
 
-        let payload: ApiPayload;
-        try {
-          payload = await fetchJson("/api/ical");
-        } catch {
-          payload = await fetchJson("/api/ical-events");
-        }
+        const all = normalizeBookingsFromApi(json);
+        // vis kun igangværende/kommende
+        const filtered = all.filter((b) => b.endDay >= today);
         if (!alive) return;
-        if (!payload.ok) throw new Error("API returned error");
-
-        // Kun fremtid og igangværende
-        const today = dateOnlyUTC(now);
-        const all = toBookings(payload.events).filter(
-          (b) => b.endDay >= today // inkluder igangværende og fremtid
-        );
-        setBookings(all);
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Unknown error");
+        setBookings(filtered);
+      } catch (e) {
+        if (!alive) return;
+        setError((e as Error).message || "Fetch error");
         setBookings([]);
-      } finally {
-        if (alive) setLoading(false);
       }
     }
+
     load();
     return () => {
       alive = false;
+      ctrl.abort();
     };
-    // kun ved mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [apiPath, today]);
 
-  const WEEKS = 5;
-  const gridStart = startOfMonthGridUTC(ym.y, ym.m);
-  const gridEnd = addDays(gridStart, WEEKS * 7);
+  // navigation: må ikke gå bagud før minMonth
+  const canPrev = React.useMemo(() => {
+    const a = startOfMonth(monthBase).getTime();
+    const b = startOfMonth(minMonth).getTime();
+    return a > b;
+  }, [monthBase, minMonth]);
 
-  // Segmenter for synlig periode
-  const segments: Segment[] = React.useMemo(() => {
+  function prevMonth() {
+    if (!canPrev) return;
+    setMonthBase((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
+  }
+  function nextMonth() {
+    setMonthBase((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
+  }
+
+  // celler til 5 uger
+  const cells = React.useMemo(() => {
+    const arr: Date[] = [];
+    for (let i = 0; i < WEEKS * 7; i++) arr.push(addDays(gridStart, i));
+    return arr;
+  }, [gridStart]);
+
+  // segmenter for vist grid
+  const segments = React.useMemo(() => {
     if (!bookings) return [];
-    const list: Segment[] = [];
+    const segs: Segment[] = [];
     for (const b of bookings) {
-      // vis kun hvis der er overlap med synlig grid
-      if (b.endDay <= gridStart || b.startDay >= gridEnd) continue;
-      list.push(...splitIntoSegments(b, gridStart, WEEKS));
+      segs.push(...splitIntoSegments(b, gridStart, WEEKS));
     }
-    return list;
-  }, [bookings, gridStart, gridEnd]);
+    return segs;
+  }, [bookings, gridStart]);
 
-  // Celler
-  const cells = Array.from({ length: WEEKS * 7 }).map((_, i) => {
-    const d = addDays(gridStart, i);
-    const inMonth = d.getUTCMonth() === ym.m;
-    const isToday =
-      d.getUTCFullYear() === now.getUTCFullYear() &&
-      d.getUTCMonth() === now.getUTCMonth() &&
-      d.getUTCDate() === now.getUTCDate();
-
-    return (
-      <div
-        key={i}
-        className={styles.cell}
-        data-dim={!inMonth ? "1" : undefined}
-      >
-        <div className={styles.dayWrap}>
-          <span className={isToday ? styles.todayBadge : styles.dayNum}>
-            {d.getUTCDate()}
-          </span>
-        </div>
-      </div>
-    );
-  });
-
-  const monthTitle = new Intl.DateTimeFormat(
-    lang === "da" ? "da-DK" : "en-GB",
-    {
-      year: "numeric",
-      month: "long",
-      timeZone: "UTC",
-    }
-  ).format(dUTC(ym.y, ym.m, 1));
-
-  const onPrev = () => {
-    if (sameYM(ym, nowYM)) return; // kan ikke bagud
-    setYm(({ y, m }) => (m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 }));
-  };
-  const onNext = () =>
-    setYm(({ y, m }) => (m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 }));
-
-  const labelText = lang === "da" ? "Reserveret" : "Reserved";
+  const monthTitle = formatMonthTitle(monthBase, lang);
+  const reservedLabel = t("Reserveret", "Reserved");
 
   return (
     <div className={styles.wrap}>
       <div className={styles.head}>
         <button
-          className={styles.nav}
-          onClick={onPrev}
-          disabled={sameYM(ym, nowYM)}
-          aria-label={lang === "da" ? "Forrige måned" : "Previous month"}
+          type="button"
+          className={styles.navBtn}
+          onClick={prevMonth}
+          disabled={!canPrev}
+          aria-label={t("Forrige måned", "Previous month")}
         >
           ‹
         </button>
-        <div className={styles.title}>{monthTitle}</div>
+        <div className={styles.month}>{monthTitle}</div>
         <button
-          className={styles.nav}
-          onClick={onNext}
-          aria-label={lang === "da" ? "Næste måned" : "Next month"}
+          type="button"
+          className={styles.navBtn}
+          onClick={nextMonth}
+          aria-label={t("Næste måned", "Next month")}
         >
           ›
         </button>
       </div>
 
-      <div className={styles.weekheads}>
-        {Array.from({ length: 7 }).map((_, i) => {
-          const d = addDays(dUTC(2024, 0, 1), i); // Mon..Sun labels
-          const txt = new Intl.DateTimeFormat(
-            lang === "da" ? "da-DK" : "en-GB",
-            {
-              weekday: "short",
-              timeZone: "UTC",
-            }
+      <div
+        className={styles.grid}
+        style={{ ["--weeks" as string]: WEEKS } as React.CSSProperties}
+      >
+        {/* ugedage */}
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+          .slice(weekStartsOn)
+          .concat(
+            ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].slice(
+              0,
+              weekStartsOn
+            )
           )
-            .format(d)
-            .replace(".", "");
+          .map((label) => (
+            <div key={label} className={styles.weekday}>
+              {lang === "da"
+                ? (
+                    {
+                      Mon: "Man",
+                      Tue: "Tir",
+                      Wed: "Ons",
+                      Thu: "Tor",
+                      Fri: "Fre",
+                      Sat: "Lør",
+                      Sun: "Søn",
+                    } as Record<string, string>
+                  )[label]
+                : label}
+            </div>
+          ))}
+
+        {/* dato-celler */}
+        {cells.map((d) => {
+          const isToday = d.getTime() === today.getTime();
+          const inMonth = d.getMonth() === monthBase.getMonth();
+
           return (
-            <div key={i} className={styles.wd}>
-              {txt}
+            <div
+              key={d.toISOString()}
+              className={styles.cell}
+              data-dim={!inMonth ? "1" : undefined}
+            >
+              <div
+                className={styles.dayNum}
+                data-today={isToday ? "1" : undefined}
+              >
+                {d.getDate()}
+                {isToday && <span className={styles.dot} aria-hidden />}
+              </div>
             </div>
           );
         })}
-      </div>
 
-      <div className={styles.grid}>
-        {/* Bars (overlay) */}
-        <div className={styles.overlay}>
-          {segments.map((s) => {
-            const style: React.CSSProperties = {
-              gridRow: s.row + 1,
-              gridColumn: `${s.colStart} / ${s.colEnd}`,
-              borderTopLeftRadius: s.isFirst ? 12 : 6,
-              borderBottomLeftRadius: s.isFirst ? 12 : 6,
-              borderTopRightRadius: s.isLast ? 12 : 6,
-              borderBottomRightRadius: s.isLast ? 12 : 6,
-            };
-            return (
-              <div key={s.id} className={styles.bar} style={style}>
-                {s.labelHere && (
-                  <span className={styles.barLabel}>{labelText}</span>
-                )}
-              </div>
-            );
-          })}
+        {/* bars-lag */}
+        <div className={styles.bars}>
+          {segments.map((s) => (
+            <div
+              key={s.id}
+              className={styles.bar}
+              style={{
+                gridRow: s.row + 2, // +1 for header, +1 fordi grid ligger i samme container
+                gridColumn: `${s.colStart} / ${s.colEnd}`,
+              }}
+            >
+              {s.labelHere && (
+                <span className={styles.barLabel}>{reservedLabel}</span>
+              )}
+            </div>
+          ))}
         </div>
-
-        {/* Day cells */}
-        {cells}
       </div>
 
-      <div className={styles.status}>
-        {loading && (
-          <span>
-            {lang === "da" ? "Henter kalender…" : "Loading calendar…"}
-          </span>
-        )}
-        {!loading && error && (
-          <span className={styles.error}>
-            {lang === "da"
-              ? "Kunne ikke hente kalender"
-              : "Failed to load calendar"}
-          </span>
-        )}
-      </div>
+      {!bookings && (
+        <div className={styles.loading}>{t("Henter…", "Loading…")}</div>
+      )}
+      {error && <div className={styles.error}>{error}</div>}
     </div>
   );
 }
