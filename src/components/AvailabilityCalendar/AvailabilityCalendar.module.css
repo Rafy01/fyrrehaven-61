@@ -1,85 +1,135 @@
-.wrap {
+:root {
   --gap: 10px;
-  --cell-h: 74px;
-  --pill: #1e1e1e;
-  --ink-muted: #80848a;
+  --cellH: 88px;
+  --ink: #0b0b0c;
+  --muted: #9aa0a6;
+  --bg: #ffffff;
+  --cell-bg: #f6f7f8;
+  --pill: #1e1f20;
 }
 
-.bar { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:8px; }
-.title { font-weight:600; }
-.nav {
-  appearance:none; border:0; background:#eee; border-radius:8px;
-  width:28px; height:28px; line-height:28px; text-align:center; cursor:pointer;
+.wrap {
+  width: 100%;
 }
-.nav:hover { background:#e3e3e3; }
 
-.dowGrid {
-  display:grid; grid-template-columns: repeat(7, 1fr);
-  gap: var(--gap); margin-bottom:6px;
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
-.dow { text-align:center; font-size:12px; color: var(--ink-muted); }
 
-.cellsWrap { position: relative; }
-
-.cellsGrid {
-  display:grid; grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: var(--cell-h); gap: var(--gap);
+.title {
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 0.2px;
 }
-.cell {
+
+.navBtn {
+  border: 0;
+  background: var(--cell-bg);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.grid {
   position: relative;
-  background:#fff; border:1px solid #eee; border-radius:12px;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.02);
-}
-.cell.dim { opacity:.5; }
-.day { position:absolute; top:6px; left:8px; font-size:12px; }
-
-.eventsGrid {
-  pointer-events:none;
-  position:absolute; inset:0;
-  display:grid; grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: var(--cell-h); gap: var(--gap);
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--cellH);
+  gap: var(--gap);
 }
 
-/* ---- booking pills ----
-   - Bridge gap mellem kolonner, så segmenter hænger sammen. */
+.wd {
+  height: 28px;
+  line-height: 28px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.cell {
+  background: var(--bg);
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+  position: relative;
+}
+
+.dim {
+  opacity: 0.45;
+}
+
+.today {
+  box-shadow: inset 0 0 0 2px #d00;
+}
+
+.date {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+/* Overlay grid til piller (lægger sig ovenpå cellerne) */
+.overlay {
+  pointer-events: none;
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--cellH);
+  gap: var(--gap);
+}
+
+/* --- PILL STYLES --- */
 .pill {
   position: relative;
-  height:28px; background: var(--pill); color:#fff;
-  display:flex; align-items:center;
-  border-radius:999px; padding:0 12px;
+  height: 28px;
+  background: var(--pill);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  border-radius: 999px; /* hvis alene */
+  padding: 0 12px;
   box-shadow: 0 2px 6px rgba(0,0,0,.15);
 }
 
-/* Mid/fulde stykker: overlap begge sider af grid-gap */
+/* flade ender når stykket spænder over flere kolonner */
 .pillBridge {
   margin-left: calc(-1 * var(--gap) / 2);
   margin-right: calc(-1 * var(--gap) / 2);
+  border-radius: 0;
 }
 
-/* Start: halv dags bredde – men overlapper højre gap */
+/* start: rund kun venstre, flad mod højre + start i højre halvdel */
 .pillStart {
   margin-left: calc(50% - var(--gap) / 2);
   margin-right: calc(-1 * var(--gap) / 2);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
-/* Slut: halv dags bredde – men overlapper venstre gap */
+/* slut: rund kun højre, flad mod venstre + slutter i venstre halvdel */
 .pillEnd {
   margin-left: calc(-1 * var(--gap) / 2);
   margin-right: calc(50% - var(--gap) / 2);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
-.avatar {
-  width:22px; height:22px; border-radius:999px;
-  background:#2b2b2b; display:inline-flex; align-items:center; justify-content:center;
-  font-size:12px; text-transform:lowercase; margin-right:8px;
-  border:2px solid rgba(255,255,255,.25);
+.label {
+  font-size: 12px;
+  font-weight: 500;
 }
-.label { font-weight:600; font-size:14px; }
 
-.note { margin-top:8px; font-size:14px; color:#666; }
-.err  { margin-top:8px; font-size:14px; color:#b00020; }
-
-@media (max-width: 640px) {
-  .cellsGrid, .eventsGrid { --cell-h: 64px; }
-  .pill { height:26px; }
+/* footer */
+.loading {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
 }
