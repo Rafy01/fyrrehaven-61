@@ -74,6 +74,17 @@ function formatMonthTitle(d: Date, lang: Lang): string {
   });
 }
 
+/** ISO-uge (ISO 8601, mandag=uge-start). Behold weekStartsOn=1 for korrekt ISO. */
+function getISOWeek(d: Date): number {
+  const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = dt.getUTCDay() || 7; // 1..7, hvor 1=Mon
+  dt.setUTCDate(dt.getUTCDate() + 4 - day); // til torsdag i samme uge
+  const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+  const diffDays =
+    Math.floor((dt.getTime() - yearStart.getTime()) / 86400000) + 1;
+  return Math.ceil(diffDays / 7);
+}
+
 /* ─── API → bookings ─── */
 function looksLikeBooking(ev: ApiEvent): boolean {
   const t = ev.title.toLowerCase();
@@ -168,6 +179,8 @@ function splitIntoSegments(
 }
 
 /* ─── Component ─── */
+type CSSVars = React.CSSProperties & { ["--weeks"]?: number };
+
 export default function AvailabilityCalendar({
   lang,
   apiPath = "/api/ical",
@@ -178,6 +191,7 @@ export default function AvailabilityCalendar({
   const minMonth = startOfMonth(today);
 
   const WEEKS = 5;
+  const WEEKNUM_COL = 40; // px – bredde til uge-kolonnen
 
   const [monthBase, setMonthBase] = React.useState<Date>(minMonth);
   const gridStart = React.useMemo(
@@ -229,11 +243,18 @@ export default function AvailabilityCalendar({
   }
 
   // cells (5 weeks)
-  const cells = React.useMemo(() => {
-    const arr: Date[] = [];
-    for (let i = 0; i < WEEKS * 7; i++) arr.push(addDays(gridStart, i));
-    return arr;
-  }, [gridStart]);
+  const weekStarts: Date[] = React.useMemo(
+    () => Array.from({ length: WEEKS }, (_, r) => addDays(gridStart, r * 7)),
+    [gridStart]
+  );
+
+  const cells: Date[][] = React.useMemo(
+    () =>
+      weekStarts.map((ws) =>
+        Array.from({ length: 7 }, (_, i) => addDays(ws, i))
+      ),
+    [weekStarts]
+  );
 
   // segments
   const segments = React.useMemo(() => {
@@ -253,6 +274,8 @@ export default function AvailabilityCalendar({
   const wd = (lang === "da" ? WD_DA : WD_EN)
     .slice(weekStartsOn)
     .concat((lang === "da" ? WD_DA : WD_EN).slice(0, weekStartsOn));
+
+  const weekColTemplate = `${WEEKNUM_COL}px repeat(7, 1fr)`;
 
   return (
     <div className={styles.wrap}>
@@ -282,41 +305,59 @@ export default function AvailabilityCalendar({
         style={
           {
             ["--weeks"]: WEEKS,
-          } as React.CSSProperties & Record<string, number>
+            gridTemplateColumns: weekColTemplate, // ← ekstra uge-kolonne
+          } as CSSVars
         }
       >
-        {/* Weekday header row */}
+        {/* Week header row (først uge-etiket, så 7 hverdage) */}
+        <div className={styles.weeknumHead} aria-hidden="true" />
         {wd.map((label) => (
           <div key={label} className={styles.weekday}>
             {label}
           </div>
         ))}
 
-        {/* Day cells */}
-        {cells.map((d) => {
-          const isToday = d.getTime() === today.getTime();
-          const inMonth = d.getMonth() === monthBase.getMonth();
+        {/* 5 rækker: uge-nummer + 7 dato-celler */}
+        {weekStarts.map((ws, r) => {
+          const iso = getISOWeek(ws);
           return (
-            <div
-              key={d.toISOString()}
-              className={styles.cell}
-              data-dim={!inMonth ? "1" : undefined}
-              data-today={isToday ? "1" : undefined} // ← flyt attributten herop
-            >
-              <div className={styles.dayNum}>{d.getDate()}</div>
-            </div>
+            <React.Fragment key={`row-${r}-${iso}`}>
+              {/* uge-nummer-celle */}
+              <div className={styles.weeknumCell} aria-label={`Uge ${iso}`}>
+                {iso}
+              </div>
+
+              {/* 7 datoer i ugen */}
+              {cells[r].map((d) => {
+                const isToday = d.getTime() === today.getTime();
+                const inMonth = d.getMonth() === monthBase.getMonth();
+                return (
+                  <div
+                    key={d.toISOString()}
+                    className={styles.cell}
+                    data-dim={!inMonth ? "1" : undefined}
+                    data-today={isToday ? "1" : undefined}
+                  >
+                    <div className={styles.dayNum}>{d.getDate()}</div>
+                  </div>
+                );
+              })}
+            </React.Fragment>
           );
         })}
 
-        {/* Bars layer – perfectly aligned to 5 week rows */}
-        <div className={styles.bars}>
+        {/* Bars layer – nu med 8 kolonner (uge + 7 dage) */}
+        <div
+          className={styles.bars}
+          style={{ gridTemplateColumns: weekColTemplate }}
+        >
           {segments.map((s) => (
             <div
               key={s.id}
               className={styles.bar}
               style={{
-                gridRow: s.row + 1,
-                gridColumn: `${s.colStart} / ${s.colEnd}`,
+                gridRow: s.row + 1, // samme række
+                gridColumn: `${s.colStart + 1} / ${s.colEnd + 1}`, // +1 pga. uge-kolonnen
               }}
             >
               {s.labelHere && (
@@ -325,8 +366,7 @@ export default function AvailabilityCalendar({
             </div>
           ))}
         </div>
-          </div>
-          
+      </div>
 
       {!bookings && (
         <div className={styles.loading}>{t("Henter…", "Loading…")}</div>
