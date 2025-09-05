@@ -309,6 +309,22 @@ export default function AvailabilityCalendar({
     return segs;
   }, [bookings, gridStart]);
 
+  /* 1) bookedDays: alle datoer (YYYY-MM-DD) der er booket i de 5 uger (endDay eksklusiv) */
+  const bookedDays = React.useMemo(() => {
+    const set = new Set<string>();
+    if (!bookings) return set;
+
+    const gridEnd = addDays(gridStart, WEEKS * 7); // eksklusiv
+    for (const b of bookings) {
+      const s = clampDate(b.startDay, gridStart, gridEnd);
+      const e = clampDate(b.endDay, gridStart, gridEnd); // eksklusiv
+      for (let d = new Date(s); d < e; d = addDays(d, 1)) {
+        set.add(d.toISOString().slice(0, 10));
+      }
+    }
+    return set;
+  }, [bookings, gridStart]);
+
   // selection segments (only for range when both ends exist)
   const selSegments = React.useMemo(() => {
     if (selectionMode !== "range") return [];
@@ -344,20 +360,15 @@ export default function AvailabilityCalendar({
   );
 
   // Beregn pris for valgt periode og emit til parent
-  // ↓ erstatter din eksisterende computeAndEmitPrice
   const computeAndEmitPrice = React.useCallback(
     (current: Selection | null) => {
       const send = (payload: SelectionPrice) => {
-        // emit til parent hvis sat
         onSelectionPrice?.(payload);
-
-        // console-log samlet pris + detaljer
         try {
           const totalTxt =
             payload.total != null ? fmtPrice.format(payload.total) : "—";
           console.log("[Calendar] Samlet pris:", totalTxt, payload);
         } catch {
-          // fallback hvis formatter fejler
           console.log(
             "[Calendar] Samlet pris:",
             payload.total ?? null,
@@ -441,7 +452,7 @@ export default function AvailabilityCalendar({
 
     // range mode
     if (!sel || sel.kind !== "range" || (sel.kind === "range" && sel.end)) {
-      // Start a new range
+      // Start a ny range
       emitSelection({ kind: "range", start: startOfDay(d) });
       return;
     }
@@ -449,10 +460,8 @@ export default function AvailabilityCalendar({
     const start = sel.start;
     const clicked = startOfDay(d);
     if (clicked.getTime() === start.getTime()) {
-      // same day -> cancel selection
       emitSelection(null);
     } else if (clicked < start) {
-      // swap so start <= end
       emitSelection({ kind: "range", start: clicked, end: start });
     } else {
       emitSelection({ kind: "range", start, end: clicked });
@@ -534,7 +543,12 @@ export default function AvailabilityCalendar({
 
                 const selectedSingle = isSingleSelected(d);
                 const edge = isRangeEdge(d); // "start" | "end" | ""
-                const price = inMonth ? getPriceForDate(d) : null;
+
+                /* 2) Skjul pris for bookede dage */
+                const ymd = d.toISOString().slice(0, 10);
+                const isBooked = bookedDays.has(ymd);
+
+                const price = !isBooked && inMonth ? getPriceForDate(d) : null;
                 const priceLabel =
                   price != null ? fmtPrice.format(price) : null;
 
