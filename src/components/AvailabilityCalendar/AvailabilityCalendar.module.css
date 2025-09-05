@@ -1,49 +1,145 @@
-/* src/components/AvailabilityCalendar/AvailabilityCalendar.module.css */
-.wrap { width: 100%; }
-.head {
-  display:flex; align-items:center; justify-content:center;
-  gap:.5rem; margin-bottom:.75rem;
+.wrap {
+  --cell: 86px;            /* cellens højde */
+  --radius: 12px;
+  --seg-h: 26px;           /* højde på bookingbar */
+  --seg-pad: 6px;          /* lodret offset så dagstal kan læses */
+  --col-bg: #f7f7f8;
+  --col-bg-dim: #f1f1f3;
+  --ink: #0b0c0e;
+  --muted: #8d8f98;
+  --seg: #1f1f22;          /* bar-farve */
+  --seg-edge: #1f1f22;
 }
-.title { font-weight:750; font-size:1.25rem; }
-.nav {
-  appearance:none; border:0; background:var(--gray-3,#eee);
-  width:32px; height:32px; border-radius:8px; cursor:pointer;
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
 }
-.grid {
-  display:grid;
+
+.month {
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.navBtn {
+  appearance: none;
+  border: none;
+  background: #ececf0;
+  color: #111;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.navBtn:hover { background: #e2e2e7; }
+
+.headerGrid {
+  display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: .5rem;
+  margin-bottom: 6px;
+  padding: 0 2px;
 }
 .wd {
-  font-size:.8rem; color:var(--gray-9,#666);
-  text-align:center; padding:.25rem 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
 }
+
+.grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--cell);
+  gap: 12px;
+}
+
+/* dagceller */
 .cell {
-  position:relative;
-  background:var(--gray-1,#fafafa);
-  border:1px solid rgba(0,0,0,.06);
-  border-radius:12px; height:80px;
-  overflow:hidden;
+  position: relative;
+  background: var(--col-bg);
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px #e9e9ee;
+  overflow: hidden;
 }
-.cell[data-dim="0"]{ opacity:.45; }
+.dim {
+  background: var(--col-bg-dim);
+  color: var(--muted);
+}
 .dayNum {
-  position:absolute; top:.35rem; left:.45rem;
-  font-size:.8rem; color:var(--gray-10,#444);
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-/* booking-bar der fylder feltet på tværs */
-.bar {
-  position:absolute; left:6px; right:6px; top:35px; height:16px;
-  background: #181;  /* grøn, justér tema */
+/* ind/ud markører i cellens kanter */
+.flags {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
-.startCap { border-top-left-radius:12px; border-bottom-left-radius:12px; }
-.endCap   { border-top-right-radius:12px; border-bottom-right-radius:12px; }
+.flag {
+  position: absolute;
+  top: 4px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+}
+.in {
+  left: 6px;
+  border-right: 8px solid #0a7a34; /* grøn check-in */
+}
+.out {
+  right: 6px;
+  border-left: 8px solid #b21e1e;  /* rød check-out */
+}
 
-/* samme-dag checkin/checkout: to tynde striber */
-.stack2 {
-  position:absolute; left:8px; right:8px; top:30px; display:grid; gap:6px;
+/* booking segmenter */
+.seg {
+  display: contents; /* vi placerer kun .segBody visuelt */
 }
-.mini {
-  height:6px; background:#181; border-radius:8px;
+.segBody {
+  align-self: end;
+  height: var(--seg-h);
+  margin-bottom: var(--seg-pad);
+  background: var(--seg);
+  border-radius: 999px;
+  position: relative;
 }
-.loading { margin-top:.5rem; color:var(--gray-10,#555); font-size:.9rem; }
+
+/* venstre/højre "pilehoved" (chevrons) */
+.segStart .segBody::before,
+.segEnd .segBody::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 12px;
+  height: 100%;
+  background: var(--seg-edge);
+  clip-path: polygon(0 0, 100% 50%, 0 100%); /* ► */
+}
+.segStart .segBody::before {
+  left: -10px;
+  transform: rotate(180deg); /* ◄ ved start */
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+.segEnd .segBody::after {
+  right: -10px;
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+.loading,
+.error {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.error { color: #b21e1e; }
