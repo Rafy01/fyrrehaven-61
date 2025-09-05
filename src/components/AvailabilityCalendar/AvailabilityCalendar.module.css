@@ -1,12 +1,10 @@
 .wrap {
   --gap: 14px;
   --cell-radius: 12px;
-  --bg: #ffffff;
   --ink: #0d0e10;
   --muted: #a7abb3;
   --bar: #191919;
   --today: #e20d43;
-
   color: var(--ink);
 }
 
@@ -17,13 +15,11 @@
   gap: 8px;
   margin-bottom: 8px;
 }
-
 .title {
   text-align: center;
   font-weight: 600;
   font-size: 18px;
 }
-
 .nav {
   height: 32px;
   width: 32px;
@@ -32,22 +28,25 @@
   background: #fff;
   cursor: pointer;
 }
+.nav:disabled {
+  opacity: .4;
+  cursor: default;
+}
 
 .weekheads {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: var(--gap);
   margin-bottom: 6px;
-  padding-left: 2px;
-  padding-right: 2px;
+  padding: 0 2px;
 }
-
 .wd {
   font-size: 12px;
   color: var(--muted);
   text-align: left;
 }
 
+/* Main grid (5 uger) */
 .grid {
   position: relative;
   display: grid;
@@ -56,67 +55,55 @@
   gap: var(--gap);
 }
 
+/* Overlay: brug samme repeat(...) i stedet for subgrid (bedre kompatibilitet) */
+.overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(5, 100px);
+  gap: var(--gap);
+  z-index: 2;
+}
+
 .cell {
-  background: var(--bg);
+  background: #fff;
   border: 1px solid #eceef2;
   border-radius: var(--cell-radius);
   position: relative;
   overflow: hidden;
 }
-
-.cell[data-dim="1"] {
-  opacity: 0.45;
-}
+.cell[data-dim="1"] { opacity: .45; }
 
 .dayWrap {
   position: absolute;
   top: 8px;
   right: 10px;
 }
-
-.dayNum {
-  font-weight: 600;
-  font-size: 14px;
-}
-
+.dayNum { font-weight: 600; font-size: 14px; }
 .todayBadge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 26px; height: 26px;
   border-radius: 9999px;
   background: var(--today);
-  color: white;
+  color: #fff;
   font-weight: 700;
   font-size: 14px;
 }
 
-/* Overlay layer for bars (same grid) */
-.overlay {
-  pointer-events: none;
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: subgrid;
-  grid-template-rows: subgrid;
-  gap: var(--gap);
-  z-index: 2;
-}
-
 .bar {
-  align-self: center; /* vertical centering in the row */
+  align-self: center;
   height: 20px;
   background: var(--bar);
   border-radius: 12px;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
-  position: relative;
+  box-shadow: 0 1px 0 rgba(0,0,0,.12);
   display: flex;
   align-items: center;
   padding: 0 10px;
-  overflow: hidden;
 }
-
 .barLabel {
   pointer-events: none;
   color: #fff;
@@ -124,13 +111,9 @@
   font-weight: 600;
 }
 
-/* status line */
 .status {
   margin-top: 10px;
   font-size: 12px;
   color: var(--muted);
 }
-
-.error {
-  color: #c0183a;
-}
+.error { color: #c0183a; }

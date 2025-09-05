@@ -2,175 +2,148 @@ import * as React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
 
-/* ===================== Dates (UTC-safe, Monday-first) ===================== */
+/* ========== Date helpers (UTC, Mon–Sun) ========== */
 const MS_DAY = 24 * 60 * 60 * 1000;
 const addDays = (d: Date, n: number) => new Date(d.getTime() + n * MS_DAY);
-
-/** Strip time -> UTC date at 00:00 */
-function dUTC(y: number, m: number, d: number) {
-  return new Date(Date.UTC(y, m, d));
-}
-function dateOnlyUTC(d: Date | string) {
-  const dt = typeof d === "string" ? new Date(d) : d;
-  return dUTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
-}
-function mondayIndex(utcDay: number) {
-  // JS: 0=Sun..6=Sat  ->  Mon=0..Sun=6
-  return (utcDay + 6) % 7;
-}
+const dUTC = (y: number, m: number, d: number) => new Date(Date.UTC(y, m, d));
+const dateOnlyUTC = (d: Date | string) => {
+  const x = typeof d === "string" ? new Date(d) : d;
+  return dUTC(x.getUTCFullYear(), x.getUTCMonth(), x.getUTCDate());
+};
+const daysBetween = (a: Date, b: Date) =>
+  Math.round((dateOnlyUTC(b).getTime() - dateOnlyUTC(a).getTime()) / MS_DAY);
+const mondayIndex = (utcDay: number) => (utcDay + 6) % 7;
 function startOfMonthGridUTC(y: number, m: number) {
-  // first-of-month in UTC
   const first = dUTC(y, m, 1);
   const wd = mondayIndex(first.getUTCDay());
-  return addDays(first, -wd); // Monday of that grid
+  return addDays(first, -wd); // Monday before/at month start
 }
 function clampDate(d: Date, lo: Date, hi: Date) {
   if (d < lo) return lo;
   if (d > hi) return hi;
   return d;
 }
-function daysBetween(a: Date, b: Date) {
-  return Math.round(
-    (dateOnlyUTC(b).getTime() - dateOnlyUTC(a).getTime()) / MS_DAY
-  );
+function sameYM(a: { y: number; m: number }, b: { y: number; m: number }) {
+  return a.y === b.y && a.m === b.m;
 }
 
-/* ===================== API & types ===================== */
+/* ========== API types ========== */
 type ApiEvent = {
   id: string;
   title: string;
   description?: string;
-  start: string;
-  end: string;
+  start: string; // ISO
+  end: string; // ISO
   allDay?: boolean;
 };
+type ApiOk = {
+  ok: true;
+  events: ApiEvent[];
+  updatedAt?: string;
+  count?: number;
+};
+type ApiErr = { ok: false; error: string };
+type ApiPayload = ApiOk | ApiErr;
 
-type ApiPayload =
-  | { ok: true; events: ApiEvent[]; updatedAt?: string; count?: number }
-  | { ok: false; error: string };
-
+/* ========== Booking model (nætter) ========== */
 type Booking = {
   id: string;
-  startDay: Date; // inclusive (check-in day)
-  endDay: Date; // checkout day (exclusive)
+  startDay: Date; // check-in dag (inkl.)
+  endDay: Date; // check-out dag (ekskl.)
 };
 
-/** crude detector for bookings vs. chores/meetings */
 function isReservationEvent(ev: ApiEvent): boolean {
   const t = (ev.title || "").toLowerCase();
   const d = (ev.description || "").toLowerCase();
-
   const positive =
-    /(airbnb|campaya|dancenter|sol\s*og\s*strand|udlejning|reservation|reserved|privat|not available|familien|oh ?ana)/i.test(
-      ev.title
-    ) || /(reservation|not available)/i.test(d);
-
+    /(airbnb|campaya|dancenter|sol\s*og\s*strand|udlejning|reservation|reserved|not available|privat|familien|ohana)/i.test(
+      t + " " + d
+    );
   const negative =
     /(rengøring|rengoering|clean|møde|moede|meeting|fotograf|levering|generalforsamling|refsix|arbejde)/i.test(
       t + " " + d
     );
-
   if (negative) return false;
   if (positive) return true;
 
-  // fallback: long-ish spans likely a stay
+  // fallback: 2+ døgn antages at være et ophold
   try {
-    const s = new Date(ev.start);
-    const e = new Date(ev.end);
-    return e.getTime() - s.getTime() >= 2 * MS_DAY - 1 * 60 * 60 * 1000; // ~2 days
+    const dur = new Date(ev.end).getTime() - new Date(ev.start).getTime();
+    return dur >= 2 * MS_DAY - 60 * 60 * 1000;
   } catch {
     return false;
   }
 }
 
-/** Normalize API events -> bookings (nights). endDay is checkout (exclusive). */
 function toBookings(events: ApiEvent[]): Booking[] {
   const out: Booking[] = [];
   for (const ev of events) {
     if (!isReservationEvent(ev)) continue;
-
-    const s = new Date(ev.start);
-    const e = new Date(ev.end);
-
-    const sDay = dateOnlyUTC(s);
-    const eDay = dateOnlyUTC(e); // checkout date.
-
-    // Ignore zero/negative spans
+    const sDay = dateOnlyUTC(ev.start);
+    const eDay = dateOnlyUTC(ev.end); // eksklusiv
     if (daysBetween(sDay, eDay) <= 0) continue;
-
-    out.push({
-      id: ev.id,
-      startDay: sDay,
-      endDay: eDay, // exclusive
-    });
+    out.push({ id: ev.id, startDay: sDay, endDay: eDay });
   }
-  // sort by start
   out.sort((a, b) => a.startDay.getTime() - b.startDay.getTime());
   return out;
 }
 
-/* Break a booking into week-segments inside visible grid (Mon..Sun rows). */
+/* ========== Split til “week segments” ========== */
 type Segment = {
   id: string;
   row: number; // 0..4
-  colStart: number; // 1..7 (CSS grid columns)
+  colStart: number; // 1..7
   colEnd: number; // 2..8 (exclusive)
   isFirst: boolean;
   isLast: boolean;
-  labelHere: boolean; // place "Reserved/Reserveret" on first visible segment only
+  labelHere: boolean; // kun på første synlige segment
 };
 
-function splitIntoSegments(b: Booking, gridStart: Date, weeks = 5): Segment[] {
-  const gridDays = weeks * 7;
-  const gridEnd = addDays(gridStart, gridDays); // exclusive
-  // Clip booking to visible grid; note booking endDay is exclusive
+function splitIntoSegments(
+  b: Booking,
+  gridStart: Date,
+  weeks: number
+): Segment[] {
+  const gridEnd = addDays(gridStart, weeks * 7); // eksklusiv
   const visStart = clampDate(b.startDay, gridStart, gridEnd);
   const visEnd = clampDate(b.endDay, gridStart, gridEnd);
-
   if (visStart >= visEnd) return [];
 
-  const firstDayIndex = daysBetween(gridStart, visStart); // 0..34
-  const lastDayIndexExclusive = daysBetween(gridStart, visEnd); // 1..35
+  const firstIx = daysBetween(gridStart, visStart);
+  const lastIxEx = daysBetween(gridStart, visEnd);
 
   const segs: Segment[] = [];
-
-  let cursor = firstDayIndex;
-  const endIx = lastDayIndexExclusive;
-
-  while (cursor < endIx) {
-    const row = Math.floor(cursor / 7); // 0..4
-    const rowStartIx = row * 7;
-    const rowEndIxExclusive = rowStartIx + 7;
-
+  let cursor = firstIx;
+  while (cursor < lastIxEx) {
+    const row = Math.floor(cursor / 7);
+    const rowEndEx = (row + 1) * 7;
     const segStartIx = cursor;
-    const segEndIx = Math.min(endIx, rowEndIxExclusive);
+    const segEndIx = Math.min(lastIxEx, rowEndEx);
 
     segs.push({
       id: `${b.id}:${row}:${segStartIx}-${segEndIx}`,
       row,
-      colStart: (segStartIx % 7) + 1, // 1..7
-      colEnd: (segEndIx % 7) + 1, // 2..8 (exclusive)
-      isFirst: segStartIx === firstDayIndex,
-      isLast: segEndIx === lastDayIndexExclusive,
-      labelHere: segStartIx === firstDayIndex, // only on first visible segment
+      colStart: (segStartIx % 7) + 1,
+      colEnd: (segEndIx % 7) + 1,
+      isFirst: segStartIx === firstIx,
+      isLast: segEndIx === lastIxEx,
+      labelHere: segStartIx === firstIx,
     });
 
-    cursor = segEndIx; // next row
+    cursor = segEndIx;
   }
-
   return segs;
 }
 
-/* ===================== Component ===================== */
+/* ========== Component ========== */
 type Props = { lang: Lang };
 
 export default function AvailabilityCalendar({ lang }: Props) {
-  // month in UTC
   const now = new Date();
-  const [ym, setYm] = React.useState<{ y: number; m: number }>(() => ({
-    y: now.getUTCFullYear(),
-    m: now.getUTCMonth(),
-  }));
+  const nowYM = { y: now.getUTCFullYear(), m: now.getUTCMonth() };
+
+  // Måned kan aldrig gå bagud før nu
+  const [ym, setYm] = React.useState<{ y: number; m: number }>(nowYM);
 
   // data
   const [bookings, setBookings] = React.useState<Booking[] | null>(null);
@@ -179,66 +152,66 @@ export default function AvailabilityCalendar({ lang }: Props) {
 
   React.useEffect(() => {
     let alive = true;
-    (async () => {
+    async function load() {
       setLoading(true);
       setError(null);
       try {
-        // Try /api/ical first, fallback to /api/ical-events
-        const tryFetch = async (url: string) => {
+        const fetchJson = async (url: string): Promise<ApiPayload> => {
           const r = await fetch(url);
-          if (!r.ok) throw new Error(`${r.status}`);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
           return (await r.json()) as ApiPayload;
         };
 
         let payload: ApiPayload;
         try {
-          payload = await tryFetch("/api/ical");
-          if (!payload.ok) throw new Error("API");
+          payload = await fetchJson("/api/ical");
         } catch {
-          payload = await tryFetch("/api/ical-events");
+          payload = await fetchJson("/api/ical-events");
         }
         if (!alive) return;
+        if (!payload.ok) throw new Error("API returned error");
 
-        if (!("ok" in payload) || payload.ok !== true) {
-          throw new Error("Bad API payload");
-        }
-        const b = toBookings(payload.events);
-        setBookings(b);
+        // Kun fremtid og igangværende
+        const today = dateOnlyUTC(now);
+        const all = toBookings(payload.events).filter(
+          (b) => b.endDay >= today // inkluder igangværende og fremtid
+        );
+        setBookings(all);
       } catch (e: unknown) {
-        const message =
-          typeof e === "object" && e !== null && "message" in e
-            ? String((e as { message?: unknown }).message)
-            : String(e);
-        setError(message);
+        setError(e instanceof Error ? e.message : "Unknown error");
         setBookings([]);
       } finally {
         if (alive) setLoading(false);
       }
-    })();
+    }
+    load();
     return () => {
       alive = false;
     };
+    // kun ved mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const gridStart = startOfMonthGridUTC(ym.y, ym.m); // Monday
-  const gridDays = 5 * 7;
+  const WEEKS = 5;
+  const gridStart = startOfMonthGridUTC(ym.y, ym.m);
+  const gridEnd = addDays(gridStart, WEEKS * 7);
 
-  // Prepare segments for visible month
+  // Segmenter for synlig periode
   const segments: Segment[] = React.useMemo(() => {
     if (!bookings) return [];
-    const all: Segment[] = [];
+    const list: Segment[] = [];
     for (const b of bookings) {
-      const segs = splitIntoSegments(b, gridStart, 5);
-      all.push(...segs);
+      // vis kun hvis der er overlap med synlig grid
+      if (b.endDay <= gridStart || b.startDay >= gridEnd) continue;
+      list.push(...splitIntoSegments(b, gridStart, WEEKS));
     }
-    return all;
-  }, [bookings, gridStart]);
+    return list;
+  }, [bookings, gridStart, gridEnd]);
 
-  // Grid cells (5 weeks)
-  const cells = Array.from({ length: gridDays }).map((_, i) => {
+  // Celler
+  const cells = Array.from({ length: WEEKS * 7 }).map((_, i) => {
     const d = addDays(gridStart, i);
     const inMonth = d.getUTCMonth() === ym.m;
-
     const isToday =
       d.getUTCFullYear() === now.getUTCFullYear() &&
       d.getUTCMonth() === now.getUTCMonth() &&
@@ -259,80 +232,77 @@ export default function AvailabilityCalendar({ lang }: Props) {
     );
   });
 
-  const monthFormatter = new Intl.DateTimeFormat(
+  const monthTitle = new Intl.DateTimeFormat(
     lang === "da" ? "da-DK" : "en-GB",
     {
       year: "numeric",
       month: "long",
       timeZone: "UTC",
     }
-  );
+  ).format(dUTC(ym.y, ym.m, 1));
 
-  const monthTitle = monthFormatter.format(dUTC(ym.y, ym.m, 1));
-
-  const prevMonth = () => {
+  const onPrev = () => {
+    if (sameYM(ym, nowYM)) return; // kan ikke bagud
     setYm(({ y, m }) => (m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 }));
   };
-  const nextMonth = () => {
+  const onNext = () =>
     setYm(({ y, m }) => (m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 }));
-  };
-
-  // Weekday headings Mon..Sun
-  const wdFmt = new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
-    weekday: "short",
-    timeZone: "UTC",
-  });
-  const monday = dUTC(2024, 0, 1); // Mon 1 Jan 2024 UTC
-  const weekHeads = Array.from({ length: 7 }).map((_, i) => {
-    const d = addDays(monday, i);
-    const s = wdFmt.format(d).replace(".", "");
-    return (
-      <div key={i} className={styles.wd}>
-        {s}
-      </div>
-    );
-  });
 
   const labelText = lang === "da" ? "Reserveret" : "Reserved";
 
   return (
     <div className={styles.wrap}>
-      {/* header */}
       <div className={styles.head}>
         <button
           className={styles.nav}
-          onClick={prevMonth}
-          aria-label="Prev month"
+          onClick={onPrev}
+          disabled={sameYM(ym, nowYM)}
+          aria-label={lang === "da" ? "Forrige måned" : "Previous month"}
         >
           ‹
         </button>
         <div className={styles.title}>{monthTitle}</div>
         <button
           className={styles.nav}
-          onClick={nextMonth}
-          aria-label="Next month"
+          onClick={onNext}
+          aria-label={lang === "da" ? "Næste måned" : "Next month"}
         >
           ›
         </button>
       </div>
 
-      {/* week headings */}
-      <div className={styles.weekheads}>{weekHeads}</div>
+      <div className={styles.weekheads}>
+        {Array.from({ length: 7 }).map((_, i) => {
+          const d = addDays(dUTC(2024, 0, 1), i); // Mon..Sun labels
+          const txt = new Intl.DateTimeFormat(
+            lang === "da" ? "da-DK" : "en-GB",
+            {
+              weekday: "short",
+              timeZone: "UTC",
+            }
+          )
+            .format(d)
+            .replace(".", "");
+          return (
+            <div key={i} className={styles.wd}>
+              {txt}
+            </div>
+          );
+        })}
+      </div>
 
-      {/* grid with overlay */}
       <div className={styles.grid}>
-        {/* booking bars overlay */}
+        {/* Bars (overlay) */}
         <div className={styles.overlay}>
           {segments.map((s) => {
             const style: React.CSSProperties = {
-              gridRow: s.row + 1, // 1..5
+              gridRow: s.row + 1,
               gridColumn: `${s.colStart} / ${s.colEnd}`,
               borderTopLeftRadius: s.isFirst ? 12 : 6,
               borderBottomLeftRadius: s.isFirst ? 12 : 6,
               borderTopRightRadius: s.isLast ? 12 : 6,
               borderBottomRightRadius: s.isLast ? 12 : 6,
             };
-
             return (
               <div key={s.id} className={styles.bar} style={style}>
                 {s.labelHere && (
@@ -343,11 +313,10 @@ export default function AvailabilityCalendar({ lang }: Props) {
           })}
         </div>
 
-        {/* day cells */}
+        {/* Day cells */}
         {cells}
       </div>
 
-      {/* status */}
       <div className={styles.status}>
         {loading && (
           <span>
