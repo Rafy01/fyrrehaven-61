@@ -22,13 +22,13 @@ type ApiResponse =
 
 type Booking = {
   id: string;
-  startDay: Date; // local midnight (check-in day)
-  endDay: Date; // local midnight (check-out day, exclusive)
+  startDay: Date;
+  endDay: Date; // exclusive
 };
 
 type Segment = {
   id: string;
-  row: number; // 0..4
+  row: number;
   colStart: number; // 1..7
   colEnd: number; // 2..8 (8 = end-of-week)
   isFirst: boolean;
@@ -56,16 +56,28 @@ export type SelectionPrice = {
 type Props = {
   lang: Lang;
   apiPath?: string; // default "/api/ical"
-  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6; // 0=Sun .. 6=Sat
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   selectionMode?: SelectionMode; // default "range"
   disablePastSelection?: boolean; // default true
   onSelectionChange?: (sel: Selection | null) => void;
   onSelectionPrice?: (p: SelectionPrice) => void;
-  /** Bredde på uge-nummer kolonnen i px (default 15) */
-  weekNumberColWidth?: number;
+  weekNumberColWidth?: number; // px
 };
 
 /* ─── Date utils ─── */
+
+function rangeIsFree(
+  start: Date,
+  endExclusive: Date,
+  bookedDays: Set<string>
+): boolean {
+  if (endExclusive <= start) return false;
+  for (let d = startOfDay(start); d < endExclusive; d = addDays(d, 1)) {
+    const ymd = d.toISOString().slice(0, 10);
+    if (bookedDays.has(ymd)) return false;
+  }
+  return true;
+}
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -165,62 +177,48 @@ function normalizeBookingsFromApi(payload: ApiResponse): Booking[] {
   return bs;
 }
 
-/* ─── Segment helper ─── */
-function splitIntoSegments(
-  b: Booking,
-  gridStart: Date,
-  weeks: number
-): Segment[] {
-  const gridEnd = addDays(gridStart, weeks * 7); // exclusive
-  const visStart = clampDate(b.startDay, gridStart, gridEnd);
-  const visEnd = clampDate(b.endDay, gridStart, gridEnd);
-  if (visStart >= visEnd) return [];
+/* ─── ICAL fetch: cache pr. apiPath (og de-dupe in-flight) ─── */
+type CacheEntry = { data: Booking[]; error: string | null };
+const ICAL_PROMISE = new Map<string, Promise<CacheEntry>>();
 
-  const firstIx = daysBetween(gridStart, visStart);
-  const lastIxEx = daysBetween(gridStart, visEnd);
-
-  const segs: Segment[] = [];
-  let cursor = firstIx;
-
-  const endColLine = (ixEx: number): number => {
-    const mod = ixEx % 7;
-    return mod === 0 ? 8 : mod + 1;
-  };
-
-  while (cursor < lastIxEx) {
-    const row = Math.floor(cursor / 7);
-    const rowEndEx = (row + 1) * 7;
-
-    const segStartIx = cursor;
-    const segEndIx = Math.min(lastIxEx, rowEndEx);
-
-    segs.push({
-      id: `${b.id}:${row}:${segStartIx}-${segEndIx}`,
-      row,
-      colStart: (segStartIx % 7) + 1,
-      colEnd: endColLine(segEndIx),
-      isFirst: segStartIx === firstIx,
-      isLast: segEndIx === lastIxEx,
-      labelHere: segStartIx === firstIx,
-    });
-
-    cursor = segEndIx;
+async function loadIcal(apiPath: string): Promise<CacheEntry> {
+  let p = ICAL_PROMISE.get(apiPath);
+  if (!p) {
+    p = (async () => {
+      try {
+        const res = await fetch(apiPath, { method: "GET" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        // Prøv JSON først – hvis det fejler, læs tekst og kast en pæn fejl
+        let json: ApiResponse | null = null;
+        try {
+          json = (await res.json()) as ApiResponse;
+        } catch {
+          const txt = await res.text();
+          throw new Error(
+            `Ugyldigt JSON-svar fra ${apiPath}. Første bytes: ${txt.slice(
+              0,
+              80
+            )}`
+          );
+        }
+        const norm = normalizeBookingsFromApi(json);
+        if (norm.length === 0) {
+          return { data: [], error: "Ingen kalenderdata fundet." };
+        }
+        return { data: norm, error: null };
+      } catch (err: unknown) {
+        return {
+          data: [],
+          error:
+            err instanceof Error
+              ? err.message
+              : "Kunne ikke hente kalenderdata.",
+        };
+      }
+    })();
+    ICAL_PROMISE.set(apiPath, p);
   }
-  return segs;
-}
-
-/** Tjek om alle nætter i [start, endExclusive) er ledige */
-function rangeIsFree(
-  start: Date,
-  endExclusive: Date,
-  bookedDays: Set<string>
-): boolean {
-  if (endExclusive <= start) return false;
-  for (let d = startOfDay(start); d < endExclusive; d = addDays(d, 1)) {
-    const ymd = d.toISOString().slice(0, 10);
-    if (bookedDays.has(ymd)) return false;
-  }
-  return true;
+  return p;
 }
 
 /* ─── Component ─── */
@@ -267,39 +265,27 @@ export default function AvailabilityCalendar({
     [onSelectionChange]
   );
 
-  // Fetch iCal
+  // Hold altid seneste onSelectionPrice i en ref (for at undgå render-loop)
+  const onPriceRef = React.useRef<typeof onSelectionPrice>(undefined);
   React.useEffect(() => {
-    let alive = true;
-    const ctrl = new AbortController();
+    onPriceRef.current = onSelectionPrice;
+  }, [onSelectionPrice]);
 
-    (async () => {
-      setError(null);
-      try {
-        const res = await fetch(apiPath, { signal: ctrl.signal });
-        if (!res.ok) throw new Error(res.statusText || `HTTP ${res.status}`);
-        const json = (await res.json()) as ApiResponse;
+  // Hent iCal KUN én gang pr. apiPath (også i StrictMode)
+  React.useEffect(() => {
+    let mounted = true;
+    setError(null);
+    setBookings(null);
 
-        const all = normalizeBookingsFromApi(json);
-        const filtered = all.filter((b) => b.endDay >= today);
-        if (!alive) return;
-        setBookings(filtered);
-      } catch (e: unknown) {
-        if (!alive) return;
-        if (e instanceof Error) {
-          if (e.name === "AbortError") return;
-          console.error("ICAL fetch failed:", e);
-          setError(e.message || "Fetch error");
-        } else {
-          console.error("ICAL fetch failed:", e);
-          setError("Fetch error");
-        }
-        setBookings([]);
-      }
-    })();
+    loadIcal(apiPath).then(({ data, error }) => {
+      if (!mounted) return;
+      const filtered = data.filter((b) => b.endDay >= today);
+      setBookings(filtered);
+      if (error) setError(error);
+    });
 
     return () => {
-      alive = false;
-      ctrl.abort();
+      mounted = false;
     };
   }, [apiPath, today]);
 
@@ -376,7 +362,7 @@ export default function AvailabilityCalendar({
     .slice(weekStartsOn)
     .concat((lang === "da" ? WD_DA : WD_EN).slice(0, weekStartsOn));
 
-  // Kun tal (ingen symbol) til visning
+  // Kun tal (ingen symbol)
   const fmtNumber = React.useMemo(
     () =>
       new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
@@ -385,79 +371,70 @@ export default function AvailabilityCalendar({
     [lang]
   );
 
-  // beregn + emit pris for valgt periode
-  const computeAndEmitPrice = React.useCallback(
-    (current: Selection | null) => {
-      const send = (payload: SelectionPrice) => {
-        onSelectionPrice?.(payload);
-      };
+  // Emit pris KUN når sel ændrer sig (ingen afhængighed af callback-identitet)
+  React.useEffect(() => {
+    const send = (payload: SelectionPrice) => {
+      onPriceRef.current?.(payload);
+    };
 
-      if (!current) {
-        send({ kind: "none" });
-        return;
-      }
+    if (!sel) {
+      send({ kind: "none" });
+      return;
+    }
 
-      if (current.kind === "single") {
-        const day = startOfDay(current.date);
-        const price = getPriceForDate(day);
-        send({
-          kind: "single",
-          start: day,
-          endExclusive: addDays(day, 1),
-          nights: 1,
-          total: price ?? null,
-          breakdown: [{ date: day, price }],
-          hasMissing: price == null,
-        });
-        return;
-      }
+    if (sel.kind === "single") {
+      const day = startOfDay(sel.date);
+      const price = getPriceForDate(day);
+      send({
+        kind: "single",
+        start: day,
+        endExclusive: addDays(day, 1),
+        nights: 1,
+        total: price ?? null,
+        breakdown: [{ date: day, price }],
+        hasMissing: price == null,
+      });
+      return;
+    }
 
-      const start = startOfDay(current.start);
-      const endEx = current.end ? startOfDay(current.end) : undefined;
-      if (!endEx || endEx <= start) {
-        send({
-          kind: "range",
-          start,
-          endExclusive: endEx,
-          nights: endEx ? daysBetween(start, endEx) : undefined,
-          total: null,
-          breakdown: [],
-          hasMissing: true,
-        });
-        return;
-      }
-
-      const days = eachDay(start, endEx);
-      const breakdown = days.map((d) => ({
-        date: d,
-        price: getPriceForDate(d),
-      }));
-      const total = breakdown.reduce((sum, it) => sum + (it.price ?? 0), 0);
-      const hasMissing = breakdown.some((it) => it.price == null);
-
+    const start = startOfDay(sel.start);
+    const endEx = sel.end ? startOfDay(sel.end) : undefined;
+    if (!endEx || endEx <= start) {
       send({
         kind: "range",
         start,
         endExclusive: endEx,
-        nights: days.length,
-        total: hasMissing && total === 0 ? null : total,
-        breakdown,
-        hasMissing,
+        nights: endEx ? daysBetween(start, endEx) : undefined,
+        total: null,
+        breakdown: [],
+        hasMissing: true,
       });
-    },
-    [onSelectionPrice]
-  );
-  React.useEffect(() => {
-    computeAndEmitPrice(sel);
-  }, [sel, computeAndEmitPrice]);
+      return;
+    }
+
+    const days = eachDay(start, endEx);
+    const breakdown = days.map((d) => ({ date: d, price: getPriceForDate(d) }));
+    const total = breakdown.reduce((sum, it) => sum + (it.price ?? 0), 0);
+    const hasMissing = breakdown.some((it) => it.price == null);
+
+    send({
+      kind: "range",
+      start,
+      endExclusive: endEx,
+      nights: days.length,
+      total: hasMissing && total === 0 ? null : total,
+      breakdown,
+      hasMissing,
+    });
+  }, [sel]);
 
   // Klik-håndtering med bookingvalidering
   function handleDayClick(d: Date) {
     if (selectionMode === "none") return;
     const day = startOfDay(d);
 
-    // NEW: forbyd både fortid **og i dag**
-    if (disablePastSelection && day <= today) return; // NEW
+    // Forbyd både fortid og i dag
+    if (disablePastSelection && day <= today) return;
 
     const ymd = day.toISOString().slice(0, 10);
     const isBooked = bookedDays.has(ymd);
@@ -539,7 +516,7 @@ export default function AvailabilityCalendar({
         className={styles.grid}
         style={
           {
-            ["--weeks"]: WEEKS,
+            ["--weeks"]: 5,
             gridTemplateColumns: weekColTemplate,
           } as CSSVars
         }
@@ -574,9 +551,9 @@ export default function AvailabilityCalendar({
                   sel.start &&
                   !sel.end;
 
-                // Klikbarhed for knappen
+                // Klikbarhed
                 let canClick = selectionMode !== "none";
-                if (disablePastSelection && d <= today) canClick = false; // NEW: også i dag
+                if (disablePastSelection && d <= today) canClick = false;
 
                 if (selectionMode === "single") {
                   if (isBooked) canClick = false;
@@ -598,9 +575,8 @@ export default function AvailabilityCalendar({
                 const selectedSingle = isSingleSelected(d);
                 const edge = isRangeEdge(d);
 
-                // NYT: vis ikke pris for fortid **eller i dag**
-                const isPastOrToday = d <= today; // NEW
-                const shouldShowPrice = inMonth && !isBooked && !isPastOrToday; // NEW
+                // Vis ikke pris for fortid eller i dag
+                const shouldShowPrice = inMonth && !isBooked && d > today;
 
                 const value = shouldShowPrice ? getPriceForDate(d) : null;
                 const priceMain =
@@ -646,7 +622,11 @@ export default function AvailabilityCalendar({
         {/* Booking bars (8 kolonner pga. uge-kolonnen) */}
         <div
           className={styles.bars}
-          style={{ gridTemplateColumns: weekColTemplate }}
+          style={{
+            gridTemplateColumns: weekColTemplate,
+            pointerEvents: "none",
+          }}
+          aria-hidden="true"
         >
           {segments.map((s) => (
             <div
@@ -668,7 +648,10 @@ export default function AvailabilityCalendar({
         {selectionMode === "range" && selSegments.length > 0 && (
           <div
             className={styles.selBars}
-            style={{ gridTemplateColumns: weekColTemplate }}
+            style={{
+              gridTemplateColumns: weekColTemplate,
+              pointerEvents: "none",
+            }}
             aria-hidden="true"
           >
             {selSegments.map((s) => (
@@ -693,4 +676,48 @@ export default function AvailabilityCalendar({
       {error && <div className={styles.error}>{error}</div>}
     </div>
   );
+}
+
+/* ─── Segment helper ─── */
+function splitIntoSegments(
+  b: Booking,
+  gridStart: Date,
+  weeks: number
+): Segment[] {
+  const gridEnd = addDays(gridStart, weeks * 7); // exclusive
+  const visStart = clampDate(b.startDay, gridStart, gridEnd);
+  const visEnd = clampDate(b.endDay, gridStart, gridEnd);
+  if (visStart >= visEnd) return [];
+
+  const firstIx = daysBetween(gridStart, visStart);
+  const lastIxEx = daysBetween(gridStart, visEnd);
+
+  const segs: Segment[] = [];
+  let cursor = firstIx;
+
+  const endColLine = (ixEx: number): number => {
+    const mod = ixEx % 7;
+    return mod === 0 ? 8 : mod + 1;
+  };
+
+  while (cursor < lastIxEx) {
+    const row = Math.floor(cursor / 7);
+    const rowEndEx = (row + 1) * 7;
+
+    const segStartIx = cursor;
+    const segEndIx = Math.min(lastIxEx, rowEndEx);
+
+    segs.push({
+      id: `${b.id}:${row}:${segStartIx}-${segEndIx}`,
+      row,
+      colStart: (segStartIx % 7) + 1,
+      colEnd: endColLine(segEndIx),
+      isFirst: segStartIx === firstIx,
+      isLast: segEndIx === lastIxEx,
+      labelHere: segStartIx === firstIx,
+    });
+
+    cursor = segEndIx;
+  }
+  return segs;
 }
