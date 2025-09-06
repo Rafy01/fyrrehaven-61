@@ -373,11 +373,10 @@ export default function AvailabilityCalendar({
     .slice(weekStartsOn)
     .concat((lang === "da" ? WD_DA : WD_EN).slice(0, weekStartsOn));
 
-  const fmtPrice = React.useMemo(
+  // Kun tal (ingen symbol), bruges til top-linje – ”2.200 kr”
+  const fmtNumber = React.useMemo(
     () =>
       new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
-        style: "currency",
-        currency: "DKK",
         maximumFractionDigits: 0,
       }),
     [lang]
@@ -602,9 +601,9 @@ export default function AvailabilityCalendar({
                 const edge = isRangeEdge(d);
 
                 // Skjul pris for bookede dage
-                const price = !isBooked && inMonth ? getPriceForDate(d) : null;
-                const priceLabel =
-                  price != null ? fmtPrice.format(price) : null;
+                const value = !isBooked && inMonth ? getPriceForDate(d) : null;
+                const priceMain =
+                  value != null ? `${fmtNumber.format(value)} ` : null;
 
                 return (
                   <div
@@ -616,11 +615,14 @@ export default function AvailabilityCalendar({
                     data-edge={edge || undefined}
                   >
                     <div className={styles.dayNum}>{d.getDate()}</div>
-                    {priceLabel && (
+
+                    {priceMain && (
                       <div className={styles.price} aria-hidden="true">
-                        {priceLabel}
+                        <span className={styles.priceMain}>{priceMain}</span>
+                        <span className={styles.priceCur}>DKK</span>
                       </div>
                     )}
+
                     <button
                       type="button"
                       className={styles.cellBtn}
