@@ -1,108 +1,506 @@
-/* AvailabilityCalendar.module.css  — mobil-først, uden overflow  */
+/* =========================================================
+=  Baseline (DIN NUVARRENDE CSS – UÆNDRET)
+=  Desktop/tablet opfører sig som i dag.
+========================================================= */
 
-/* ---------- Tokens ---------- */
-.wrap{
-  --weeks:5;
-  --head-h:28px;
-  --cell-h:78px;
-  --gap:12px;
-  --radius:14px;
-  --ink:#0f172a;
-  --muted:#64748b;
-  --today:#e3003c;
-  --bar:#1f1f1f;
-  --weeknum-w:26px; /* kun nummer, ingen border */
-  color:var(--ink);
-  position:relative;
+.wrap {
+  --weeks: 5;
+  --head-h: 28px; /* fast headerhøjde */
+  --cell-h: 82px; /* dagcellernes højde */
+  --gap: 12px;
+  --radius: 12px;
+  --ink: #111;
+  --muted: #9aa0a6;
+  --bar: #1f1f1f;
+  --today: #e3003c; /* rød cirkel for i dag */
 }
 
-/* ---------- Header ---------- */
-.head{
-  display:grid;grid-template-columns:40px 1fr 40px;align-items:center;gap:8px;
-  margin:6px 0 10px;
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
 }
-.month{justify-self:center;font-weight:700;font-size:clamp(16px,3.8vw,20px);text-transform:lowercase;}
-.navBtn{justify-self:center;width:32px;height:32px;border-radius:999px;background:#fff;color:var(--ink);border:1px solid #e5e7eb;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s ease,transform .05s ease;-webkit-tap-highlight-color:transparent;}
-.navBtn:hover{background:#f6f7f8;}
-.navBtn:active{transform:translateY(.5px);}
-.navBtn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(17,24,39,.08);}
-.navBtn:disabled{opacity:.35;cursor:not-allowed;}
+.month {
+  font-weight: 600;
+}
+.navBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  color: var(--ink);
+}
+.navBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
-/* ---------- Grid ---------- */
-.grid{
-  position:relative;display:grid;
-  grid-template-columns: var(--weeknum-w) repeat(7, 1fr) !important; /* ingen min-bredde → ingen overflow */
+/* Grid: 1 header-række + 5 uger */
+.grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
   grid-template-rows: var(--head-h) repeat(var(--weeks), var(--cell-h));
-  gap:var(--gap);
+  gap: var(--gap);
 }
 
-/* Ugedage */
-.weekday{display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);padding:0 0 6px;}
-/* Uge-nummer: kun nummer, ingen kant/baggrund */
-.weeknumCell{display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);background:transparent;border:0;}
+/* Ugedage (øverste række) */
+.weekday {
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
 
-/* ---------- Dagceller ---------- */
-.cell{position:relative;height:var(--cell-h);background:#fff;border:1px solid #efefef;border-radius:var(--radius);transition:box-shadow .12s ease;}
-.cell[data-dim="1"]{opacity:.45;}
-.dayNum{position:absolute;top:8px;right:10px;z-index:3;font-size:13px;font-weight:700;min-width:22px;line-height:22px;text-align:center;border-radius:999px;}
-.cell[data-today="1"]{border-color:var(--today)!important;box-shadow:inset 0 0 0 2px var(--today)!important;}
-.cell[data-today="1"] .dayNum{color:var(--ink)!important;}
+/* Dato-celler */
+.cell {
+  background: #fff;
+  border: 1px solid #efefef;
+  border-radius: var(--radius);
+  position: relative;
+}
+.cell[data-dim="1"] {
+  opacity: 0.45;
+}
 
-/* Pris (to linjer: tal + valuta) */
-.price{position:absolute;left:8px;right:8px;bottom:8px;z-index:3;display:flex;flex-direction:column;align-items:flex-start;line-height:1.05;}
-.priceMain{font-size:12px;font-weight:700;color:#111;}
+.dayNum {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cell[data-today="1"] .dayNum {
+  color: #fff;
+}
+
+/* Bars-lag: præcis 5 rækker, samme kolonner og gap */
+.bars {
+  pointer-events: none;
+  position: absolute;
+  /* skip header-rækken + gap, læg sig over de 5 uger */
+  top: calc(var(--head-h) + var(--gap));
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(var(--weeks), var(--cell-h));
+  gap: var(--gap);
+}
+
+.bar {
+  background: var(--bar);
+  border-radius: 20px;
+  height: 36px;
+  margin-top: 6px; /* lidt luft i cellen */
+  display: flex;
+  align-items: center;
+}
+.barLabel {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 14px;
+}
+
+.loading,
+.error {
+  margin-top: 10px;
+  font-size: 14px;
+}
+.error {
+  color: #c00;
+}
+
+/* (Din alternative header/grid-styling – beholdt) */
+.wrap {
+  --gap: 14px;
+  --cell-h: 96px;
+  --bar-h: 26px;
+  --bar-bg: #1e1e1e;
+  position: relative;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.navBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  cursor: pointer;
+}
+.navBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.monthTitle {
+  font-weight: 600;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--gap);
+}
+.dow {
+  font-size: 12px;
+  color: #6b7280;
+  padding: 0 4px 6px;
+  text-align: center;
+}
+.week {
+  position: relative;
+}
+
+/* dag-celler */
+.cell {
+  position: relative;
+  height: var(--cell-h);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+.dayNum {
+  position: absolute;
+  top: 10px;
+  z-index: 3;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 22px;
+  min-width: 22px;
+  text-align: center;
+  border-radius: 999px;
+}
+.dayNumToday {
+  background: #e51046;
+  color: #fff;
+  padding: 0 6px;
+}
+
+/* bars-overlay pr. uge: grid så vi kan bruge grid-column span */
+.weekBars {
+  position: absolute;
+  inset: 0; /* fyld ugerækken */
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--gap);
+  pointer-events: none;
+  z-index: 2; /* under dato-tallet (z=3), over cellen */
+}
+
+/* selve baren */
+.bar {
+  align-self: center; /* midt i ugerækken */
+  height: var(--bar-h);
+  background: var(--bar-bg);
+  color: #fff;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* lille overlap ind i udtjek-dagen */
+.bar.nibbleRight {
+  position: relative;
+}
+.bar.nibbleRight::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  background: var(--bar-bg);
+  border-radius: 999px;
+}
+
+/* --- Header / månedsskifter (match screenshot) --- */
+.header {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px; /* venstre pil – titel – højre pil */
+  align-items: center;
+  margin: 6px 0 10px;
+  padding: 0 env(safe-area-inset-left) 0 env(safe-area-inset-right);
+}
+.monthTitle {
+  justify-self: center;
+  text-transform: lowercase; /* "september 2025" */
+  font-weight: 700;
+  font-size: clamp(16px, 3.8vw, 20px); /* mobil → desktop */
+  letter-spacing: 0.2px;
+  color: #111;
+}
+.navBtn {
+  justify-self: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  border: 1px solid #e5e7eb;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+.navBtn:hover {
+  background: #f6f7f8;
+}
+.navBtn:active {
+  transform: translateY(0.5px);
+}
+.navBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+}
+.navBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+=  MOBIL-FORBEDRINGER (KUN MOBIL)
+=  Vi overstyrer kun variabler & små mål på små skærme.
+=  Desktop/tablet forbliver 100% som baseline ovenfor.
+========================================================= */
+
+/* — Standard-mobil (≤ 600px): mere kompakt grid + større tap-targets — */
+@media (max-width: 600px) {
+  /* 1) Strammere layout-variabler for mobil */
+  .wrap {
+    --gap: 8px; /* tættere mellem felter */
+    --cell-h: 68px; /* lavere celler, så 5 uger fylder mindre */
+    --radius: 12px; /* lidt mindre runding */
+    --bar-h: 22px; /* tyndere booking-bar */
+  }
+
+  /* 2) Nav-UI (pile + måned) – større touch-områder, centrering */
+  .header,
+  .head {
+    grid-template-columns: 44px 1fr 44px; /* plads til større pile */
+    margin: 4px 0 8px;
+    padding: 0 env(safe-area-inset-left) 0 env(safe-area-inset-right);
+  }
+  .monthTitle,
+  .month {
+    font-size: clamp(16px, 4.2vw, 18px); /* lidt mere responsiv titel */
+    text-transform: lowercase;
+    font-weight: 700;
+  }
+  .navBtn {
+    width: 36px;
+    height: 36px; /* større tap-target */
+    font-size: 18px;
+    border-radius: 999px;
+  }
+
+  /* 3) Ugedage – mindre tekst og centreret */
+  .weekday,
+  .dow {
+    font-size: 11px;
+    padding: 0 0 4px;
+    justify-content: center;
+    padding-left: 0; /* fjern venstre-padding på mobil */
+  }
+
+  /* 4) Dato-celle – lidt lavere, sikrer at tal ikke presses */
+  .cell {
+    height: var(--cell-h);
+    border-radius: var(--radius);
+  }
+
+  /* 5) Dagsnummer & “i dag”-markør – lidt mindre så det ikke støder på baren */
+  .dayNum {
+    top: 7px;
+    right: 8px;
+    font-size: 12px;
+  }
+  .dot {
+    width: 20px;
+    height: 20px;
+    top: -3px;
+    right: -5px;
+  }
+
+  /* 6) Bars – tyndere & med lidt ekstra luft, plus kortere “nibble” */
+  .bar {
+    height: var(--bar-h);
+    font-size: 11px;
+    margin-top: 8px; /* ekstra luft fra dagsnummer */
+    padding: 0 10px; /* kort label */
+  }
+  .bar.nibbleRight::after {
+    right: -6px; /* mindre overlap ind i checkout-dag */
+    width: 12px;
+  }
+}
+
+/* — Ekstra små skærme (≤ 360px): yderligere kompaktering — */
+@media (max-width: 360px) {
+  .wrap {
+    --gap: 6px; /* endnu tættere */
+    --cell-h: 62px; /* endnu lavere celler */
+    --bar-h: 20px; /* meget tynde bars */
+    --radius: 10px;
+  }
+  .navBtn {
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
+  }
+  .dayNum {
+    font-size: 11px;
+    right: 7px;
+  }
+  .bar {
+    font-size: 10px;
+    padding: 0 8px;
+  }
+  .bar.nibbleRight::after {
+    right: -5px;
+    width: 10px;
+  }
+}
+
+/* Rød kant på dagens celle */
+/* !important sikrer at den slår din tidligere box-shadow/border-regel */
+.cell[data-today="1"] {
+  border-color: var(--today) !important;
+  box-shadow: inset 0 0 0 2px var(--today) !important;
+}
+
+/* Behold normal tekstfarve på tallet (overstyrer din gamle hvide farve) */
+.cell[data-today="1"] .dayNum {
+  color: var(--ink) !important;
+}
+
+.weeknumHead {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.weeknumCell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: right;
+  font-size: 12px;
+  color: var(--muted);
+  background: #fff;
+}
+
+.price {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  z-index: 3; /* over bars (z=2) */
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+  opacity: 0.9;
+}
 .priceCur{font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.02em;}
 
-/* Klikbart lag */
-.cellBtn{position:absolute;inset:0;z-index:1;appearance:none;background:transparent;border:0;cursor:pointer;border-radius:var(--radius);}
-.wrap[data-mode="none"] .cellBtn{pointer-events:none;}
-.cellBtn:focus-visible{outline:2px solid rgba(17,17,17,.6);outline-offset:-2px;}
-.cell[data-selected="1"]{box-shadow:inset 0 0 0 2px #0ea5e9;background:#f0f9ff;}
-.cell[data-edge="start"] .dayNum,.cell[data-edge="end"] .dayNum{background:#111;color:#fff!important;padding:0 6px;}
 
-/* ---------- Booking bars ---------- */
-.bars{
-  pointer-events:none;position:absolute;top:calc(var(--head-h) + var(--gap));left:0;right:0;bottom:0;
-  display:grid;grid-template-columns: var(--weeknum-w) repeat(7, 1fr) !important;
-  grid-template-rows:repeat(var(--weeks),var(--cell-h));gap:var(--gap);z-index:2;
+
+
+/* Klikbart lag i hver dagcelle (uden at dække tallet visuelt) */
+.cellBtn {
+  position: absolute;
+  inset: 0;
+  z-index: 1; /* under .dayNum (z=3), over cell-baggrund */
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 }
-.bar{align-self:start;height:24px;margin-top:6px;background:var(--bar);color:#fff;border-radius:999px;display:flex;align-items:center;}
-.barLabel{font-size:11px;font-weight:600;padding:0 10px;white-space:nowrap;}
-
-/* ---------- Valgt interval ---------- */
-.selBars{
-  pointer-events:none;position:absolute;top:calc(var(--head-h)+var(--gap));left:0;right:0;bottom:0;
-  display:grid;grid-template-columns: var(--weeknum-w) repeat(7, 1fr) !important;
-  grid-template-rows:repeat(var(--weeks),var(--cell-h));gap:var(--gap);z-index:3;
+.wrap[data-mode="none"] .cellBtn {
+  pointer-events: none;
 }
-.selBar{align-self:center;height:20px;background:color-mix(in srgb,#f59e0b 70%,transparent);border-radius:999px;}
-.selBar.nibbleRight{position:relative;}
-.selBar.nibbleRight::after{content:"";position:absolute;right:-8px;top:0;bottom:0;width:12px;background:inherit;border-radius:999px;}
-
-.loading,.error{margin-top:10px;font-size:14px;}
-.error{color:#c00;}
-
-/* ---------- Mobil tweaks (≤ 600px) ---------- */
-@media (max-width:600px){
-  .wrap{--gap:8px;--cell-h:70px;--radius:12px;--weeknum-w:24px;}
-  .month{font-size:clamp(16px,4vw,18px);}
-  .navBtn{width:36px;height:36px;}
-  .weekday{font-size:11px;padding-bottom:4px;}
-  .weeknumCell{font-size:11px;}
-  .dayNum{top:7px;right:8px;font-size:12px;}
-  .priceMain{font-size:6px;}
-  .priceCur{font-size:5px;}
-  .bar{height:20px;margin-top:8px;}
-  .barLabel{font-size:10px;padding:0 8px;}
-  .selBar{height:18px;}
+.cellBtn:focus-visible {
+  outline: 2px solid rgba(17, 17, 17, 0.6);
+  outline-offset: -2px;
+  border-radius: var(--radius);
 }
 
-/* ---------- Ekstra små (≤ 360px) ---------- */
-@media (max-width:360px){
-  .wrap{--gap:6px;--cell-h:64px;--radius:10px;--weeknum-w:22px;}
-  .dayNum{font-size:11px;}
-  .priceMain{font-size:6px;}
-  .priceCur{font-size:5px;}
-  .bar{height:18px;}
-  .barLabel{font-size:9.5px;}
+/* Single-day selection highlight */
+.cell[data-selected="1"] {
+  box-shadow: inset 0 0 0 2px #0ea5e9; /* blå ring */
+  background: #f0f9ff;
 }
+
+/* Markér start/slut (hvis du vil, kan du holde dem ens) */
+.cell[data-edge="start"] .dayNum,
+.cell[data-edge="end"] .dayNum {
+  background: var(--gold-500);
+  color: #fff;
+  padding: 0 6px;
+  border-radius: 999px;
+}
+
+/* Overlay til valgt interval (range) – over booking bars */
+.selBars {
+  pointer-events: none;
+  position: absolute;
+  top: calc(var(--head-h) + var(--gap));
+  left: 0;
+  right: 0px;
+  bottom: 0;
+  display: grid;
+  grid-template-rows: repeat(var(--weeks), var(--cell-h));
+  gap: var(--gap);
+  z-index: 3; /* over .bars (default stacking) */
+}
+.selBar {
+  align-self: center;
+  height: 28px;
+  /* --gold-500 */
+  background: var(--gold-500);
+  opacity: 0.3; /* transparent så man ser kalender under */
+  /* forskellige runding */
+  border-top-left-radius: 999px;
+  border-top-right-radius: 0px;
+  border-bottom-left-radius: 999px;
+  border-bottom-right-radius: 0px;
+}
+.selBar.nibbleRight {
+  position: relative;
+}
+.selBar.nibbleRight::after {
+  content: "";
+  position: absolute;
+  right: -50px;
+  top: 0;
+  bottom: 0;
+  width: 141px;
+  background: var(--gold-500);
+  border-top-left-radius: 0px;
+  border-top-right-radius: 999px;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 999px;
+}
+
