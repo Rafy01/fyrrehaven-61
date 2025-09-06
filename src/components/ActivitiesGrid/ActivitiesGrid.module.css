@@ -25,6 +25,10 @@
   opacity: 0;
   animation: cardIn .38s cubic-bezier(.2,.8,.2,1) both;
 }
+.card:focus{
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+ }
 
 @keyframes cardIn{
   from{ transform: translateY(6px); opacity:0 }
