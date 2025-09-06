@@ -1,3 +1,4 @@
+// src/components/AvailabilityCalendar/AvailabilityCalendar.tsx
 import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
@@ -233,11 +234,15 @@ export default function AvailabilityCalendar({
   onSelectionPrice,
 }: Props) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
-const today = React.useMemo(() => startOfDay(new Date()), []);
+
+  // Stabil "today" (undgår dependency og StrictMode-dobbelt-fetch)
+  const todayRef = React.useRef<Date>(startOfDay(new Date()));
+  const today = todayRef.current;
   const minMonth = startOfMonth(today);
 
   const WEEKS = 5;
   const WEEKNUM_COL = 40; // px
+  const weekColTemplate = `${WEEKNUM_COL}px repeat(7, 1fr)`;
 
   const [monthBase, setMonthBase] = React.useState<Date>(minMonth);
   const gridStart = React.useMemo(
@@ -259,6 +264,7 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
     [onSelectionChange]
   );
 
+  // Fetch iCal (ignorér AbortError, undgå 'today' i deps)
   React.useEffect(() => {
     let alive = true;
     const ctrl = new AbortController();
@@ -267,16 +273,23 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
       setError(null);
       try {
         const res = await fetch(apiPath, { signal: ctrl.signal });
-        if (!res.ok) throw new Error(res.statusText);
+        if (!res.ok) throw new Error(res.statusText || `HTTP ${res.status}`);
         const json = (await res.json()) as ApiResponse;
 
         const all = normalizeBookingsFromApi(json);
         const filtered = all.filter((b) => b.endDay >= today);
         if (!alive) return;
         setBookings(filtered);
-      } catch (e) {
-        if (!alive) return;
-        setError((e as Error).message || "Fetch error");
+      } catch (e: unknown) {
+        if (!alive) return; // ignore cleanup abort
+        if (e instanceof Error) {
+          if (e.name === "AbortError") return;
+          console.error("ICAL fetch failed:", e);
+          setError(e.message || "Fetch error");
+        } else {
+          console.error("ICAL fetch failed:", e);
+          setError("Fetch error");
+        }
         setBookings([]);
       }
     })();
@@ -285,7 +298,7 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
       alive = false;
       ctrl.abort();
     };
-  }, [apiPath, today]);
+  }, [apiPath, today]); // 'today' er stabil via ref (samme referenceværdi)
 
   const canPrev = React.useMemo(() => {
     return startOfMonth(monthBase).getTime() > startOfMonth(minMonth).getTime();
@@ -322,7 +335,7 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
     return segs;
   }, [bookings, gridStart]);
 
-  /* 1) bookedDays: alle datoer (YYYY-MM-DD) der er booket i viewporten */
+  /* Bookede dage i viewporten (YYYY-MM-DD) */
   const bookedDays = React.useMemo(() => {
     const set = new Set<string>();
     if (!bookings) return set;
@@ -360,7 +373,6 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
     .slice(weekStartsOn)
     .concat((lang === "da" ? WD_DA : WD_EN).slice(0, weekStartsOn));
 
-
   const fmtPrice = React.useMemo(
     () =>
       new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
@@ -376,10 +388,6 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
     (current: Selection | null) => {
       const send = (payload: SelectionPrice) => {
         onSelectionPrice?.(payload);
-        try {       // test rendering (kan fejle hvis datoer er invalide)
-        } catch {   
-            // ignore formatting errors
-        }
       };
 
       if (!current) {
@@ -532,7 +540,7 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
         style={
           {
             ["--weeks"]: WEEKS,
-            gridTemplateColumns: `${WEEKNUM_COL}px repeat(7, 1fr)`,
+            gridTemplateColumns: weekColTemplate,
           } as CSSVars
         }
       >
@@ -593,7 +601,7 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
                 const selectedSingle = isSingleSelected(d);
                 const edge = isRangeEdge(d);
 
-                // 2) Skjul pris for bookede dage
+                // Skjul pris for bookede dage
                 const price = !isBooked && inMonth ? getPriceForDate(d) : null;
                 const priceLabel =
                   price != null ? fmtPrice.format(price) : null;
@@ -635,7 +643,7 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
         {/* Booking bars (8 kolonner pga. uge-kolonnen) */}
         <div
           className={styles.bars}
-          style={{ gridTemplateColumns: `${WEEKNUM_COL}px repeat(7, 1fr)` }}
+          style={{ gridTemplateColumns: weekColTemplate }}
         >
           {segments.map((s) => (
             <div
@@ -657,7 +665,7 @@ const today = React.useMemo(() => startOfDay(new Date()), []);
         {selectionMode === "range" && selSegments.length > 0 && (
           <div
             className={styles.selBars}
-            style={{ gridTemplateColumns: `${WEEKNUM_COL}px repeat(7, 1fr)` }}
+            style={{ gridTemplateColumns: weekColTemplate }}
             aria-hidden="true"
           >
             {selSegments.map((s) => (
