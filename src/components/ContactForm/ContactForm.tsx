@@ -34,14 +34,14 @@ type FormState = {
   email: string;
   phone: string; // national del (uden +kode)
   countryIso: ISO2;
-  message: string;
-  consent: boolean; // nødvendig (GDPR behandling)
-  feesAccepted: boolean; // nødvendig i booking-varianten
+  message: string; // bruges kun i contact-varianten
+  consent: boolean;
+  feesAccepted: boolean; // kun i booking-varianten
   // Kun i booking-varianten
   adults: number;
   children: number;
   babies: number;
-  stayPurpose: string; // hvad vil man bruge opholdet til
+  stayPurpose: string;
 };
 
 const CLEANING_FEE_DKK = 1200;
@@ -66,6 +66,7 @@ export default function ContactForm({
   const lang: Lang = ui;
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const uiLang: UiLang = lang;
+  const isBooking = variant === "booking";
 
   // init land/telefon fra localStorage
   const initialIso: ISO2 = (() => {
@@ -95,9 +96,9 @@ export default function ContactForm({
 
   // Formål (kun synligt i booking-varianten, men vi holder state alligevel)
   const [purpose, setPurpose] = React.useState<Purpose>(
-    variant === "booking" ? "booking" : "inquiry"
+    isBooking ? "booking" : "inquiry"
   );
-  const effectivePurpose: Purpose = variant === "booking" ? purpose : "inquiry";
+  const effectivePurpose: Purpose = isBooking ? purpose : "inquiry";
 
   // Kalender-valg/pris (kun relevant i booking-varianten)
   const [, setSel] = React.useState<Selection | null>(null);
@@ -173,14 +174,23 @@ export default function ContactForm({
     e.preventDefault();
     setError(null);
 
-    // Basal validering
-    if (!state.name.trim() || !state.email.trim() || !state.message.trim()) {
-      setError(
-        t(
+    // Basal validering (besked kræves kun i contact-varianten)
+    const missingMsg = isBooking
+      ? t(
+          "Udfyld venligst navn og e-mail.",
+          "Please fill in your name and email."
+        )
+      : t(
           "Udfyld venligst navn, e-mail og besked.",
           "Please fill in your name, email and message."
-        )
-      );
+        );
+
+    if (
+      !state.name.trim() ||
+      !state.email.trim() ||
+      (!isBooking && !state.message.trim())
+    ) {
+      setError(missingMsg);
       return;
     }
 
@@ -195,7 +205,7 @@ export default function ContactForm({
     }
 
     // Booking-variant: ekstra krav
-    if (variant === "booking") {
+    if (isBooking) {
       const startISO = selPrice.start?.toISOString().slice(0, 10) ?? "";
       const endISO = selPrice.endExclusive?.toISOString().slice(0, 10) ?? "";
       if (!startISO || !endISO || !selPrice.nights || selPrice.nights <= 0) {
@@ -238,25 +248,24 @@ export default function ContactForm({
 
     setSending(true);
     try {
-      const selectionPayload =
-        variant === "booking"
-          ? {
-              start: selPrice.start?.toISOString().slice(0, 10) ?? null,
-              endExclusive:
-                selPrice.endExclusive?.toISOString().slice(0, 10) ?? null,
-              nights: selPrice.nights ?? null,
-              baseNightsTotalDKK: selPrice.total ?? null,
-              cleaningFeeDKK: includeCleaning ? CLEANING_FEE_DKK : 0,
-              totalWithCleaningDKK: includeCleaning
-                ? (selPrice.total ?? 0) + CLEANING_FEE_DKK
-                : selPrice.total ?? null,
-              breakdown:
-                selPrice.breakdown?.map((b) => ({
-                  date: b.date.toISOString().slice(0, 10),
-                  price: b.price,
-                })) ?? [],
-            }
-          : null;
+      const selectionPayload = isBooking
+        ? {
+            start: selPrice.start?.toISOString().slice(0, 10) ?? null,
+            endExclusive:
+              selPrice.endExclusive?.toISOString().slice(0, 10) ?? null,
+            nights: selPrice.nights ?? null,
+            baseNightsTotalDKK: selPrice.total ?? null,
+            cleaningFeeDKK: includeCleaning ? CLEANING_FEE_DKK : 0,
+            totalWithCleaningDKK: includeCleaning
+              ? (selPrice.total ?? 0) + CLEANING_FEE_DKK
+              : selPrice.total ?? null,
+            breakdown:
+              selPrice.breakdown?.map((b) => ({
+                date: b.date.toISOString().slice(0, 10),
+                price: b.price,
+              })) ?? [],
+          }
+        : null;
 
       const res = await fetch(submitUrl, {
         method: "POST",
@@ -268,19 +277,17 @@ export default function ContactForm({
           email: state.email.trim(),
           phone: fullPhone,
           countryIso: state.countryIso,
-          message: state.message.trim(),
+          message: isBooking ? undefined : state.message.trim(),
           consent: state.consent,
-          feesAccepted: variant === "booking" ? state.feesAccepted : undefined,
-          guests:
-            variant === "booking"
-              ? {
-                  adults: state.adults,
-                  children: state.children,
-                  babies: state.babies,
-                }
-              : undefined,
-          stayPurpose:
-            variant === "booking" ? state.stayPurpose.trim() : undefined,
+          feesAccepted: isBooking ? state.feesAccepted : undefined,
+          guests: isBooking
+            ? {
+                adults: state.adults,
+                children: state.children,
+                babies: state.babies,
+              }
+            : undefined,
+          stayPurpose: isBooking ? state.stayPurpose.trim() : undefined,
           selection: selectionPayload, // kun udfyldt i booking-variant
         }),
       });
@@ -340,7 +347,7 @@ export default function ContactForm({
             <dd>{countryLabel(state.countryIso, uiLang)}</dd>
           </div>
 
-          {variant === "booking" && selPrice.start && selPrice.endExclusive && (
+          {isBooking && selPrice.start && selPrice.endExclusive && (
             <>
               <div>
                 <dt>{t("Periode", "Period")}</dt>
@@ -385,10 +392,12 @@ export default function ContactForm({
             </>
           )}
 
-          <div className={styles.echoMsg}>
-            <dt>{t("Besked", "Message")}</dt>
-            <dd>{state.message}</dd>
-          </div>
+          {!isBooking && state.message && (
+            <div className={styles.echoMsg}>
+              <dt>{t("Besked", "Message")}</dt>
+              <dd>{state.message}</dd>
+            </div>
+          )}
         </dl>
 
         <Buttons
@@ -419,7 +428,7 @@ export default function ContactForm({
       noValidate
     >
       {/* ——— KUN i booking-varianten ——— */}
-      {variant === "booking" && (
+      {isBooking && (
         <>
           {/* Kalender først (vises uafhængigt af dropdown-valget) */}
           <div className={styles.row}>
@@ -561,29 +570,6 @@ export default function ContactForm({
                 }
               />
             </div>
-          </div>
-
-          {/* Formål med opholdet */}
-          <div className={styles.row}>
-            <label
-              className={styles.label}
-              htmlFor="cf-staypurpose"
-              data-required="true"
-            >
-              {t(
-                "Hvad er grunden til opholdet?",
-                "What is the purpose of your stay?"
-              )}
-            </label>
-            <textarea
-              id="cf-staypurpose"
-              className={styles.textarea}
-              required
-              rows={3}
-              value={state.stayPurpose}
-              onChange={(e) => onChange("stayPurpose", e.target.value)}
-              placeholder={t("Kort beskrivelse…", "Brief description…")}
-            />
           </div>
 
           {/* Prisopsummering */}
@@ -744,28 +730,53 @@ export default function ContactForm({
           </div>
         </div>
       </div>
-
+      {/* Formål med opholdet */}
       <div className={styles.row}>
-        <label className={styles.label} htmlFor="cf-msg" data-required="true">
-          {t("Besked", "Message")}
+        <label
+          className={styles.label}
+          htmlFor="cf-staypurpose"
+          data-required="true"
+        >
+          {t(
+            "Hvad er grunden til opholdet?",
+            "What is the purpose of your stay?"
+          )}
         </label>
         <textarea
-          id="cf-msg"
+          id="cf-staypurpose"
           className={styles.textarea}
-          name="message"
           required
-          rows={6}
-          value={state.message}
-          onChange={(e) => onChange("message", e.target.value)}
-          placeholder={t(
-            "Skriv kort, hvad du ønsker hjælp til…",
-            "Tell us briefly what you need help with…"
-          )}
+          rows={3}
+          value={state.stayPurpose}
+          onChange={(e) => onChange("stayPurpose", e.target.value)}
+          placeholder={t("Kort beskrivelse…", "Brief description…")}
         />
       </div>
 
+      {/* Besked-felt KUN i contact-varianten */}
+      {!isBooking && (
+        <div className={styles.row}>
+          <label className={styles.label} htmlFor="cf-msg" data-required="true">
+            {t("Besked", "Message")}
+          </label>
+          <textarea
+            id="cf-msg"
+            className={styles.textarea}
+            name="message"
+            required
+            rows={6}
+            value={state.message}
+            onChange={(e) => onChange("message", e.target.value)}
+            placeholder={t(
+              "Skriv kort, hvad du ønsker hjælp til…",
+              "Tell us briefly what you need help with…"
+            )}
+          />
+        </div>
+      )}
+
       {/* Gebyr-liste accept (obligatorisk — KUN i booking-variant) */}
-      {variant === "booking" && (
+      {isBooking && (
         <div className={styles.row}>
           <label className={styles.checkbox}>
             <input
@@ -778,7 +789,11 @@ export default function ContactForm({
               {lang === "da" ? (
                 <>
                   Jeg har læst og accepterer{" "}
-                  <a href={pathOf(lang, "fees")} target="_blank" rel="noreferrer">
+                  <a
+                    href={pathOf(lang, "fees")}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     gebyroversigten
                   </a>
                   .
@@ -786,7 +801,11 @@ export default function ContactForm({
               ) : (
                 <>
                   I have read and accept the{" "}
-                  <a href={pathOf(lang, "fees")} target="_blank" rel="noreferrer">
+                  <a
+                    href={pathOf(lang, "fees")}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     fee list
                   </a>
                   .
@@ -827,7 +846,7 @@ export default function ContactForm({
           loading={sending}
           variant="primary"
           label={
-            variant === "booking"
+            isBooking
               ? t("Send booking", "Send booking")
               : t("Send besked", "Send message")
           }
