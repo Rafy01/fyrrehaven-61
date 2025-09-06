@@ -6,7 +6,7 @@ import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import Highlights from "../../components/Highlights"; // ← NYT
 import { pathOf } from "../../lib/routes";
-import { AIRBNB_URL } from "../../lib/links";
+// import { AIRBNB_URL } from "../../lib/links";
 import UspStrip from "../../components/UspStrip";
 import {
   ClockIcon,
@@ -139,7 +139,7 @@ export default function Home({ lang }: { lang: Lang }) {
         ]}
         primaryCta={{
           label: t("Book via Airbnb", "Book on Airbnb"),
-          href: AIRBNB_URL,
+          href: pathOf(lang, "book"),
           external: true,
         }}
         secondaryCta={{
