@@ -36,7 +36,7 @@
   transform: translateY(-1px);
 }
 .chip:focus-visible {
-  outline: 3px solid var(--focus, #2563eb);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 

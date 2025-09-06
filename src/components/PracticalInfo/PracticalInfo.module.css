@@ -47,7 +47,7 @@
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.09);
 }
 .card:focus-visible {
-  outline: 3px solid var(--focus, #2563eb);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
@@ -115,6 +115,6 @@
   box-shadow: 0 12px 26px rgba(0,0,0,.12);
 }
 .ctaBtn:focus-visible{
-  outline: 3px solid var(--focus, #2563eb);
+  outline: 3px solid var(--focus);
   outline-offset: 3px;
 }

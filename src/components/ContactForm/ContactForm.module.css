@@ -98,7 +98,8 @@
 .input:focus,
 .select:focus,
 .textarea:focus {
-  outline: none;
+   outline: 3px solid var(--focus);
+  outline-offset: 3px;
   border-color: var(--gold-500);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold-500) 22%, transparent);
 }

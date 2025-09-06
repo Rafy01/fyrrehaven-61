@@ -280,8 +280,9 @@
   transform: translateY(0.5px);
 }
 .navBtn:focus-visible {
-  outline: none;
   box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }
 .navBtn:disabled {
   opacity: 0.35;
