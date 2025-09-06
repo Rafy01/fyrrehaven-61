@@ -314,9 +314,8 @@
   top: 0;
   right: 0;
   height: 100vh;
-  height: 100dvh;
+  min-height: 100dvh;
   max-height: 100svh;
-  width: min(85vw, 420px);
   background: rgba(255, 255, 255, 0.9);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   backdrop-filter: blur(18px) saturate(160%);
@@ -446,7 +445,7 @@
   justify-content: space-between;
   padding: 0.4rem 0;
   min-height: 30px;
-  max-height: 100vh;
+  max-height: 120vh;
   text-decoration: none;
   color: var(--ink-900);
   font-weight: 700;
