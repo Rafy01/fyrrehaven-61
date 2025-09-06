@@ -93,13 +93,14 @@ export default function House({ lang }: { lang: Lang }) {
           t("Sauna", "Sauna"),
         ]}
         primaryCta={{
-          label: t("Book via Airbnb", "Book on Airbnb"),
-          href: AIRBNB_URL,
-          external: true,
+          label: t("Book privat", "Book privately"),
+          href: pathOf(lang, "book"),
+          external: false,
         }}
         secondaryCta={{
-          label: t("Se galleri", "See gallery"),
-          to: pathOf(lang, "gallery"),
+          label: t("Book | Airbnb", "Book | Airbnb"),
+          href: AIRBNB_URL,
+          external: true,
         }}
         media={{
           type: "image",
@@ -108,7 +109,10 @@ export default function House({ lang }: { lang: Lang }) {
             "Udendørs poolområde ved sommerhuset",
             "Outdoor pool area at the house"
           ),
-          title: t("Fyrrehaven 61 – feriehus ved Fjellerup Strand", "Fyrrehaven 61 – holiday home by Fjellerup Beach"),
+          title: t(
+            "Fyrrehaven 61 – feriehus ved Fjellerup Strand",
+            "Fyrrehaven 61 – holiday home by Fjellerup Beach"
+          ),
         }}
         align="left"
       />
