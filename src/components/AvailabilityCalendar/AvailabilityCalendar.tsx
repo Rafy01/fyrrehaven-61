@@ -61,6 +61,8 @@ type Props = {
   disablePastSelection?: boolean; // default true
   onSelectionChange?: (sel: Selection | null) => void;
   onSelectionPrice?: (p: SelectionPrice) => void;
+  /** Bredde på uge-nummer kolonnen i px (default 15) */
+  weekNumberColWidth?: number;
 };
 
 /* ─── Date utils ─── */
@@ -232,6 +234,7 @@ export default function AvailabilityCalendar({
   disablePastSelection = true,
   onSelectionChange,
   onSelectionPrice,
+  weekNumberColWidth = 15,
 }: Props) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
@@ -241,8 +244,8 @@ export default function AvailabilityCalendar({
   const minMonth = startOfMonth(today);
 
   const WEEKS = 5;
-  const WEEKNUM_COL = 40; // px
-  const weekColTemplate = `${WEEKNUM_COL}px repeat(7, 1fr)`;
+  const WEEKNUM_COL = weekNumberColWidth; // brug prop
+  const weekColTemplate = `minmax(${WEEKNUM_COL}px, ${WEEKNUM_COL}px) repeat(7, 1fr)`;
 
   const [monthBase, setMonthBase] = React.useState<Date>(minMonth);
   const gridStart = React.useMemo(
@@ -298,7 +301,7 @@ export default function AvailabilityCalendar({
       alive = false;
       ctrl.abort();
     };
-  }, [apiPath, today]); // 'today' er stabil via ref (samme referenceværdi)
+  }, [apiPath, today]); // 'today' er stabil via ref
 
   const canPrev = React.useMemo(() => {
     return startOfMonth(monthBase).getTime() > startOfMonth(minMonth).getTime();
@@ -373,7 +376,7 @@ export default function AvailabilityCalendar({
     .slice(weekStartsOn)
     .concat((lang === "da" ? WD_DA : WD_EN).slice(0, weekStartsOn));
 
-  // Kun tal (ingen symbol), bruges til top-linje – ”2.200 kr”
+  // Kun tal (ingen symbol) til visning: “2.200” + “DKK” på ny linje
   const fmtNumber = React.useMemo(
     () =>
       new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
@@ -596,12 +599,14 @@ export default function AvailabilityCalendar({
                 }
 
                 const disabled = !canClick;
-
                 const selectedSingle = isSingleSelected(d);
                 const edge = isRangeEdge(d);
 
-                // Skjul pris for bookede dage
-                const value = !isBooked && inMonth ? getPriceForDate(d) : null;
+                // --- NYT: vis ikke pris for datoer før i dag (selv i samme måned)
+                const isPast = d < today;
+                const shouldShowPrice = inMonth && !isBooked && !isPast;
+
+                const value = shouldShowPrice ? getPriceForDate(d) : null;
                 const priceMain =
                   value != null ? `${fmtNumber.format(value)} ` : null;
 
