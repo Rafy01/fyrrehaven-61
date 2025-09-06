@@ -138,9 +138,8 @@ export default function Home({ lang }: { lang: Lang }) {
           t("Pool-Vildmarksbad-Sauna", "Pool-Hottub-Sauna"),
         ]}
         primaryCta={{
-          label: t("Book via Airbnb", "Book on Airbnb"),
+          label: t("Book nu", "Book now"),
           href: pathOf(lang, "book"),
-          external: true,
         }}
         secondaryCta={{
           label: t("Se huset", "See the house"),
