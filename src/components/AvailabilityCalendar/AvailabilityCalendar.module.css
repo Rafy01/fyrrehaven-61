@@ -24,6 +24,10 @@
 }
 .month {
   font-weight: 600;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+  cursor: default;
 }
 .navBtn {
   width: 28px;
@@ -74,6 +78,10 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--ink);
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
+  cursor: default;
 }
 
 .cell[data-today="1"] .dayNum {
@@ -567,10 +575,9 @@
     width: 10px;
   }
   .cell[data-today="1"] {
-  border-color: var(--today) !important;
-  border: .1px !important;
-}
-
+    border-color: var(--today) !important;
+    border: 0.1px !important;
+  }
 }
 
 @media (max-width: 360px) {
@@ -588,7 +595,7 @@
   .dayNum {
     font-size: 11px;
   }
- .price {
+  .price {
     bottom: -1px;
     left: 1px;
     right: 1px;
