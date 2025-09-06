@@ -528,6 +528,13 @@
 }
 
 @media (max-width: 600px) {
+  .cell[data-edge="start"] .dayNum,
+.cell[data-edge="end"] .dayNum {
+  background: var(--gold-500);
+  color: #fff;
+  padding: 0 0px;
+  border-radius: 999px;
+}
   .wrap {
     --gap: 8px;
     --cell-h: 66px;
