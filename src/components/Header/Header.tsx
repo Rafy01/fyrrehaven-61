@@ -123,22 +123,23 @@ export default function Header({ lang }: { lang: Lang }) {
             </NavLink>
           ))}
 
+          {/* IMPORTANT: use SPA link, not href */}
           <Buttons
             labelDa="Book nu"
             labelEn="Book now"
-            //intern link til booking siden inkl sprog
-            href={pathOf(lang, "book")}
+            to={pathOf(lang, "book")}
+            buttonType="button"
           />
 
           {/* Language dropdown */}
           <DropdownMenu.Root open={langOpen} onOpenChange={setLangOpen}>
             <DropdownMenu.Trigger asChild>
+              {/* EXPLICIT TYPE */}
               <button
+                type="button"
                 className={styles.langTrigger}
                 aria-label="Change language"
-                data-state={
-                  langOpen ? "open" : "closed"
-                } /* ← til CSS animation */
+                data-state={langOpen ? "open" : "closed"}
               >
                 <span className={styles.flag}>{flag}</span>
                 <ChevronDownIcon />
@@ -169,7 +170,9 @@ export default function Header({ lang }: { lang: Lang }) {
         {/* Mobile/Tablet burger + panel */}
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger asChild>
+            {/* EXPLICIT TYPE */}
             <button
+              type="button"
               className={styles.menuBtn}
               aria-label={
                 open
@@ -190,7 +193,9 @@ export default function Header({ lang }: { lang: Lang }) {
           <Dialog.Content className={styles.panel} aria-label="Mobile menu">
             <div className={styles.panelHeader}>
               <Text weight="bold">{lang === "da" ? "Menu" : "Menu"}</Text>
+              {/* EXPLICIT TYPE */}
               <button
+                type="button"
                 className={styles.closeBtn}
                 aria-label={lang === "da" ? "Luk menu" : "Close menu"}
                 onClick={() => setOpen(false)}
@@ -218,25 +223,30 @@ export default function Header({ lang }: { lang: Lang }) {
             </nav>
 
             <div className={styles.panelFooter}>
-              <a
-                href="https://www.airbnb.dk/h/fyrrehaven-61"
-                target="_blank"
-                rel="noreferrer"
+              {/* Avoid <a><button/></a>. Use Link directly (or <Buttons to=.../>) */}
+              <Link
+                to={pathOf(lang, "book")}
                 onClick={() => setOpen(false)}
+                className={styles.ctaLink}
               >
-                <button className={styles.cta}>
+                <span className={styles.cta}>
                   {lang === "da" ? "Book" : "Book"}
-                </button>
-              </a>
+                </span>
+              </Link>
+
               <div className={styles.langGroup}>
+                {/* EXPLICIT TYPE */}
                 <button
+                  type="button"
                   className={styles.langChip}
                   onClick={() => switchLang("da")}
                   aria-label="Switch to Danish"
                 >
                   <span className={styles.flag}>🇩🇰</span> DA
                 </button>
+                {/* EXPLICIT TYPE */}
                 <button
+                  type="button"
                   className={styles.langChip}
                   onClick={() => switchLang("en")}
                   aria-label="Switch to English"

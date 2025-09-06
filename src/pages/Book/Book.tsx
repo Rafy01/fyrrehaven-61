@@ -148,10 +148,11 @@ export default function Book({ lang }: { lang: Lang }) {
               </ul>
               <div className={styles.actions}>
                 <Buttons
-                  to={contactTo}
+                  to={pathOf(lang, "book")}
                   variant="primary"
                   labelDa="Anmod om booking"
                   labelEn="Request booking"
+                  buttonType="button"
                 />
               </div>
             </section>
@@ -182,6 +183,7 @@ export default function Book({ lang }: { lang: Lang }) {
                     variant="secondary"
                     labelDa="Gå til Airbnb"
                     labelEn="Go to Airbnb"
+                    buttonType="button"
                   />
                 ) : (
                   <Text color="gray">

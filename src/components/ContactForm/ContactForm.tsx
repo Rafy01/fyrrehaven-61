@@ -18,6 +18,7 @@ import AvailabilityCalendar, {
   type SelectionMode,
   type SelectionPrice,
 } from "../AvailabilityCalendar/AvailabilityCalendar";
+import { pathOf } from "../../lib/routes";
 
 type Purpose = "inquiry" | "booking" | "other";
 
@@ -65,11 +66,6 @@ export default function ContactForm({
   const lang: Lang = ui;
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const uiLang: UiLang = lang;
-
-  const feesUrl =
-    lang === "da"
-      ? "http://localhost:5173/da/Gebyrer"
-      : "http://localhost:5173/en/fees";
 
   // init land/telefon fra localStorage
   const initialIso: ISO2 = (() => {
@@ -399,6 +395,7 @@ export default function ContactForm({
           to="/"
           variant="secondary"
           label={t("Til forsiden", "Back to home")}
+          buttonType="button"
         />
       </div>
     );
@@ -407,7 +404,18 @@ export default function ContactForm({
   return (
     <form
       className={`${styles.card} ${styles.form}`}
-      onSubmit={onSubmit}
+      onSubmit={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onSubmit(e);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          const tag = (e.target as HTMLElement).tagName;
+          // Allow enter in <textarea>, but not in other fields
+          if (tag !== "TEXTAREA") e.preventDefault();
+        }
+      }}
       noValidate
     >
       {/* ——— KUN i booking-varianten ——— */}
@@ -770,7 +778,7 @@ export default function ContactForm({
               {lang === "da" ? (
                 <>
                   Jeg har læst og accepterer{" "}
-                  <a href={feesUrl} target="_blank" rel="noreferrer">
+                  <a href={pathOf(lang, "fees")} target="_blank" rel="noreferrer">
                     gebyroversigten
                   </a>
                   .
@@ -778,7 +786,7 @@ export default function ContactForm({
               ) : (
                 <>
                   I have read and accept the{" "}
-                  <a href={feesUrl} target="_blank" rel="noreferrer">
+                  <a href={pathOf(lang, "fees")} target="_blank" rel="noreferrer">
                     fee list
                   </a>
                   .
