@@ -238,13 +238,13 @@ export default function AvailabilityCalendar({
 }: Props) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
-  // Stabil "today" (undgår dependency og StrictMode-dobbelt-fetch)
+  // Stabil "today"
   const todayRef = React.useRef<Date>(startOfDay(new Date()));
   const today = todayRef.current;
   const minMonth = startOfMonth(today);
 
   const WEEKS = 5;
-  const WEEKNUM_COL = weekNumberColWidth; // brug prop
+  const WEEKNUM_COL = weekNumberColWidth;
   const weekColTemplate = `minmax(${WEEKNUM_COL}px, ${WEEKNUM_COL}px) repeat(7, 1fr)`;
 
   const [monthBase, setMonthBase] = React.useState<Date>(minMonth);
@@ -267,7 +267,7 @@ export default function AvailabilityCalendar({
     [onSelectionChange]
   );
 
-  // Fetch iCal (ignorér AbortError, undgå 'today' i deps)
+  // Fetch iCal
   React.useEffect(() => {
     let alive = true;
     const ctrl = new AbortController();
@@ -284,7 +284,7 @@ export default function AvailabilityCalendar({
         if (!alive) return;
         setBookings(filtered);
       } catch (e: unknown) {
-        if (!alive) return; // ignore cleanup abort
+        if (!alive) return;
         if (e instanceof Error) {
           if (e.name === "AbortError") return;
           console.error("ICAL fetch failed:", e);
@@ -301,7 +301,7 @@ export default function AvailabilityCalendar({
       alive = false;
       ctrl.abort();
     };
-  }, [apiPath, today]); // 'today' er stabil via ref
+  }, [apiPath, today]);
 
   const canPrev = React.useMemo(() => {
     return startOfMonth(monthBase).getTime() > startOfMonth(minMonth).getTime();
@@ -376,7 +376,7 @@ export default function AvailabilityCalendar({
     .slice(weekStartsOn)
     .concat((lang === "da" ? WD_DA : WD_EN).slice(0, weekStartsOn));
 
-  // Kun tal (ingen symbol) til visning: “2.200” + “DKK” på ny linje
+  // Kun tal (ingen symbol) til visning
   const fmtNumber = React.useMemo(
     () =>
       new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
@@ -456,13 +456,14 @@ export default function AvailabilityCalendar({
     if (selectionMode === "none") return;
     const day = startOfDay(d);
 
-    if (disablePastSelection && day < today) return;
+    // NEW: forbyd både fortid **og i dag**
+    if (disablePastSelection && day <= today) return; // NEW
 
     const ymd = day.toISOString().slice(0, 10);
     const isBooked = bookedDays.has(ymd);
 
     if (selectionMode === "single") {
-      if (isBooked) return; // single må ikke være booket
+      if (isBooked) return;
       const current =
         sel && sel.kind === "single" && sel.date.getTime() === day.getTime()
           ? null
@@ -473,13 +474,11 @@ export default function AvailabilityCalendar({
 
     // range
     if (!sel || sel.kind !== "range" || sel.end) {
-      // starten må ikke være booket
       if (isBooked) return;
       emitSelection({ kind: "range", start: day });
       return;
     }
 
-    // vi har en start og mangler slut (checkout)
     const start = startOfDay(sel.start);
 
     if (day.getTime() === start.getTime()) {
@@ -487,7 +486,6 @@ export default function AvailabilityCalendar({
       return;
     }
 
-    // Kun tilladt hvis alle nætter [start, day) er ledige
     if (!rangeIsFree(start, day, bookedDays)) return;
 
     if (day < start) {
@@ -578,16 +576,14 @@ export default function AvailabilityCalendar({
 
                 // Klikbarhed for knappen
                 let canClick = selectionMode !== "none";
-                if (disablePastSelection && d < today) canClick = false;
+                if (disablePastSelection && d <= today) canClick = false; // NEW: også i dag
 
                 if (selectionMode === "single") {
                   if (isBooked) canClick = false;
                 } else if (selectionMode === "range") {
                   if (!awaitingEnd) {
-                    // start må ikke være booket
                     if (isBooked) canClick = false;
                   } else {
-                    // vælger slut (checkout): hele [start, d) skal være fri
                     const start = startOfDay(sel!.start);
                     const endEx = startOfDay(d);
                     if (
@@ -602,9 +598,9 @@ export default function AvailabilityCalendar({
                 const selectedSingle = isSingleSelected(d);
                 const edge = isRangeEdge(d);
 
-                // --- NYT: vis ikke pris for datoer før i dag (selv i samme måned)
-                const isPast = d < today;
-                const shouldShowPrice = inMonth && !isBooked && !isPast;
+                // NYT: vis ikke pris for fortid **eller i dag**
+                const isPastOrToday = d <= today; // NEW
+                const shouldShowPrice = inMonth && !isBooked && !isPastOrToday; // NEW
 
                 const value = shouldShowPrice ? getPriceForDate(d) : null;
                 const priceMain =

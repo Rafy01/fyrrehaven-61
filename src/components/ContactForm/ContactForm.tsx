@@ -415,9 +415,6 @@ export default function ContactForm({
         <>
           {/* Kalender først (vises uafhængigt af dropdown-valget) */}
           <div className={styles.row}>
-            <label className={styles.label}>
-              {t("Vælg datoer", "Select dates")}
-            </label>
             <div className={styles.calendarWrap}>
               <AvailabilityCalendar
                 lang={lang}

@@ -404,13 +404,23 @@
   color: var(--muted);
 }
 
-.weeknumCell {
+/* .weeknumCell {
   display: flex;
   align-items: flex-start;
   justify-content: right;
   font-size: 12px;
   color: var(--muted);
   background: #fff;
+} */
+
+.weeknumCell {
+  padding: 0 2px; /* mindre vandret padding */
+  background: transparent;
+  border: 0;
+  font-size: 8px;
+  box-shadow: none;
+  justify-content: center; /* eller right, hvis du vil højrejustere tallet */
+  font-variant-numeric: tabular-nums;
 }
 
 .price {
@@ -423,10 +433,14 @@
   color: #111;
   opacity: 0.9;
 }
-.priceCur{font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.02em;}
-
-
-
+.priceCur {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  bottom: 100px;
+}
 
 /* Klikbart lag i hver dagcelle (uden at dække tallet visuelt) */
 .cellBtn {
@@ -504,3 +518,92 @@
   border-bottom-right-radius: 999px;
 }
 
+@media (max-width: 600px) {
+  .wrap {
+    --gap: 8px;
+    --cell-h: 66px;
+    --radius: 12px;
+    --weeknum-w: 26px;
+    --day-min: 92px;
+  }
+  .month {
+    font-size: clamp(16px, 4.2vw, 18px);
+  }
+  .navBtn {
+    width: 36px;
+    height: 36px;
+  }
+  .weekday {
+    font-size: 11px;
+    padding-bottom: 4px;
+  }
+  .dayNum {
+    top: 7px;
+    right: 8px;
+    font-size: 12px;
+  }
+  .price {
+    bottom: -1px;
+    left: 1px;
+    right: 1px;
+    font-size: 10px;
+  }
+  .priceCur {
+    font-size: 8px;
+  }
+  .bar {
+    height: 22px;
+    margin-top: 8px;
+  }
+  .barLabel {
+    font-size: 11px;
+    padding: 0 10px;
+  }
+  .selBar {
+    height: 20px;
+  }
+  .selBar.nibbleRight::after {
+    right: -6px;
+    width: 10px;
+  }
+  .cell[data-today="1"] {
+  border-color: var(--today) !important;
+  border: .1px !important;
+}
+
+}
+
+@media (max-width: 360px) {
+  .wrap {
+    --gap: 6px;
+    --cell-h: 60px;
+    --radius: 10px;
+    --weeknum-w: 24px;
+    --day-min: 98px;
+  }
+  .navBtn {
+    width: 34px;
+    height: 34px;
+  }
+  .dayNum {
+    font-size: 11px;
+  }
+ .price {
+    bottom: -1px;
+    left: 1px;
+    right: 1px;
+    font-size: 8px;
+  }
+  .priceCur {
+    font-size: 6px;
+  }
+  .bar {
+    height: 20px;
+  }
+  .barLabel {
+    font-size: 10px;
+  }
+  .selBar {
+    height: 18px;
+  }
+}
