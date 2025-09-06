@@ -126,8 +126,8 @@ export default function Header({ lang }: { lang: Lang }) {
           <Buttons
             labelDa="Book nu"
             labelEn="Book now"
-            href="https://www.airbnb.dk/h/fyrrehaven-61"
-            external
+            //intern link til booking siden inkl sprog
+            href={pathOf(lang, "book")}
           />
 
           {/* Language dropdown */}
