@@ -99,7 +99,7 @@ export default function Header({ lang }: { lang: Lang }) {
         >
           <img
             src="/logo_trans.png"
-            alt=""
+            alt="Fyrrehaven 61 - logo"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
@@ -202,7 +202,7 @@ export default function Header({ lang }: { lang: Lang }) {
                 ? "Hovednavigation for siden"
                 : "Main navigation for the site"}
             </Dialog.Description>
-            
+
             <nav className={styles.panelNav}>
               {navItems.map((item) => (
                 <NavLink
