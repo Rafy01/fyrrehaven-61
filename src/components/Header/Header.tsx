@@ -2,8 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { Text } from "@radix-ui/themes";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { useTranslation } from "react-i18next";
 import styles from "./Header.module.css";
 
@@ -106,7 +105,6 @@ export default function Header({ lang }: { lang: Lang }) {
             }}
           />
         </Link>
-
         {/* Desktop nav */}
         <nav className={`${styles.nav} ${styles.navPrimary}`} aria-label="Main">
           {navItems.map((item) => (
@@ -166,43 +164,37 @@ export default function Header({ lang }: { lang: Lang }) {
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </nav>
-
         {/* Mobile/Tablet burger + panel */}
         <Dialog.Root open={open} onOpenChange={setOpen}>
-          <Dialog.Trigger asChild>
-            {/* EXPLICIT TYPE */}
-            <button
-              type="button"
-              className={styles.menuBtn}
-              aria-label={
-                open
-                  ? lang === "da"
-                    ? "Luk menu"
-                    : "Close menu"
-                  : lang === "da"
-                  ? "Åbn menu"
-                  : "Open menu"
-              }
-              data-open={open}
-            >
-              <span className={styles.burger} aria-hidden="true" />
-            </button>
-          </Dialog.Trigger>
+          {/* NOT a Dialog.Trigger — we control it ourselves */}
+          <button
+            type="button"
+            className={styles.menuBtn}
+            aria-label={
+              open
+                ? lang === "da"
+                  ? "Luk menu"
+                  : "Close menu"
+                : lang === "da"
+                ? "Åbn menu"
+                : "Open menu"
+            }
+            aria-expanded={open}
+            aria-controls="mobile-menu-panel"
+            data-open={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span className={styles.burger} aria-hidden="true" />
+          </button>
 
+          {/* Overlay/panel are positioned *under* the sticky header */}
           <Dialog.Overlay className={styles.overlay} />
-          <Dialog.Content className={styles.panel} aria-label="Mobile menu">
-            <div className={styles.panelHeader}>
-              <Text weight="bold">{lang === "da" ? "Menu" : "Menu"}</Text>
-              {/* EXPLICIT TYPE */}
-              <button
-                type="button"
-                className={styles.closeBtn}
-                aria-label={lang === "da" ? "Luk menu" : "Close menu"}
-                onClick={() => setOpen(false)}
-              >
-                <Cross2Icon />
-              </button>
-            </div>
+          <Dialog.Content
+            id="mobile-menu-panel"
+            className={styles.panel}
+            aria-label={lang === "da" ? "Mobilmenu" : "Mobile menu"}
+          >
+            {/* (Removed the title bar) */}
 
             <nav className={styles.panelNav}>
               {navItems.map((item) => (
@@ -223,19 +215,17 @@ export default function Header({ lang }: { lang: Lang }) {
             </nav>
 
             <div className={styles.panelFooter}>
-              {/* Avoid <a><button/></a>. Use Link directly (or <Buttons to=.../>) */}
-              <Link
+              <Buttons
                 to={pathOf(lang, "book")}
                 onClick={() => setOpen(false)}
                 className={styles.ctaLink}
-              >
-                <span className={styles.cta}>
-                  {lang === "da" ? "Book" : "Book"}
-                </span>
-              </Link>
+                labelDa="Book"
+                labelEn="Book"
+                buttonType="button"
+                fullWidth
+              />
 
               <div className={styles.langGroup}>
-                {/* EXPLICIT TYPE */}
                 <button
                   type="button"
                   className={styles.langChip}
@@ -244,7 +234,6 @@ export default function Header({ lang }: { lang: Lang }) {
                 >
                   <span className={styles.flag}>🇩🇰</span> DA
                 </button>
-                {/* EXPLICIT TYPE */}
                 <button
                   type="button"
                   className={styles.langChip}

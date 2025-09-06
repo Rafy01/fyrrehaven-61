@@ -299,8 +299,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(8, 15, 20, 0.35);
-  -webkit-backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(1px);
   backdrop-filter: blur(6px);
 }
 .overlay[data-state="open"] {
@@ -368,11 +367,26 @@
 
 .panelFooter {
   display: flex;
-  gap: 0.5rem;
-  align-items: center;
   justify-content: space-between;
-  padding-top: 0.6rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  max-height: 39px;
+  gap: 0.5rem;
+}
+.langGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.langChip
+{
+  appearance: none;
+  background: transparent;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  color: var(--ink-900);
+  border-radius: 10px;
+  position: relative;
+  transition: transform 0.18s ease;
 }
 
 /* === SCROLL i midterfeltet, kun når der er brug for det === */
@@ -541,3 +555,67 @@
     background: #fff;
   }
 }
+:root {
+  --header-h: 56px; /* height of sticky header on mobile */
+}
+
+@media (min-width: 768px) {
+  :root { --header-h: 72px; }
+}
+
+/* make sure header always sits above the menu */
+.wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 50; /* higher than overlay/panel below */
+}
+
+/* overlay/panel start *below* the header so the logo/burger remain visible */
+
+.panel {
+  position: fixed;
+  inset: var(--header-h) 0 0 0; /* top offset */
+  background: var(--panel-bg, #fff);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* remove old header row styles if you had them */
+.panelHeader { display: none; }
+
+
+.panel {
+  --panel-pad-x: 20px;             /* justér efter din nuværende padding */
+  padding: 0 var(--panel-pad-x) 24px;
+}
+
+/* standard link i mobilpanelet */
+.panelNav { padding: 8px 0; }
+.panelLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;              /* “indre” padding for selve linket */
+  margin: 6px 0;
+  border-radius: 12px;
+  text-decoration: none;
+}
+
+/* gør den aktive linje bredere i begge sider */
+.panelLinkActive {
+  background: var(--panel-active-bg, rgba(0,0,0,.06));
+  margin-left: calc(-1 * var(--panel-pad-x));
+  margin-right: calc(-1 * var(--panel-pad-x));
+  padding-left: calc(16px + var(--panel-pad-x));
+  padding-right: calc(16px + var(--panel-pad-x));
+  /* vælg én af disse alt efter look: */
+  /* border-radius: 0; */           /* går helt ud til kanterne */
+  border-radius: 12px;              /* beholder afrunding, men bredere flade */
+}
+
+/* valgfrit: undgå horisontal scroll hvis noget går i udbrud */
+.panelNav { overflow-x: hidden; }
+
