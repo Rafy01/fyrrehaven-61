@@ -194,8 +194,15 @@ export default function Header({ lang }: { lang: Lang }) {
             className={styles.panel}
             aria-label={lang === "da" ? "Mobilmenu" : "Mobile menu"}
           >
-            {/* (Removed the title bar) */}
-
+            <Dialog.Title className={styles.srOnly}>
+              {lang === "da" ? "Menu" : "Menu"}
+            </Dialog.Title>
+            <Dialog.Description className={styles.srOnly}>
+              {lang === "da"
+                ? "Hovednavigation for siden"
+                : "Main navigation for the site"}
+            </Dialog.Description>
+            
             <nav className={styles.panelNav}>
               {navItems.map((item) => (
                 <NavLink

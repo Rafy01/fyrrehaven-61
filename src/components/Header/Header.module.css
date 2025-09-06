@@ -473,17 +473,12 @@
   animation-delay: 0.21s;
 }
 
-.panelLink:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
 .panelLink:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 4px;
   background: rgba(37, 99, 235, 0.06);
 }
-.panelLinkActive {
-  background: rgba(0, 0, 0, 0.05);
-}
+
 
 /* === Animations === */
 @keyframes overlayIn {
@@ -613,9 +608,20 @@
   padding-right: calc(16px + var(--panel-pad-x));
   /* vælg én af disse alt efter look: */
   /* border-radius: 0; */           /* går helt ud til kanterne */
-  border-radius: 12px;              /* beholder afrunding, men bredere flade */
+  border-radius: 999px;              /* beholder afrunding, men bredere flade */
 }
 
 /* valgfrit: undgå horisontal scroll hvis noget går i udbrud */
 .panelNav { overflow-x: hidden; }
 
+.srOnly{
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  padding:0 !important;
+  margin:-1px !important;
+  overflow:hidden !important;
+  clip:rect(0 0 0 0) !important;
+  white-space:nowrap !important;
+  border:0 !important;
+}
