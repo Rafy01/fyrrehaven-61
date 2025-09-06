@@ -429,49 +429,60 @@ export default function AvailabilityCalendar({
   }, [sel]);
 
   // Klik-håndtering med bookingvalidering
-  function handleDayClick(d: Date) {
-    if (selectionMode === "none") return;
-    const day = startOfDay(d);
+ function handleDayClick(d: Date) {
+   if (selectionMode === "none") return;
+   const day = startOfDay(d);
 
-    // Forbyd både fortid og i dag
-    if (disablePastSelection && day <= today) return;
+   // — NEW: Hvis der er et færdigt range, og man klikker inden for det ⇒ deselect
+   if (
+     selectionMode === "range" &&
+     sel?.kind === "range" &&
+     sel.end &&
+     day >= startOfDay(sel.start) &&
+     day <= startOfDay(sel.end)
+   ) {
+     emitSelection(null);
+     return;
+   }
 
-    const ymd = day.toISOString().slice(0, 10);
-    const isBooked = bookedDays.has(ymd);
+   // Forbyd både fortid og i dag (gælder kun for NYT valg; ikke for deselect ovenfor)
+   if (disablePastSelection && day <= today) return;
 
-    if (selectionMode === "single") {
-      if (isBooked) return;
-      const current =
-        sel && sel.kind === "single" && sel.date.getTime() === day.getTime()
-          ? null
-          : ({ kind: "single", date: day } as Selection);
-      emitSelection(current);
-      return;
-    }
+   const ymd = day.toISOString().slice(0, 10);
+   const isBooked = bookedDays.has(ymd);
 
-    // range
-    if (!sel || sel.kind !== "range" || sel.end) {
-      if (isBooked) return;
-      emitSelection({ kind: "range", start: day });
-      return;
-    }
+   if (selectionMode === "single") {
+     if (isBooked) return;
+     const current =
+       sel && sel.kind === "single" && sel.date.getTime() === day.getTime()
+         ? null
+         : ({ kind: "single", date: day } as Selection);
+     emitSelection(current);
+     return;
+   }
 
-    const start = startOfDay(sel.start);
+   // range
+   if (!sel || sel.kind !== "range" || sel.end) {
+     if (isBooked) return;
+     emitSelection({ kind: "range", start: day });
+     return;
+   }
 
-    if (day.getTime() === start.getTime()) {
-      emitSelection(null);
-      return;
-    }
+   const start = startOfDay(sel.start);
 
-    if (!rangeIsFree(start, day, bookedDays)) return;
+   if (day.getTime() === start.getTime()) {
+     emitSelection(null);
+     return;
+   }
 
-    if (day < start) {
-      emitSelection({ kind: "range", start: day, end: start });
-    } else {
-      emitSelection({ kind: "range", start, end: day });
-    }
-  }
+   if (!rangeIsFree(start, day, bookedDays)) return;
 
+   if (day < start) {
+     emitSelection({ kind: "range", start: day, end: start });
+   } else {
+     emitSelection({ kind: "range", start, end: day });
+   }
+ }
   // helpers til selected styling
   function isSingleSelected(d: Date): boolean {
     return sel?.kind === "single" && sel.date.getTime() === d.getTime();
@@ -550,7 +561,14 @@ export default function AvailabilityCalendar({
                   sel?.kind === "range" &&
                   sel.start &&
                   !sel.end;
-
+                  
+                const inCurrentRange =
+                  selectionMode === "range" &&
+                  sel?.kind === "range" &&
+                  sel.end &&
+                  d >= startOfDay(sel.start) &&
+                  d <= startOfDay(sel.end);
+                
                 // Klikbarhed
                 let canClick = selectionMode !== "none";
                 if (disablePastSelection && d <= today) canClick = false;
@@ -570,8 +588,12 @@ export default function AvailabilityCalendar({
                     }
                   }
                 }
+                if (inCurrentRange) canClick = true;
 
                 const disabled = !canClick;
+                const cursorStyle: React.CSSProperties = {
+                  cursor: disabled ? "default" : "pointer",
+                };
                 const selectedSingle = isSingleSelected(d);
                 const edge = isRangeEdge(d);
 
@@ -591,7 +613,27 @@ export default function AvailabilityCalendar({
                     data-selected={selectedSingle ? "1" : undefined}
                     data-edge={edge || undefined}
                   >
-                    <div className={styles.dayNum}>{d.getDate()}</div>
+                    <div
+                      className={styles.dayNum}
+                      role="button"
+                      tabIndex={disabled ? -1 : 0}
+                      aria-disabled={disabled || undefined}
+                      style={cursorStyle}
+                      onClick={(e) => {
+                        if (disabled) return;
+                        e.preventDefault();
+                        handleDayClick(d);
+                      }}
+                      onKeyDown={(e) => {
+                        if (disabled) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleDayClick(d);
+                        }
+                      }}
+                    >
+                      {d.getDate()}
+                    </div>
 
                     {priceMain && (
                       <div className={styles.price} aria-hidden="true">
@@ -610,6 +652,7 @@ export default function AvailabilityCalendar({
                         selectionMode === "single" ? selectedSingle : undefined
                       }
                       disabled={disabled}
+                       style={cursorStyle}
                       onClick={() => handleDayClick(d)}
                     />
                   </div>

@@ -78,10 +78,8 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--ink);
-  -webkit-user-select: none; /* Safari */
-  -ms-user-select: none; /* IE 10 and IE 11 */
-  user-select: none; /* Standard syntax */
-  cursor: default;
+  cursor: pointer;
+  
 }
 
 .cell[data-today="1"] .dayNum {
@@ -382,6 +380,9 @@
   .dayNum {
     font-size: 11px;
     right: 7px;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
   }
   .bar {
     font-size: 10px;
@@ -529,12 +530,12 @@
 
 @media (max-width: 600px) {
   .cell[data-edge="start"] .dayNum,
-.cell[data-edge="end"] .dayNum {
-  background: var(--gold-500);
-  color: #fff;
-  padding: 0 0px;
-  border-radius: 999px;
-}
+  .cell[data-edge="end"] .dayNum {
+    background: var(--gold-500);
+    color: #fff;
+    padding: 0 0px;
+    border-radius: 999px;
+  }
   .wrap {
     --gap: 8px;
     --cell-h: 66px;
