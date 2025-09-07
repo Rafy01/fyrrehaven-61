@@ -1,11 +1,9 @@
-// api/_lib/tuya.ts
-/* eslint-disable no-console */
 
 /**
  * Tuya OpenAPI helper til serverless (Vercel/Node 20+).
  * - Enhanced signing (canonical string) for token + API-kald
  * - Simpel token- og scale-cache
- * - Udtrækker °C fra "bedste" temperatur-DP
+ * - Hent ALLE datapunkter (status) og normaliser med scale
  */
 
 type TuyaResp<T> = {
@@ -16,7 +14,21 @@ type TuyaResp<T> = {
   result: T;
 };
 
-type StatusItem = { code: string; value: unknown };
+export type StatusItem = { code: string; value: unknown };
+
+type SpecFnOrStatus = { code: string; values?: string };
+export type DeviceSpecs = {
+  category: string;
+  functions?: SpecFnOrStatus[];
+  status?: SpecFnOrStatus[];
+};
+
+export type LogItem = {
+  event_time?: number; // ms
+  code?: string;
+  value?: unknown;
+  // Tuya returnerer flere felter – vi nøjes med de relevante
+};
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Konfiguration + debug
@@ -49,7 +61,6 @@ function redact(s: string, keep = 4): string {
 // ───────────────────────────────────────────────────────────────────────────────
 
 async function sha256Hex(input: string): Promise<string> {
-  // Node 20+: brug node:crypto for konsistent serverless-udførsel
   const crypto = await import("node:crypto");
   return crypto.createHash("sha256").update(input, "utf8").digest("hex");
 }
@@ -60,9 +71,9 @@ async function hmac256Hex(key: string, input: string): Promise<string> {
 }
 
 /**
- * Canonical string til signering:
+ * Canonical string:
  *   <METHOD>\n<SHA256(body)>\n<sign_headers>\n<path_with_query>
- * Vi bruger ingen sign_headers → tom linje.
+ * (vi bruger ingen sign_headers → tom linje)
  */
 async function buildStringToSign(
   method: "GET" | "POST" | "PUT" | "DELETE",
@@ -73,13 +84,13 @@ async function buildStringToSign(
   return [method, bodyHash, "", pathWithQuery].join("\n");
 }
 
-/** Sign til TOKEN: ACCESS_KEY + t + stringToSign (uden access_token) */
+/** Sign til TOKEN */
 async function signForToken(t: string, stringToSign: string): Promise<string> {
   const raw = ACCESS_KEY + t + stringToSign;
   return (await hmac256Hex(SECRET, raw)).toUpperCase();
 }
 
-/** Sign til AUTHAUTH-kald: ACCESS_KEY + access_token + t + stringToSign */
+/** Sign til AUTHAUTH-kald */
 async function signForApi(
   accessToken: string,
   t: string,
@@ -114,8 +125,8 @@ async function getAccessToken(): Promise<string> {
 
   const headers: Record<string, string> = {
     client_id: ACCESS_KEY,
-    sign: sign,
-    t: t,
+    sign,
+    t,
     sign_method: "HMAC-SHA256",
   };
 
@@ -167,8 +178,8 @@ async function tuyaGet<T>(path: string): Promise<T> {
   const headers: Record<string, string> = {
     client_id: ACCESS_KEY,
     access_token: accessToken,
-    sign: sign,
-    t: t,
+    sign,
+    t,
     sign_method: "HMAC-SHA256",
   };
 
@@ -202,7 +213,7 @@ async function tuyaGet<T>(path: string): Promise<T> {
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
-// Scale-cache pr. deviceId+code
+// ALLE data – status, specs, logs, normalisering med scale
 // ───────────────────────────────────────────────────────────────────────────────
 
 const SCALE_CACHE = new Map<string, number>(); // key: `${deviceId}:${code}`
@@ -212,14 +223,9 @@ async function getScale(deviceId: string, code: string): Promise<number> {
   const hit = SCALE_CACHE.get(key);
   if (typeof hit === "number") return hit;
 
-  // v1.0/iot-03/devices/{device_id}/specifications
-  const spec = await tuyaGet<{
-    category: string;
-    functions?: Array<{ code: string; values?: string }>;
-    status?: Array<{ code: string; values?: string }>;
-  }>(`/v1.0/iot-03/devices/${deviceId}/specifications`);
+  const spec = await getDeviceSpecs(deviceId);
 
-  const all = ([] as Array<{ code: string; values?: string }>)
+  const all: SpecFnOrStatus[] = ([] as SpecFnOrStatus[])
     .concat(spec.functions ?? [])
     .concat(spec.status ?? []);
 
@@ -230,13 +236,7 @@ async function getScale(deviceId: string, code: string): Promise<number> {
     return 0;
   }
 
-  let parsed: {
-    unit?: string;
-    min?: number;
-    max?: number;
-    step?: number;
-    scale?: number;
-  };
+  let parsed: { scale?: number };
   try {
     parsed = JSON.parse(item.values);
   } catch {
@@ -252,66 +252,143 @@ async function getScale(deviceId: string, code: string): Promise<number> {
   const scale = Number(parsed.scale ?? 0);
   const safe = Number.isFinite(scale) && scale >= 0 && scale <= 6 ? scale : 0;
   SCALE_CACHE.set(key, safe);
-
   log("scale", { deviceId, code, scale: safe });
   return safe;
 }
 
-// ───────────────────────────────────────────────────────────────────────────────
-// Public API: hent °C fra et device
-// ───────────────────────────────────────────────────────────────────────────────
-
-/** Vælg bedste temperatur-DP ud fra status-listen */
-function pickTempCode(items: StatusItem[]): string | null {
-  const pref = [
-    "ch1_temp",
-    // "temp_current",
-    "va_temperature",
-  ];
-  const have = new Set(items.map((i) => i.code));
-  const pick = pref.find((p) => have.has(p));
-  return pick ?? null;
+export async function getDeviceStatus(deviceId: string): Promise<StatusItem[]> {
+  return tuyaGet<StatusItem[]>(`/v1.0/iot-03/devices/${deviceId}/status`);
 }
 
-/** Returnerer temperatur i °C som number (kaster ved fejl) */
-export async function getPoolTempC(deviceId: string): Promise<number> {
+export async function getDeviceSpecs(deviceId: string): Promise<DeviceSpecs> {
+  return tuyaGet<DeviceSpecs>(
+    `/v1.0/iot-03/devices/${deviceId}/specifications`
+  );
+}
+
+/** (Valgfri) hent logs for de sidste X timer – hvis endpointet ikke findes, returnér tom liste */
+export async function getDeviceLogs(
+  deviceId: string,
+  hours = 6,
+  pageSize = 100
+): Promise<LogItem[]> {
+  try {
+    const end = Date.now();
+    const start = end - hours * 3600 * 1000;
+    // type=1 (status report), se Tuya docs. Ikke alle produkter eksponerer dette.
+    const qs = `start_time=${start}&end_time=${end}&type=1&page_size=${pageSize}`;
+    const r = await tuyaGet<{ logs?: LogItem[] }>(
+      `/v1.0/iot-03/devices/${deviceId}/logs?${qs}`
+    );
+    return r.logs ?? [];
+  } catch (e) {
+    log("logs unavailable or error -> ignore", (e as Error)?.message);
+    return [];
+  }
+}
+
+/** Normaliser en status-liste ved at anvende scale */
+export async function normalizeStatus(
+  deviceId: string,
+  items: StatusItem[]
+): Promise<
+  Array<{
+    code: string;
+    valueRaw: unknown;
+    scale: number;
+    value: number | unknown; // number hvis scale anvendes, ellers original
+  }>
+> {
+  const out = await Promise.all(
+    items.map(async (it) => {
+      const valueRaw = it.value;
+      // scale giver kun mening for numeriske DP’er
+      const rawNum = Number(valueRaw);
+      if (!Number.isFinite(rawNum)) {
+        return { code: it.code, valueRaw, scale: 0, value: valueRaw };
+      }
+      const scale = await getScale(deviceId, it.code);
+      const divisor = Math.pow(10, scale); // CORRECT: 10^scale
+      const value = scale > 0 ? rawNum / divisor : rawNum;
+      return { code: it.code, valueRaw, scale, value };
+    })
+  );
+  return out;
+}
+
+/** Convenience: hent ALT samlet */
+export async function getAllDeviceData(deviceId: string): Promise<{
+  statusRaw: StatusItem[];
+  status: Awaited<ReturnType<typeof normalizeStatus>>;
+  specs: DeviceSpecs;
+  logs: LogItem[];
+  fetchedAt: string;
+}> {
+  const [statusRaw, specs, logs] = await Promise.all([
+    getDeviceStatus(deviceId),
+    getDeviceSpecs(deviceId),
+    getDeviceLogs(deviceId).catch(() => [] as LogItem[]),
+  ]);
+  const status = await normalizeStatus(deviceId, statusRaw);
+  return {
+    statusRaw,
+    status,
+    specs,
+    logs,
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+/** Temperatur-hjælper (bevarer din oprindelige funktionalitet) */
+export async function getPoolTempC(
+  deviceId: string,
+  preferCode?: string
+): Promise<number> {
   if (!deviceId || !/^[A-Za-z0-9]{16,64}$/.test(deviceId)) {
     throw new Error("Bad device id");
   }
 
-  // v1.0/iot-03/devices/{device_id}/status
-  const list = await tuyaGet<StatusItem[]>(
-    `/v1.0/iot-03/devices/${deviceId}/status`
-  );
-
+  const list = await getDeviceStatus(deviceId);
   log("status codes", list);
 
-  const code = pickTempCode(list);
-  if (!code) {
-    throw new Error("No temperature datapoint found on device");
+  // 1) eksplicit code via query/env
+  if (preferCode) {
+    const hit = list.find((x) => x.code === preferCode);
+    if (!hit) throw new Error(`Datapoint '${preferCode}' not found on device`);
+    const raw = Number(hit.value);
+    const scale = await getScale(deviceId, preferCode);
+    const c = scale > 0 ? raw / Math.pow(10, scale) : raw;
+    if (!Number.isFinite(c)) {
+      throw new Error(`Temperature value not numeric for code=${preferCode}`);
+    }
+    log("temp", { code: preferCode, raw, scale, c });
+    return c;
   }
 
-  const rawItem = list.find((x) => x.code === code)!;
-  const rawNum = Number(rawItem.value);
-  if (!Number.isFinite(rawNum)) {
-    throw new Error(`Temperature value not numeric for code=${code}`);
-  }
+  // 2) heuristik
+  const pref = ["ch1_temp", "water_temp", "temp_current", "va_temperature"];
+  const have = new Set(list.map((i) => i.code));
+  const code = pref.find((p) => have.has(p));
+  if (!code) throw new Error("No temperature datapoint found on device");
 
+  const rawNum = Number(list.find((x) => x.code === code)!.value);
   const scale = await getScale(deviceId, code);
-  const divisor = Math.pow(100, scale);
-  const c = scale > 0 ? rawNum / divisor : rawNum;
+  const c = scale > 0 ? rawNum / Math.pow(10, scale) : rawNum;
 
   log("temp", { code, raw: rawNum, scale, c });
-
   return c;
 }
 
-// Valgfri named exports (kan bruges i tests)
+// Valgfri named exports (til debugging/tests)
 export const __tuyaDebug = {
   getAccessToken,
   tuyaGet,
   getScale,
-  pickTempCode,
+  getDeviceStatus,
+  getDeviceSpecs,
+  getDeviceLogs,
+  normalizeStatus,
+  getAllDeviceData,
   BASE,
   ACCESS_KEY_MASKED: redact(ACCESS_KEY),
 };
