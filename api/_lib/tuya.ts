@@ -300,7 +300,7 @@ export async function getPoolTempC(deviceId: string): Promise<number> {
   }
 
   const scale = await getScale(deviceId, code);
-  const divisor = Math.pow(10, scale);
+  const divisor = Math.pow(100, scale);
   const c = scale > 0 ? rawNum / divisor : rawNum;
 
   log("temp", { code, raw: rawNum, scale, c });
