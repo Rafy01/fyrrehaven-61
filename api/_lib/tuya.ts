@@ -265,10 +265,6 @@ async function getScale(deviceId: string, code: string): Promise<number> {
 function pickTempCode(items: StatusItem[]): string | null {
   const pref = [
     "ch1_temp",
-    "water_temp",
-    "temp_current",
-    "va_temperature",
-    "temperature",
   ];
   const have = new Set(items.map((i) => i.code));
   const pick = pref.find((p) => have.has(p));
