@@ -204,17 +204,23 @@ export default function Gallery({
           const label = lang === "da" ? f.labelDa : f.labelEn;
           const cover = f.cover;
           const count = f.items.length;
+          const extra = Math.max(0, count - 1); // ← antal ud over cover
+
+          const countWord =
+            lang === "da"
+              ? count === 1
+                ? "billede"
+                : "billeder"
+              : count === 1
+              ? "photo"
+              : "photos";
 
           return (
             <button
               key={f.id}
               className={styles.tileBtn}
               onClick={() => openFolder(f)}
-              aria-label={`${label} – ${count} ${tPick(
-                "billeder",
-                "photos",
-                lang
-              )}`}
+              aria-label={`${label} – ${count} ${countWord}`}
             >
               <div className={styles.tile}>
                 <img
@@ -223,10 +229,13 @@ export default function Gallery({
                   alt={getCaption(cover, lang) || ""}
                   loading="lazy"
                 />
-                {/* Overlay med navn + antal */}
+                {/* Overlay med navn + (evt.) antal */}
                 <div className={styles.tileOverlay} aria-hidden="true" />
                 <span className={styles.tileTitle}>{label}</span>
-                <span className={styles.tileBadge}>+{count}</span>
+                {/* Vis KUN badge hvis der er mere end 1 billede i mappen */}
+                {extra > 0 && (
+                  <span className={styles.tileBadge}>+{extra}</span>
+                )}
               </div>
             </button>
           );
@@ -265,7 +274,6 @@ export default function Gallery({
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
           >
-            {/* Radix a11y: kræver Title/Description */}
             <Dialog.Title className={styles.srOnly}>
               {activeFolder
                 ? lang === "da"
