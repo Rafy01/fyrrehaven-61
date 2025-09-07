@@ -1,110 +1,259 @@
 // api/_lib/tuya.ts
-import crypto from "node:crypto";
+// ESM + Node 18/20+
+// Denne fil har ekstra logging for at finde fejl – slå til med DEBUG_POOL_TEMP=1
 
-/** -- Miljø -- */
-const BASE_URL = process.env.TUYA_BASE_URL ?? "https://openapi.tuyaeu.com";
-const CLIENT_ID = process.env.TUYA_ACCESS_KEY!;
-const SECRET = process.env.TUYA_SECRET!;
+const DEBUG =
+  process.env.DEBUG_POOL_TEMP === "1" || process.env.DEBUG_POOL_TEMP === "true";
 
-if (!CLIENT_ID || !SECRET) {
-  throw new Error(
-    "Missing TUYA_ACCESS_KEY / TUYA_SECRET env vars. Set them in your hosting environment."
-  );
+function log(...args: unknown[]) {
+  if (DEBUG) console.log("[tuya]", ...args);
+}
+function red(str?: string) {
+  if (!str) return "∅";
+  return `${str.slice(0, 4)}…${str.slice(-4)}`;
 }
 
-/** Token-cache i memory (serverless instans) */
-let cachedToken: { token: string; expiresAt: number } | null = null;
+/* ──────────────────────────────────────────────────────────────────
+   Tuya auth + signing (simple helper)
+   ────────────────────────────────────────────────────────────────── */
 
-function sha256Hex(s: string) {
-  return crypto.createHash("sha256").update(s).digest("hex");
-}
-function hmac256Upper(key: string, data: string) {
-  return crypto
-    .createHmac("sha256", key)
-    .update(data)
-    .digest("hex")
-    .toUpperCase();
+type TuyaResponse<T> = {
+  success: boolean;
+  t: number;
+  code?: number | string;
+  msg?: string;
+  result: T;
+};
+
+type StatusItem = { code: string; value: unknown };
+
+const BASE = (
+  process.env.TUYA_BASE_URL || "https://openapi.tuyaeu.com"
+).replace(/\/+$/, "");
+const ACCESS_KEY = process.env.TUYA_ACCESS_KEY || "";
+const SECRET = process.env.TUYA_SECRET || "";
+
+if (DEBUG) {
+  log("env presence", {
+    BASE: BASE,
+    ACCESS_KEY_present: !!ACCESS_KEY,
+    SECRET_present: !!SECRET,
+  });
 }
 
-/** Hent (og cache) access_token */
+/**
+ * Tuya REST: hent access_token (grant_type=1)
+ * Vi cacher token i memory (Vercel cold starts vil reset’e den – det er ok).
+ */
+let _cachedToken: { token: string; expireAt: number } | null = null;
+
 async function getAccessToken(): Promise<string> {
   const now = Date.now();
-  if (cachedToken && cachedToken.expiresAt - 60_000 > now) {
-    return cachedToken.token;
+  if (_cachedToken && _cachedToken.expireAt > now + 5_000) {
+    log("token cache hit; expires in ms", _cachedToken.expireAt - now);
+    return _cachedToken.token;
   }
 
-  const t = String(now);
-  const sign = hmac256Upper(SECRET, CLIENT_ID + t);
+  const path = "/v1.0/token?grant_type=1";
+  log("fetch token", { url: BASE + path });
 
-  const r = await fetch(`${BASE_URL}/v1.0/token?grant_type=1`, {
-    method: "GET",
-    headers: {
-      client_id: CLIENT_ID,
-      t: t,
-      sign_method: "HMAC-SHA256",
-      sign: sign,
-    },
+  // Tuya-token-kald kræver sign = HMAC(accessKey + t)
+  // Doc: https://developer.tuya.com/en/docs/cloud/openapi/authorization?id=Ka7adj2a7s6q9
+  const t = String(Date.now());
+  const stringToSign = ""; // tom for token-kald
+  const signStr = ACCESS_KEY + t + stringToSign;
+  const crypto = await import("node:crypto");
+  const sign = crypto
+    .createHmac("sha256", SECRET)
+    .update(signStr, "utf8")
+    .digest("hex")
+    .toUpperCase();
+
+  const headers: Record<string, string> = {
+    client_id: ACCESS_KEY,
+    sign: sign,
+    t: t,
+    sign_method: "HMAC-SHA256",
+  };
+
+  const r = await fetch(BASE + path, { method: "GET", headers });
+  const txt = await r.text();
+  log("token raw response", {
+    status: r.status,
+    len: txt.length,
+    bodySample: txt.slice(0, 240),
   });
 
-  const j = await r.json();
-  if (!j?.success) throw new Error(`Tuya token error: ${j?.msg ?? "unknown"}`);
+  const j: TuyaResponse<{ access_token: string; expire_time: number }> =
+    JSON.parse(txt);
 
-  const token: string = j.result.access_token;
-  const expiresSec: number = j.result.expire_time; // seconds
-  cachedToken = {
+  if (!j?.success) {
+    const c = j?.code;
+    const m = j?.msg;
+    throw new Error(`Tuya token error: ${c ?? ""} ${m ?? ""}`.trim());
+  }
+
+  const token = j.result.access_token;
+  const ttlSec = Number(j.result.expire_time ?? 0);
+  _cachedToken = {
     token,
-    expiresAt: now + Math.max(30, expiresSec - 120) * 1000,
+    expireAt: Date.now() + Math.max(10_000, ttlSec * 1000),
   };
+  log("token ok (cached)", { ttlSec });
+
   return token;
 }
 
-/** Signér og kald Tuya OpenAPI (V2-signature) */
-async function tuyaRequest<T>(
-  path: string,
-  method: "GET" | "POST" = "GET",
-  body?: unknown
-): Promise<T> {
-  const accessToken = await getAccessToken();
-  const t = String(Date.now());
-  const bodyStr = body ? JSON.stringify(body) : "";
-  const contentHash = sha256Hex(bodyStr);
-  const stringToSign = [method.toUpperCase(), contentHash, "", path].join("\n");
-  const signStr = CLIENT_ID + accessToken + t + stringToSign;
-  const sign = hmac256Upper(SECRET, signStr);
+/**
+ * Signede kald efter vi har token.
+ */
+async function tuyaGet<T>(path: string): Promise<T> {
+  const token = await getAccessToken();
 
-  const r = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers: {
-      client_id: CLIENT_ID,
-      t: t,
-      sign_method: "HMAC-SHA256",
-      sign: sign,
-      access_token: accessToken,
-      "Content-Type": "application/json",
-    },
-    body: bodyStr || undefined,
+  const t = String(Date.now());
+  const method = "GET";
+  const body = ""; // GET: tom krop
+  const bodyHash = (await import("node:crypto"))
+    .createHash("sha256")
+    .update(body, "utf8")
+    .digest("hex");
+
+  const contentHeaders = ""; // vi bruger ikke custom signHeaders
+  const stringToSign = [method, bodyHash, contentHeaders, path].join("\n");
+
+  const toSign = ACCESS_KEY + token + t + stringToSign;
+  const sign = (await import("node:crypto"))
+    .createHmac("sha256", SECRET)
+    .update(toSign, "utf8")
+    .digest("hex")
+    .toUpperCase();
+
+  const headers: Record<string, string> = {
+    client_id: ACCESS_KEY,
+    access_token: token,
+    sign: sign,
+    t: t,
+    sign_method: "HMAC-SHA256",
+  };
+
+  const url = BASE + path;
+  log("GET", { url, headersPreview: { client_id: red(ACCESS_KEY), t } });
+
+  const r = await fetch(url, { method: "GET", headers });
+  const txt = await r.text();
+  log("GET raw response", {
+    status: r.status,
+    len: txt.length,
+    bodySample: txt.slice(0, 400),
   });
 
-  const j = await r.json();
+  const j: TuyaResponse<T> = JSON.parse(txt);
+
   if (!j?.success) {
-    const code = j?.code ?? "E_TUYA";
-    const msg = j?.msg ?? "Tuya request failed";
-    throw new Error(`${code}: ${msg}`);
+    const c = j?.code;
+    const m = j?.msg;
+    throw new Error(`Tuya GET error: ${c ?? ""} ${m ?? ""} (path=${path})`);
   }
-  return j.result as T;
+  return j.result;
 }
 
-/** Læs va_temperature og divider med scale=1 → tiendedele grader */
+/* ──────────────────────────────────────────────────────────────────
+   Offentlig API vi bruger i handleren
+   ────────────────────────────────────────────────────────────────── */
+
+const DP_PREF = [
+  "ch1_temp",
+  "water_temp",
+  "temp_current",
+  "va_temperature",
+  "temperature",
+];
+
+/** scale-cache pr. device+dp-kode */
+const SCALE_CACHE = new Map<string, number>();
+
+/** find scale for dp kode (så 237 => 23.7 hvis scale=1) */
+async function getScale(deviceId: string, code: string): Promise<number> {
+  const key = `${deviceId}:${code}`;
+  const cached = SCALE_CACHE.get(key);
+  if (typeof cached === "number") {
+    log("scale cache hit", { deviceId, code, scale: cached });
+    return cached;
+  }
+
+  // henter spec
+  const specPath = `/v1.0/iot-03/devices/${deviceId}/specifications`;
+  const spec = await tuyaGet<{ functions?: unknown[]; status?: { code: string; type?: string; values?: string }[] }>(specPath);
+  log("spec fetched", {
+    hasFunctions: Array.isArray(spec.functions),
+    hasStatus: Array.isArray(spec.status),
+  });
+
+  const statusList: Array<{ code: string; type?: string; values?: string }> =
+    spec.status || [];
+  const hit = statusList.find((s) => s.code === code);
+  if (!hit?.values) {
+    log("scale not found in spec; default=0", { code });
+    SCALE_CACHE.set(key, 0);
+    return 0;
+  }
+
+  // values er JSON-string med bl.a. "scale": 1
+  let scale = 0;
+  try {
+    const parsed = JSON.parse(hit.values);
+    // typisk {"unit":"°C","min":-400,"max":600,"scale":1,"step":1}
+    if (Number.isFinite(parsed?.scale)) scale = Number(parsed.scale);
+  } catch (e) {
+    log("spec.values JSON parse error", { e });
+  }
+
+  log("scale resolved", { deviceId, code, scale });
+  SCALE_CACHE.set(key, scale);
+  return scale;
+}
+
+/** hovedfunktion – returnér grader C som number */
 export async function getPoolTempC(deviceId: string): Promise<number> {
-  type StatusItem = { code: string; value: number | string };
-  const list = await tuyaRequest<StatusItem[]>(
-    `/v1.0/iot-03/devices/${deviceId}/status`,
-    "GET"
+  console.time?.(`tuya:getStatus:${deviceId}`);
+  const path = `/v1.0/iot-03/devices/${deviceId}/status`;
+  const list = await tuyaGet<StatusItem[]>(path);
+  console.timeEnd?.(`tuya:getStatus:${deviceId}`);
+
+  log("status list size", list.length);
+
+  // dump relevante DP’er
+  const byCode = Object.fromEntries(list.map((s) => [s.code, s.value]));
+  log(
+    "interesting codes snapshot",
+    DP_PREF.reduce((acc, c) => {
+      acc[c] = byCode[c] ?? null;
+      return acc;
+    }, {} as Record<string, unknown>)
   );
 
-  const raw = Number(list.find((x) => x.code === "va_temperature")?.value);
-  if (!Number.isFinite(raw)) throw new Error("Temperature datapoint not found");
+  // 1) vælg foretrukken dp
+  const foundCode = DP_PREF.find((c) => byCode[c] != null);
+  if (!foundCode) {
+    throw new Error(
+      `No temperature datapoint found (looked for: ${DP_PREF.join(", ")})`
+    );
+  }
 
-  // Spec siger scale=1 → værdien er i tiendedele grader
-  return raw / 10;
+  const raw = Number(byCode[foundCode]);
+  if (!Number.isFinite(raw)) {
+    throw new Error(
+      `Temperature value for ${foundCode} is not numeric: ${String(
+        byCode[foundCode]
+      )}`
+    );
+  }
+
+  // 2) scale
+  const scale = await getScale(deviceId, foundCode);
+  const divisor = Math.pow(10, scale || 0);
+  const c = divisor > 1 ? raw / divisor : raw;
+
+  log("value", { code: foundCode, raw, scale, celsius: c });
+  return c;
 }
