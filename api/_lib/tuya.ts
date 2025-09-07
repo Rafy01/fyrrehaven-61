@@ -5,7 +5,7 @@
  * Tuya OpenAPI helper til serverless (Vercel/Node 20+).
  * - Enhanced signing (canonical string) for token + API-kald
  * - Simpel token- og scale-cache
- * - Udtrækker °C fra "bedste" temperatur-DP
+ * - Udtrækker °C fra valgt temperatur-DP (med mulighed for override)
  */
 
 type TuyaResp<T> = {
@@ -22,7 +22,7 @@ type StatusItem = { code: string; value: unknown };
 // Konfiguration + debug
 // ───────────────────────────────────────────────────────────────────────────────
 
-const BASE = mustEnv("TUYA_BASE_URL").replace(/\/+$/, ""); // uden trailing slash
+const BASE = mustEnv("TUYA_BASE_URL").replace(/\/+$/, "");
 const ACCESS_KEY = mustEnv("TUYA_ACCESS_KEY");
 const SECRET = mustEnv("TUYA_SECRET");
 
@@ -49,7 +49,6 @@ function redact(s: string, keep = 4): string {
 // ───────────────────────────────────────────────────────────────────────────────
 
 async function sha256Hex(input: string): Promise<string> {
-  // Node 20+: brug node:crypto for konsistent serverless-udførsel
   const crypto = await import("node:crypto");
   return crypto.createHash("sha256").update(input, "utf8").digest("hex");
 }
@@ -59,11 +58,7 @@ async function hmac256Hex(key: string, input: string): Promise<string> {
   return crypto.createHmac("sha256", key).update(input, "utf8").digest("hex");
 }
 
-/**
- * Canonical string til signering:
- *   <METHOD>\n<SHA256(body)>\n<sign_headers>\n<path_with_query>
- * Vi bruger ingen sign_headers → tom linje.
- */
+/** Canonical: METHOD \n SHA256(body) \n sign_headers \n path?query  */
 async function buildStringToSign(
   method: "GET" | "POST" | "PUT" | "DELETE",
   pathWithQuery: string,
@@ -73,13 +68,13 @@ async function buildStringToSign(
   return [method, bodyHash, "", pathWithQuery].join("\n");
 }
 
-/** Sign til TOKEN: ACCESS_KEY + t + stringToSign (uden access_token) */
+/** Token-sign: ACCESS_KEY + t + stringToSign */
 async function signForToken(t: string, stringToSign: string): Promise<string> {
   const raw = ACCESS_KEY + t + stringToSign;
   return (await hmac256Hex(SECRET, raw)).toUpperCase();
 }
 
-/** Sign til AUTHAUTH-kald: ACCESS_KEY + access_token + t + stringToSign */
+/** API-sign: ACCESS_KEY + access_token + t + stringToSign */
 async function signForApi(
   accessToken: string,
   t: string,
@@ -212,7 +207,6 @@ async function getScale(deviceId: string, code: string): Promise<number> {
   const hit = SCALE_CACHE.get(key);
   if (typeof hit === "number") return hit;
 
-  // v1.0/iot-03/devices/{device_id}/specifications
   const spec = await tuyaGet<{
     category: string;
     functions?: Array<{ code: string; values?: string }>;
@@ -258,11 +252,21 @@ async function getScale(deviceId: string, code: string): Promise<number> {
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
-// Public API: hent °C fra et device
+// Public API: hent °C fra et device (med DP-override)
 // ───────────────────────────────────────────────────────────────────────────────
 
-/** Vælg bedste temperatur-DP ud fra status-listen */
-function pickTempCode(items: StatusItem[]): string | null {
+function pickTempCode(
+  items: StatusItem[],
+  preferred?: string[]
+): string | null {
+  // Brug evt. override først
+  if (preferred && preferred.length > 0) {
+    for (const p of preferred) {
+      if (items.some((i) => i.code === p)) return p;
+    }
+  }
+
+  // Ellers find “bedst kendte”
   const pref = [
     "ch1_temp",
     "water_temp",
@@ -275,20 +279,28 @@ function pickTempCode(items: StatusItem[]): string | null {
   return pick ?? null;
 }
 
-/** Returnerer temperatur i °C som number (kaster ved fejl) */
-export async function getPoolTempC(deviceId: string): Promise<number> {
+export async function getPoolTempC(
+  deviceId: string,
+  opts?: { preferredCodes?: string[] }
+): Promise<number> {
   if (!deviceId || !/^[A-Za-z0-9]{16,64}$/.test(deviceId)) {
     throw new Error("Bad device id");
   }
 
-  // v1.0/iot-03/devices/{device_id}/status
   const list = await tuyaGet<StatusItem[]>(
     `/v1.0/iot-03/devices/${deviceId}/status`
   );
 
   log("status codes", list);
 
-  const code = pickTempCode(list);
+  // Byg preferred fra opts og/eller env
+  const envDp = process.env.TUYA_TEMP_DP_CODE?.trim();
+  const preferred = [
+    ...(opts?.preferredCodes ?? []),
+    ...(envDp ? [envDp] : []),
+  ].filter(Boolean);
+
+  const code = pickTempCode(list, preferred.length ? preferred : undefined);
   if (!code) {
     throw new Error("No temperature datapoint found on device");
   }
@@ -300,15 +312,24 @@ export async function getPoolTempC(deviceId: string): Promise<number> {
   }
 
   const scale = await getScale(deviceId, code);
-  const divisor = Math.pow(10, scale);
-  const c = scale > 0 ? rawNum / divisor : rawNum;
+  let c: number;
+  if (scale > 0) {
+    c = rawNum / Math.pow(10, scale);
+  } else {
+    // Nogle enheder rapporterer f.eks. 241 med scale 0 → ~24.1 °C.
+    c = rawNum;
+    if (rawNum > 80 && rawNum < 1200) {
+      c = rawNum / 10;
+      log("heuristic /10 applied (scale=0)", { code, raw: rawNum, c });
+    }
+  }
 
   log("temp", { code, raw: rawNum, scale, c });
 
   return c;
 }
 
-// Valgfri named exports (kan bruges i tests)
+// Valgfri named exports
 export const __tuyaDebug = {
   getAccessToken,
   tuyaGet,
