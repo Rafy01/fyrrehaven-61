@@ -6,23 +6,29 @@ export default function PoolTempCard() {
   const [temp, setTemp] = React.useState<number | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const r = await fetch("/api/pool-temp");
-        const j = await r.json();
-        if (!alive) return;
-        if (j.ok) setTemp(j.tempC);
-        else setErr(j.error ?? "Fejl");
-      } catch (e: any) {
-        if (alive) setErr(e?.message ?? "Netværksfejl");
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
+ type PoolTempResp =
+   | { ok: true; tempC: number }
+   | { ok: false; error?: string };
+
+ React.useEffect(() => {
+   let alive = true;
+   (async () => {
+     try {
+       const r = await fetch("/api/pool-temp");
+       const j: PoolTempResp = await r.json(); // <- typet JSON
+       if (!alive) return;
+
+       if (j.ok) setTemp(j.tempC);
+       else setErr(j.error ?? "Ukendt fejl");
+     } catch (e: unknown) {
+       // <- unknown i stedet for any
+       if (alive) setErr(e instanceof Error ? e.message : "Netværksfejl");
+     }
+   })();
+   return () => {
+     alive = false;
+   };
+ }, []);
 
   if (err) return <div role="status">Pool: {err}</div>;
   if (temp == null) return <div role="status">Pool: henter…</div>;
