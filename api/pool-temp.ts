@@ -1,58 +1,80 @@
 // api/pool-temp.ts
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getTempForCodeC, getPoolTempC } from "./_lib/tuya";
+import { getPoolTempC } from "./_lib/tuya.js"; // <- BEVAR .js
 
-function badId(id: string): boolean {
-  return !/^[A-Za-z0-9]{16,64}$/.test(id);
+const DEBUG =
+  process.env.DEBUG_POOL_TEMP === "1" || process.env.DEBUG_POOL_TEMP === "true";
+
+function log(...args: unknown[]) {
+  if (DEBUG) console.log("[pool-temp]", ...args);
 }
-function badDp(dp: string): boolean {
-  // tillad a-z0-9_ (Tuya DP codes)
-  return !/^[a-z0-9_]{2,40}$/.test(dp);
+
+function badId(id: string) {
+  return !/^[A-Za-z0-9]{16,64}$/.test(id);
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const startedAt = Date.now();
   try {
+    log("incoming", { method: req.method, query: req.query });
+
     if (req.method !== "GET") {
       res.setHeader("Allow", "GET");
+      log("405 Method Not Allowed");
       return res.status(405).json({ ok: false, error: "Method Not Allowed" });
     }
 
-    const deviceId = (
-      typeof req.query.id === "string"
-        ? req.query.id
-        : process.env.TUYA_POOL_DEVICE_ID || ""
+    // vælg deviceId: ?id=… eller env
+    const envId = (
+      process.env.TUYA_POOL_DEVICE_ID ||
+      process.env.TUYA_DEVICE_ID ||
+      ""
     ).trim();
+    const qId = typeof req.query.id === "string" ? req.query.id.trim() : "";
+    const deviceId = qId || envId;
+
+    log("device id resolution", {
+      fromQuery: qId || null,
+      fromEnvPresent: Boolean(envId),
+      final: deviceId || null,
+    });
 
     if (!deviceId || badId(deviceId)) {
+      log("400 bad device id format");
       return res.status(400).json({ ok: false, error: "Bad device id format" });
     }
 
-    const dpQuery =
-      typeof req.query.dp === "string" ? req.query.dp.trim() : undefined;
+    // env presence (ikke værdier!)
+    log("env presence", {
+      TUYA_BASE_URL: !!process.env.TUYA_BASE_URL,
+      TUYA_ACCESS_KEY: !!process.env.TUYA_ACCESS_KEY,
+      TUYA_SECRET: !!process.env.TUYA_SECRET,
+    });
 
-    const dp =
-      dpQuery && !badDp(dpQuery)
-        ? dpQuery
-        : process.env.TUYA_TEMP_DP_CODE?.trim() || "ch1_temp";
+    console.time("getPoolTempC");
+    const celsius = await getPoolTempC(deviceId);
+    console.timeEnd("getPoolTempC");
 
-    const c = dp
-      ? await getTempForCodeC(deviceId, dp)
-      : await getPoolTempC(deviceId);
+    log("success", { celsius });
 
-    // CDN-cache på edge 30 sekunder
+    // 30 sek cache i edge + SWR
     res.setHeader(
       "Cache-Control",
       "public, s-maxage=30, stale-while-revalidate=30"
     );
-
     return res.status(200).json({
       ok: true,
-      celsius: c,
-      dp,
+      celsius,
       updatedAt: new Date().toISOString(),
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown server error";
+    const elapsed = Date.now() - startedAt;
+    const msg = err instanceof Error ? err.message : String(err);
+    log("500 error", {
+      elapsedMs: elapsed,
+      message: msg,
+      stack: err instanceof Error ? err.stack : null,
+    });
     return res.status(500).json({ ok: false, error: msg });
   }
 }

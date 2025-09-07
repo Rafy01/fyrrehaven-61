@@ -1,231 +1,319 @@
 // api/_lib/tuya.ts
-// Tuya v2 signering + simple helpers til at læse datapunkter (fx "ch1_temp") som °C
+/* eslint-disable no-console */
 
-import { createHash, createHmac } from "crypto";
+/**
+ * Tuya OpenAPI helper til serverless (Vercel/Node 20+).
+ * - Enhanced signing (canonical string) for token + API-kald
+ * - Simpel token- og scale-cache
+ * - Udtrækker °C fra "bedste" temperatur-DP
+ */
 
-/** --------- ENV + konfiguration --------- */
-const ACCESS_KEY = process.env.TUYA_ACCESS_KEY ?? "";
-const SECRET_KEY = process.env.TUYA_SECRET_KEY ?? "";
-const REGION = (process.env.TUYA_REGION ?? "EU").toUpperCase();
-const API_BASE =
-  process.env.TUYA_API_BASE ??
-  (REGION === "EU"
-    ? "https://openapi.tuyaeu.com"
-    : REGION === "US"
-    ? "https://openapi.tuyaus.com"
-    : REGION === "CN"
-    ? "https://openapi.tuyacn.com"
-    : REGION === "IN"
-    ? "https://openapi.tuyain.com"
-    : "https://openapi.tuyaeu.com");
-
-const DBG = process.env.TUYA_DEBUG === "1";
-
-/** --------- Hjælpere --------- */
-function sha256Hex(input: string): string {
-  return createHash("sha256").update(input).digest("hex");
-}
-function hmacSha256Upper(key: string, content: string): string {
-  return createHmac("sha256", key)
-    .update(content, "utf8")
-    .digest("hex")
-    .toUpperCase();
-}
-function qstr(
-  q?: Record<string, string | number | boolean | undefined>
-): string {
-  if (!q) return "";
-  const parts = Object.entries(q)
-    .filter(([, v]) => v !== undefined && v !== null && `${v}` !== "")
-    .map(
-      ([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`
-    );
-  return parts.length ? `?${parts.join("&")}` : "";
-}
-
-/** --------- Token-cache i hukommelse --------- */
-type TokenState = { token: string; expiresAt: number };
-let tokenCache: TokenState | null = null;
-
-type TuyaEnvelope<T> = {
+type TuyaResp<T> = {
   success: boolean;
-  code: number;
+  t: number;
+  code?: number | string;
   msg?: string;
-  t?: number;
-  tid?: string;
   result: T;
 };
 
-type TokenResult = {
-  access_token: string;
-  expire_time: number; // sekunder
-};
+type StatusItem = { code: string; value: unknown };
 
-async function fetchTuya<T>(
-  method: "GET" | "POST",
-  path: string,
-  opts?: { query?: Record<string, string | number | boolean | undefined>; body?: unknown; withToken?: boolean }
-): Promise<T> {
-  const urlPath = path + qstr(opts?.query);
-  const url = API_BASE + urlPath;
-  const bodyJson = opts?.body ? JSON.stringify(opts.body) : "";
-  const contentHash = sha256Hex(bodyJson);
-  const t = Date.now().toString();
+// ───────────────────────────────────────────────────────────────────────────────
+// Konfiguration + debug
+// ───────────────────────────────────────────────────────────────────────────────
+
+const BASE = mustEnv("TUYA_BASE_URL").replace(/\/+$/, ""); // uden trailing slash
+const ACCESS_KEY = mustEnv("TUYA_ACCESS_KEY");
+const SECRET = mustEnv("TUYA_SECRET");
+
+const DEBUG = process.env.DEBUG_POOL_TEMP === "1" || process.env.DEBUG === "1";
+
+function log(...args: unknown[]) {
+  if (DEBUG) console.log("[tuya]", ...args);
+}
+
+function mustEnv(name: string): string {
+  const v = process.env[name]?.trim();
+  if (!v) throw new Error(`Missing environment variable: ${name}`);
+  return v;
+}
+
+function redact(s: string, keep = 4): string {
+  if (!s) return "";
+  if (s.length <= keep * 2) return "*".repeat(s.length);
+  return s.slice(0, keep) + "…" + s.slice(-keep);
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Signering (Tuya Enhanced Signatures)
+// ───────────────────────────────────────────────────────────────────────────────
+
+async function sha256Hex(input: string): Promise<string> {
+  // Node 20+: brug node:crypto for konsistent serverless-udførsel
+  const crypto = await import("node:crypto");
+  return crypto.createHash("sha256").update(input, "utf8").digest("hex");
+}
+
+async function hmac256Hex(key: string, input: string): Promise<string> {
+  const crypto = await import("node:crypto");
+  return crypto.createHmac("sha256", key).update(input, "utf8").digest("hex");
+}
+
+/**
+ * Canonical string til signering:
+ *   <METHOD>\n<SHA256(body)>\n<sign_headers>\n<path_with_query>
+ * Vi bruger ingen sign_headers → tom linje.
+ */
+async function buildStringToSign(
+  method: "GET" | "POST" | "PUT" | "DELETE",
+  pathWithQuery: string,
+  body: string
+): Promise<string> {
+  const bodyHash = await sha256Hex(body ?? "");
+  return [method, bodyHash, "", pathWithQuery].join("\n");
+}
+
+/** Sign til TOKEN: ACCESS_KEY + t + stringToSign (uden access_token) */
+async function signForToken(t: string, stringToSign: string): Promise<string> {
+  const raw = ACCESS_KEY + t + stringToSign;
+  return (await hmac256Hex(SECRET, raw)).toUpperCase();
+}
+
+/** Sign til AUTHAUTH-kald: ACCESS_KEY + access_token + t + stringToSign */
+async function signForApi(
+  accessToken: string,
+  t: string,
+  stringToSign: string
+): Promise<string> {
+  const raw = ACCESS_KEY + accessToken + t + stringToSign;
+  return (await hmac256Hex(SECRET, raw)).toUpperCase();
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Token-cache
+// ───────────────────────────────────────────────────────────────────────────────
+
+let tokenCache: { token: string; expireAt: number /* ms epoch */ } | null =
+  null;
+
+async function getAccessToken(): Promise<string> {
+  const now = Date.now();
+  if (tokenCache && tokenCache.expireAt > now + 5_000) {
+    log("token cache hit; ttl(ms) =", tokenCache.expireAt - now);
+    return tokenCache.token;
+  }
+
+  const path = "/v1.0/token?grant_type=1";
+  const url = BASE + path;
+
+  const method = "GET" as const;
+  const body = "";
+  const stringToSign = await buildStringToSign(method, path, body);
+  const t = String(Date.now());
+  const sign = await signForToken(t, stringToSign);
 
   const headers: Record<string, string> = {
     client_id: ACCESS_KEY,
+    sign: sign,
     t: t,
     sign_method: "HMAC-SHA256",
-    "Content-Type": "application/json",
   };
 
-  let accessToken = "";
-  if (opts?.withToken) {
-    accessToken = await getAccessToken();
-    headers["access_token"] = accessToken;
-  }
-
-  // Tuya v2 stringToSign
-  const stringToSign = [method, contentHash, "", urlPath].join("\n");
-  const signStr = `${ACCESS_KEY}${accessToken}${t}${stringToSign}`;
-  headers["sign"] = hmacSha256Upper(SECRET_KEY, signStr);
-
-  if (DBG) {
-    console.log("[Tuya] fetch", {
-      method,
-      urlPath,
-      withToken: !!opts?.withToken,
-    });
-  }
-
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: bodyJson || undefined,
+  log("fetch token", {
+    url,
+    headers: { client_id: redact(ACCESS_KEY), t, sign: sign.slice(0, 8) + "…" },
   });
 
-  const text = await res.text();
-  let parsed: TuyaEnvelope<T> | null = null;
+  const r = await fetch(url, { method, headers });
+  const raw = await r.text();
+  log("token response", { status: r.status, sample: raw.slice(0, 200) });
+
+  let j: TuyaResp<{ access_token: string; expire_time: number }>;
   try {
-    parsed = JSON.parse(text) as TuyaEnvelope<T>;
+    j = JSON.parse(raw);
   } catch {
     throw new Error(
-      `Tuya response not JSON (${res.status}): ${text.slice(0, 200)}`
+      `Tuya token JSON parse error (status ${r.status}): ${raw.slice(0, 200)}`
     );
   }
-
-  if (!parsed.success) {
-    if (DBG) console.error("[Tuya] API error", parsed);
-    throw new Error(
-      `Tuya error ${parsed.code}: ${parsed.msg ?? "Unknown error"}`
-    );
+  if (!j.success) {
+    throw new Error(`Tuya token error: ${j.code ?? ""} ${j.msg ?? "unknown"}`);
   }
-  return parsed.result;
+
+  const token = j.result.access_token;
+  const ttlSec = Number(j.result.expire_time || 0);
+  const expireAt = Date.now() + Math.max(10_000, ttlSec * 1000);
+
+  tokenCache = { token, expireAt };
+  log("token ok", { ttlSec });
+
+  return token;
 }
 
-async function getAccessToken(): Promise<string> {
-  // brug cache hvis gyldig
-  if (tokenCache && tokenCache.expiresAt > Date.now() + 10_000) {
-    return tokenCache.token;
-  }
-  if (!ACCESS_KEY || !SECRET_KEY) {
-    throw new Error("Missing TUYA_ACCESS_KEY or TUYA_SECRET_KEY");
-  }
+// ───────────────────────────────────────────────────────────────────────────────
+// GET-helper (autoriseret)
+// ───────────────────────────────────────────────────────────────────────────────
 
-  // Token-kald: med samme sign-procedure, men UDEN access_token
-  const path = "/v1.0/token";
-  const result = await fetchTuya<TokenResult>("GET", path, {
-    query: { grant_type: 1 },
-    withToken: false,
+async function tuyaGet<T>(path: string): Promise<T> {
+  const accessToken = await getAccessToken();
+
+  const method = "GET" as const;
+  const body = "";
+  const stringToSign = await buildStringToSign(method, path, body);
+  const t = String(Date.now());
+  const sign = await signForApi(accessToken, t, stringToSign);
+
+  const url = BASE + path;
+  const headers: Record<string, string> = {
+    client_id: ACCESS_KEY,
+    access_token: accessToken,
+    sign: sign,
+    t: t,
+    sign_method: "HMAC-SHA256",
+  };
+
+  log("GET", {
+    path,
+    headers: {
+      client_id: redact(ACCESS_KEY),
+      access_token: redact(accessToken),
+      t,
+      sign: sign.slice(0, 8) + "…",
+    },
   });
 
-  const ttlMs = Math.max(30_000, (result.expire_time ?? 3600) * 1000 - 60_000);
-  tokenCache = { token: result.access_token, expiresAt: Date.now() + ttlMs };
+  const r = await fetch(url, { method, headers });
+  const raw = await r.text();
 
-  if (DBG) console.log("[Tuya] New token acquired, ttl(ms)=", ttlMs);
-  return tokenCache.token;
-}
+  log("GET response", { status: r.status, sample: raw.slice(0, 240) });
 
-/** --------- High-level helpers --------- */
-
-type StatusItem = { code: string; value: unknown };
-
-export async function getDeviceStatus(deviceId: string): Promise<StatusItem[]> {
-  const path = `/v1.0/iot-03/devices/${deviceId}/status`;
-  const result = await fetchTuya<StatusItem[]>("GET", path, {
-    withToken: true,
-  });
-  if (DBG) console.log("[Tuya] status count", result.length);
-  return result;
-}
-
-type SpecStatusItem = { code: string; type: string; values?: string };
-type SpecResult = { status: SpecStatusItem[] };
-
-async function getDeviceSpecifications(deviceId: string): Promise<SpecResult> {
-  const path = `/v1.0/iot-03/devices/${deviceId}/specifications`;
-  const result = await fetchTuya<SpecResult>("GET", path, { withToken: true });
-  if (DBG) console.log("[Tuya] specs status count", result.status?.length ?? 0);
-  return result;
-}
-
-function parseScale(values?: string): number {
-  if (!values) return 0;
+  let j: TuyaResp<T>;
   try {
-    const obj = JSON.parse(values) as { scale?: number };
-    const s = typeof obj.scale === "number" ? obj.scale : 0;
-    return Number.isFinite(s) ? s : 0;
+    j = JSON.parse(raw);
   } catch {
+    throw new Error(
+      `Tuya GET JSON parse error (status ${r.status}): ${raw.slice(0, 240)}`
+    );
+  }
+  if (!j.success) {
+    throw new Error(`Tuya GET error: ${j.code ?? ""} ${j.msg ?? "unknown"}`);
+  }
+  return j.result;
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// Scale-cache pr. deviceId+code
+// ───────────────────────────────────────────────────────────────────────────────
+
+const SCALE_CACHE = new Map<string, number>(); // key: `${deviceId}:${code}`
+
+async function getScale(deviceId: string, code: string): Promise<number> {
+  const key = `${deviceId}:${code}`;
+  const hit = SCALE_CACHE.get(key);
+  if (typeof hit === "number") return hit;
+
+  // v1.0/iot-03/devices/{device_id}/specifications
+  const spec = await tuyaGet<{
+    category: string;
+    functions?: Array<{ code: string; values?: string }>;
+    status?: Array<{ code: string; values?: string }>;
+  }>(`/v1.0/iot-03/devices/${deviceId}/specifications`);
+
+  const all = ([] as Array<{ code: string; values?: string }>)
+    .concat(spec.functions ?? [])
+    .concat(spec.status ?? []);
+
+  const item = all.find((x) => x.code === code);
+  if (!item?.values) {
+    SCALE_CACHE.set(key, 0);
+    log("scale fallback 0 (no values)", { deviceId, code });
     return 0;
   }
-}
 
-/** Find "scale" for et bestemt DP-code via specs.status[].values.scale */
-export async function getScale(
-  deviceId: string,
-  code: string
-): Promise<number> {
-  const specs = await getDeviceSpecifications(deviceId);
-  const st = specs.status?.find((s) => s.code === code);
-  return parseScale(st?.values);
-}
-
-/** Læs °C for et bestemt datapunkt (fx "ch1_temp" eller "va_temperature") */
-export async function getTempForCodeC(
-  deviceId: string,
-  code: string
-): Promise<number> {
-  const status = await getDeviceStatus(deviceId);
-  const item = status.find((s) => s.code === code);
-  if (!item) {
-    throw new Error(`Datapoint "${code}" not found on device`);
-  }
-
-  const raw = Number(item.value);
-  if (!Number.isFinite(raw)) {
-    throw new Error(`Datapoint "${code}" value not numeric`);
-  }
-
-  // Bestem scale fra specs
-  let scale = 0;
+  let parsed: {
+    unit?: string;
+    min?: number;
+    max?: number;
+    step?: number;
+    scale?: number;
+  };
   try {
-    scale = await getScale(deviceId, code);
-  } catch (e) {
-    if (DBG)
-      console.warn(
-        "[Tuya] getScale failed, fallback heuristic",
-        (e as Error)?.message
-      );
+    parsed = JSON.parse(item.values);
+  } catch {
+    SCALE_CACHE.set(key, 0);
+    log("scale parse failed; fallback 0", {
+      deviceId,
+      code,
+      values: item.values,
+    });
+    return 0;
   }
 
-  if (scale > 0) return raw / Math.pow(10, scale);
-  // fallback: klassisk Tuya temperatur 241 => 24.1
-  if (raw > 80 && raw < 2000) return raw / 10;
-  return raw;
+  const scale = Number(parsed.scale ?? 0);
+  const safe = Number.isFinite(scale) && scale >= 0 && scale <= 6 ? scale : 0;
+  SCALE_CACHE.set(key, safe);
+
+  log("scale", { deviceId, code, scale: safe });
+  return safe;
 }
 
-/** Convenience: pool-temperatur (default DP = ch1_temp, kan overrides via env) */
-export async function getPoolTempC(deviceId: string): Promise<number> {
-  const dp = process.env.TUYA_TEMP_DP_CODE?.trim() || "ch1_temp";
-  return getTempForCodeC(deviceId, dp);
+// ───────────────────────────────────────────────────────────────────────────────
+// Public API: hent °C fra et device
+// ───────────────────────────────────────────────────────────────────────────────
+
+/** Vælg bedste temperatur-DP ud fra status-listen */
+function pickTempCode(items: StatusItem[]): string | null {
+  const pref = [
+    "ch1_temp",
+    "water_temp",
+    "temp_current",
+    "va_temperature",
+    "temperature",
+  ];
+  const have = new Set(items.map((i) => i.code));
+  const pick = pref.find((p) => have.has(p));
+  return pick ?? null;
 }
+
+/** Returnerer temperatur i °C som number (kaster ved fejl) */
+export async function getPoolTempC(deviceId: string): Promise<number> {
+  if (!deviceId || !/^[A-Za-z0-9]{16,64}$/.test(deviceId)) {
+    throw new Error("Bad device id");
+  }
+
+  // v1.0/iot-03/devices/{device_id}/status
+  const list = await tuyaGet<StatusItem[]>(
+    `/v1.0/iot-03/devices/${deviceId}/status`
+  );
+
+  log("status codes", list);
+
+  const code = pickTempCode(list);
+  if (!code) {
+    throw new Error("No temperature datapoint found on device");
+  }
+
+  const rawItem = list.find((x) => x.code === code)!;
+  const rawNum = Number(rawItem.value);
+  if (!Number.isFinite(rawNum)) {
+    throw new Error(`Temperature value not numeric for code=${code}`);
+  }
+
+  const scale = await getScale(deviceId, code);
+  const divisor = Math.pow(100, scale);
+  const c = scale > 0 ? rawNum / divisor : rawNum;
+
+  log("temp", { code, raw: rawNum, scale, c });
+
+  return c;
+}
+
+// Valgfri named exports (kan bruges i tests)
+export const __tuyaDebug = {
+  getAccessToken,
+  tuyaGet,
+  getScale,
+  pickTempCode,
+  BASE,
+  ACCESS_KEY_MASKED: redact(ACCESS_KEY),
+};
