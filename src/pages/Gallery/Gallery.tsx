@@ -7,7 +7,7 @@ import type { Lang } from "../../lib/lang";
 import Gallery from "../../components/Gallery/Gallery";
 import { galleryItemsFromAlbum } from "../../data/gallery";
 import { AIRBNB_URL } from "../../lib/links";
-import styles from "./gallery.module.css";
+import styles from "./Gallery.module.css";
 
 export default function GalleryPage({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
