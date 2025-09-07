@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getPoolTempC } from "./_lib/tuya";
+import { getPoolTempC } from "./_lib/tuya.ts";
 
 // Simpel validering af deviceId (Tuya-IDs er typisk 16–64 alfanumeriske)
 function badId(id: string): boolean {
