@@ -1,50 +1,71 @@
 import * as React from "react";
-import { Card } from "@radix-ui/themes"; // hvis du bruger Radix Themes
-// eller lav dit eget kort – pointen er fetch + visning
+
+type ApiOk = { ok: true; celsius: number; updatedAt?: string };
+type ApiErr = { ok: false; error: string };
+type ApiResp = ApiOk | ApiErr;
 
 export default function PoolTempCard() {
   const [temp, setTemp] = React.useState<number | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
 
- type PoolTempResp =
-   | { ok: true; tempC: number }
-   | { ok: false; error?: string };
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const r = await fetch('/api/pool-temp');
+        const j = (await r.json()) as ApiResp;
+        if (!alive) return;
 
- React.useEffect(() => {
-   let alive = true;
-   (async () => {
-     try {
-       const r = await fetch("/api/pool-temp");
-       const j: PoolTempResp = await r.json(); // <- typet JSON
-       if (!alive) return;
+        if ('ok' in j && j.ok) {
+          setTemp(j.celsius);
+          setErr(null);
+        } else {
+          setErr(j.error ?? 'Ukendt fejl');
+        }
+      } catch (e) {
+        if (!alive) return;
+        setErr(e instanceof Error ? e.message : 'Netværksfejl');
+      }
+    })();
 
-       if (j.ok) setTemp(j.tempC);
-       else setErr(j.error ?? "Ukendt fejl");
-     } catch (e: unknown) {
-       // <- unknown i stedet for any
-       if (alive) setErr(e instanceof Error ? e.message : "Netværksfejl");
-     }
-   })();
-   return () => {
-     alive = false;
-   };
- }, []);
+    return () => {
+      alive = false;
+    };
+  }, []);
 
-  if (err) return <div role="status">Pool: {err}</div>;
-  if (temp == null) return <div role="status">Pool: henter…</div>;
+  if (err) {
+    return (
+      <div role="status" style={cardStyle}>
+        <strong>Pool:</strong> {err}
+      </div>
+    );
+  }
+
+  if (temp === null) {
+    return (
+      <div role="status" style={cardStyle}>
+        <strong>Pool:</strong> henter…
+      </div>
+    );
+  }
 
   return (
-    <Card
-      style={{
-        padding: 12,
-        display: "inline-flex",
-        gap: 8,
-        alignItems: "center",
-      }}
-    >
-      <span aria-hidden>🌡️</span>
-      <strong>Pool</strong>
-      <span style={{ fontSize: 22, fontWeight: 800 }}>{temp.toFixed(1)}°C</span>
-    </Card>
+    <div role="status" style={cardStyle}>
+      <div style={{ fontSize: 14, opacity: 0.8 }}>Pool temperatur</div>
+      <div style={{ fontSize: 36, fontWeight: 800, lineHeight: 1.1 }}>
+        {temp.toFixed(1)}°C
+      </div>
+    </div>
   );
 }
+
+const cardStyle: React.CSSProperties = {
+  display: 'grid',
+  gap: 6,
+  padding: '12px 14px',
+  borderRadius: 12,
+  border: '1px solid rgba(0,0,0,0.08)',
+  boxShadow: '0 6px 18px rgba(0,0,0,0.06)',
+  background: '#fff',
+  maxWidth: 220,
+};

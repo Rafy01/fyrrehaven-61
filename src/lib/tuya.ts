@@ -1,170 +1,98 @@
 // src/lib/tuya.ts
 import { TuyaContext } from "@tuya/tuya-connector-nodejs";
 
-/**
- * Required env vars:
- *  - TUYA_BASE_URL   (e.g. "https://openapi.tuyaeu.com")
- *  - TUYA_ACCESS_KEY
- *  - TUYA_SECRET
- */
-const BASE_URL =
-  process.env.TUYA_BASE_URL?.trim() || "https://openapi.tuyaeu.com";
-const ACCESS_KEY = process.env.TUYA_ACCESS_KEY!;
-const SECRET_KEY = process.env.TUYA_SECRET!;
+/** Tuya kontekst */
+const baseUrl = (
+  process.env.TUYA_BASE_URL || "https://openapi.tuyaeu.com"
+).trim();
+const accessKey = (process.env.TUYA_ACCESS_KEY || "").trim();
+const secretKey = (process.env.TUYA_SECRET || "").trim();
 
-if (!ACCESS_KEY || !SECRET_KEY) {
-  throw new Error(
-    "[tuya] Missing TUYA_ACCESS_KEY and/or TUYA_SECRET environment variables"
-  );
+if (!accessKey || !secretKey) {
+  // Kast tidligt – så man ser fejlen tydeligt i logs
+  throw new Error("Missing TUYA_ACCESS_KEY / TUYA_SECRET env vars");
 }
 
-/** Shared Tuya client */
 export const tuya = new TuyaContext({
-  baseUrl: BASE_URL,
-  accessKey: ACCESS_KEY,
-  secretKey: SECRET_KEY,
+  baseUrl,
+  accessKey,
+  secretKey,
 });
 
-/* ────────────────────────────────────────────────────────────────────────── */
-/* Types                                                                    */
-/* ────────────────────────────────────────────────────────────────────────── */
 
-export type StatusItem = { code: string; value: unknown };
+export type StatusItem = { code: string; value: unknown; t?: number };
 
+type DeviceStatus = StatusItem[];
 type SpecFunction = { code: string; type: string; values?: string };
-type SpecStatus = { code: string; type: string; values?: string };
+type DeviceSpecifications = { functions: SpecFunction[] };
 
-/* ────────────────────────────────────────────────────────────────────────── */
-/* Helpers                                                                  */
-/* ────────────────────────────────────────────────────────────────────────── */
+/* ─────────────────────── Helpers (typed) ─────────────────────── */
 
-/** Wrap TuyaContext.request and return the unwrapped `result` typed as T */
-/* Helpers
-   ------------------------------------------------------------------ */
-
-type TuyaErr = { success: false; code?: string | number; msg?: string };
-type TuyaOk<T> = { success?: true; result?: T }; // Tuya types sometimes omit success/result in d.ts
-
-function isTuyaErr(x: unknown): x is TuyaErr {
-  return !!x && typeof (x as { success?: boolean }).success === "boolean"
-         && (x as { success?: boolean }).success === false;
-}
-
-/** Wrap TuyaContext.request and return the unwrapped `result` typed as T */
 async function tuyaGet<T>(path: string): Promise<T> {
-  const res = await tuya.request<T>({ path, method: "GET" });
+  const res = await tuya.request<{ success: boolean; t: number; tid: string; result: T; code?: number; msg?: string }>({
+    path,
+    method: "GET",
+  });
 
-  if (isTuyaErr(res)) {
-    const code = res.code ?? "";
-    const msg = res.msg ?? "Unknown Tuya error";
-    throw new Error(`[tuya] ${code} ${msg}`.trim());
+  if (!res?.success) {
+    const code = typeof res?.code === "number" ? res.code : undefined;
+    const msg = res?.msg ?? "Unknown Tuya error";
+    throw new Error(`[tuya] ${code ?? ""} ${msg}`.trim());
   }
-
-  const ok = res as TuyaOk<T>;
-  if (ok.result === undefined || ok.result === null) {
-    throw new Error("[tuya] Missing result payload");
-  }
-  return ok.result as T;
+  return res.result as T;
 }
 
-/** Small error helper */
-function fail(where: string, msg: string): never {
-  throw new Error(`[tuya:${where}] ${msg}`);
-}
+/* ───────────────── Temperature fetch ───────────────── */
 
-/** Coerce unknown DP value to number */
-function coerceNumber(v: unknown): number {
-  if (typeof v === "number") return v;
-  if (typeof v === "string") {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : NaN;
-  }
-  return NaN;
-}
-
-/** Cache scale (decimal places) per device+dp code */
-const SCALE_CACHE = new Map<string, number>();
-
-/** Read DP "scale" (decimal places) from device specifications, default 0 */
-async function getDpScale(deviceId: string, code: string): Promise<number> {
-  const key = `${deviceId}:${code}`;
-  const cached = SCALE_CACHE.get(key);
-  if (typeof cached === "number") return cached;
-
-  const spec = await tuyaGet<{
-    functions?: SpecFunction[];
-    status?: SpecStatus[];
-  }>(`/v1.0/iot-03/devices/${deviceId}/specifications`);
-
-  const entry =
-    (spec.functions ?? []).find((f) => f.code === code) ??
-    (spec.status ?? []).find((s) => s.code === code);
-
-  let scale = 0;
-  if (entry?.values) {
-    try {
-      const parsed = JSON.parse(entry.values) as { scale?: number } | undefined;
-      if (parsed && typeof parsed.scale === "number") scale = parsed.scale;
-    } catch {
-      /* ignore and keep scale=0 */
-    }
-  }
-
-  SCALE_CACHE.set(key, scale);
-  return scale;
-}
-
-/* ────────────────────────────────────────────────────────────────────────── */
-/* Public API                                                               */
-/* ────────────────────────────────────────────────────────────────────────── */
-
-/** Fetch all datapoints (status) for a device */
-export async function getDeviceStatus(deviceId: string): Promise<StatusItem[]> {
-  const list = await tuyaGet<StatusItem[]>(
-    `/v1.0/iot-03/devices/${deviceId}/status`
-  );
-  return Array.isArray(list) ? list : [];
-}
+const TEMP_DP_CANDIDATES = [
+  "water_temp",
+  "temp_current",
+  "va_temperature",
+  "temperature",
+];
 
 /**
- * Find a temperature-like DP and return temperature in °C.
- * Respects the DP's `scale` if present.
+ * Hent temperatur i °C for en given Tuya deviceId.
+ * Håndterer scale (fx 286 -> 28.6 hvis scale=1).
  */
 export async function getPoolTempC(deviceId: string): Promise<number> {
-  const status = await getDeviceStatus(deviceId);
-  if (!status.length) fail("status", "No datapoints returned for device");
+  // 1) Status (alle datapunkter)
+  const list = await tuyaGet<DeviceStatus>(
+    `/v1.0/iot-03/devices/${deviceId}/status`
+  );
 
-  // Try common temperature codes
-  const preferred = [
-    "water_temp",
-    "temp_current",
-    "va_temperature",
-    "temperature",
-  ];
-  const hit =
-    status.find((s) => preferred.includes(s.code)) ??
-    status.find((s) => /temp/i.test(s.code));
+  // 2) Find et temp-agtigt datapunkt
+  const hit = list.find((x) => TEMP_DP_CANDIDATES.includes(x.code));
+  if (!hit) throw new Error("Temperature datapoint not found");
 
-  if (!hit) {
-    fail(
-      "find-dp",
-      `Temperature datapoint not found. Tried: ${preferred.join(", ")}`
+  // 3) Hent scale for det pågældende DP (valgfrit – men giver korrekt decimal)
+  let scalePow = 0;
+  try {
+    const spec = await tuyaGet<DeviceSpecifications>(
+      `/v1.0/iot-03/devices/${deviceId}/specifications`
     );
+    const fn = (spec.functions || []).find((f) => f.code === hit.code);
+    if (fn?.values) {
+      // values er en JSON-string med fx: {"unit":"°C","min":0,"max":600,"scale":1,"step":1}
+      const v = JSON.parse(fn.values) as { scale?: number };
+      if (typeof v.scale === "number" && Number.isFinite(v.scale)) {
+        scalePow = v.scale;
+      }
+    }
+  } catch {
+    // Ignorer – vi kan godt leve uden scale, men prøver at være præcis
   }
 
-  const scale = await getDpScale(deviceId, hit.code);
-  const raw = coerceNumber(hit.value);
-  if (!Number.isFinite(raw)) fail("parse", `Non-numeric value for ${hit.code}`);
+  // 4) Normaliser værdi
+  const raw =
+    typeof hit.value === "number"
+      ? hit.value
+      : typeof hit.value === "string"
+      ? Number(hit.value)
+      : NaN;
 
-  const tempC = scale ? raw / Math.pow(10, scale) : raw;
+  const celsius = Number.isFinite(raw) ? raw / Math.pow(10, scalePow) : NaN;
+  if (!Number.isFinite(celsius)) throw new Error("Invalid temperature value");
 
-  // Sanity guard (adjust to your real-world range if needed)
-  if (!Number.isFinite(tempC) || tempC < -40 || tempC > 90) {
-    fail(
-      "range",
-      `Out-of-range temperature "${tempC}" from code "${hit.code}" (raw=${raw}, scale=${scale})`
-    );
-  }
-
-  return tempC;
+  return celsius;
 }
