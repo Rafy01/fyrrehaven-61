@@ -14,10 +14,10 @@ export type Lang = "da" | "en";
 export type GalleryItem = {
   src: string; // thumbnail
   full?: string; // stor version (fallback = src)
-  alt?: string; // fallback alt
-  altDa?: string; // valgfri sprog-specifik alt
+  alt?: string;
+  altDa?: string;
   altEn?: string;
-  captionDa?: string; // fuld tekst (vises under billedet i lightbox)
+  captionDa?: string;
   captionEn?: string;
 };
 
@@ -30,6 +30,7 @@ export type GalleryProps = {
   lang?: Lang;
   title?: string;
   subtitle?: string;
+  /** Flad liste af billeder (fra fælles mappe). Vi grupperer automatisk efter undermappe. */
   items: GalleryItem[];
   cta?: CTA;
   align?: "left" | "center";
@@ -37,16 +38,17 @@ export type GalleryProps = {
   /** Fast “ens” tile-størrelse (ratio styres af w/h) */
   tile?: { width: number; height: number };
   gap?: number;
-  /** Vis kun N felter – sidste får +N-badge (lightbox viser alle) */
+  /** Vis kun N mapper (lightbox viser alt i den valgte mappe) */
   maxItems?: number;
-  /** Hvordan skal billedet udfylde tile? "cover" (pænt beskåret) eller "fill" (stræk) */
+  /** Hvordan skal cover-billedet udfylde tile? */
   fit?: "cover" | "fill";
 };
+
+/* ───────────────── helpers ───────────────── */
 
 function tPick(da: string, en: string, lang: Lang) {
   return lang === "da" ? da : en;
 }
-
 function getCaption(it: GalleryItem, lang: Lang): string {
   const cap = lang === "da" ? it.captionDa : it.captionEn;
   if (cap && cap.trim()) return cap.trim();
@@ -54,6 +56,60 @@ function getCaption(it: GalleryItem, lang: Lang): string {
   if (a && a.trim()) return a.trim();
   return it.alt ?? "";
 }
+
+/** slug fra src: '/gallery/<slug>/fil.webp' -> '<slug>'; ellers 'misc' */
+function folderOf(src: string): string {
+  const m = src.match(/\/gallery\/([^/]+)\//i);
+  return (m?.[1] ?? "misc").toLowerCase();
+}
+const FOLDER_LABELS: Record<string, { da: string; en: string }> = {
+  outdoor: { da: "Udendørs", en: "Outdoor" },
+  evening: { da: "Aften", en: "Evening" },
+  indoor: { da: "Indendørs", en: "Indoor" },
+  pool: { da: "Pool", en: "Pool" },
+  sauna: { da: "Sauna", en: "Sauna" },
+  area: { da: "Området", en: "Area" },
+  floorplan: { da: "Plantegning", en: "Floor plan" },
+  misc: { da: "Blandet", en: "Misc" },
+};
+function labelFor(slug: string, lang: Lang): string {
+  const fromMap = FOLDER_LABELS[slug];
+  if (fromMap) return lang === "da" ? fromMap.da : fromMap.en;
+  // Fallback: Capitalize slug
+  return slug.slice(0, 1).toUpperCase() + slug.slice(1);
+}
+
+type Folder = {
+  id: string; // slug
+  labelDa: string;
+  labelEn: string;
+  items: GalleryItem[]; // alle billeder i mappen
+  cover: GalleryItem; // første billede bruges som cover
+};
+
+/** Byg mappe-struktur i stabil rækkefølge ud fra første optræden i items */
+function buildFolders(items: GalleryItem[]): Folder[] {
+  const map = new Map<string, Folder>();
+  for (const it of items) {
+    const slug = folderOf(it.src);
+    let f = map.get(slug);
+    if (!f) {
+      f = {
+        id: slug,
+        labelDa: labelFor(slug, "da"),
+        labelEn: labelFor(slug, "en"),
+        items: [],
+        cover: it,
+      };
+      map.set(slug, f);
+    }
+    f.items.push(it);
+    // behold første som cover
+  }
+  return Array.from(map.values());
+}
+
+/* ───────────────── component ───────────────── */
 
 export default function Gallery({
   lang = "da",
@@ -68,29 +124,37 @@ export default function Gallery({
   maxItems,
   fit = "cover",
 }: GalleryProps) {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const all = items ?? [];
-  const visibleItems = useMemo(
-    () => (typeof maxItems === "number" ? all.slice(0, maxItems) : all),
-    [all, maxItems]
+  // Grupper til mapper
+  const folders = useMemo(() => buildFolders(items ?? []), [items]);
+  const visibleFolders = useMemo(
+    () => (typeof maxItems === "number" ? folders.slice(0, maxItems) : folders),
+    [folders, maxItems]
   );
-  const extraCount = Math.max(0, all.length - (visibleItems?.length ?? 0));
 
-  // Lightbox
+  // Lightbox (pr. mappe)
   const [open, setOpen] = useState(false);
+  const [activeFolder, setActiveFolder] = useState<Folder | null>(null);
   const [index, setIndex] = useState(0);
-  const total = all.length;
 
-  const openAt = (i: number) => {
-    setIndex(i);
+  const total = activeFolder?.items.length ?? 0;
+
+  const openFolder = (f: Folder) => {
+    setActiveFolder(f);
+    setIndex(0);
     setOpen(true);
   };
-  const prev = useCallback(
-    () => setIndex((i) => (i - 1 + total) % total),
-    [total]
-  );
-  const next = useCallback(() => setIndex((i) => (i + 1) % total), [total]);
+  const prev = useCallback(() => {
+    if (!activeFolder) return;
+    setIndex(
+      (i) => (i - 1 + activeFolder.items.length) % activeFolder.items.length
+    );
+  }, [activeFolder]);
+  const next = useCallback(() => {
+    if (!activeFolder) return;
+    setIndex((i) => (i + 1) % activeFolder.items.length);
+  }, [activeFolder]);
 
+  // Piletaster
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -118,7 +182,6 @@ export default function Gallery({
     ["--tile-h" as string]: `${tile.height}px`,
     ["--gap" as string]: `${gap}px`,
   } as React.CSSProperties;
-
   const fitClass = fit === "fill" ? styles.fill : styles.cover;
 
   return (
@@ -135,44 +198,35 @@ export default function Gallery({
         </header>
       )}
 
-      {/* Grid: ALLE tiles er 100% samme størrelse */}
+      {/* Grid: én tile pr. mappe */}
       <div className={styles.grid} style={gridStyle}>
-        {visibleItems.map((it, i) => {
-          const isLastVisible = i === visibleItems.length - 1;
+        {visibleFolders.map((f) => {
+          const label = lang === "da" ? f.labelDa : f.labelEn;
+          const cover = f.cover;
+          const count = f.items.length;
+
           return (
             <button
-              key={`tile-${i}`}
+              key={f.id}
               className={styles.tileBtn}
-              onClick={() => {
-                if (extraCount > 0 && isLastVisible) {
-                  setIndex(visibleItems.length);
-                  setOpen(true);
-                } else {
-                  openAt(i);
-                }
-              }}
-              aria-label={
-                it.alt
-                  ? tPick(
-                      `Åbn billede: ${it.alt}`,
-                      `Open image: ${it.alt}`,
-                      lang
-                    )
-                  : tPick(`Åbn billede ${i + 1}`, `Open image ${i + 1}`, lang)
-              }
+              onClick={() => openFolder(f)}
+              aria-label={`${label} – ${count} ${tPick(
+                "billeder",
+                "photos",
+                lang
+              )}`}
             >
               <div className={styles.tile}>
                 <img
                   className={`${styles.img} ${fitClass}`}
-                  src={it.src}
-                  alt={getCaption(it, lang) || ""}
+                  src={cover.src}
+                  alt={getCaption(cover, lang) || ""}
                   loading="lazy"
                 />
-                {extraCount > 0 && isLastVisible && (
-                  <div className={styles.more} aria-hidden="true">
-                    <span className={styles.moreBadge}>+{extraCount}</span>
-                  </div>
-                )}
+                {/* Overlay med navn + antal */}
+                <div className={styles.tileOverlay} aria-hidden="true" />
+                <span className={styles.tileTitle}>{label}</span>
+                <span className={styles.tileBadge}>+{count}</span>
               </div>
             </button>
           );
@@ -199,7 +253,7 @@ export default function Gallery({
         </div>
       )}
 
-      {/* Lightbox */}
+      {/* Lightbox pr. mappe */}
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className={styles.lbOverlay} />
@@ -211,7 +265,23 @@ export default function Gallery({
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
           >
-            {total > 0 && (
+            {/* Radix a11y: kræver Title/Description */}
+            <Dialog.Title className={styles.srOnly}>
+              {activeFolder
+                ? lang === "da"
+                  ? activeFolder.labelDa
+                  : activeFolder.labelEn
+                : ""}
+            </Dialog.Title>
+            <Dialog.Description className={styles.srOnly}>
+              {tPick(
+                "Billedviser. Brug venstre/højre piletaster for at bladre.",
+                "Image viewer. Use left/right arrows to navigate.",
+                lang
+              )}
+            </Dialog.Description>
+
+            {activeFolder && total > 0 && (
               <>
                 <button
                   className={styles.lbClose}
@@ -240,17 +310,19 @@ export default function Gallery({
                 <figure className={styles.lbFigure}>
                   <img
                     className={styles.lbImg}
-                    src={all[index].full ?? all[index].src}
-                    alt={getCaption(all[index], lang) || ""}
+                    src={
+                      activeFolder.items[index].full ??
+                      activeFolder.items[index].src
+                    }
+                    alt={getCaption(activeFolder.items[index], lang) || ""}
                   />
                   <div className={styles.lbCounter}>
                     {index + 1} / {total}
                   </div>
 
-                  {/* Tekst direkte under billedet */}
-                  {getCaption(all[index], lang) ? (
+                  {getCaption(activeFolder.items[index], lang) ? (
                     <figcaption className={styles.lbCap}>
-                      {getCaption(all[index], lang)}
+                      {getCaption(activeFolder.items[index], lang)}
                     </figcaption>
                   ) : null}
                 </figure>
