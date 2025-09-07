@@ -4,6 +4,7 @@ import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
+import PoolTempCard from "../../components/PoolTemp";
 
 export default function Faq({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
@@ -65,10 +66,7 @@ export default function Faq({ lang }: { lang: Lang }) {
             "Detaljer & svar for dit ophold",
             "Details & answers for your stay"
           ),
-          title: t(
-            "Fyrrehaven 61 – FAQ",
-            "Fyrrehaven 61 – FAQ"
-          ),
+          title: t("Fyrrehaven 61 – FAQ", "Fyrrehaven 61 – FAQ"),
         }}
         align="left"
       />
@@ -77,6 +75,8 @@ export default function Faq({ lang }: { lang: Lang }) {
       <Container size="3">
         <Box py="6" />
       </Container>
+
+      <PoolTempCard />
     </>
   );
 }
