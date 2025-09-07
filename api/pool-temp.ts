@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getPoolTempC } from "../src/lib/tuya";
+import { getPoolTempC, isValidDeviceId } from "../src/lib/tuya";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -8,18 +8,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(405).json({ ok: false, error: "Method Not Allowed" });
     }
 
-    // deviceId: ?id=... (til test) ellers fra ENV
     const rawId = (
       typeof req.query.id === "string"
         ? req.query.id
         : process.env.TUYA_POOL_DEVICE_ID || ""
     ).trim();
 
-    if (!rawId) {
+    if (!rawId || !isValidDeviceId(rawId)) {
       return res.status(400).json({ ok: false, error: "Bad device id format" });
     }
 
-    const c = await getPoolTempC(rawId);
+    const dp =
+      typeof req.query.dp === "string"
+        ? req.query.dp
+        : process.env.TUYA_TEMP_DP || undefined;
+
+    const c = await getPoolTempC(rawId, dp);
 
     res.setHeader(
       "Cache-Control",
@@ -28,10 +32,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       ok: true,
       celsius: c,
+      dp: dp ?? "auto",
       updatedAt: new Date().toISOString(),
     });
   } catch (err) {
-    // Log til Vercel logs for nem fejlfinding
     console.error("[pool-temp] ERROR", err);
     const msg = err instanceof Error ? err.message : "Unknown server error";
     return res.status(500).json({ ok: false, error: msg });
