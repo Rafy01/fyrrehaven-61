@@ -19,7 +19,7 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
     "Gallery – photos of the house, pool and surroundings"
   );
   const seoDescription = t(
-    "Se stemningsbilleder fra stue, køkken-alrum, soveværelser samt udendørs pool, vildmarksbad og skov/strand tæt på.",
+    "Se stemningsbilleder fra stue,  køkken-alrum, soveværelser samt udendørs pool, vildmarksbad og skov/strand tæt på.",
     "Browse photos of living areas, bedrooms and the heated outdoor pool, hot tub and nearby forest/beach."
   );
   const jsonLd = {
