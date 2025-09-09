@@ -31,15 +31,15 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
   };
 
   // De mapper/album vi vil vise (rækkefølge)
-  const albums = [
-    { id: "plantegning", label: t("Plantegning", "Floor plan") },
-    { id: "indoor", label: t("Indendørs", "Indoor") },
-    { id: "pool", label: "Pool" },
-    { id: "spa", label: "Spa" },
-    { id: "sauna", label: "Sauna" },
-    { id: "aktivitetsrum", label: t("Aktivitetsrum", "Activity room") },
-  ] as const;
-
+    const albums = [
+      { id: "plantegning", label: t("Plantegning", "Floor plan") },
+      { id: "indoor", label: t("Indendørs", "Indoor") },
+      { id: "pool", label: "Pool" },
+      { id: "spa", label: "Spa" },
+      { id: "sauna", label: "Sauna" },
+      { id: "outdoor", label: t("Udendørs", "Outdoor") }, // ← var 'aktivitetsrum'
+      { id: "area", label: t("Området", "Area (nearby)") }, // ← ny mappe
+    ] as const;
   return (
     <>
       <Head
