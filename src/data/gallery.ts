@@ -19,155 +19,154 @@ export type GalleryAlbum = {
   id: AlbumId;
   titleDa: string;
   titleEn: string;
-  cover?: string; // valgfri – hvis ikke sat bruger vi items[0].src
+  cover?: string; // hvis ikke sat, bruges items[0].src
   items: GalleryDataItem[];
 };
 
 /** Albums (mapper) */
 export const GALLERY_ALBUMS: GalleryAlbum[] = [
+  /* ——— Plantegning ——— */
   {
     id: "plantegning",
     titleDa: "Plantegning",
     titleEn: "Floor plan",
-    cover: "/gallery/plantegning/floorplan.webp",
+    // Ret stien her, hvis din floorplan ligger et andet sted
+    cover: "/gallery/plantegning.webp",
     items: [
       {
-        src: "/gallery/plantegning/floorplan.webp",
-        altDa: "Plantegning",
-        altEn: "Floor plan",
+        src: "/gallery/plantegning.webp",
+        altDa: "Plantegning over feriehusets indretning",
+        altEn: "Floor plan of the holiday home",
       },
     ],
   },
 
-  // ─────────────────────────────────────────────────────────
-  // INDOOR – BRUGER DINE FAKTISKE FILNAVNE + COVER = IMG_3665.webp
-  // ─────────────────────────────────────────────────────────
+  /* ——— Indoor (dine faktiske filer) ——— */
   {
     id: "indoor",
     titleDa: "Indendørs",
     titleEn: "Indoor",
-    cover: "/gallery/indoor/IMG_3665.webp",
+    cover: "/gallery/indoor/IMG_3665.webp", // dit ønskede cover
     items: [
       {
         src: "/gallery/indoor/IMG_3664.webp",
-        altDa: "Fyrrehaven 61 – indendørs opholdsrum ved Fjellerup Strand",
-        altEn: "Fyrrehaven 61 – indoor living area near Fjellerup Beach",
+        altDa: "Indendørs – lys stue med hyggelig indretning",
+        altEn: "Indoor – bright living room with cozy decor",
       },
       {
         src: "/gallery/indoor/IMG_3665.webp",
-        altDa: "Lys stue med sofa – Fyrrehaven 61",
-        altEn: "Bright living room with sofa – Fyrrehaven 61",
+        altDa: "Indendørs – stue og siddeområde",
+        altEn: "Indoor – living room seating area",
       },
       {
         src: "/gallery/indoor/IMG_3666.webp",
-        altDa: "Køkken-alrum med spiseplads i sommerhus ved Fjellerup Strand",
-        altEn:
-          "Kitchen–dining space with table in holiday home near Fjellerup Beach",
+        altDa: "Indendørs – spiseplads ved køkken",
+        altEn: "Indoor – dining setup by the kitchen",
       },
       {
         src: "/gallery/indoor/IMG_3667.webp",
-        altDa: "Stuehjørne med sofa og vinduer",
-        altEn: "Lounge corner with sofa and windows",
+        altDa: "Indendørs – hyggelig krogeniche",
+        altEn: "Indoor – comfy nook",
       },
       {
         src: "/gallery/indoor/IMG_3668.webp",
-        altDa: "Detalje fra køkkenet – moderne hvide elementer",
-        altEn: "Kitchen detail – modern white cabinetry",
+        altDa: "Indendørs – funktionelt køkken",
+        altEn: "Indoor – functional kitchen",
       },
       {
         src: "/gallery/indoor/IMG_3669.webp",
-        altDa: "Gang med adgang til værelser – Fyrrehaven 61",
-        altEn: "Hallway with access to bedrooms – Fyrrehaven 61",
+        altDa: "Indendørs – roligt soveområde",
+        altEn: "Indoor – calm sleeping area",
       },
       {
         src: "/gallery/indoor/IMG_3670.webp",
-        altDa: "Badeværelse med bruser",
-        altEn: "Bathroom with shower",
+        altDa: "Indendørs – rummelig opholdsafdeling",
+        altEn: "Indoor – spacious common room",
       },
       {
         src: "/gallery/indoor/IMG_3671.webp",
-        altDa: "Hyggekrog med lænestol og lampe",
-        altEn: "Cozy nook with armchair and lamp",
+        altDa: "Indendørs – dagslys og udsigt",
+        altEn: "Indoor – daylight and view",
       },
       {
         src: "/gallery/indoor/IMG_3672.webp",
-        altDa: "Brændeovn i stuen – feriehus ved Fjellerup Strand",
-        altEn: "Wood stove in living room – holiday home near Fjellerup Beach",
+        altDa: "Indendørs – interiørdetalje",
+        altEn: "Indoor – interior detail",
       },
       {
         src: "/gallery/indoor/IMG_3673.webp",
-        altDa: "Udsigt mod terrasse fra stuen",
-        altEn: "View towards terrace from living room",
+        altDa: "Indendørs – plads til samvær",
+        altEn: "Indoor – space for togetherness",
       },
       {
         src: "/gallery/indoor/IMG_3674.webp",
-        altDa: "Soveværelse med dobbeltseng – Fyrrehaven 61",
-        altEn: "Bedroom with double bed – Fyrrehaven 61",
+        altDa: "Indendørs – stue med afslapningshjørne",
+        altEn: "Indoor – living room relaxation corner",
       },
       {
         src: "/gallery/indoor/IMG_3675.webp",
-        altDa: "Soveværelse med to enkeltsenge",
-        altEn: "Bedroom with twin single beds",
+        altDa: "Indendørs – spisebord og lamper",
+        altEn: "Indoor – dining table and lighting",
       },
       {
         src: "/gallery/indoor/IMG_3676.webp",
-        altDa: "Skrive- eller arbejdsplads i opholdszonen",
-        altEn: "Desk/work corner in living zone",
+        altDa: "Indendørs – hyggelig sofaopstilling",
+        altEn: "Indoor – cozy sofa setup",
       },
       {
         src: "/gallery/indoor/IMG_3677.webp",
-        altDa: "Entré med opbevaring",
-        altEn: "Entrance with storage",
+        altDa: "Indendørs – køkken med gode arbejdsflader",
+        altEn: "Indoor – kitchen with practical worktops",
       },
       {
         src: "/gallery/indoor/IMG_3678.webp",
-        altDa: "Bryggers med vask og maskiner",
-        altEn: "Utility room with sink and appliances",
+        altDa: "Indendørs – soveværelse med opbevaring",
+        altEn: "Indoor – bedroom with storage",
       },
       {
         src: "/gallery/indoor/IMG_3679.webp",
-        altDa: "Indretningsdetalje – kunst og belysning",
-        altEn: "Interior detail – art and lighting",
+        altDa: "Indendørs – entre og gennemgang",
+        altEn: "Indoor – entrance and corridor",
       },
       {
         src: "/gallery/indoor/IMG_3680.webp",
-        altDa: "Loft, træ og belysning i stuen",
-        altEn: "Ceiling, wood and lighting in living room",
+        altDa: "Indendørs – stue med naturlys",
+        altEn: "Indoor – living room with natural light",
       },
       {
         src: "/gallery/indoor/IMG_3681.webp",
-        altDa: "Opholdsrum – overblik over sofa og spiseplads",
-        altEn: "Living area – overview of sofa and dining",
+        altDa: "Indendørs – detalje i indretningen",
+        altEn: "Indoor – decorative interior detail",
       },
       {
         src: "/gallery/indoor/IMG_3682.webp",
-        altDa: "Spisebord med plads til familien",
-        altEn: "Dining table with seating for the family",
+        altDa: "Indendørs – familievenligt opholdsrum",
+        altEn: "Indoor – family-friendly living space",
       },
       {
         src: "/gallery/indoor/IMG_3683.webp",
-        altDa: "Sofagruppe til afslapning",
-        altEn: "Sofa group for relaxing",
+        altDa: "Indendørs – siddepladser og udsyn",
+        altEn: "Indoor – seating with outlook",
       },
       {
         src: "/gallery/indoor/IMG_3684.webp",
-        altDa: "Morgenlys i stue og køkken – Fyrrehaven 61",
-        altEn: "Morning light in living room and kitchen – Fyrrehaven 61",
+        altDa: "Indendørs – moderne køkkenfaciliteter",
+        altEn: "Indoor – modern kitchen facilities",
       },
       {
         src: "/gallery/indoor/IMG_3685.webp",
-        altDa: "Aftenstemning indendørs ved Fjellerup Strand",
-        altEn: "Evening ambience indoors near Fjellerup Beach",
+        altDa: "Indendørs – hyggelig stemning i stuen",
+        altEn: "Indoor – cozy living ambience",
       },
       {
         src: "/gallery/indoor/IMG_3686.webp",
-        altDa: "Indendørs detalje – naturlige materialer",
-        altEn: "Indoor detail – natural materials",
+        altDa: "Indendørs – velindrettet boligmiljø",
+        altEn: "Indoor – well-designed interior",
       },
     ],
   },
 
-  // RESTEN UÆNDRET
+  /* ——— De øvrige albums (ret stier/indhold efter dine filer) ——— */
   {
     id: "pool",
     titleDa: "Pool",
@@ -176,18 +175,8 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
     items: [
       {
         src: "/gallery/pool/1.webp",
-        altDa: "Udendørs pool",
-        altEn: "Outdoor pool",
-      },
-      {
-        src: "/gallery/pool/2.webp",
-        altDa: "Pool og terrasse",
-        altEn: "Pool and terrace",
-      },
-      {
-        src: "/gallery/pool/3.webp",
-        altDa: "Pool – detalje",
-        altEn: "Pool detail",
+        altDa: "Opvarmet udendørs pool ved huset",
+        altEn: "Heated outdoor pool by the house",
       },
     ],
   },
@@ -197,11 +186,10 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
     titleEn: "Spa / Hot tub",
     cover: "/gallery/spa/cover.webp",
     items: [
-      { src: "/gallery/spa/1.webp", altDa: "Vildmarksbad", altEn: "Hot tub" },
       {
-        src: "/gallery/spa/2.webp",
-        altDa: "Spa i aftenskumring",
-        altEn: "Spa at dusk",
+        src: "/gallery/spa/1.webp",
+        altDa: "Vildmarksbad til afslapning",
+        altEn: "Wood-fired hot tub for relaxation",
       },
     ],
   },
@@ -213,13 +201,8 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
     items: [
       {
         src: "/gallery/sauna/1.webp",
-        altDa: "Sauna – interiør",
-        altEn: "Sauna interior",
-      },
-      {
-        src: "/gallery/sauna/2.webp",
-        altDa: "Sauna – detalje",
-        altEn: "Sauna detail",
+        altDa: "Sauna – lyst træinteriør",
+        altEn: "Sauna – light wooden interior",
       },
     ],
   },
@@ -231,27 +214,26 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
     items: [
       {
         src: "/gallery/aktivitetsrum/1.webp",
-        altDa: "Aktivitetsrum",
-        altEn: "Activity room",
-      },
-      {
-        src: "/gallery/aktivitetsrum/2.webp",
-        altDa: "Spil og hygge",
-        altEn: "Games & fun",
+        altDa: "Aktivitetsrum med spil og hygge",
+        altEn: "Activity room for games and fun",
       },
     ],
   },
 ] as const;
 
 /** Hjælpere – brugbare til UI’et */
+
+// Få et album efter id
 export function getAlbum(id: AlbumId): GalleryAlbum | undefined {
   return GALLERY_ALBUMS.find((a) => a.id === id);
 }
 
+// Vælg cover (album.cover eller første billede)
 export function albumCover(a: GalleryAlbum): string | undefined {
   return a.cover || a.items[0]?.src;
 }
 
+// Liste til “mappetiles”: titel + cover + antal billeder
 export function albumSummaries(lang: Lang) {
   return GALLERY_ALBUMS.map((a) => ({
     id: a.id,
@@ -261,13 +243,13 @@ export function albumSummaries(lang: Lang) {
   }));
 }
 
+// Konverter et album til input til <Gallery/>
 export type GalleryItemInput = {
   src: string;
   full: string;
   altDa?: string;
   altEn?: string;
 };
-
 export function galleryItemsFromAlbum(id: AlbumId): GalleryItemInput[] {
   const a = getAlbum(id);
   if (!a) return [];

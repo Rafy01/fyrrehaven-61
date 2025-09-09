@@ -5,7 +5,7 @@ import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
 import Gallery from "../../components/Gallery/Gallery";
-import { galleryItemsFromAlbum } from "../../data/gallery";
+import { galleryItemsFromAlbum } from "../../data/gallery"; // ⬅️ brug funktionen
 import { AIRBNB_URL } from "../../lib/links";
 import styles from "./Gallery.module.css";
 
@@ -32,12 +32,12 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
 
   // De mapper/album vi vil vise (rækkefølge)
   const albums = [
-    { id: "plantegning",  label: t("Plantegning", "Floor plan") },
-    { id: "indoor",       label: t("Indendørs", "Indoor") },
-    { id: "pool",         label: "Pool" },
-    { id: "spa",          label: "Spa" },
-    { id: "sauna",        label: "Sauna" },
-    { id: "aktivitetsrum",label: t("Aktivitetsrum", "Activity room") },
+    { id: "plantegning", label: t("Plantegning", "Floor plan") },
+    { id: "indoor", label: t("Indendørs", "Indoor") },
+    { id: "pool", label: "Pool" },
+    { id: "spa", label: "Spa" },
+    { id: "sauna", label: "Sauna" },
+    { id: "aktivitetsrum", label: t("Aktivitetsrum", "Activity room") },
   ] as const;
 
   return (
@@ -85,7 +85,6 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
       />
 
       {/* Mapper som grid (3 pr. række) */}
-      {/* Fuldt galleri (3 pr. række) */}
       <Container size="3" id="grid">
         <Box py="6">
           <div className={styles.albumGrid}>
