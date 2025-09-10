@@ -11,7 +11,6 @@ const req = (k) => {
 /** Ens signatur til alle mails (indsat som HTML) */
 const SIGNATURE_HTML = `
 <div data-spark-custom-html="true">
-  <!-- (din eksisterende signatur – uændret) -->
   <div dir="auto">
     <table cellpadding="0" style="border-collapse: collapse;">
       <tbody>
@@ -149,7 +148,7 @@ export default async function handler(req_, res) {
       message,
 
       // kontekst
-      purpose, // "booking" | "inquiry" | "other" (fra din form)
+      purpose, // "booking" | "inquiry" | "other" (fra klient)
       context, // evt. ældre klienter
       marketingOptIn = false,
 
@@ -163,7 +162,18 @@ export default async function handler(req_, res) {
       selection, // { start, endExclusive, nights, baseNightsTotalDKK, cleaningFeeDKK, totalWithCleaningDKK, breakdown: [{date, price}] }
     } = req_.body ?? {};
 
-    if (!name || !email || !message) {
+    // Normalisér formål og afgør om det er booking (også hvis selection/guests findes)
+    const intentRaw = (
+      purpose ||
+      context ||
+      (selection || guests ? "booking" : "inquiry")
+    ).toString();
+    const isBookingReq = intentRaw === "booking" || !!selection || !!guests;
+
+    // Påkrævede felter:
+    // - Altid: name + email
+    // - Contact/inquiry: message
+    if (!name || !email || (!isBookingReq && !message)) {
       res.status(400).json({
         ok: false,
         error: "VALIDATION_ERROR",
@@ -172,8 +182,10 @@ export default async function handler(req_, res) {
       return;
     }
 
-    // Konsolider kontekst
-    const intent = (purpose || context || "contact").toString();
+    // Fallback-besked til mailvisning
+    const messageForMail = (
+      message ?? (isBookingReq ? stayPurpose ?? "" : "")
+    ).trim();
 
     /** ---- SMTP ---- */
     const host = req("SMTP_HOST");
@@ -207,6 +219,7 @@ export default async function handler(req_, res) {
     await transporter.verify();
 
     /** ---- Mail til admin ---- */
+    const intent = intentRaw; // "booking" | "inquiry" | "other"
     const subjectAdmin =
       lang === "da"
         ? `Fyrrehaven 61 | ${name} (${intent})`
@@ -220,7 +233,7 @@ export default async function handler(req_, res) {
     const countryShown = country || countryIso || "";
 
     // Bookingsektion (kun hvis data medsendes)
-    const isBooking = String(intent) === "booking" || !!selection || !!guests;
+    const isBooking = isBookingReq;
 
     const bookingHtml = isBooking
       ? `
@@ -390,7 +403,8 @@ export default async function handler(req_, res) {
           lang === "da" ? "Besked" : "Message"
         }</h3>
         <pre style="white-space:pre-wrap;background:#f6f6f6;border:1px solid #eee;border-radius:6px;padding:12px">${escapeHtml(
-          message
+          messageForMail ||
+            (lang === "da" ? "Ingen ekstra besked." : "No additional message.")
         )}</pre>
 
         ${SIGNATURE_HTML}
@@ -444,7 +458,10 @@ export default async function handler(req_, res) {
       `\n— Godkendelser / Approvals —\n` +
       `Samtykke (GDPR)/Consent: ${yn(consent, lang)}\n` +
       `Marketing e-mail: ${yn(Boolean(marketingOptIn), lang)}\n\n` +
-      `— Besked / Message —\n${message}\n`;
+      `— Besked / Message —\n${
+        messageForMail ||
+        (lang === "da" ? "Ingen ekstra besked." : "No additional message.")
+      }\n`;
 
     const infoAdmin = await transporter.sendMail({
       from,
@@ -488,7 +505,7 @@ export default async function handler(req_, res) {
       });
     } catch (autoErr) {
       console.error("MAIL_AUTOREPLY_ERROR", autoErr);
-      // fortsætter – vi svarer stadig ok til brugeren
+      // fortsæt; vi svarer stadig ok til brugeren
     }
 
     res.status(200).json({ ok: true, id: infoAdmin.messageId || null });
