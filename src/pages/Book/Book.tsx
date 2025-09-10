@@ -2,7 +2,6 @@
 import { Container, Box, Heading, Text } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
-import Buttons from "../../components/Buttons";
 import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
@@ -91,7 +90,7 @@ export default function Book({ lang }: { lang: Lang }) {
         secondaryCta={
           AIRBNB_URL
             ? {
-                label: t("Se kalender på Airbnb", "View calendar on Airbnb"),
+                label: t("Booking Airbnb", "Booking Airbnb"),
                 href: AIRBNB_URL,
                 external: true,
               }
@@ -109,91 +108,17 @@ export default function Book({ lang }: { lang: Lang }) {
         layout="media-right"
       />
 
-      {/* ——— Link-sektion ——— */}
       <Container size="3">
         <Box py="6">
-          <div className={styles.grid}>
-            {/* Direkte forespørgsel */}
-            <section className={styles.card}>
-              <header className={styles.cardHead}>
-                <h2 className={styles.cardTitle}>
-                  {t("Direkte forespørgsel", "Direct request")}
-                </h2>
-                <p className={styles.cardSub}>
-                  {t(
-                    "Udfyld formularen – vi svarer som regel inden for en time.",
-                    "Fill in the form – we usually reply within an hour."
-                  )}
-                </p>
-              </header>
-              <ul className={styles.list}>
-                <li>
-                  {t(
-                    "Ofte bedre pris end platforme",
-                    "Often better price than platforms"
-                  )}
-                </li>
-                <li>
-                  {t(
-                    "Fleksibel ankomst/afrejse hvis muligt",
-                    "Flexible check-in/out when possible"
-                  )}
-                </li>
-                <li>
-                  {t(
-                    "El- og vandforbrug afregnes efter endt ophold via bankoverførsel",
-                    "Electricity and water are settled after the stay via bank transfer"
-                  )}
-                </li>
-              </ul>
-              <div className={styles.actions}>
-                <Buttons
-                  to={pathOf(lang, "book")}
-                  variant="primary"
-                  labelDa="Anmod om booking"
-                  labelEn="Request booking"
-                  buttonType="button"
-                />
-              </div>
-            </section>
-
-            {/* Airbnb */}
-            <section className={styles.card}>
-              <header className={styles.cardHead}>
-                <h2 className={styles.cardTitle}>Airbnb</h2>
-                <p className={styles.cardSub}>
-                  {t(
-                    "Se live-kalender, anmeldelser og priser på Airbnb.",
-                    "See live calendar, reviews and pricing on Airbnb."
-                  )}
-                </p>
-              </header>
-              <ul className={styles.list}>
-                <li>
-                  {t("Nemt, sikkert checkout", "Simple, secure checkout")}
-                </li>
-                <li>{t("Anmeldelser fra gæster", "Guest reviews")}</li>
-                <li>{t("Opdateret kalender", "Updated calendar")}</li>
-              </ul>
-              <div className={styles.actions}>
-                {AIRBNB_URL ? (
-                  <Buttons
-                    href={AIRBNB_URL}
-                    external
-                    variant="secondary"
-                    labelDa="Gå til Airbnb"
-                    labelEn="Go to Airbnb"
-                    buttonType="button"
-                  />
-                ) : (
-                  <Text color="gray">
-                    {t("Airbnb-link kommer snart…", "Airbnb link coming soon…")}
-                  </Text>
-                )}
-              </div>
-            </section>
-          </div>
-
+          <Heading as="h2" size="4" mb="2">
+            {t("Hvordan vil du booke?", "How would you like to book?")}
+          </Heading>
+          <Text size="2" mb="4" color="gray">
+            {t(
+              "Du kan enten sende os en direkte forespørgsel via formularen nedenfor, eller du kan booke via Airbnb, hvis du foretrækker det. Vi svarer normalt inden for 1 time",
+              "You can either send us a direct request using the form below, or you can book via Airbnb if you prefer. We usually respond within 1 hour."
+            )}
+          </Text>
           {/* Lille “praktisk” note */}
           <div className={styles.note}>
             <Heading as="h3" size="3" mb="1">
