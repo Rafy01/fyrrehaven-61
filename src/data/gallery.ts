@@ -29,7 +29,7 @@ export type GalleryAlbum = {
 /*  Hjælpere                                                                  */
 /* -------------------------------------------------------------------------- */
 
-const BASE = "http://media.fyrrehaven-61.dk/wp-content/uploads/2025/09";
+const BASE = "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09";
 const u = (file: string) => `${BASE}/${file}`;
 
 /** Få et album efter id */
