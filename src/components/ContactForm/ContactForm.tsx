@@ -639,59 +639,60 @@ export default function ContactForm({
         </>
       )}
 
-      {/* Gæsteantal — responsivt */}
-      <div className={`${styles.rowGroup} ${styles.cols3}`}>
-        <div className={styles.row}>
-          <label
-            className={styles.label}
-            htmlFor="cf-adults"
-            data-required="true"
-          >
-            {t("Voksne", "Adults")}
-          </label>
-          <input
-            id="cf-adults"
-            className={styles.input}
-            type="number"
-            min={0} // ← så det kan være tomt / midlertidigt 0
-            max={adultsMax}
-            step={1}
-            value={state.adults === "" ? "" : String(state.adults)}
-            onChange={onAdultsChange}
-          />
+      {/* Gæsteantal — responsivt (KUN i booking) */}
+      {isBooking && (
+        <div className={`${styles.rowGroup} ${styles.cols3}`}>
+          <div className={styles.row}>
+            <label
+              className={styles.label}
+              htmlFor="cf-adults"
+              data-required="true"
+            >
+              {t("Voksne", "Adults")}
+            </label>
+            <input
+              id="cf-adults"
+              className={styles.input}
+              type="number"
+              min={0}
+              max={adultsMax}
+              step={1}
+              value={state.adults === "" ? "" : String(state.adults)}
+              onChange={onAdultsChange}
+            />
+          </div>
+          <div className={styles.row}>
+            <label className={styles.label} htmlFor="cf-children">
+              {t("Børn", "Children")}
+            </label>
+            <input
+              id="cf-children"
+              className={styles.input}
+              type="number"
+              min={0}
+              max={childrenMax}
+              step={1}
+              value={state.children === "" ? "" : String(state.children)}
+              onChange={onChildrenChange}
+            />
+          </div>
+          <div className={styles.row}>
+            <label className={styles.label} htmlFor="cf-babies">
+              {t("Babyer", "Babies")}
+            </label>
+            <input
+              id="cf-babies"
+              className={styles.input}
+              type="number"
+              min={0}
+              max={babiesMax}
+              step={1}
+              value={state.babies === "" ? "" : String(state.babies)}
+              onChange={onBabiesChange}
+            />
+          </div>
         </div>
-        <div className={styles.row}>
-          <label className={styles.label} htmlFor="cf-children">
-            {t("Børn", "Children")}
-          </label>
-          <input
-            id="cf-children"
-            className={styles.input}
-            type="number"
-            min={0}
-            max={childrenMax}
-            step={1}
-            value={state.children === "" ? "" : String(state.children)}
-            onChange={onChildrenChange}
-          />
-        </div>
-        <div className={styles.row}>
-          <label className={styles.label} htmlFor="cf-babies">
-            {t("Babyer", "Babies")}
-          </label>
-          <input
-            id="cf-babies"
-            className={styles.input}
-            type="number"
-            min={0}
-            max={babiesMax}
-            step={1}
-            value={state.babies === "" ? "" : String(state.babies)}
-            onChange={onBabiesChange}
-          />
-        </div>
-      </div>
-
+      )}
       {/* ——— Kontaktfelter (begge varianter) ——— */}
       <div className={styles.row}>
         <label className={styles.label} htmlFor="cf-name" data-required="true">

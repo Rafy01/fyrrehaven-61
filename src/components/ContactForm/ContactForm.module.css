@@ -318,3 +318,66 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ==== MOBILE TWEAKS (append at the end) ==== */
+@media (max-width: 600px) {
+  /* Card spacing */
+  .card {
+    padding: 0.9rem 0.95rem;
+    border-radius: 16px;
+  }
+
+  /* Kompakte grids/gaps */
+  .form { gap: .65rem; }
+  .row { gap: .35rem; }
+  .rowGroup { gap: .65rem; }
+
+  /* Mindre typografi */
+  .kicker { font-size: .72rem; }
+  .label { font-size: .95rem; }
+
+  /* Mindre inputfelter */
+  .input,
+  .select,
+  .textarea,
+  .inputphone {
+    padding: .6rem .75rem;
+    font-size: .95rem;
+    border-radius: 10px;
+  }
+
+  /* Select-pil og spacing */
+  .select { padding-right: 1.8rem; }
+  .chev { right: .55rem; font-size: .9rem; }
+
+  /* Telefon–landekode badge */
+  .dial {
+    min-width: 60px;
+    height: 38px;
+    line-height: 38px;
+    border-radius: 10px;
+    font-size: .95rem;
+  }
+
+  /* “Nætter” lige under afrejse – mere kompakt */
+  .inlineMeta { gap: 8px; margin-top: -10px; }
+  .metaLabel { font-size: .92rem; }
+  .metaValue { padding: 2px 8px; }
+
+  /* Totalboksen: tættere og klarere på små skærme */
+  .totalsBox {
+    grid-template-columns: 1fr;   /* stack på mobil */
+    gap: 10px;
+    padding: .6rem .75rem;
+    border: 1px solid rgba(15,23,42,.08);
+    border-radius: 12px;
+    background: #fafafa;
+  }
+  .tLabel { font-size: .92rem; }
+  .tValue { font-size: .98rem; }
+}
+
+/* Lidt strammere tablet-niveau (≤ 820px) */
+@media (max-width: 820px) {
+  .totalsBox { grid-template-columns: 1fr; }
+}
