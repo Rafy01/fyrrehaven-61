@@ -1,14 +1,53 @@
-// /api/contact.mjs  (Node/ESM på Vercel)
+// /api/contact.mjs
 import nodemailer from "nodemailer";
 
-/** Læs påkrævet env eller kast klar fejl */
-const req = (k) => {
+/** --- Utils ---------------------------------------------------- */
+const reqEnv = (k) => {
   const v = process.env[k];
   if (!v) throw new Error(`ENV_MISSING:${k}`);
   return v;
 };
 
-/** Ens signatur til alle mails (indsat som HTML) */
+const fmtMoney = (n, lang = "da") => {
+  if (n == null || Number.isNaN(Number(n))) return "—";
+  try {
+    return new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
+      style: "currency",
+      currency: "DKK",
+      maximumFractionDigits: 0,
+    }).format(Number(n));
+  } catch {
+    return `${Number(n).toFixed(0)} DKK`;
+  }
+};
+
+const fmtDate = (iso, lang = "da") => {
+  if (!iso) return "—";
+  try {
+    const d = new Date(`${iso}T00:00:00`);
+    return new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(d);
+  } catch {
+    return iso || "—";
+  }
+};
+
+const yn = (b, lang = "da") =>
+  b ? (lang === "da" ? "Ja" : "Yes") : lang === "da" ? "Nej" : "No";
+
+const esc = (s = "") =>
+  String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+
+const OR_DASH = (v) => (v === 0 ? "0" : v ? String(v) : "—");
+
+/** —— Din faste signatur (uforandret) —— */
 const SIGNATURE_HTML = `
 <div data-spark-custom-html="true">
   <div dir="auto">
@@ -90,52 +129,15 @@ const SIGNATURE_HTML = `
 </div>
 `;
 
-/* ---------- Helpers ---------- */
-const fmtMoney = (n, lang = "da") => {
-  if (n == null || Number.isNaN(Number(n))) return "—";
+/** --- Handler -------------------------------------------------- */
+export default async function handler(req, res) {
   try {
-    return new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
-      style: "currency",
-      currency: "DKK",
-      maximumFractionDigits: 0,
-    }).format(Number(n));
-  } catch {
-    return `${Number(n).toFixed(0)} DKK`;
-  }
-};
-const fmtDate = (iso, lang = "da") => {
-  if (!iso) return "";
-  try {
-    const d = new Date(`${iso}T00:00:00`);
-    return new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(d);
-  } catch {
-    return iso;
-  }
-};
-const yn = (b, lang = "da") =>
-  b ? (lang === "da" ? "Ja" : "Yes") : lang === "da" ? "Nej" : "No";
-
-/** Simple HTML escape */
-function escapeHtml(s = "") {
-  return String(s)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
-
-export default async function handler(req_, res) {
-  try {
-    if (req_.method !== "POST") {
+    if (req.method !== "POST") {
       res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
       return;
     }
 
-    /** ---- Body (begge varianter) ---- */
+    // Body
     const {
       lang = "da",
 
@@ -143,57 +145,58 @@ export default async function handler(req_, res) {
       name,
       email,
       phone,
-      country, // label, hvis sendt
-      countryIso, // fallback label
+      country, // label hvis sendt
+      countryIso, // ISO fallback
       message,
 
       // kontekst
-      purpose, // "booking" | "inquiry" | "other" (fra klient)
-      context, // evt. ældre klienter
-      marketingOptIn = false,
+      purpose, // "booking" | "inquiry" | "other"
+      context,
 
       // godkendelser
       consent = false,
       feesAccepted = false,
 
       // bookingfelter
-      guests, // {adults, children, babies}
-      stayPurpose, // tekst
-      selection, // { start, endExclusive, nights, baseNightsTotalDKK, cleaningFeeDKK, totalWithCleaningDKK, breakdown: [{date, price}] }
-    } = req_.body ?? {};
+      guests, // { adults, children, babies }
+      stayPurpose,
+      selection, // { start, endExclusive, nights, baseNightsTotalDKK, cleaningFeeDKK, totalWithCleaningDKK, breakdown[] }
+    } = req.body ?? {};
 
-    // Normalisér formål og afgør om det er booking (også hvis selection/guests findes)
-    const intentRaw = (
-      purpose ||
-      context ||
-      (selection || guests ? "booking" : "inquiry")
-    ).toString();
-    const isBookingReq = intentRaw === "booking" || !!selection || !!guests;
+    const intent = String(purpose || context || "contact");
+    const isBookingReq =
+      intent === "booking" || !!selection || !!guests || !!stayPurpose;
 
-    // Påkrævede felter:
-    // - Altid: name + email
-    // - Contact/inquiry: message
-    if (!name || !email || (!isBookingReq && !message)) {
-      res.status(400).json({
-        ok: false,
-        error: "VALIDATION_ERROR",
-        detail: "Missing required fields",
-      });
+    // Validering:
+    if (!name || !email) {
+      res
+        .status(400)
+        .json({
+          ok: false,
+          error: "VALIDATION_ERROR",
+          detail: "Missing name or email",
+        });
+      return;
+    }
+    if (!isBookingReq && !message) {
+      // kun contact/inquiry kræver besked
+      res
+        .status(400)
+        .json({
+          ok: false,
+          error: "VALIDATION_ERROR",
+          detail: "Missing message",
+        });
       return;
     }
 
-    // Fallback-besked til mailvisning
-    const messageForMail = (
-      message ?? (isBookingReq ? stayPurpose ?? "" : "")
-    ).trim();
-
-    /** ---- SMTP ---- */
-    const host = req("SMTP_HOST");
+    // SMTP
+    const host = reqEnv("SMTP_HOST");
     const port = Number(process.env.SMTP_PORT || 587);
-    const user = req("SMTP_USER");
-    const pass = req("SMTP_PASS");
-    const from = req("MAIL_FROM");
-    const to = req("MAIL_TO");
+    const user = reqEnv("SMTP_USER");
+    const pass = reqEnv("SMTP_PASS");
+    const from = reqEnv("MAIL_FROM");
+    const to = reqEnv("MAIL_TO");
 
     const secure =
       String(process.env.SMTP_SECURE || "").toLowerCase() === "true" ||
@@ -218,193 +221,137 @@ export default async function handler(req_, res) {
 
     await transporter.verify();
 
-    /** ---- Mail til admin ---- */
-    const intent = intentRaw; // "booking" | "inquiry" | "other"
+    const introAdmin =
+      lang === "da"
+        ? "Ny indsendelse fra websitet:"
+        : "New submission from the website:";
     const subjectAdmin =
       lang === "da"
         ? `Fyrrehaven 61 | ${name} (${intent})`
         : `Fyrrehaven 61 | ${name} (${intent})`;
 
-    const introAdmin =
-      lang === "da"
-        ? "Ny indsendelse fra websitet:"
-        : "New submission from the website:";
+    const countryShown = country || countryIso || "—";
 
-    const countryShown = country || countryIso || "";
+    // Normaliser bookingfelter (altid faste rækker – “—” hvis tomt)
+    const startStr = fmtDate(selection?.start, lang);
+    const endStr = fmtDate(selection?.endExclusive, lang);
+    const nightsStr =
+      typeof selection?.nights === "number" ? String(selection.nights) : "—";
+    const nightsPriceStr = fmtMoney(selection?.baseNightsTotalDKK, lang);
+    const cleaningStr = fmtMoney(selection?.cleaningFeeDKK, lang);
+    const totalStr = fmtMoney(selection?.totalWithCleaningDKK, lang);
 
-    // Bookingsektion (kun hvis data medsendes)
-    const isBooking = isBookingReq;
+    const adultsStr = OR_DASH(guests?.adults);
+    const childrenStr = OR_DASH(guests?.children);
+    const babiesStr = OR_DASH(guests?.babies);
+    const stayPurposeStr = OR_DASH(stayPurpose);
 
-    const bookingHtml = isBooking
-      ? `
-        <h3 style="margin:16px 0 8px;font-size:16px;">${
-          lang === "da" ? "Bookingoplysninger" : "Booking details"
-        }</h3>
-        <table style="border-collapse:collapse">
-          ${
-            selection?.start && selection?.endExclusive
-              ? `<tr><td style="padding:4px 8px"><b>${
-                  lang === "da" ? "Periode" : "Period"
-                }</b></td>
-                 <td style="padding:4px 8px">${fmtDate(
-                   selection.start,
-                   lang
-                 )} – ${fmtDate(selection.endExclusive, lang)} · ${
-                  selection.nights || 0
-                } ${lang === "da" ? "nætter" : "nights"}</td></tr>`
-              : ""
-          }
-          ${
-            typeof selection?.baseNightsTotalDKK !== "undefined"
-              ? `<tr><td style="padding:4px 8px"><b>${
-                  lang === "da" ? "Pris (overnatninger)" : "Price (nights)"
-                }</b></td><td style="padding:4px 8px">${fmtMoney(
-                  selection.baseNightsTotalDKK,
-                  lang
-                )}</td></tr>`
-              : ""
-          }
-          ${
-            typeof selection?.cleaningFeeDKK !== "undefined"
-              ? `<tr><td style="padding:4px 8px"><b>${
-                  lang === "da" ? "Rengøring" : "Cleaning"
-                }</b></td><td style="padding:4px 8px">${fmtMoney(
-                  selection.cleaningFeeDKK,
-                  lang
-                )}</td></tr>`
-              : ""
-          }
-          ${
-            typeof selection?.totalWithCleaningDKK !== "undefined"
-              ? `<tr><td style="padding:4px 8px"><b>${
-                  lang === "da" ? "Estimeret total" : "Estimated total"
-                }</b></td><td style="padding:4px 8px">${fmtMoney(
-                  selection.totalWithCleaningDKK,
-                  lang
-                )}</td></tr>`
-              : ""
-          }
-          ${
-            guests
-              ? `<tr><td style="padding:4px 8px"><b>${
-                  lang === "da" ? "Gæster" : "Guests"
-                }</b></td><td style="padding:4px 8px">${[
-                  `${lang === "da" ? "Voksne" : "Adults"}: ${
-                    guests.adults ?? 0
-                  }`,
-                  `${lang === "da" ? "Børn" : "Children"}: ${
-                    guests.children ?? 0
-                  }`,
-                  `${lang === "da" ? "Babyer" : "Babies"}: ${
-                    guests.babies ?? 0
-                  }`,
-                ].join(", ")}</td></tr>`
-              : ""
-          }
-          ${
-            stayPurpose
-              ? `<tr><td style="padding:4px 8px"><b>${
-                  lang === "da" ? "Formål med opholdet" : "Purpose of stay"
-                }</b></td><td style="padding:4px 8px">${escapeHtml(
-                  stayPurpose
-                )}</td></tr>`
-              : ""
-          }
-          <tr><td style="padding:4px 8px"><b>${
-            lang === "da" ? "Gebyr-liste accepteret" : "Fees accepted"
-          }</b></td><td style="padding:4px 8px">${yn(
-          feesAccepted,
-          lang
-        )}</td></tr>
-        </table>
-        ${
-          Array.isArray(selection?.breakdown) && selection.breakdown.length
-            ? `<div style="margin-top:10px">
-                 <div style="font-weight:600;margin-bottom:4px">${
-                   lang === "da" ? "Dag-til-dag" : "Daily breakdown"
-                 }</div>
-                 <table style="border-collapse:collapse">
-                   ${selection.breakdown
-                     .map((b) => {
-                       const d = b?.date || "";
-                       const price = b?.price;
-                       return `<tr>
-                         <td style="padding:2px 8px; white-space:nowrap">${fmtDate(
-                           d,
-                           lang
-                         )}</td>
-                         <td style="padding:2px 8px">${fmtMoney(
-                           price,
-                           lang
-                         )}</td>
-                       </tr>`;
-                     })
-                     .join("")}
-                 </table>
-               </div>`
-            : ""
-        }
-      `
-      : "";
-
-    const approvalsHtml = `
-      <h3 style="margin:16px 0 8px;font-size:16px;">${
-        lang === "da" ? "Godkendelser" : "Approvals"
-      }</h3>
+    const bookingHtml = `
+      <h3 style="margin:16px 0 8px;font-size:16px;">
+        ${lang === "da" ? "Bookingoplysninger" : "Booking details"}
+      </h3>
       <table style="border-collapse:collapse">
-        <tr><td style="padding:4px 8px"><b>${
-          lang === "da" ? "Samtykke (GDPR)" : "Consent (GDPR)"
-        }</b></td><td style="padding:4px 8px">${yn(consent, lang)}</td></tr>
-        <tr><td style="padding:4px 8px"><b>${
-          lang === "da" ? "Markedsføring via e-mail" : "Marketing via e-mail"
-        }</b></td><td style="padding:4px 8px">${yn(
-      Boolean(marketingOptIn),
-      lang
-    )}</td></tr>
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            lang === "da" ? "Periode" : "Period"
+          }</b></td>
+          <td style="padding:4px 8px">${startStr} – ${endStr} · ${nightsStr} ${
+      lang === "da" ? "nætter" : "nights"
+    }</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            lang === "da" ? "Pris (overnatninger)" : "Price (nights)"
+          }</b></td>
+          <td style="padding:4px 8px">${nightsPriceStr}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            lang === "da" ? "Rengøring" : "Cleaning"
+          }</b></td>
+          <td style="padding:4px 8px">${cleaningStr}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            lang === "da" ? "Estimeret total" : "Estimated total"
+          }</b></td>
+          <td style="padding:4px 8px">${totalStr}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            lang === "da" ? "Gæster" : "Guests"
+          }</b></td>
+          <td style="padding:4px 8px">
+            ${lang === "da" ? "Voksne" : "Adults"}: ${adultsStr},
+            ${lang === "da" ? "Børn" : "Children"}: ${childrenStr},
+            ${lang === "da" ? "Babyer" : "Babies"}: ${babiesStr}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            lang === "da" ? "Formål med opholdet" : "Purpose of stay"
+          }</b></td>
+          <td style="padding:4px 8px">${esc(stayPurposeStr)}</td>
+        </tr>
       </table>
     `;
+
+    // Godkendelser: uden marketing, MED gebyr-liste
+    const approvalsHtml = `
+      <h3 style="margin:16px 0 8px;font-size:16px;">
+        ${lang === "da" ? "Godkendelser" : "Approvals"}
+      </h3>
+      <table style="border-collapse:collapse">
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            lang === "da" ? "Samtykke (GDPR)" : "Consent (GDPR)"
+          }</b></td>
+          <td style="padding:4px 8px">${yn(Boolean(consent), lang)}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            lang === "da" ? "Gebyroversigt accepteret" : "Fee list accepted"
+          }</b></td>
+          <td style="padding:4px 8px">${yn(Boolean(feesAccepted), lang)}</td>
+        </tr>
+      </table>
+    `;
+
+    const messageForMail = isBookingReq ? OR_DASH(message) : message;
 
     const htmlAdmin = `
       <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.45">
         <p>${introAdmin}</p>
         <table style="border-collapse:collapse">
-          <tr><td style="padding:4px 8px"><b>Navn / Name</b></td><td style="padding:4px 8px">${escapeHtml(
-            name
+          <tr><td style="padding:4px 8px"><b>Navn / Name</b></td><td style="padding:4px 8px">${esc(
+            name || "—"
           )}</td></tr>
-          <tr><td style="padding:4px 8px"><b>E-mail</b></td><td style="padding:4px 8px">${escapeHtml(
-            email
+          <tr><td style="padding:4px 8px"><b>E-mail</b></td><td style="padding:4px 8px">${esc(
+            email || "—"
           )}</td></tr>
-          ${
-            phone
-              ? `<tr><td style="padding:4px 8px"><b>Telefon / Phone</b></td><td style="padding:4px 8px">${escapeHtml(
-                  phone
-                )}</td></tr>`
-              : ""
-          }
-          ${
+          <tr><td style="padding:4px 8px"><b>Telefon / Phone</b></td><td style="padding:4px 8px">${esc(
+            phone || "—"
+          )}</td></tr>
+          <tr><td style="padding:4px 8px"><b>Land / Country</b></td><td style="padding:4px 8px">${esc(
             countryShown
-              ? `<tr><td style="padding:4px 8px"><b>Land / Country</b></td><td style="padding:4px 8px">${escapeHtml(
-                  countryShown
-                )}</td></tr>`
-              : ""
-          }
-          <tr><td style="padding:4px 8px"><b>Sprog / Lang</b></td><td style="padding:4px 8px">${escapeHtml(
+          )}</td></tr>
+          <tr><td style="padding:4px 8px"><b>Sprog / Lang</b></td><td style="padding:4px 8px">${esc(
             lang
           )}</td></tr>
-          <tr><td style="padding:4px 8px"><b>Kontekst / Context</b></td><td style="padding:4px 8px">${escapeHtml(
+          <tr><td style="padding:4px 8px"><b>Kontekst / Context</b></td><td style="padding:4px 8px">${esc(
             intent
           )}</td></tr>
         </table>
 
-        ${bookingHtml}
+        ${isBookingReq ? bookingHtml : ""}
+
         ${approvalsHtml}
 
         <h3 style="margin:16px 0 8px;font-size:16px;">${
           lang === "da" ? "Besked" : "Message"
         }</h3>
-        <pre style="white-space:pre-wrap;background:#f6f6f6;border:1px solid #eee;border-radius:6px;padding:12px">${escapeHtml(
-          messageForMail ||
-            (lang === "da" ? "Ingen ekstra besked." : "No additional message.")
+        <pre style="white-space:pre-wrap;background:#f6f6f6;border:1px solid #eee;border-radius:6px;padding:12px">${esc(
+          messageForMail || "—"
         )}</pre>
 
         ${SIGNATURE_HTML}
@@ -413,55 +360,27 @@ export default async function handler(req_, res) {
 
     const textAdmin =
       `${introAdmin}\n\n` +
-      `Navn/Name: ${name}\n` +
-      `E-mail: ${email}\n` +
-      (phone ? `Telefon/Phone: ${phone}\n` : "") +
-      (countryShown ? `Land/Country: ${countryShown}\n` : "") +
+      `Navn/Name: ${name || "—"}\n` +
+      `E-mail: ${email || "—"}\n` +
+      `Telefon/Phone: ${phone || "—"}\n` +
+      `Land/Country: ${countryShown}\n` +
       `Sprog/Lang: ${lang}\n` +
       `Kontekst/Context: ${intent}\n` +
-      (isBooking
+      (isBookingReq
         ? `\n— Booking —\n` +
-          (selection?.start && selection?.endExclusive
-            ? `Periode/Period: ${fmtDate(selection.start, lang)} – ${fmtDate(
-                selection.endExclusive,
-                lang
-              )} · ${selection.nights || 0} ${
-                lang === "da" ? "nætter" : "nights"
-              }\n`
-            : "") +
-          (typeof selection?.baseNightsTotalDKK !== "undefined"
-            ? `Pris (overnatninger)/Price (nights): ${fmtMoney(
-                selection.baseNightsTotalDKK,
-                lang
-              )}\n`
-            : "") +
-          (typeof selection?.cleaningFeeDKK !== "undefined"
-            ? `Rengøring/Cleaning: ${fmtMoney(
-                selection.cleaningFeeDKK,
-                lang
-              )}\n`
-            : "") +
-          (typeof selection?.totalWithCleaningDKK !== "undefined"
-            ? `Estimeret total/Estimated total: ${fmtMoney(
-                selection.totalWithCleaningDKK,
-                lang
-              )}\n`
-            : "") +
-          (guests
-            ? `Gæster/Guests: Adults ${guests.adults ?? 0}, Children ${
-                guests.children ?? 0
-              }, Babies ${guests.babies ?? 0}\n`
-            : "") +
-          (stayPurpose ? `Formål/Purpose: ${stayPurpose}\n` : "") +
-          `Gebyr-liste accepteret/Fees accepted: ${yn(feesAccepted, lang)}\n`
+          `Periode/Period: ${startStr} – ${endStr} · ${nightsStr} ${
+            lang === "da" ? "nætter" : "nights"
+          }\n` +
+          `Pris (overnatninger)/Price (nights): ${nightsPriceStr}\n` +
+          `Rengøring/Cleaning: ${cleaningStr}\n` +
+          `Estimeret total/Estimated total: ${totalStr}\n` +
+          `Gæster/Guests: Adults ${adultsStr}, Children ${childrenStr}, Babies ${babiesStr}\n` +
+          `Formål/Purpose: ${stayPurposeStr}\n`
         : "") +
       `\n— Godkendelser / Approvals —\n` +
-      `Samtykke (GDPR)/Consent: ${yn(consent, lang)}\n` +
-      `Marketing e-mail: ${yn(Boolean(marketingOptIn), lang)}\n\n` +
-      `— Besked / Message —\n${
-        messageForMail ||
-        (lang === "da" ? "Ingen ekstra besked." : "No additional message.")
-      }\n`;
+      `Samtykke (GDPR)/Consent: ${yn(Boolean(consent), lang)}\n` +
+      `Fee list accepted: ${yn(Boolean(feesAccepted), lang)}\n\n` +
+      `— Besked / Message —\n${messageForMail || "—"}\n`;
 
     const infoAdmin = await transporter.sendMail({
       from,
@@ -472,7 +391,7 @@ export default async function handler(req_, res) {
       replyTo: email,
     });
 
-    /** ---- Auto-reply til afsender ---- */
+    /** Auto-reply til afsender */
     const siteName = process.env.SITE_NAME || "Fyrrehaven 61";
     const subjectUser =
       lang === "da"
@@ -480,8 +399,12 @@ export default async function handler(req_, res) {
         : `Thanks for your message – ${siteName}`;
     const bodyUser =
       lang === "da"
-        ? `<p>Tak for din henvendelse. Vi har modtaget din besked og vender tilbage snarest muligt.</p>`
-        : `<p>Thanks for your message. We’ve received your inquiry and will get back to you as soon as possible.</p>`;
+        ? `<p>Tak for din ${
+            isBookingReq ? "bookingforespørgsel" : "henvendelse"
+          }. Vi vender tilbage snarest muligt.</p>`
+        : `<p>Thanks for your ${
+            isBookingReq ? "booking request" : "message"
+          }. We’ll get back to you shortly.</p>`;
 
     const htmlUser = `
       <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.45">
@@ -491,8 +414,12 @@ export default async function handler(req_, res) {
     `;
     const textUser =
       lang === "da"
-        ? `Tak for din henvendelse. Vi har modtaget din besked og vender tilbage snarest muligt.\n\n${siteName}\nhttps://fyrrehaven-61.dk`
-        : `Thanks for your message. We’ve received your inquiry and will get back to you as soon as possible.\n\n${siteName}\nhttps://fyrrehaven-61.dk`;
+        ? `Tak for din ${
+            isBookingReq ? "bookingforespørgsel" : "henvendelse"
+          }. Vi vender tilbage snarest muligt.\n\n${siteName}\nhttps://fyrrehaven-61.dk`
+        : `Thanks for your ${
+            isBookingReq ? "booking request" : "message"
+          }. We’ll get back to you shortly.\n\n${siteName}\nhttps://fyrrehaven-61.dk`;
 
     try {
       await transporter.sendMail({
@@ -505,7 +432,7 @@ export default async function handler(req_, res) {
       });
     } catch (autoErr) {
       console.error("MAIL_AUTOREPLY_ERROR", autoErr);
-      // fortsæt; vi svarer stadig ok til brugeren
+      // fortsæt – svar stadig ok til bruger
     }
 
     res.status(200).json({ ok: true, id: infoAdmin.messageId || null });
@@ -521,6 +448,7 @@ export default async function handler(req_, res) {
       });
       return;
     }
+    // hvis nodemailer kaster fejl med 4xx, oversæt til 500 for klient
     res.status(500).json({ ok: false, error: "MAIL_ERROR", detail: msg });
   }
 }
