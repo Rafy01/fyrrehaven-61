@@ -7,6 +7,7 @@ export type AlbumId =
   | "spa"
   | "sauna"
   | "outdoor"
+  | "outdoor_night"
   | "area";
 
 export type GalleryDataItem = {
@@ -94,8 +95,7 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
     id: "indoor",
     titleDa: "Indendørs",
     titleEn: "Indoor",
-    // du nævnte at cover bør være IMG_3665.webp
-    cover: u("IMG_3665.webp"),
+    cover: u("IMG_3665.webp"), // dit valgte cover
     items: [
       {
         src: u("IMG_3664.webp"),
@@ -134,8 +134,7 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
       },
       {
         src: u("IMG_3671.webp"),
-        altDa:
-          "Soveværelse med udgang til terrasse, skriveplads og ekstern monitor",
+        altDa: "Soveværelse med udgang til terrasse, skriveplads og monitor",
         altEn:
           "Bedroom with terrace access, fold-down desk and external monitor",
       },
@@ -462,6 +461,106 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
     ],
   },
 
+  /* ---------------------------- Outdoor (night) ------------------------------- */
+  {
+    id: "outdoor_night",
+    titleDa: "Udendørs – aften",
+    titleEn: "Outdoor – night",
+    cover: u("IMG_3806.webp"),
+    items: [
+      {
+        src: u("IMG_3799.webp"),
+        altDa: "Aftenstemning ved poolen – hyggelig belysning, Fyrrehaven 61",
+        altEn: "Evening ambience by the pool – cosy lighting, Fyrrehaven 61",
+      },
+      {
+        src: u("IMG_3802.webp"),
+        altDa: "Poolen oplyst i skumringen – Fjellerup Strand",
+        altEn: "Pool lit at dusk – Fjellerup Beach",
+      },
+      {
+        src: u("IMG_3803.webp"),
+        altDa: "Aftenbad i opvarmet pool – ferie ved Djursland",
+        altEn: "Night swim in the heated pool – holiday in Djursland",
+      },
+      {
+        src: u("IMG_3804.webp"),
+        altDa: "Pooldæk med lys langs kanten – sikker og stemningsfuld",
+        altEn: "Pool deck with edge lights – safe and atmospheric",
+      },
+      {
+        src: u("IMG_3805.webp"),
+        altDa: "Poolområde om aftenen – klar til aften-dukkert",
+        altEn: "Pool area at night – ready for an evening dip",
+      },
+      {
+        src: u("IMG_3806.webp"),
+        altDa: "Pool med blå glød – sommeraften ved Fyrrehaven 61",
+        altEn: "Pool with blue glow – summer night at Fyrrehaven 61",
+      },
+      {
+        src: u("IMG_3807.webp"),
+        altDa: "Udeområde i tusmørke – rolig feriestemning",
+        altEn: "Outdoor area at twilight – relaxed holiday mood",
+      },
+      {
+        src: u("IMG_3808.webp"),
+        altDa: "Aftensol over pool og terrasse – Djursland",
+        altEn: "Evening sun over pool and terrace – Djursland",
+      },
+      {
+        src: u("IMG_3810.webp"),
+        altDa: "Indgang og overdækning oplyst – velkomst i aftenlys",
+        altEn: "Entrance and canopy lit up – welcoming evening light",
+      },
+      {
+        src: u("IMG_3811.webp"),
+        altDa: "Detalje af belysning og udezone – nattehimmel",
+        altEn: "Lighting detail and outdoor zone – night sky",
+      },
+      {
+        src: u("IMG_3812.webp"),
+        altDa: "Overdækket område med lys – komfort udendørs",
+        altEn: "Covered outdoor section with lights – comfort outdoors",
+      },
+      {
+        src: u("IMG_3813.webp"),
+        altDa: "Indgangsparti i aftenskær – Fyrrehaven 61",
+        altEn: "Entrance at dusk – Fyrrehaven 61",
+      },
+      {
+        src: u("IMG_3814.webp"),
+        altDa: "Oplyst gennemgang – sikkert og indbydende",
+        altEn: "Lit walkway – safe and inviting",
+      },
+      {
+        src: u("IMG_3815.webp"),
+        altDa: "Udeplads i skumringen – stemningsfuld belysning",
+        altEn: "Patio at dusk – atmospheric lighting",
+      },
+      {
+        src: u("IMG_3816.webp"),
+        altDa: "Sti og terrasse oplyst om aftenen",
+        altEn: "Path and terrace illuminated at night",
+      },
+      {
+        src: u("IMG_3818.webp"),
+        altDa: "Pool og terrasse efter solnedgang – Fjellerup",
+        altEn: "Pool and terrace after sunset – Fjellerup",
+      },
+      {
+        src: u("IMG_3819.webp"),
+        altDa: "Nattestemning ved feriehus – Fyrrehaven 61",
+        altEn: "Night ambience at the holiday home – Fyrrehaven 61",
+      },
+      {
+        src: u("IMG_3820.webp"),
+        altDa: "Aftenlys over udeområdet – hyggelig afslutning på dagen",
+        altEn: "Evening lights across the outdoor area – cosy end to the day",
+      },
+    ],
+  },
+
   /* ----------------------------------- Area ---------------------------------- */
   {
     id: "area",
@@ -469,6 +568,28 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
     titleEn: "Area (walking distance)",
     cover: u("IMG_3660.webp"),
     items: [
+      {
+        src: u("IMG_3771.webp"),
+        altDa: "Solnedgang ved Fjellerup Strand – gyldent lys over Kattegat",
+        altEn: "Sunset at Fjellerup Beach – golden light over the Kattegat",
+      },
+      {
+        src: u("IMG_3772.webp"),
+        altDa: "Aftensol ved kysten – klitter og strand i gåafstand",
+        altEn:
+          "Evening sun by the coast – dunes and beach within walking distance",
+      },
+      {
+        src: u("IMG_3773.webp"),
+        altDa: "Bred sandstrand ved Fjellerup – familievenlig kyst",
+        altEn: "Wide sandy beach at Fjellerup – family-friendly coast",
+      },
+      {
+        src: u("IMG_3770.webp"),
+        altDa: "Kystlinje og blide bølger – Djursland",
+        altEn: "Coastline and gentle waves – Djursland",
+      },
+
       {
         src: u("2c0c5a11-59f7-4ddf-9fda-10068650f7a1.webp"),
         altDa: "Skovsti i gåafstand fra Fyrrehaven 61 – Fjellerup",
