@@ -377,6 +377,27 @@ export default function ContactForm({
   }
 
   if (sent) {
+    const startStr = selPrice.start
+      ? fmtDate.format(selPrice.start)
+      : t("—", "—");
+    const endStr = selPrice.endExclusive
+      ? fmtDate.format(selPrice.endExclusive)
+      : t("—", "—");
+    const nightsStr =
+      typeof selPrice.nights === "number"
+        ? String(selPrice.nights)
+        : t("—", "—");
+    const nightsPriceStr =
+      selPrice.total != null ? fmtMoney.format(selPrice.total) : t("—", "—");
+    const cleaningStr = includeCleaning
+      ? fmtMoney.format(CLEANING_FEE_DKK)
+      : t("—", "—");
+    const totalStr = includeCleaning
+      ? fmtMoney.format(totalWithCleaning)
+      : selPrice.total != null
+      ? fmtMoney.format(selPrice.total)
+      : t("—", "—");
+
     return (
       <div
         className={`${styles.card} ${styles.success}`}
@@ -384,23 +405,74 @@ export default function ContactForm({
         aria-live="polite"
       >
         <h3 className={styles.sTitle}>
-          {t("Tak for din henvendelse!", "Thanks for your message!")}
+          {isBooking
+            ? t(
+                "Tak for din bookingforespørgsel!",
+                "Thanks for your booking request!"
+              )
+            : t("Tak for din henvendelse!", "Thanks for your message!")}
         </h3>
         <p className={styles.sLead}>
-          {t(
-            "Vi vender tilbage hurtigst muligt. Her er en kopi af det, du sendte:",
-            "We'll get back to you as soon as possible. Here's a copy of what you sent:"
-          )}
+          {isBooking
+            ? t(
+                "Vi vender tilbage hurtigst muligt. Her er en oversigt over din forespørgsel:",
+                "We’ll get back to you shortly. Here’s a summary of your request:"
+              )
+            : t(
+                "Vi vender tilbage hurtigst muligt. Her er en kopi af det, du sendte:",
+                "We'll get back to you as soon as possible. Here's a copy of what you sent:"
+              )}
         </p>
 
+        {isBooking && (
+          <dl className={styles.echo}>
+            <div>
+              <dt>{t("Ankomst", "Check-in")}</dt>
+              <dd>{startStr}</dd>
+            </div>
+            <div>
+              <dt>{t("Afrejse", "Check-out")}</dt>
+              <dd>{endStr}</dd>
+            </div>
+            <div>
+              <dt>{t("Nætter", "Nights")}</dt>
+              <dd>{nightsStr}</dd>
+            </div>
+            <div>
+              <dt>{t("Pris (overnatninger)", "Price (nights)")}</dt>
+              <dd>{nightsPriceStr}</dd>
+            </div>
+            <div>
+              <dt>{t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}</dt>
+              <dd>{cleaningStr}</dd>
+            </div>
+            <div>
+              <dt>{t("Estimeret total", "Estimated total")}</dt>
+              <dd>{totalStr}</dd>
+            </div>
+            <div>
+              <dt>{t("Gæster", "Guests")}</dt>
+              <dd>
+                {`${toInt(state.adults)} ${t("voksne", "adults")}, ${toInt(
+                  state.children
+                )} ${t("børn", "children")}, ${toInt(state.babies)} ${t(
+                  "babyer",
+                  "babies"
+                )}`}
+              </dd>
+            </div>
+          </dl>
+        )}
+
+        {/* Kontakt-oplysninger vises for begge varianter */}
         <dl className={styles.echo}>
           <div>
             <dt>{t("Navn", "Name")}</dt>
-            <dd>{state.name}</dd>
+            <dd>{state.name || t("—", "—")}</dd>
           </div>
           <div>
             <dt>E-mail</dt>
-            <dd>{state.email}</dd>
+            <dd>{state.email || t("—", "—")}</dd>
           </div>
           {fullPhone && (
             <div>
@@ -412,7 +484,6 @@ export default function ContactForm({
             <dt>{t("Land", "Country")}</dt>
             <dd>{countryLabel(state.countryIso, uiLang)}</dd>
           </div>
-          {/* (øvrig echo kan beholdes som før) */}
         </dl>
 
         <Buttons
