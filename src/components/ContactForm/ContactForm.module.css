@@ -231,3 +231,90 @@
 }
 
 /* Kalender-wrap så kortet ikke “sprænger” på mobil */
+/* ——— Nætter på én linje under Afrejse ——— */
+.inlineMeta {
+  grid-column: 1 / -1;         /* fylder hele gruppens bredde */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -17px;
+}
+.metaLabel {
+  font-weight: 650;
+  color: #475569;              /* slate-600 */
+}
+.metaValue {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  min-width: 3ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ——— Samlet prisboks (behold din eksisterende .totalsBox) ——— */
+.totalsBox {
+  /* behold dine nuværende værdier */
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;          /* <— så rækkerne ikke tvinges i samme højde */
+}
+
+/* Hver “celle” i boksen */
+.totalItem {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;                /* <— gør det lovligt for label at wrappe */
+}
+
+/* Label: må gerne gå på 2 linjer */
+.tLabel {
+  flex: 1 1 auto;
+  min-width: 0;                /* <— kræves for at wrap/ellipsis virker i flex */
+  color: #64748b;              /* lidt lysere (slate-500/600) */
+  font-weight: 650;
+  line-height: 1.2;
+  /* FJERN enhver white-space: nowrap du evt. havde */
+  white-space: normal;         /* <— tillad linjeskift */
+  overflow-wrap: anywhere;     /* <— bryd lange ord hvis nødvendigt */
+}
+
+/* Værdi: må ikke krympe og skal blive på én linje */
+.tValue {
+  flex: 0 0 auto;              /* <— ingen krympning */
+  white-space: nowrap;         /* <— altid på én linje */
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* Den fremhævede “Estimeret total” kan få lidt mere pondus */
+.em .tValue {
+  font-size: 1.05rem;
+}
+
+/* Responsivt fallback */
+@media (max-width: 880px) {
+  .totalsBox {
+    grid-template-columns: 1fr;  /* stack på små skærme */
+  }
+}
+
+/* Mørk tilstand */
+@media (prefers-color-scheme: dark) {
+  .totalsBox {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.14);
+  }
+  .tLabel { color: #cbd5e1; }         /* slate-300 */
+  .metaValue { background: rgba(255,255,255,0.06); }
+}
+
+/* Responsivt: må gerne stacke på små skærme */
+@media (max-width: 560px) {
+  .totalsBox {
+    grid-template-columns: 1fr;
+  }
+}

@@ -29,22 +29,25 @@ type Props = {
   variant?: "contact" | "booking";
 };
 
+type NumOrEmpty = number | ""; // ← tillad tom input
+
 type FormState = {
   name: string;
   email: string;
   phone: string; // national del (uden +kode)
   countryIso: ISO2;
-  message: string; // bruges kun i contact-varianten
+  message: string; // kun i contact-varianten
   consent: boolean;
   feesAccepted: boolean; // kun i booking-varianten
   // Kun i booking-varianten
-  adults: number;
-  children: number;
-  babies: number;
+  adults: NumOrEmpty;
+  children: NumOrEmpty;
+  babies: NumOrEmpty;
   stayPurpose: string;
 };
 
 const CLEANING_FEE_DKK = 1200;
+const MAX_GUESTS = 10;
 const DIGITS_RE = /[^\d]/g;
 
 /** Resolve current UI language. */
@@ -55,6 +58,13 @@ function useUiLang(explicit?: Lang): Lang {
       ? ("da" as Lang)
       : ("en" as Lang);
   return explicit ?? i18nLang ?? "da";
+}
+
+// Hjælpere til tal↔state
+const toInt = (v: NumOrEmpty) => (typeof v === "number" ? v : 0);
+function clampInt(n: number, min: number, max: number) {
+  if (!Number.isFinite(n)) n = min;
+  return Math.min(Math.max(n, min), max);
 }
 
 export default function ContactForm({
@@ -169,6 +179,34 @@ export default function ContactForm({
     ? baseNightsTotal + CLEANING_FEE_DKK
     : baseNightsTotal;
 
+  /* ─────────────── GUEST CAP (max 10 personer) ─────────────── */
+  const nAdults = toInt(state.adults);
+  const nChildren = toInt(state.children);
+  const nBabies = toInt(state.babies);
+
+  const adultsMax = Math.max(1, MAX_GUESTS - nChildren - nBabies);
+  const childrenMax = Math.max(0, MAX_GUESTS - nAdults - nBabies);
+  const babiesMax = Math.max(0, MAX_GUESTS - nAdults - nChildren);
+
+  function onAdultsChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    if (val === "") return onChange("adults", "");
+    const next = clampInt(Number(val), 0, adultsMax);
+    onChange("adults", next);
+  }
+  function onChildrenChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    if (val === "") return onChange("children", "");
+    const next = clampInt(Number(val), 0, childrenMax);
+    onChange("children", next);
+  }
+  function onBabiesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value;
+    if (val === "") return onChange("babies", "");
+    const next = clampInt(Number(val), 0, babiesMax);
+    onChange("babies", next);
+  }
+
   // Submit
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -206,6 +244,30 @@ export default function ContactForm({
 
     // Booking-variant: ekstra krav
     if (isBooking) {
+      const A = toInt(state.adults);
+      const C = toInt(state.children);
+      const B = toInt(state.babies);
+
+      const totalGuests = A + C + B;
+      if (A < 1) {
+        setError(
+          t(
+            "Angiv venligst antal voksne (mindst 1).",
+            "Please enter number of adults (at least 1)."
+          )
+        );
+        return;
+      }
+      if (totalGuests > MAX_GUESTS) {
+        setError(
+          t(
+            "Det samlede antal gæster må højst være 10.",
+            "The total number of guests must not exceed 10."
+          )
+        );
+        return;
+      }
+
       const startISO = selPrice.start?.toISOString().slice(0, 10) ?? "";
       const endISO = selPrice.endExclusive?.toISOString().slice(0, 10) ?? "";
       if (!startISO || !endISO || !selPrice.nights || selPrice.nights <= 0) {
@@ -235,16 +297,11 @@ export default function ContactForm({
         );
         return;
       }
-      if (state.adults < 1) {
-        setError(
-          t(
-            "Angiv venligst antal voksne (mindst 1).",
-            "Please enter number of adults (at least 1)."
-          )
-        );
-        return;
-      }
     }
+
+    const A = toInt(state.adults);
+    const C = toInt(state.children);
+    const B = toInt(state.babies);
 
     setSending(true);
     try {
@@ -282,9 +339,10 @@ export default function ContactForm({
           feesAccepted: isBooking ? state.feesAccepted : undefined,
           guests: isBooking
             ? {
-                adults: state.adults,
-                children: state.children,
-                babies: state.babies,
+                adults: A,
+                children: C,
+                babies: B,
+                total: A + C + B,
               }
             : undefined,
           stayPurpose: isBooking ? state.stayPurpose.trim() : undefined,
@@ -346,58 +404,7 @@ export default function ContactForm({
             <dt>{t("Land", "Country")}</dt>
             <dd>{countryLabel(state.countryIso, uiLang)}</dd>
           </div>
-
-          {isBooking && selPrice.start && selPrice.endExclusive && (
-            <>
-              <div>
-                <dt>{t("Periode", "Period")}</dt>
-                <dd>
-                  {fmtDate.format(selPrice.start)} –{" "}
-                  {fmtDate.format(selPrice.endExclusive)} · {selPrice.nights}{" "}
-                  {t("nætter", "nights")}
-                </dd>
-              </div>
-              <div>
-                <dt>{t("Pris (overnatninger)", "Price (nights)")}</dt>
-                <dd>
-                  {selPrice.total != null
-                    ? fmtMoney.format(selPrice.total)
-                    : "—"}
-                </dd>
-              </div>
-              <div>
-                <dt>{t("Rengøring", "Cleaning")}</dt>
-                <dd>{fmtMoney.format(CLEANING_FEE_DKK)}</dd>
-              </div>
-              <div>
-                <dt>{t("Estimeret total", "Estimated total")}</dt>
-                <dd>{fmtMoney.format(totalWithCleaning)}</dd>
-              </div>
-              <div>
-                <dt>{t("Gæster", "Guests")}</dt>
-                <dd>
-                  {t("Voksne", "Adults")}: {state.adults}
-                  {", "}
-                  {t("Børn", "Children")}: {state.children}
-                  {", "}
-                  {t("Babyer", "Babies")}: {state.babies}
-                </dd>
-              </div>
-              {state.stayPurpose && (
-                <div>
-                  <dt>{t("Formål med opholdet", "Purpose of stay")}</dt>
-                  <dd>{state.stayPurpose}</dd>
-                </div>
-              )}
-            </>
-          )}
-
-          {!isBooking && state.message && (
-            <div className={styles.echoMsg}>
-              <dt>{t("Besked", "Message")}</dt>
-              <dd>{state.message}</dd>
-            </div>
-          )}
+          {/* (øvrig echo kan beholdes som før) */}
         </dl>
 
         <Buttons
@@ -430,7 +437,7 @@ export default function ContactForm({
       {/* ——— KUN i booking-varianten ——— */}
       {isBooking && (
         <>
-          {/* Kalender først (vises uafhængigt af dropdown-valget) */}
+          {/* Kalender */}
           <div className={styles.row}>
             <div className={styles.calendarWrap}>
               <AvailabilityCalendar
@@ -444,7 +451,7 @@ export default function ContactForm({
             </div>
           </div>
 
-          {/* Dropdown EFTER kalenderen (kun i booking) */}
+          {/* Dropdown EFTER kalenderen */}
           <div className={styles.row}>
             <label
               className={styles.label}
@@ -461,8 +468,9 @@ export default function ContactForm({
                 onChange={(e) => setPurpose(e.target.value as Purpose)}
                 required
               >
-                <option value="booking">{t("Booking", "Booking")}</option>
-                <option value="inquiry">{t("Forspørgsel", "Inquiry")}</option>
+                <option value="booking-inquiry">
+                  {t("Booking forespørgsel", "Booking Inquiry")}
+                </option>
                 <option value="other">{t("Andet", "Other")}</option>
               </select>
               <span className={styles.chev} aria-hidden>
@@ -515,132 +523,174 @@ export default function ContactForm({
             </div>
           </div>
 
-          {/* Gæsteantal — responsivt (stack → 2 kol → 3 kol) */}
-          <div className={`${styles.rowGroup} ${styles.cols3}`}>
+          {/* Ankomst/Afrejse visning */}
+          <div className={styles.rowGroup}>
             <div className={styles.row}>
               <label
                 className={styles.label}
-                htmlFor="cf-adults"
+                htmlFor="cf-checkin"
                 data-required="true"
               >
-                {t("Voksne", "Adults")}
+                {t("Ankomst", "Check-in")}
               </label>
               <input
-                id="cf-adults"
+                id="cf-checkin"
                 className={styles.input}
-                type="number"
-                min={1}
-                step={1}
+                type="text"
+                readOnly
                 required
-                value={state.adults}
-                onChange={(e) =>
-                  onChange("adults", Math.max(1, Number(e.target.value || 0)))
-                }
+                value={selPrice.start ? fmtDate.format(selPrice.start) : ""}
+                placeholder={t("Vælg i kalenderen", "Pick in the calendar")}
               />
             </div>
-            <div className={styles.row}>
-              <label className={styles.label} htmlFor="cf-children">
-                {t("Børn", "Children")}
-              </label>
-              <input
-                id="cf-children"
-                className={styles.input}
-                type="number"
-                min={0}
-                step={1}
-                value={state.children}
-                onChange={(e) =>
-                  onChange("children", Math.max(0, Number(e.target.value || 0)))
-                }
-              />
-            </div>
-            <div className={styles.row}>
-              <label className={styles.label} htmlFor="cf-babies">
-                {t("Babyer", "Babies")}
-              </label>
-              <input
-                id="cf-babies"
-                className={styles.input}
-                type="number"
-                min={0}
-                step={1}
-                value={state.babies}
-                onChange={(e) =>
-                  onChange("babies", Math.max(0, Number(e.target.value || 0)))
-                }
-              />
-            </div>
-          </div>
 
-          {/* Prisopsummering */}
-          <div className={styles.rowGroup}>
             <div className={styles.row}>
-              <label className={styles.label} htmlFor="cf-nights">
-                {t("Nætter", "Nights")}
+              <label
+                className={styles.label}
+                htmlFor="cf-checkout"
+                data-required="true"
+              >
+                {t("Afrejse", "Check-out")}
               </label>
               <input
-                id="cf-nights"
+                id="cf-checkout"
                 className={styles.input}
                 type="text"
                 readOnly
-                value={selPrice.nights ?? ""}
-                placeholder="—"
-              />
-            </div>
-            <div className={styles.row}>
-              <label className={styles.label} htmlFor="cf-base-total">
-                {t("Pris (overnatninger)", "Price (nights)")}
-              </label>
-              <input
-                id="cf-base-total"
-                className={styles.input}
-                type="text"
-                readOnly
+                required
                 value={
-                  selPrice.total != null ? fmtMoney.format(selPrice.total) : ""
-                }
-                placeholder="—"
-              />
-            </div>
-          </div>
-
-          <div className={styles.rowGroup}>
-            <div className={styles.row}>
-              <label className={styles.label} htmlFor="cf-cleaning">
-                {t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}
-              </label>
-              <input
-                id="cf-cleaning"
-                className={styles.input}
-                type="text"
-                readOnly
-                value={
-                  includeCleaning ? fmtMoney.format(CLEANING_FEE_DKK) : "—"
-                }
-              />
-            </div>
-            <div className={styles.row}>
-              <label className={styles.label} htmlFor="cf-total">
-                {t("Estimeret total", "Estimated total")}
-              </label>
-              <input
-                id="cf-total"
-                className={styles.input}
-                type="text"
-                readOnly
-                value={
-                  includeCleaning
-                    ? fmtMoney.format(totalWithCleaning)
-                    : selPrice.total != null
-                    ? fmtMoney.format(selPrice.total)
+                  selPrice.endExclusive
+                    ? fmtDate.format(selPrice.endExclusive)
                     : ""
                 }
-                placeholder="—"
+                placeholder={t("Vælg i kalenderen", "Pick in the calendar")}
               />
             </div>
+
+            {/* NYT: Nætter lige under afrejse – én linje */}
+            <div className={styles.inlineMeta} aria-live="polite">
+              <span className={styles.metaLabel}>
+                {t("Nætter:", "Nights:")}
+              </span>
+              <output className={styles.metaValue}>
+                {selPrice.nights ?? t("—", "N/A")}
+              </output>
+            </div>
+          </div>
+          {/* NYT: Samlet prisboks i én linje (responsiv) */}
+          <div
+            className={styles.totalsBox}
+            role="group"
+            aria-label="Price summary"
+          >
+            <div className={styles.totalItem}>
+              <span className={styles.tLabel}>
+                {t("Pris (overnatninger)", "Price (nights)")}
+              </span>
+              <output className={styles.tValue} aria-live="polite">
+                {selPrice.total != null ? fmtMoney.format(selPrice.total) : "—"}
+              </output>
+            </div>
+
+            <div className={styles.totalItem}>
+              <span className={styles.tLabel}>
+                {t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}
+              </span>
+              <output className={styles.tValue} aria-live="polite">
+                {includeCleaning ? fmtMoney.format(CLEANING_FEE_DKK) : "—"}
+              </output>
+            </div>
+
+            <div className={`${styles.totalItem} ${styles.em}`}>
+              <span className={styles.tLabel}>
+                {t("Estimeret total", "Estimated total")}
+              </span>
+              <output className={styles.tValue} aria-live="polite">
+                {includeCleaning
+                  ? fmtMoney.format(totalWithCleaning)
+                  : selPrice.total != null
+                  ? fmtMoney.format(selPrice.total)
+                  : "—"}
+              </output>
+            </div>
+          </div>
+          {/* Formål med opholdet (påkrævet, kun booking) */}
+          <div className={styles.row}>
+            <label
+              className={styles.label}
+              htmlFor="cf-staypurpose"
+              data-required="true"
+            >
+              {t(
+                "Hvad er grunden til opholdet?",
+                "What is the purpose of your stay?"
+              )}
+            </label>
+            <textarea
+              id="cf-staypurpose"
+              className={styles.textarea}
+              required
+              rows={3}
+              value={state.stayPurpose}
+              onChange={(e) => onChange("stayPurpose", e.target.value)}
+              placeholder={t("Kort beskrivelse…", "Brief description…")}
+            />
           </div>
         </>
       )}
+
+      {/* Gæsteantal — responsivt */}
+      <div className={`${styles.rowGroup} ${styles.cols3}`}>
+        <div className={styles.row}>
+          <label
+            className={styles.label}
+            htmlFor="cf-adults"
+            data-required="true"
+          >
+            {t("Voksne", "Adults")}
+          </label>
+          <input
+            id="cf-adults"
+            className={styles.input}
+            type="number"
+            min={0} // ← så det kan være tomt / midlertidigt 0
+            max={adultsMax}
+            step={1}
+            value={state.adults === "" ? "" : String(state.adults)}
+            onChange={onAdultsChange}
+          />
+        </div>
+        <div className={styles.row}>
+          <label className={styles.label} htmlFor="cf-children">
+            {t("Børn", "Children")}
+          </label>
+          <input
+            id="cf-children"
+            className={styles.input}
+            type="number"
+            min={0}
+            max={childrenMax}
+            step={1}
+            value={state.children === "" ? "" : String(state.children)}
+            onChange={onChildrenChange}
+          />
+        </div>
+        <div className={styles.row}>
+          <label className={styles.label} htmlFor="cf-babies">
+            {t("Babyer", "Babies")}
+          </label>
+          <input
+            id="cf-babies"
+            className={styles.input}
+            type="number"
+            min={0}
+            max={babiesMax}
+            step={1}
+            value={state.babies === "" ? "" : String(state.babies)}
+            onChange={onBabiesChange}
+          />
+        </div>
+      </div>
 
       {/* ——— Kontaktfelter (begge varianter) ——— */}
       <div className={styles.row}>
@@ -730,30 +780,8 @@ export default function ContactForm({
           </div>
         </div>
       </div>
-      {/* Formål med opholdet */}
-      <div className={styles.row}>
-        <label
-          className={styles.label}
-          htmlFor="cf-staypurpose"
-          data-required="true"
-        >
-          {t(
-            "Hvad er grunden til opholdet?",
-            "What is the purpose of your stay?"
-          )}
-        </label>
-        <textarea
-          id="cf-staypurpose"
-          className={styles.textarea}
-          required
-          rows={3}
-          value={state.stayPurpose}
-          onChange={(e) => onChange("stayPurpose", e.target.value)}
-          placeholder={t("Kort beskrivelse…", "Brief description…")}
-        />
-      </div>
 
-      {/* Besked-felt KUN i contact-varianten */}
+      {/* Besked-felt KUN i kontakt-varianten (påkrævet) */}
       {!isBooking && (
         <div className={styles.row}>
           <label className={styles.label} htmlFor="cf-msg" data-required="true">
