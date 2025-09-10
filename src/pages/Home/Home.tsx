@@ -157,9 +157,6 @@ export default function Home({ lang }: { lang: Lang }) {
         align="left"
       />
 
-      {/* din eksisterende tekst under CTA-knapperne – lader den stå */}
-      <a> Sikker betaling & kalender via Airbnb</a>
-
       <Separator size="4" />
 
       {/* Højdepunkter / Highlights – opdateret til dine 4 punkter */}
