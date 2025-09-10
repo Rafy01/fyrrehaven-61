@@ -11,7 +11,7 @@ import { saveLang, type Lang } from "../lib/lang";
 import CookieBanner from "../components/Cookies/CookieBanner";
 import ScrollMemory from "./ScrollMemory";
 import HashScroll from "./HashScroll";
-import ChatWidget from "../components/ChatWidget";
+// import ChatWidget from "../components/ChatWidget";
 
 
 export default function App({ lang }: { lang: Lang }) {
@@ -36,7 +36,7 @@ export default function App({ lang }: { lang: Lang }) {
             <Outlet />
           </Box>
         </Container>
-        <ChatWidget lang={lang} />
+        {/* <ChatWidget lang={lang} /> */}
       </main>
       <Footer lang={lang} />
       <ScrollMemory />
