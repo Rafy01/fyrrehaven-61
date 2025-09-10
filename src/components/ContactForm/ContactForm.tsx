@@ -108,7 +108,6 @@ export default function ContactForm({
   const [purpose, setPurpose] = React.useState<Purpose>(
     isBooking ? "booking" : "inquiry"
   );
-  const effectivePurpose: Purpose = isBooking ? purpose : "inquiry";
 
   // Kalender-valg/pris (kun relevant i booking-varianten)
   const [, setSel] = React.useState<Selection | null>(null);
@@ -302,6 +301,7 @@ export default function ContactForm({
     const A = toInt(state.adults);
     const C = toInt(state.children);
     const B = toInt(state.babies);
+    
 
     setSending(true);
     try {
@@ -324,12 +324,18 @@ export default function ContactForm({
           }
         : null;
 
+      const purposeForApi: Purpose = isBooking
+        ? purpose === "other"
+          ? "other"
+          : "booking"
+        : "inquiry";
+
       const res = await fetch(submitUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lang,
-          purpose: effectivePurpose, // "inquiry" | "booking" | "other"
+          purpose: purposeForApi, // normaliseret til API'et
           name: state.name.trim(),
           email: state.email.trim(),
           phone: fullPhone,
@@ -349,6 +355,8 @@ export default function ContactForm({
           selection: selectionPayload, // kun udfyldt i booking-variant
         }),
       });
+
+      
 
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
@@ -468,58 +476,15 @@ export default function ContactForm({
                 onChange={(e) => setPurpose(e.target.value as Purpose)}
                 required
               >
-                <option value="booking-inquiry">
-                  {t("Booking forespørgsel", "Booking Inquiry")}
+                {/* “Booking forespørgsel” ⇒ value="booking" (gyldig for backend) */}
+                <option value="booking">
+                  {t("Booking forespørgsel", "Booking request")}
                 </option>
                 <option value="other">{t("Andet", "Other")}</option>
               </select>
               <span className={styles.chev} aria-hidden>
                 ▾
               </span>
-            </div>
-          </div>
-
-          {/* Ankomst/Afrejse visning */}
-          <div className={styles.rowGroup}>
-            <div className={styles.row}>
-              <label
-                className={styles.label}
-                htmlFor="cf-checkin"
-                data-required="true"
-              >
-                {t("Ankomst", "Check-in")}
-              </label>
-              <input
-                id="cf-checkin"
-                className={styles.input}
-                type="text"
-                readOnly
-                required
-                value={selPrice.start ? fmtDate.format(selPrice.start) : ""}
-                placeholder={t("Vælg i kalenderen", "Pick in the calendar")}
-              />
-            </div>
-            <div className={styles.row}>
-              <label
-                className={styles.label}
-                htmlFor="cf-checkout"
-                data-required="true"
-              >
-                {t("Afrejse", "Check-out")}
-              </label>
-              <input
-                id="cf-checkout"
-                className={styles.input}
-                type="text"
-                readOnly
-                required
-                value={
-                  selPrice.endExclusive
-                    ? fmtDate.format(selPrice.endExclusive)
-                    : ""
-                }
-                placeholder={t("Vælg i kalenderen", "Pick in the calendar")}
-              />
             </div>
           </div>
 
