@@ -1,11 +1,10 @@
-// src/pages/Gallery/gallery.tsx
 import { Container, Box } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
 import Gallery from "../../components/Gallery/Gallery";
-import { galleryItemsFromAlbum } from "../../data/gallery"; // ⬅️ brug funktionen
+import { galleryItemsFromAlbum } from "../../data/gallery";
 import { AIRBNB_URL } from "../../lib/links";
 import styles from "./Gallery.module.css";
 
@@ -13,7 +12,6 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const path = pathOf(lang, "gallery");
 
-  // SEO
   const seoTitle = t(
     "Galleri – billeder af hus, pool og omgivelser",
     "Gallery – photos of the house, pool and surroundings"
@@ -30,16 +28,16 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
     url: `https://fyrrehaven-61.dk${path}`,
   };
 
-  // De mapper/album vi vil vise (rækkefølge)
-    const albums = [
-      { id: "plantegning", label: t("Plantegning", "Floor plan") },
-      { id: "indoor", label: t("Indendørs", "Indoor") },
-      { id: "pool", label: "Pool" },
-      { id: "spa", label: "Spa" },
-      { id: "sauna", label: "Sauna" },
-      { id: "outdoor", label: t("Udendørs", "Outdoor") }, // ← var 'aktivitetsrum'
-      { id: "area", label: t("Området", "Area (nearby)") }, // ← ny mappe
-    ] as const;
+  const albums = [
+    { id: "plantegning", label: t("Plantegning", "Floor plan") },
+    { id: "indoor", label: t("Indendørs", "Indoor") },
+    { id: "pool", label: "Pool" },
+    { id: "spa", label: "Spa" },
+    { id: "sauna", label: "Sauna" },
+    { id: "outdoor", label: t("Udendørs", "Outdoor") },
+    { id: "area", label: t("Området", "Area (nearby)") },
+  ] as const;
+
   return (
     <>
       <Head
@@ -84,18 +82,20 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
         layout="media-right"
       />
 
-      {/* Mapper som grid (3 pr. række) */}
       <Container size="3" id="grid">
         <Box py="6">
           <div className={styles.albumGrid}>
             {albums.map(({ id, label }) => (
               <figure key={id} className={styles.albumCard}>
-                <Gallery
-                  lang={lang}
-                  /* én thumbnail per “mappe” */
-                  items={galleryItemsFromAlbum(id)}
-                  maxItems={1}
-                />
+                <div className={styles.thumbClamp}>
+                  <Gallery
+                    lang={lang}
+                    items={galleryItemsFromAlbum(id)}
+                    maxItems={1}
+                    tile={{ width: 260, height: 420 }} // ⬅️ mere højde
+                    fit="cover"
+                  />
+                </div>
                 <figcaption className={styles.albumCaption}>{label}</figcaption>
               </figure>
             ))}
