@@ -50,6 +50,76 @@ const CLEANING_FEE_DKK = 1200;
 const MAX_GUESTS = 10;
 const DIGITS_RE = /[^\d]/g;
 
+/* ─────────────── EKSTRA SERVICES (KUN UI) ───────────────
+   Tilpas priser & labels efter behov. Jeg sender dem ikke til API’et,
+   så backend brydes ikke. */
+type ExtraService = {
+  id: string;
+  priceDKK: number;
+  icon?: string; // emoji ikon
+  imgSrc?: string; // alternativt billede (valgfrit)
+  label: { da: string; en: string };
+};
+
+const EXTRA_SERVICES: ExtraService[] = [
+  {
+    id: "bedding-duvet-pillow",
+    priceDKK: 75,
+    icon: "🛌", // Sengetøj (dyne + pude)
+    label: {
+      da: "Sengetøj (dyne + pude)",
+      en: "Bedding (duvet & pillow covers)",
+    },
+  },
+  {
+    id: "fitted-sheet-mattress",
+    priceDKK: 50,
+    icon: "🧺", // Sengelinned (lagen/madras)
+    label: { da: "Sengelinned (lagen/madras)", en: "Fitted sheet (mattress)" },
+  },
+  {
+    id: "towels",
+    priceDKK: 75,
+    icon: "🧼", // Håndklæder
+    label: { da: "Håndklæder", en: "Towels" },
+  },
+  {
+    id: "linens-package",
+    priceDKK: 150,
+    icon: "📦", // Pakke: sengetøj + sengelinned + håndklæder
+    label: {
+      da: "Sengetøj + Sengelinned + Håndklæder",
+      en: "Bedding + Fitted sheet + Towels",
+    },
+  },
+  {
+    id: "hottub-refill",
+    priceDKK: 150,
+    icon: "♨️", // Påfyldning af vildmarksbad
+    label: { da: "Påfyldning af vildmarksbad", en: "Hot tub refill" },
+  },
+  {
+    id: "firewood",
+    priceDKK: 100,
+    icon: "🪵", // Træ og optænding (pr. sæk)
+    label: { da: "Træ og optænding", en: "Firewood and kindling" },
+  },
+  {
+    id: "babychair",
+    priceDKK: 0,
+    icon: "🪑", // Højstol
+    label: { da: "Højstol", en: "High chair" },
+  },
+  {
+    id: "babycot",
+    priceDKK: 0,
+    icon: "👶", // Babyseng
+    label: { da: "Babyseng", en: "Baby cot" },
+  },
+];
+
+type ExtrasState = Record<string, number>; // id → qty
+
 /** Resolve current UI language. */
 function useUiLang(explicit?: Lang): Lang {
   const { i18n } = useTranslation();
@@ -66,6 +136,28 @@ function clampInt(n: number, min: number, max: number) {
   if (!Number.isFinite(n)) n = min;
   return Math.min(Math.max(n, min), max);
 }
+
+/* ─────────────── FASTE CAP-REGLER ─────────────── */
+const EXTRA_MAX_FIREWOOD = 20;
+const EXTRA_MAX_HOTTUB_REFILL = 1;
+const EXTRA_MAX_BABYCHAIR = 2; // ← NY
+const EXTRA_MAX_BABYCOT = 1;   // ← NY
+// Cap pr. service:
+// - firewood = 20 (uafhængigt af gæster)
+// - hottub-refill = 1
+// - babychair = 2
+// - babycot = 1
+// - øvrige = antal gæster
+const getExtraCap = (id: string, totalGuests: number) =>
+  id === "firewood"
+    ? EXTRA_MAX_FIREWOOD
+    : id === "hottub-refill"
+    ? EXTRA_MAX_HOTTUB_REFILL
+    : id === "babychair"
+    ? EXTRA_MAX_BABYCHAIR
+    : id === "babycot"
+    ? EXTRA_MAX_BABYCOT
+    : Math.max(0, totalGuests);
 
 export default function ContactForm({
   lang: langProp,
@@ -171,7 +263,7 @@ export default function ContactForm({
     [lang]
   );
 
-  // Udregn total inkl. rengøring (kun hvis der er nætter)
+  /* ─────────────── BASE & TOTALS ─────────────── */
   const baseNightsTotal = selPrice.total ?? 0;
   const includeCleaning = !!(selPrice.nights && selPrice.nights > 0);
   const totalWithCleaning = includeCleaning
@@ -182,6 +274,7 @@ export default function ContactForm({
   const nAdults = toInt(state.adults);
   const nChildren = toInt(state.children);
   const nBabies = toInt(state.babies);
+  const totalGuests = nAdults + nChildren + nBabies;
 
   const adultsMax = Math.max(1, MAX_GUESTS - nChildren - nBabies);
   const childrenMax = Math.max(0, MAX_GUESTS - nAdults - nBabies);
@@ -204,6 +297,85 @@ export default function ContactForm({
     if (val === "") return onChange("babies", "");
     const next = clampInt(Number(val), 0, babiesMax);
     onChange("babies", next);
+  }
+
+  /* ─────────────── EXTRA SERVICES STATE ─────────────── */
+  const [extras, setExtras] = React.useState<ExtrasState>(() =>
+    Object.fromEntries(EXTRA_SERVICES.map((s) => [s.id, 0]))
+  );
+
+  // Clamp alle extras hvis cap ændres (firewood=20, hottub=1, højstol=2, babyseng=1, øvrige = antal gæster)
+  React.useEffect(() => {
+    setExtras((prev) => {
+      let changed = false;
+      const next: ExtrasState = { ...prev };
+      for (const id of Object.keys(next)) {
+        const cap = getExtraCap(id, totalGuests);
+        const v = next[id] ?? 0;
+        if (v > cap) {
+          next[id] = cap;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [totalGuests]);
+
+  const extrasTotalDKK = React.useMemo(() => {
+    if (!includeCleaning) return 0; // kun når der faktisk er en booking (nætter valgt)
+    return EXTRA_SERVICES.reduce((sum, svc) => {
+      const qty = extras[svc.id] ?? 0;
+      return sum + qty * svc.priceDKK;
+    }, 0);
+  }, [extras, includeCleaning]);
+
+  const grandTotal = includeCleaning
+    ? totalWithCleaning + extrasTotalDKK
+    : baseNightsTotal; // hvis ingen nætter, vis kun base (typisk 0/—)
+
+  /* ─────────────── HORIZONTAL SCROLLER (UI) ─────────────── */
+  const scrollerRef = React.useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
+  const [canScrollRight, setCanScrollRight] = React.useState(false);
+
+  const updateScrollShadows = React.useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
+
+  React.useEffect(() => {
+    updateScrollShadows();
+    const el = scrollerRef.current;
+    if (!el) return;
+    const onScroll = () => updateScrollShadows();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    const ro = new ResizeObserver(updateScrollShadows);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      ro.disconnect();
+    };
+  }, [updateScrollShadows]);
+
+  function incExtra(id: string) {
+    setExtras((prev) => {
+      const cap = getExtraCap(id, totalGuests);
+      const current = prev[id] ?? 0;
+      const next = clampInt(current + 1, 0, cap);
+      if (next === current) return prev;
+      return { ...prev, [id]: next };
+    });
+  }
+  function decExtra(id: string) {
+    setExtras((prev) => {
+      const cap = getExtraCap(id, totalGuests);
+      const current = prev[id] ?? 0;
+      const next = clampInt(current - 1, 0, cap);
+      if (next === current) return prev;
+      return { ...prev, [id]: next };
+    });
   }
 
   // Submit
@@ -301,7 +473,7 @@ export default function ContactForm({
     const A = toInt(state.adults);
     const C = toInt(state.children);
     const B = toInt(state.babies);
-    
+    // (Bemærk: Jeg sender ikke extras til API’et for ikke at ændre backend)
 
     setSending(true);
     try {
@@ -356,8 +528,6 @@ export default function ContactForm({
         }),
       });
 
-      
-
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
         throw new Error(`HTTP ${res.status}${txt ? ` – ${txt}` : ""}`);
@@ -392,11 +562,12 @@ export default function ContactForm({
     const cleaningStr = includeCleaning
       ? fmtMoney.format(CLEANING_FEE_DKK)
       : t("—", "—");
-    const totalStr = includeCleaning
-      ? fmtMoney.format(totalWithCleaning)
-      : selPrice.total != null
-      ? fmtMoney.format(selPrice.total)
-      : t("—", "—");
+
+    // NYT: total inkluderer ekstra services (hvis der er nætter)
+    const totalStr =
+      includeCleaning || selPrice.total != null
+        ? fmtMoney.format(grandTotal)
+        : t("—", "—");
 
     return (
       <div
@@ -613,6 +784,110 @@ export default function ContactForm({
               </output>
             </div>
           </div>
+
+          {/* ─────────────── NYT: EKSTRA SERVICES – HORIZONTAL SCROLL ─────────────── */}
+          <div className={styles.row} aria-labelledby="extras-label">
+            <div className={styles.header}>
+              <div id="extras-label" className={styles.kicker}>
+                {t("Ekstra services", "Extra services")}
+              </div>
+              <p className={styles.title} aria-live="polite">
+                {t(
+                  "Vælg antal pr. gæst (max = antal personer). Scroll vandret for flere.",
+                  "Choose quantity per guest (max = number of guests). Scroll horizontally for more."
+                )}
+              </p>
+            </div>
+
+            <div
+              className={[
+                styles.extrasWrap,
+                canScrollLeft ? styles["is-scrollable-left"] : "",
+                canScrollRight ? styles["is-scrollable-right"] : "",
+              ].join(" ")}
+            >
+              {/* Scroll-hints (CSS viser små fade/chevrons) */}
+          
+              <div
+                ref={scrollerRef}
+                className={styles.extrasScroller}
+                role="group"
+                aria-roledescription="carousel"
+                onScroll={updateScrollShadows}
+              >
+                {EXTRA_SERVICES.map((svc) => {
+                  const qty = extras[svc.id] ?? 0;
+                  const label = lang === "da" ? svc.label.da : svc.label.en;
+                  const priceStr =
+                    svc.priceDKK > 0
+                      ? fmtMoney.format(svc.priceDKK)
+                      : t("Gratis", "Free");
+                  const cap = getExtraCap(svc.id, totalGuests);
+
+                  return (
+                    <div key={svc.id} className={styles.extraCard}>
+                      <div className={styles.extraThumb} aria-hidden="true">
+                        {svc.imgSrc ? (
+                          <img src={svc.imgSrc} alt="" />
+                        ) : (
+                          <span>{svc.icon ?? "✨"}</span>
+                        )}
+                      </div>
+
+                      <div className={styles.extraMeta}>
+                        <div className={styles.extraLabel}>{label}</div>
+                        <div className={styles.extraPrice}>
+                          {priceStr}
+                          {svc.priceDKK > 0 ? t(" / stk.", " / each") : ""}
+                        </div>
+                      </div>
+
+                      <div className={styles.extraCounter}>
+                        <button
+                          type="button"
+                          className={styles.extraBtn}
+                          onClick={() => decExtra(svc.id)}
+                          aria-label={t(
+                            `Minus én ${label}`,
+                            `Decrease ${label}`
+                          )}
+                          disabled={qty <= 0}
+                          data-variant="minus"
+                        >
+                          –
+                        </button>
+                        <output
+                          className={styles.extraQty}
+                          aria-live="polite"
+                          data-animate={qty > 0 ? "pop" : undefined}
+                        >
+                          {qty}
+                        </output>
+                        <button
+                          type="button"
+                          className={styles.extraBtn}
+                          onClick={() => incExtra(svc.id)}
+                          aria-label={t(
+                            `Plus én ${label} (max ${cap})`,
+                            `Increase ${label} (max ${cap})`
+                          )}
+                          disabled={qty >= cap}
+                          data-variant="plus"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Små, ikke-interaktive hints (kan styles/animere i CSS) */}
+              <div className={styles.extrasHintLeft} aria-hidden />
+              <div className={styles.extrasHintRight} aria-hidden />
+            </div>
+          </div>
+
           {/* NYT: Samlet prisboks i én linje (responsiv) */}
           <div
             className={styles.totalsBox}
@@ -637,19 +912,21 @@ export default function ContactForm({
               </output>
             </div>
 
+            {/* Bemærk: vi viser ikke en separat “Ekstra services”-linje,
+                men totalen nedenfor INKLUDERER extrasTotalDKK. */}
+
             <div className={`${styles.totalItem} ${styles.em}`}>
               <span className={styles.tLabel}>
                 {t("Estimeret total", "Estimated total")}
               </span>
               <output className={styles.tValue} aria-live="polite">
-                {includeCleaning
-                  ? fmtMoney.format(totalWithCleaning)
-                  : selPrice.total != null
-                  ? fmtMoney.format(selPrice.total)
+                {includeCleaning || selPrice.total != null
+                  ? fmtMoney.format(grandTotal)
                   : "—"}
               </output>
             </div>
           </div>
+
           {/* Formål med opholdet (påkrævet, kun booking) */}
           <div className={styles.row}>
             <label
@@ -729,6 +1006,7 @@ export default function ContactForm({
           </div>
         </div>
       )}
+
       {/* ——— Kontaktfelter (begge varianter) ——— */}
       <div className={styles.row}>
         <label className={styles.label} htmlFor="cf-name" data-required="true">
