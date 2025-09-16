@@ -825,7 +825,6 @@ export default function ContactForm({
               />
             </div>
           </div>
-
           {/* Dropdown EFTER kalenderen */}
           <div className={styles.row}>
             <label
@@ -853,7 +852,6 @@ export default function ContactForm({
               </span>
             </div>
           </div>
-
           {/* Ankomst/Afrejse visning */}
           <div className={styles.rowGroup}>
             <div className={styles.row}>
@@ -908,14 +906,13 @@ export default function ContactForm({
               </output>
             </div>
           </div>
-
           {/* EKSTRA SERVICES – HORIZONTAL SCROLL */}
           <div className={styles.row} aria-labelledby="extras-label">
             <div className={styles.header}>
-              <div id="extras-label" className={styles.kicker}>
+              <label id="extras-label" className={styles.label} data-required="true">
                 {t("Ekstra services", "Extra services")}
-              </div>
-              <p className={styles.title} aria-live="polite">
+              </label>
+              <p className={styles.title} aria-live="polite" >
                 {t(
                   "Vælg ekstra services eller markér “Ønsker ikke ekstra service”. Scroll vandret for flere.",
                   "Choose extra services or tick “No extra services”. Scroll horizontally for more."
@@ -1013,7 +1010,6 @@ export default function ContactForm({
               <div className={styles.extrasHintRight} aria-hidden />
             </div>
           </div>
-
           {/* Samlet prisboks */}
           {/* Samlet prisboks – 4 kolonner på én linje */}
           <div
@@ -1073,7 +1069,6 @@ export default function ContactForm({
               </output>
             </div>
           </div>
-
           {/* Formål med opholdet (påkrævet, kun booking) */}
           <div className={styles.row}>
             <label
