@@ -63,7 +63,7 @@ const EXTRA_SERVICES: ExtraService[] = [
   {
     id: "bedding-duvet-pillow",
     priceDKK: 75,
-    icon: "🛌", // Sengetøj (dyne + pude)
+    icon: "🛌",
     label: {
       da: "Sengetøj (dyne + pude)",
       en: "Bedding (duvet & pillow covers)",
@@ -72,19 +72,19 @@ const EXTRA_SERVICES: ExtraService[] = [
   {
     id: "fitted-sheet-mattress",
     priceDKK: 50,
-    icon: "🧺", // Sengelinned (lagen/madras)
+    icon: "🧺",
     label: { da: "Sengelinned (lagen/madras)", en: "Fitted sheet (mattress)" },
   },
   {
     id: "towels",
     priceDKK: 75,
-    icon: "🧼", // Håndklæder
+    icon: "🧼",
     label: { da: "Håndklæder", en: "Towels" },
   },
   {
     id: "linens-package",
     priceDKK: 150,
-    icon: "📦", // Pakke: sengetøj + sengelinned + håndklæder
+    icon: "📦",
     label: {
       da: "Sengetøj + Sengelinned + Håndklæder",
       en: "Bedding + Fitted sheet + Towels",
@@ -93,25 +93,25 @@ const EXTRA_SERVICES: ExtraService[] = [
   {
     id: "hottub-refill",
     priceDKK: 150,
-    icon: "♨️", // Påfyldning af vildmarksbad
+    icon: "♨️",
     label: { da: "Påfyldning af vildmarksbad", en: "Hot tub refill" },
   },
   {
     id: "firewood",
     priceDKK: 100,
-    icon: "🪵", // Træ og optænding (pr. sæk)
+    icon: "🪵",
     label: { da: "Træ og optænding", en: "Firewood and kindling" },
   },
   {
     id: "babychair",
     priceDKK: 0,
-    icon: "🪑", // Højstol
+    icon: "🪑",
     label: { da: "Højstol", en: "High chair" },
   },
   {
     id: "babycot",
     priceDKK: 0,
-    icon: "👶", // Babyseng
+    icon: "👶",
     label: { da: "Babyseng", en: "Baby cot" },
   },
 ];
@@ -138,14 +138,15 @@ function clampInt(n: number, min: number, max: number) {
 /* ─────────────── FASTE CAP-REGLER ─────────────── */
 const EXTRA_MAX_FIREWOOD = 20;
 const EXTRA_MAX_HOTTUB_REFILL = 1;
-const EXTRA_MAX_BABYCHAIR = 2; // max 2
-const EXTRA_MAX_BABYCOT = 1; // max 1
-// Cap pr. service:
-// - firewood = 20 (uafhængigt af gæster)
-// - hottub-refill = 1
-// - babychair = 2
-// - babycot = 1
-// - øvrige = antal gæster
+const EXTRA_MAX_BABYCHAIR = 2;
+const EXTRA_MAX_BABYCOT = 1;
+/** Cap pr. service:
+ *  - firewood = 20 (uafhængigt af gæster)
+ *  - hottub-refill = 1
+ *  - babychair = 2
+ *  - babycot = 1
+ *  - øvrige = antal gæster
+ */
 const getExtraCap = (id: string, totalGuests: number) =>
   id === "firewood"
     ? EXTRA_MAX_FIREWOOD
@@ -302,7 +303,7 @@ export default function ContactForm({
     Object.fromEntries(EXTRA_SERVICES.map((s) => [s.id, 0]))
   );
 
-  // Clamp alle extras hvis cap ændres (firewood=20, hottub=1, højstol=2, babyseng=1, øvrige = antal gæster)
+  // Clamp extras når cap ændres
   React.useEffect(() => {
     setExtras((prev) => {
       let changed = false;
@@ -320,18 +321,14 @@ export default function ContactForm({
   }, [totalGuests]);
 
   const extrasTotalDKK = React.useMemo(() => {
-    if (!includeCleaning) return 0; // kun når der faktisk er en booking (nætter valgt)
+    if (!includeCleaning) return 0; // kun når der er en booking (nætter valgt)
     return EXTRA_SERVICES.reduce((sum, svc) => {
       const qty = extras[svc.id] ?? 0;
       return sum + qty * svc.priceDKK;
     }, 0);
   }, [extras, includeCleaning]);
 
-  const grandTotal = includeCleaning
-    ? totalWithCleaning + extrasTotalDKK
-    : baseNightsTotal; // hvis ingen nætter, vis kun base (typisk 0/—)
-
-  // Udvalgte extras (til success-view)
+  // Udvalgte extras (bruges i success-view og sendes til API)
   const selectedExtras = React.useMemo(
     () =>
       EXTRA_SERVICES.map((svc) => {
@@ -351,6 +348,10 @@ export default function ContactForm({
       }>,
     [extras]
   );
+
+  const grandTotal = includeCleaning
+    ? totalWithCleaning + extrasTotalDKK
+    : baseNightsTotal;
 
   /* ─────────────── HORIZONTAL SCROLLER (UI) ─────────────── */
   const scrollerRef = React.useRef<HTMLDivElement | null>(null);
@@ -489,11 +490,6 @@ export default function ContactForm({
       }
     }
 
-    const A = toInt(state.adults);
-    const C = toInt(state.children);
-    const B = toInt(state.babies);
-    // (Bemærk: Jeg sender ikke extras til API’et i denne fil)
-
     setSending(true);
     try {
       const selectionPayload = isBooking
@@ -507,6 +503,11 @@ export default function ContactForm({
             totalWithCleaningDKK: includeCleaning
               ? (selPrice.total ?? 0) + CLEANING_FEE_DKK
               : selPrice.total ?? null,
+            // NEW: total inkl. ekstra services (hjælper mailen)
+            totalWithCleaningAndExtrasDKK:
+              includeCleaning && selPrice.total != null
+                ? (selPrice.total ?? 0) + CLEANING_FEE_DKK + extrasTotalDKK
+                : null,
             breakdown:
               selPrice.breakdown?.map((b) => ({
                 date: b.date.toISOString().slice(0, 10),
@@ -536,14 +537,25 @@ export default function ContactForm({
           feesAccepted: isBooking ? state.feesAccepted : undefined,
           guests: isBooking
             ? {
-                adults: A,
-                children: C,
-                babies: B,
-                total: A + C + B,
+                adults: toInt(state.adults),
+                children: toInt(state.children),
+                babies: toInt(state.babies),
+                total:
+                  toInt(state.adults) +
+                  toInt(state.children) +
+                  toInt(state.babies),
               }
             : undefined,
           stayPurpose: isBooking ? state.stayPurpose.trim() : undefined,
           selection: selectionPayload, // kun udfyldt i booking-variant
+          // NEW: send valgte ekstra services til mail-backend
+          extras:
+            isBooking && selectedExtras.length > 0
+              ? {
+                  items: selectedExtras, // [{ id, qty, unitPriceDKK, label:{da,en} }]
+                  totalDKK: extrasTotalDKK,
+                }
+              : null,
         }),
       });
 
@@ -582,13 +594,20 @@ export default function ContactForm({
       ? fmtMoney.format(CLEANING_FEE_DKK)
       : t("—", "—");
 
-    // Total inkluderer ekstra services hvis valgt (kun hvis der er nætter)
+    // Total inkl. ekstra services (hvis der er nætter)
     const totalStr =
       includeCleaning || selPrice.total != null
         ? fmtMoney.format(grandTotal)
         : t("—", "—");
 
-    const hasExtras = selectedExtras.length > 0;
+    // Liste til visning
+    const extrasLines =
+      selectedExtras.map((it) => {
+        const label = lang === "da" ? it.label.da : it.label.en;
+        const unit =
+          it.unitPriceDKK > 0 ? ` (${fmtMoney.format(it.unitPriceDKK)})` : "";
+        return `${it.qty} × ${label}${unit}`;
+      }) ?? [];
 
     return (
       <div
@@ -638,25 +657,6 @@ export default function ContactForm({
               <dt>{t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}</dt>
               <dd>{cleaningStr}</dd>
             </div>
-
-            {hasExtras && (
-              <div>
-                <dt>{t("Valgte ekstra services", "Selected extras")}</dt>
-                <dd>
-                  <ul style={{ margin: 0, paddingLeft: "1.1em" }}>
-                    {selectedExtras.map((e) => (
-                      <li key={e.id}>
-                        {e.qty} × {lang === "da" ? e.label.da : e.label.en}
-                        {e.unitPriceDKK > 0
-                          ? ` (${fmtMoney.format(e.unitPriceDKK)})`
-                          : ""}
-                      </li>
-                    ))}
-                  </ul>
-                </dd>
-              </div>
-            )}
-
             <div>
               <dt>{t("Estimeret total", "Estimated total")}</dt>
               <dd>{totalStr}</dd>
@@ -672,6 +672,21 @@ export default function ContactForm({
                 )}`}
               </dd>
             </div>
+
+            {selectedExtras.length > 0 && (
+              <div>
+                <dt>
+                  {t("Valgte ekstra services", "Selected extra services")}
+                </dt>
+                <dd>
+                  <ul style={{ margin: 0, paddingLeft: "1.1rem" }}>
+                    {extrasLines.map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            )}
           </dl>
         )}
 
@@ -718,7 +733,7 @@ export default function ContactForm({
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           const tag = (e.target as HTMLElement).tagName;
-          // Allow enter in <textarea>, but not in other fields
+          // Allow enter i <textarea>, men ikke i andre felter
           if (tag !== "TEXTAREA") e.preventDefault();
         }
       }}
@@ -758,7 +773,6 @@ export default function ContactForm({
                 onChange={(e) => setPurpose(e.target.value as Purpose)}
                 required
               >
-                {/* “Booking forespørgsel” ⇒ value="booking" (gyldig for backend) */}
                 <option value="booking">
                   {t("Booking forespørgsel", "Booking request")}
                 </option>
@@ -814,7 +828,7 @@ export default function ContactForm({
               />
             </div>
 
-            {/* Nætter lige under afrejse – én linje */}
+            {/* Nætter lige under afrejse */}
             <div className={styles.inlineMeta} aria-live="polite">
               <span className={styles.metaLabel}>
                 {t("Nætter:", "Nights:")}
@@ -824,61 +838,6 @@ export default function ContactForm({
               </output>
             </div>
           </div>
-
-          {/* Gæsteantal — responsivt (KUN i booking) */}
-          {isBooking && (
-            <div className={`${styles.rowGroup} ${styles.cols3}`}>
-              <div className={styles.row}>
-                <label
-                  className={styles.label}
-                  htmlFor="cf-adults"
-                  data-required="true"
-                >
-                  {t("Voksne", "Adults")}
-                </label>
-                <input
-                  id="cf-adults"
-                  className={styles.input}
-                  type="number"
-                  min={0}
-                  max={adultsMax}
-                  step={1}
-                  value={state.adults === "" ? "" : String(state.adults)}
-                  onChange={onAdultsChange}
-                />
-              </div>
-              <div className={styles.row}>
-                <label className={styles.label} htmlFor="cf-children">
-                  {t("Børn", "Children")}
-                </label>
-                <input
-                  id="cf-children"
-                  className={styles.input}
-                  type="number"
-                  min={0}
-                  max={childrenMax}
-                  step={1}
-                  value={state.children === "" ? "" : String(state.children)}
-                  onChange={onChildrenChange}
-                />
-              </div>
-              <div className={styles.row}>
-                <label className={styles.label} htmlFor="cf-babies">
-                  {t("Babyer", "Babies")}
-                </label>
-                <input
-                  id="cf-babies"
-                  className={styles.input}
-                  type="number"
-                  min={0}
-                  max={babiesMax}
-                  step={1}
-                  value={state.babies === "" ? "" : String(state.babies)}
-                  onChange={onBabiesChange}
-                />
-              </div>
-            </div>
-          )}
 
           {/* EKSTRA SERVICES – HORIZONTAL SCROLL */}
           <div className={styles.row} aria-labelledby="extras-label">
@@ -975,7 +934,7 @@ export default function ContactForm({
                 })}
               </div>
 
-              {/* Små, ikke-interaktive hints */}
+              {/* Hints */}
               <div className={styles.extrasHintLeft} aria-hidden />
               <div className={styles.extrasHintRight} aria-hidden />
             </div>
@@ -1040,6 +999,61 @@ export default function ContactForm({
             />
           </div>
         </>
+      )}
+
+      {/* Gæsteantal — responsivt (KUN i booking) */}
+      {isBooking && (
+        <div className={`${styles.rowGroup} ${styles.cols3}`}>
+          <div className={styles.row}>
+            <label
+              className={styles.label}
+              htmlFor="cf-adults"
+              data-required="true"
+            >
+              {t("Voksne", "Adults")}
+            </label>
+            <input
+              id="cf-adults"
+              className={styles.input}
+              type="number"
+              min={0}
+              max={adultsMax}
+              step={1}
+              value={state.adults === "" ? "" : String(state.adults)}
+              onChange={onAdultsChange}
+            />
+          </div>
+          <div className={styles.row}>
+            <label className={styles.label} htmlFor="cf-children">
+              {t("Børn", "Children")}
+            </label>
+            <input
+              id="cf-children"
+              className={styles.input}
+              type="number"
+              min={0}
+              max={childrenMax}
+              step={1}
+              value={state.children === "" ? "" : String(state.children)}
+              onChange={onChildrenChange}
+            />
+          </div>
+          <div className={styles.row}>
+            <label className={styles.label} htmlFor="cf-babies">
+              {t("Babyer", "Babies")}
+            </label>
+            <input
+              id="cf-babies"
+              className={styles.input}
+              type="number"
+              min={0}
+              max={babiesMax}
+              step={1}
+              value={state.babies === "" ? "" : String(state.babies)}
+              onChange={onBabiesChange}
+            />
+          </div>
+        </div>
       )}
 
       {/* ——— Kontaktfelter (begge varianter) ——— */}
