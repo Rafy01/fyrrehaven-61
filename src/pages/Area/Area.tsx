@@ -88,11 +88,11 @@ export default function Area({ lang }: { lang: Lang }) {
         ]}
         primaryCta={{
           label: t("Book nu", "Book now"),
-          to: `${path}#book`,
+          to: pathOf(lang, "book"),
         }}
         secondaryCta={{
           label: t("Se området", "View the area"),
-          to: "#filters",
+          to: pathOf(lang, "house"),
         }}
         media={{
           type: "image",
