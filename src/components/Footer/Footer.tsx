@@ -241,9 +241,12 @@ export default function Footer({
             <ul className={styles.bottomLinks}>
               {/* Erstat # med rigtige ruter når klar */}
               <li>
-                <a className={styles.bottomLink} href="#">
+                <Link
+                  className={styles.bottomLink}
+                  to={pathOf(currentLang, "privacy")}
+                >
                   {t("Privatliv", "Privacy")}
-                </a>
+                </Link>
               </li>
               <li>
                 <a className={styles.bottomLink} href="#">
