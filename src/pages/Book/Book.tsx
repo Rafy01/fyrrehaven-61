@@ -5,6 +5,7 @@ import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
+import { AIRBNB_URL } from "../../lib/links";
 
 // Hvis du har en index-barrel for AvailabilityCalendar, kan du bruge
 //  import AvailabilityCalendar from "../../components/AvailabilityCalendar";
@@ -25,8 +26,7 @@ export default function Book({ lang }: { lang: Lang }) {
     "Send a direct booking request or book via Airbnb. Outdoor heated pool (May 1 – Oct 1), sleeps 10."
   );
 
-  // Sæt din rigtige Airbnb-URL her
-  const AIRBNB_URL = "https://www.airbnb.com/rooms/your-listing-id";
+
 
   // Struktureret data
   const jsonLd = {
@@ -55,8 +55,6 @@ export default function Book({ lang }: { lang: Lang }) {
     "Send a direct request – or book via Airbnb if you prefer."
   );
 
-  // Link til kontaktformularen med “booking-intent”
-  const contactTo = `${pathOf(lang, "contact")}#contact`;
 
   // Aktuel måned til kalenderen
 
@@ -82,10 +80,10 @@ export default function Book({ lang }: { lang: Lang }) {
           t("Plads til 10 gæster", "Sleeps 10 guests"),
           t("Familievenligt", "Family friendly"),
         ]}
-        primaryCta={{
-          label: t("Anmod om booking", "Request booking"),
-          to: contactTo,
-        }}
+        // primaryCta={{
+        //   label: t("Anmod om booking", "Request booking"),
+        //   to: pathOf(lang, "book") + "#booking",
+        // }}
         // Brug ekstern href til Airbnb for at undgå router-redirects
         secondaryCta={
           AIRBNB_URL
@@ -98,7 +96,7 @@ export default function Book({ lang }: { lang: Lang }) {
         }
         media={{
           type: "image",
-          src: "/book/hero-book.webp",
+          src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3807.webp",
           alt: t(
             "Booking af feriehus ved Fjellerup",
             "Book the holiday home in Fjellerup"
@@ -134,7 +132,12 @@ export default function Book({ lang }: { lang: Lang }) {
         </Box>
       </Container>
 
-      <ContactForm lang={lang} submitUrl="/api/contact" variant="booking" />
+      <ContactForm
+        lang={lang}
+        submitUrl="/api/contact"
+        variant="booking"
+        ctaAnchor="#booking"
+      />
     </>
   );
 }

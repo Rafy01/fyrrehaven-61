@@ -27,6 +27,7 @@ type Props = {
   submitUrl?: string;
   /** 'contact' = ingen kalender; 'booking' = kalender + bookingfelter */
   variant?: "contact" | "booking";
+  ctaAnchor?: string;
 };
 
 type NumOrEmpty = number | ""; // ← tillad tom input
