@@ -182,8 +182,6 @@ export default function Home({ lang }: { lang: Lang }) {
                 ),
                 aspect: "4 / 3",
               },
-              ctaLabel: t("Se poolområdet", "See the pool area"),
-              to: pathOf(lang, "house"),
             },
             {
               title: t("Brændefyret vildmarksbad", "Wood-fired hot tub"),
@@ -200,8 +198,6 @@ export default function Home({ lang }: { lang: Lang }) {
                 ),
                 aspect: "4 / 3",
               },
-              ctaLabel: t("Se vildmarksbadet", "View the hot tub"),
-              to: pathOf(lang, "house"),
             },
             {
               title: t("Sauna på el", "Electric sauna"),
@@ -218,8 +214,6 @@ export default function Home({ lang }: { lang: Lang }) {
                 ),
                 aspect: "4 / 3",
               },
-              ctaLabel: t("Se saunaen", "View the sauna"),
-              to: pathOf(lang, "house"),
             },
             {
               title: t("Fantastisk område", "Fantastic surroundings"),
@@ -236,8 +230,6 @@ export default function Home({ lang }: { lang: Lang }) {
                 ),
                 aspect: "4 / 3",
               },
-              ctaLabel: t("Se området", "Explore the area"),
-              to: pathOf(lang, "area"),
             },
           ]}
         />
