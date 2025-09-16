@@ -59,7 +59,18 @@ type ExtraService = {
   label: { da: string; en: string };
 };
 
+const NO_EXTRAS_ID = "no-extras";
+
 const EXTRA_SERVICES: ExtraService[] = [
+  {
+    id: NO_EXTRAS_ID,
+    priceDKK: 0,
+    icon: "🚫",
+    label: {
+      da: "Ønsker ikke ekstra service",
+      en: "No extra services",
+    },
+  },
   {
     id: "bedding-duvet-pillow",
     priceDKK: 75,
@@ -141,6 +152,7 @@ const EXTRA_MAX_HOTTUB_REFILL = 1;
 const EXTRA_MAX_BABYCHAIR = 2;
 const EXTRA_MAX_BABYCOT = 1;
 /** Cap pr. service:
+ *  - no-extras = 1 (eksklusiv)
  *  - firewood = 20 (uafhængigt af gæster)
  *  - hottub-refill = 1
  *  - babychair = 2
@@ -148,7 +160,9 @@ const EXTRA_MAX_BABYCOT = 1;
  *  - øvrige = antal gæster
  */
 const getExtraCap = (id: string, totalGuests: number) =>
-  id === "firewood"
+  id === NO_EXTRAS_ID
+    ? 1
+    : id === "firewood"
     ? EXTRA_MAX_FIREWOOD
     : id === "hottub-refill"
     ? EXTRA_MAX_HOTTUB_REFILL
@@ -303,17 +317,27 @@ export default function ContactForm({
     Object.fromEntries(EXTRA_SERVICES.map((s) => [s.id, 0]))
   );
 
-  // Clamp extras når cap ændres
+  // Clamp extras når cap ændres + håndtér eksklusiv "no-extras"
   React.useEffect(() => {
     setExtras((prev) => {
       let changed = false;
       const next: ExtrasState = { ...prev };
+      // cap pr. id
       for (const id of Object.keys(next)) {
         const cap = getExtraCap(id, totalGuests);
         const v = next[id] ?? 0;
         if (v > cap) {
           next[id] = cap;
           changed = true;
+        }
+      }
+      // eksklusivitet
+      if ((next[NO_EXTRAS_ID] ?? 0) > 0) {
+        for (const id of Object.keys(next)) {
+          if (id !== NO_EXTRAS_ID && next[id] !== 0) {
+            next[id] = 0;
+            changed = true;
+          }
         }
       }
       return changed ? next : prev;
@@ -385,6 +409,18 @@ export default function ContactForm({
       const current = prev[id] ?? 0;
       const next = clampInt(current + 1, 0, cap);
       if (next === current) return prev;
+
+      // eksklusiv "no-extras"
+      if (id === NO_EXTRAS_ID && next > 0) {
+        const cleared: ExtrasState = { ...prev, [NO_EXTRAS_ID]: 1 };
+        for (const k of Object.keys(cleared)) {
+          if (k !== NO_EXTRAS_ID) cleared[k] = 0;
+        }
+        return cleared;
+      }
+      if (id !== NO_EXTRAS_ID && (prev[NO_EXTRAS_ID] ?? 0) > 0) {
+        return { ...prev, [NO_EXTRAS_ID]: 0, [id]: next };
+      }
       return { ...prev, [id]: next };
     });
   }
@@ -470,6 +506,23 @@ export default function ContactForm({
         );
         return;
       }
+
+      // NYT: Ekstra services påkrævet
+      const chosenSome =
+        (extras[NO_EXTRAS_ID] ?? 0) > 0 ||
+        EXTRA_SERVICES.some(
+          (s) => s.id !== NO_EXTRAS_ID && (extras[s.id] ?? 0) > 0
+        );
+      if (!chosenSome) {
+        setError(
+          t(
+            "Vælg venligst ekstra service – eller markér “Ønsker ikke ekstra service”.",
+            "Please choose at least one extra service – or tick “No extra services”."
+          )
+        );
+        return;
+      }
+
       if (!state.feesAccepted) {
         setError(
           t(
@@ -503,7 +556,6 @@ export default function ContactForm({
             totalWithCleaningDKK: includeCleaning
               ? (selPrice.total ?? 0) + CLEANING_FEE_DKK
               : selPrice.total ?? null,
-            // NEW: total inkl. ekstra services (hjælper mailen)
             totalWithCleaningAndExtrasDKK:
               includeCleaning && selPrice.total != null
                 ? (selPrice.total ?? 0) + CLEANING_FEE_DKK + extrasTotalDKK
@@ -522,12 +574,35 @@ export default function ContactForm({
           : "booking"
         : "inquiry";
 
+      const selectedExtrasForPayload =
+        isBooking && selectedExtras.length > 0
+          ? {
+              items: selectedExtras, // inkluderer evt. no-extras (1 × 0 kr.)
+              totalDKK: extrasTotalDKK,
+            }
+          : (extras[NO_EXTRAS_ID] ?? 0) > 0
+          ? {
+              items: [
+                {
+                  id: NO_EXTRAS_ID,
+                  qty: 1,
+                  unitPriceDKK: 0,
+                  label: {
+                    da: "Ønsker ikke ekstra service",
+                    en: "No extra services",
+                  },
+                },
+              ],
+              totalDKK: 0,
+            }
+          : null;
+
       const res = await fetch(submitUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lang,
-          purpose: purposeForApi, // normaliseret til API'et
+          purpose: purposeForApi,
           name: state.name.trim(),
           email: state.email.trim(),
           phone: fullPhone,
@@ -547,15 +622,8 @@ export default function ContactForm({
               }
             : undefined,
           stayPurpose: isBooking ? state.stayPurpose.trim() : undefined,
-          selection: selectionPayload, // kun udfyldt i booking-variant
-          // NEW: send valgte ekstra services til mail-backend
-          extras:
-            isBooking && selectedExtras.length > 0
-              ? {
-                  items: selectedExtras, // [{ id, qty, unitPriceDKK, label:{da,en} }]
-                  totalDKK: extrasTotalDKK,
-                }
-              : null,
+          selection: selectionPayload,
+          extras: selectedExtrasForPayload,
         }),
       });
 
@@ -594,13 +662,11 @@ export default function ContactForm({
       ? fmtMoney.format(CLEANING_FEE_DKK)
       : t("—", "—");
 
-    // Total inkl. ekstra services (hvis der er nætter)
     const totalStr =
       includeCleaning || selPrice.total != null
         ? fmtMoney.format(grandTotal)
         : t("—", "—");
 
-    // Liste til visning
     const extrasLines =
       selectedExtras.map((it) => {
         const label = lang === "da" ? it.label.da : it.label.en;
@@ -658,6 +724,24 @@ export default function ContactForm({
               <dd>{cleaningStr}</dd>
             </div>
             <div>
+              <dt>{t("Ekstra services", "Extras")}</dt>
+              <dd>
+                {includeCleaning
+                  ? fmtMoney.format(extrasTotalDKK)
+                  : t("—", "—")}
+                {selectedExtras.length > 0 && (
+                  <>
+                    <br />
+                    <ul style={{ margin: 0, paddingLeft: "1.1rem" }}>
+                      {extrasLines.map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </dd>
+            </div>
+            <div>
               <dt>{t("Estimeret total", "Estimated total")}</dt>
               <dd>{totalStr}</dd>
             </div>
@@ -672,21 +756,6 @@ export default function ContactForm({
                 )}`}
               </dd>
             </div>
-
-            {selectedExtras.length > 0 && (
-              <div>
-                <dt>
-                  {t("Valgte ekstra services", "Selected extra services")}
-                </dt>
-                <dd>
-                  <ul style={{ margin: 0, paddingLeft: "1.1rem" }}>
-                    {extrasLines.map((line, i) => (
-                      <li key={i}>{line}</li>
-                    ))}
-                  </ul>
-                </dd>
-              </div>
-            )}
           </dl>
         )}
 
@@ -847,8 +916,8 @@ export default function ContactForm({
               </div>
               <p className={styles.title} aria-live="polite">
                 {t(
-                  "Vælg antal pr. gæst (max = antal personer). Scroll vandret for flere.",
-                  "Choose quantity per guest (max = number of guests). Scroll horizontally for more."
+                  "Vælg ekstra services eller markér “Ønsker ikke ekstra service”. Scroll vandret for flere.",
+                  "Choose extra services or tick “No extra services”. Scroll horizontally for more."
                 )}
               </p>
             </div>
@@ -875,6 +944,10 @@ export default function ContactForm({
                       ? fmtMoney.format(svc.priceDKK)
                       : t("Gratis", "Free");
                   const cap = getExtraCap(svc.id, totalGuests);
+
+                  const isNoExtras = svc.id === NO_EXTRAS_ID;
+                  const disabledByNoExtras =
+                    !isNoExtras && (extras[NO_EXTRAS_ID] ?? 0) > 0;
 
                   return (
                     <div key={svc.id} className={styles.extraCard}>
@@ -903,7 +976,7 @@ export default function ContactForm({
                             `Minus én ${label}`,
                             `Decrease ${label}`
                           )}
-                          disabled={qty <= 0}
+                          disabled={qty <= 0 || disabledByNoExtras}
                           data-variant="minus"
                         >
                           –
@@ -923,7 +996,7 @@ export default function ContactForm({
                             `Plus én ${label} (max ${cap})`,
                             `Increase ${label} (max ${cap})`
                           )}
-                          disabled={qty >= cap}
+                          disabled={qty >= cap || disabledByNoExtras}
                           data-variant="plus"
                         >
                           +
@@ -941,6 +1014,7 @@ export default function ContactForm({
           </div>
 
           {/* Samlet prisboks */}
+          {/* Samlet prisboks – 4 kolonner på én linje */}
           <div
             className={styles.totalsBox}
             role="group"
@@ -948,7 +1022,10 @@ export default function ContactForm({
           >
             <div className={styles.totalItem}>
               <span className={styles.tLabel}>
-                {t("Pris (overnatninger)", "Price (nights)")}
+                <span className={styles.tTop}>{t("Pris", "Price")}</span>
+                <span className={styles.tSub}>
+                  {t("(overnatninger)", "(nights)")}
+                </span>
               </span>
               <output className={styles.tValue} aria-live="polite">
                 {selPrice.total != null ? fmtMoney.format(selPrice.total) : "—"}
@@ -957,16 +1034,36 @@ export default function ContactForm({
 
             <div className={styles.totalItem}>
               <span className={styles.tLabel}>
-                {t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}
+                <span className={styles.tTop}>
+                  {t("Rengøring", "Cleaning")}
+                </span>
+                <span className={styles.tSub}>
+                  {t("(obligatorisk)", "(mandatory)")}
+                </span>
               </span>
               <output className={styles.tValue} aria-live="polite">
                 {includeCleaning ? fmtMoney.format(CLEANING_FEE_DKK) : "—"}
               </output>
             </div>
 
+            <div className={styles.totalItem}>
+              <span className={styles.tLabel}>
+                <span className={styles.tTop}>{t("Ekstra", "Extras")}</span>
+                <span className={styles.tSub}>
+                  {t("(services)", "(services)")}
+                </span>
+              </span>
+              <output className={styles.tValue} aria-live="polite">
+                {includeCleaning ? fmtMoney.format(extrasTotalDKK) : "—"}
+              </output>
+            </div>
+
             <div className={`${styles.totalItem} ${styles.em}`}>
               <span className={styles.tLabel}>
-                {t("Estimeret total", "Estimated total")}
+                <span className={styles.tTop}>
+                  {t("Estimeret", "Estimated")}
+                </span>
+                <span className={styles.tSub}>{t("total", "total")}</span>
               </span>
               <output className={styles.tValue} aria-live="polite">
                 {includeCleaning || selPrice.total != null
