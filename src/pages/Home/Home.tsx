@@ -147,7 +147,7 @@ export default function Home({ lang }: { lang: Lang }) {
         }}
         media={{
           type: "image",
-          src: "/Fyrrehaven hero.webp",
+          src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3736.webp",
           title: t(
             "Fyrrehaven 61 – feriehus ved Fjellerup Strand",
             "Fyrrehaven 61 – holiday home by Fjellerup Beach"

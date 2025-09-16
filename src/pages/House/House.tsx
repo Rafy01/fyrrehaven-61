@@ -104,7 +104,7 @@ export default function House({ lang }: { lang: Lang }) {
         }}
         media={{
           type: "image",
-          src: "/Fyrrehaven hero.webp",
+          src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.webp",
           alt: t(
             "Udendørs poolområde ved sommerhuset",
             "Outdoor pool area at the house"
