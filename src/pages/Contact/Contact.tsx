@@ -5,6 +5,7 @@ import Hero from "../../components/Hero";
 import ContactForm from "../../components/ContactForm";
 import HostsSection from "../../components/HostsSection";
 import { pathOf, type Lang } from "../../lib/routes";
+import { AIRBNB_URL } from "../../lib/links";
 
 export default function ContactPage({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
@@ -39,6 +40,15 @@ export default function ContactPage({ lang }: { lang: Lang }) {
           alt: t("Familien bag huset", "The family behind the house"),
         }}
         align="left"
+        primaryCta={{
+          label: t("Book direkte", "Book directly"),
+          to: pathOf(lang, "book"),
+        }}
+        secondaryCta={{
+          label: t("Booking Airbnb", "Booking Airbnb"),
+          href: AIRBNB_URL,
+          external: true,
+        }}
       />
 
       <HostsSection
