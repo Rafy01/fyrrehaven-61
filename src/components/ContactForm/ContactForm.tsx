@@ -50,9 +50,7 @@ const CLEANING_FEE_DKK = 1200;
 const MAX_GUESTS = 10;
 const DIGITS_RE = /[^\d]/g;
 
-/* ─────────────── EKSTRA SERVICES (KUN UI) ───────────────
-   Tilpas priser & labels efter behov. Jeg sender dem ikke til API’et,
-   så backend brydes ikke. */
+/* ─────────────── EKSTRA SERVICES (KUN UI) ─────────────── */
 type ExtraService = {
   id: string;
   priceDKK: number;
@@ -140,8 +138,8 @@ function clampInt(n: number, min: number, max: number) {
 /* ─────────────── FASTE CAP-REGLER ─────────────── */
 const EXTRA_MAX_FIREWOOD = 20;
 const EXTRA_MAX_HOTTUB_REFILL = 1;
-const EXTRA_MAX_BABYCHAIR = 2; // ← NY
-const EXTRA_MAX_BABYCOT = 1;   // ← NY
+const EXTRA_MAX_BABYCHAIR = 2; // max 2
+const EXTRA_MAX_BABYCOT = 1; // max 1
 // Cap pr. service:
 // - firewood = 20 (uafhængigt af gæster)
 // - hottub-refill = 1
@@ -333,6 +331,27 @@ export default function ContactForm({
     ? totalWithCleaning + extrasTotalDKK
     : baseNightsTotal; // hvis ingen nætter, vis kun base (typisk 0/—)
 
+  // Udvalgte extras (til success-view)
+  const selectedExtras = React.useMemo(
+    () =>
+      EXTRA_SERVICES.map((svc) => {
+        const qty = extras[svc.id] ?? 0;
+        if (qty <= 0) return null;
+        return {
+          id: svc.id,
+          qty,
+          unitPriceDKK: svc.priceDKK,
+          label: { da: svc.label.da, en: svc.label.en },
+        };
+      }).filter(Boolean) as Array<{
+        id: string;
+        qty: number;
+        unitPriceDKK: number;
+        label: { da: string; en: string };
+      }>,
+    [extras]
+  );
+
   /* ─────────────── HORIZONTAL SCROLLER (UI) ─────────────── */
   const scrollerRef = React.useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
@@ -473,7 +492,7 @@ export default function ContactForm({
     const A = toInt(state.adults);
     const C = toInt(state.children);
     const B = toInt(state.babies);
-    // (Bemærk: Jeg sender ikke extras til API’et for ikke at ændre backend)
+    // (Bemærk: Jeg sender ikke extras til API’et i denne fil)
 
     setSending(true);
     try {
@@ -563,11 +582,13 @@ export default function ContactForm({
       ? fmtMoney.format(CLEANING_FEE_DKK)
       : t("—", "—");
 
-    // NYT: total inkluderer ekstra services (hvis der er nætter)
+    // Total inkluderer ekstra services hvis valgt (kun hvis der er nætter)
     const totalStr =
       includeCleaning || selPrice.total != null
         ? fmtMoney.format(grandTotal)
         : t("—", "—");
+
+    const hasExtras = selectedExtras.length > 0;
 
     return (
       <div
@@ -617,6 +638,25 @@ export default function ContactForm({
               <dt>{t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}</dt>
               <dd>{cleaningStr}</dd>
             </div>
+
+            {hasExtras && (
+              <div>
+                <dt>{t("Valgte ekstra services", "Selected extras")}</dt>
+                <dd>
+                  <ul style={{ margin: 0, paddingLeft: "1.1em" }}>
+                    {selectedExtras.map((e) => (
+                      <li key={e.id}>
+                        {e.qty} × {lang === "da" ? e.label.da : e.label.en}
+                        {e.unitPriceDKK > 0
+                          ? ` (${fmtMoney.format(e.unitPriceDKK)})`
+                          : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            )}
+
             <div>
               <dt>{t("Estimeret total", "Estimated total")}</dt>
               <dd>{totalStr}</dd>
@@ -774,7 +814,7 @@ export default function ContactForm({
               />
             </div>
 
-            {/* NYT: Nætter lige under afrejse – én linje */}
+            {/* Nætter lige under afrejse – én linje */}
             <div className={styles.inlineMeta} aria-live="polite">
               <span className={styles.metaLabel}>
                 {t("Nætter:", "Nights:")}
@@ -785,7 +825,7 @@ export default function ContactForm({
             </div>
           </div>
 
-          {/* ─────────────── NYT: EKSTRA SERVICES – HORIZONTAL SCROLL ─────────────── */}
+          {/* EKSTRA SERVICES – HORIZONTAL SCROLL */}
           <div className={styles.row} aria-labelledby="extras-label">
             <div className={styles.header}>
               <div id="extras-label" className={styles.kicker}>
@@ -806,8 +846,6 @@ export default function ContactForm({
                 canScrollRight ? styles["is-scrollable-right"] : "",
               ].join(" ")}
             >
-              {/* Scroll-hints (CSS viser små fade/chevrons) */}
-          
               <div
                 ref={scrollerRef}
                 className={styles.extrasScroller}
@@ -882,13 +920,13 @@ export default function ContactForm({
                 })}
               </div>
 
-              {/* Små, ikke-interaktive hints (kan styles/animere i CSS) */}
+              {/* Små, ikke-interaktive hints */}
               <div className={styles.extrasHintLeft} aria-hidden />
               <div className={styles.extrasHintRight} aria-hidden />
             </div>
           </div>
 
-          {/* NYT: Samlet prisboks i én linje (responsiv) */}
+          {/* Samlet prisboks */}
           <div
             className={styles.totalsBox}
             role="group"
@@ -911,9 +949,6 @@ export default function ContactForm({
                 {includeCleaning ? fmtMoney.format(CLEANING_FEE_DKK) : "—"}
               </output>
             </div>
-
-            {/* Bemærk: vi viser ikke en separat “Ekstra services”-linje,
-                men totalen nedenfor INKLUDERER extrasTotalDKK. */}
 
             <div className={`${styles.totalItem} ${styles.em}`}>
               <span className={styles.tLabel}>
