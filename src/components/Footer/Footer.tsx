@@ -249,11 +249,6 @@ export default function Footer({
                 </Link>
               </li>
               <li>
-                <a className={styles.bottomLink} href="#">
-                  {t("Vilkår", "Terms")}
-                </a>
-              </li>
-              <li>
                 <Link
                   className={styles.bottomLink}
                   to={pathOf(currentLang, "cookies")}
