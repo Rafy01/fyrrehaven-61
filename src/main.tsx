@@ -24,6 +24,7 @@ import Faq from "./pages/Faq";
 import Contact from "./pages/Contact";
 import ChatDebug from "./pages/ChatDebug";
 import Book from "./pages/Book";
+import Privacy from "./pages/Privacy";
 
 // Hjælper til at lave child routes pr. sprog
 const langRoutes = (lang: "da" | "en") => [
@@ -38,6 +39,7 @@ const langRoutes = (lang: "da" | "en") => [
   { path: SLUGS.contact[lang], element: <Contact lang={lang} /> },
   { path: SLUGS.book[lang],    element: <Book    lang={lang} /> },
   { path: SLUGS.cookies[lang], element: <CookiesPage lang={lang} /> },
+  { path: SLUGS.privacy[lang], element: <Privacy lang={lang} /> },
 ];
 
 const router = createBrowserRouter([

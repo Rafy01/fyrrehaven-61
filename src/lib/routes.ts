@@ -11,7 +11,8 @@ export type PageKey =
   | "book"
   | "cookies"
   | "fees"
-  | "chat";
+  | "chat"
+  | "privacy";
 
 /** Lokale slugs pr. side pr. sprog.
  *  Tip: vi bruger ASCII (omraadet) for simplicity. Du kan godt bruge diakritiske tegn hvis du ønsker.
@@ -30,6 +31,7 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   cookies: { da: "cookies", en: "cookies" },
   fees: { da: "Gebyrer", en: "Fees" },
   chat: { da: "chat-ukendte-sporgsmal", en: "chat-unknown-questions" },
+  privacy: { da: "privatlivspolitik", en: "privacy-policy" },
 };
 
 /** Byg sti for en given side og sprog. */
