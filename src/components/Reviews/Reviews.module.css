@@ -1,6 +1,7 @@
 .wrap {
   padding-block: clamp(1rem, 0.6rem + 1.2vw, 2rem);
 }
+
 .header {
   display: flex;
   align-items: end;
@@ -50,12 +51,15 @@
   padding-bottom: 0.25rem;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
+  align-items: stretch; /* ← stræk kort til samme højde */
 }
 .navBtn:focus,
 .row:focus {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
+
+/* ---- Card: flex-col så vi kan pinne .source i bunden ---- */
 .card {
   scroll-snap-align: start;
   border: 1px solid rgba(0, 0, 0, 0.08);
@@ -63,14 +67,19 @@
   background: #fff;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
   padding: 0.85rem;
-  display: grid;
+  display: flex; /* ← skift fra grid til flex */
+  flex-direction: column;
   gap: 0.55rem;
+  min-height: 240px; /* lidt højde for stabil bund */
 }
+
 .cardTop {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  flex: 0 0 auto; /* topdelen må ikke strække */
 }
+
 .avatar {
   width: 34px;
   height: 34px;
@@ -105,10 +114,16 @@
 .text {
   margin: 0;
   color: #111;
+  flex: 1 1 auto; /* ← fylder midterpladsen */
 }
+
 .source {
+  margin-top: auto; /* ← skub til bunden */
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
   color: #6b7280;
   font-size: 0.85rem;
+  line-height: 1.2;
 }
 
 .cta {

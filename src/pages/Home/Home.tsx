@@ -148,7 +148,10 @@ export default function Home({ lang }: { lang: Lang }) {
         media={{
           type: "image",
           src: "/Fyrrehaven hero.webp",
-          title: t("Fyrrehaven 61 – feriehus ved Fjellerup Strand", "Fyrrehaven 61 – holiday home by Fjellerup Beach"),
+          title: t(
+            "Fyrrehaven 61 – feriehus ved Fjellerup Strand",
+            "Fyrrehaven 61 – holiday home by Fjellerup Beach"
+          ),
           alt: t(
             "Skov og strand ved sommerhuset",
             "Forest and beach near the house"
@@ -172,7 +175,7 @@ export default function Home({ lang }: { lang: Lang }) {
               ),
               media: {
                 kind: "image",
-                src: "/highlights/outdoor-pool.webp",
+                src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3720.webp",
                 alt: t(
                   "Opvarmet udendørs pool – åben 1. maj til 1. oktober",
                   "Heated outdoor pool – open May 1 to Oct 1"
@@ -208,7 +211,7 @@ export default function Home({ lang }: { lang: Lang }) {
               ),
               media: {
                 kind: "image",
-                src: "/highlights/sauna-electric.webp",
+                src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3731.webp",
                 alt: t(
                   "El-sauna i sommerhuset",
                   "Electric sauna in the holiday home"
@@ -226,7 +229,7 @@ export default function Home({ lang }: { lang: Lang }) {
               ),
               media: {
                 kind: "image",
-                src: "/highlights/forest-beach.webp",
+                src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3663.webp",
                 alt: t(
                   "Skov og strand tæt på sommerhuset",
                   "Forest and beach close to the holiday home"
@@ -248,27 +251,27 @@ export default function Home({ lang }: { lang: Lang }) {
         )}
         items={[
           {
-            src: "/gallery/01.webp",
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3669.webp",
             alt: t("Stue med lysindfald", "Living room with daylight"),
           },
           {
-            src: "/gallery/02.webp",
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3668.webp",
             alt: t("Køkken-alrum", "Kitchen-living area"),
           },
           {
-            src: "/gallery/03.webp",
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3692.webp",
             alt: t("Opvarmet udendørs pool", "Heated outdoor pool"),
           },
           {
-            src: "/gallery/04.webp",
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3696.webp",
             alt: t("Brændefyret vildmarksbad", "Wood-fired hot tub"),
           },
           {
-            src: "/gallery/05.webp",
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3709.webp",
             alt: t("El-sauna", "Electric sauna"),
           },
           {
-            src: "/gallery/06.webp",
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/2c0c5a11-59f7-4ddf-9fda-10068650f7a1.webp",
             alt: t("Skovsti mod stranden", "Forest path to the beach"),
           },
           // du kan have flere – +N overlay vises automatisk hvis items.length > max
@@ -284,7 +287,6 @@ export default function Home({ lang }: { lang: Lang }) {
       <Reviews
         lang={lang}
         title={lang === "da" ? "Gæsterne siger" : "What our guests say"}
-        maxCards={8}
         average={4.8}
       />
       <PracticalInfo
