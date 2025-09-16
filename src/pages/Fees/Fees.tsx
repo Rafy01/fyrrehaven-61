@@ -69,8 +69,8 @@ export default function Fees({ lang }: { lang: Lang }) {
               </span>
               <span className={styles.badge}>
                 {t(
-                  "Udendørspoolen åben maj – oktober .",
-                  "Outdoor pool open May – October."
+                  "Udendørspoolen åben 1. maj – 1. oktober.",
+                  "Outdoor pool open May 1 – October 1."
                 )}
               </span>
             </div>
@@ -78,7 +78,12 @@ export default function Fees({ lang }: { lang: Lang }) {
             <div className={styles.hr} />
 
             <Text as="p" mb="1">
-              <strong>{t("Forbrug afregnes efter opholdet", "Consumption is settled after your stay")}</strong>
+              <strong>
+                {t(
+                  "Forbrug afregnes efter opholdet",
+                  "Consumption is settled after your stay"
+                )}
+              </strong>
             </Text>
             <ul>
               <li>
