@@ -345,7 +345,6 @@ export default function PracticalInfo({
           ) : (
             <a
               href={ctaHref}
-              target="_blank"
               rel="noopener noreferrer"
               className={styles.ctaBtn}
             >

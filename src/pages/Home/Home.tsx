@@ -293,7 +293,7 @@ export default function Home({ lang }: { lang: Lang }) {
         lang={lang}
         variant="teaser"
         maxItems={6}
-        ctaTo={`/${lang}/house`} // valgfrit
+        ctaHref={pathOf(lang, "house")}
         ctaLabelDa="Læs mere om huset"
         ctaLabelEn="Read more about the house"
       />
