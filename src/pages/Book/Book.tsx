@@ -122,10 +122,17 @@ export default function Book({ lang }: { lang: Lang }) {
             <Heading as="h3" size="3" mb="1">
               {t("Praktisk", "Good to know")}
             </Heading>
-            <Text color="gray">
+            <Text >
               {t(
                 "Udendørs pool er opvarmet ca. 29 °C og åben 1. maj – 1. oktober. Maks. 10 personer. Ingen fester.",
                 "Outdoor pool heated to ~29 °C and open May 1 – Oct 1. Max 10 guests. No parties."
+              )}
+            </Text>
+            <br />
+            <Text>
+              {t(
+                "El: 4 kr./kWh, vand: 80 kr./m³ (afregnes efter opholdet).",
+                "Electricity: 4 DKK/kWh, water: 80 DKK/m³ (settled after your stay)."
               )}
             </Text>
           </div>
