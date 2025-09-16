@@ -909,10 +909,14 @@ export default function ContactForm({
           {/* EKSTRA SERVICES – HORIZONTAL SCROLL */}
           <div className={styles.row} aria-labelledby="extras-label">
             <div className={styles.header}>
-              <label id="extras-label" className={styles.label} data-required="true">
+              <label
+                id="extras-label"
+                className={styles.label}
+                data-required="true"
+              >
                 {t("Ekstra services", "Extra services")}
               </label>
-              <p className={styles.title} aria-live="polite" >
+              <p className={styles.title} aria-live="polite">
                 {t(
                   "Vælg ekstra services eller markér “Ønsker ikke ekstra service”. Scroll vandret for flere.",
                   "Choose extra services or tick “No extra services”. Scroll horizontally for more."
@@ -1312,10 +1316,13 @@ export default function ContactForm({
           />
           <span>
             {t(
-              "Jeg giver samtykke til, at mine oplysninger må gemmes og bruges til at behandle min henvendelse i overensstemmelse med privatlivspolitikken.",
-              "I consent to my information being stored and used to process my inquiry in accordance with the privacy policy."
+              "Jeg giver samtykke til, at mine oplysninger må gemmes og bruges til at behandle min henvendelse i overensstemmelse med privatlivspolitikken ",
+              "I consent to my information being stored and used to process my inquiry in accordance with the privacy policy "
             )}
           </span>
+          <a href={pathOf(lang, "privacy")} target="_blank" rel="noreferrer">
+            {t("privatlivspolitikken.", "privacy policy.")}
+          </a>
         </label>
       </div>
 
