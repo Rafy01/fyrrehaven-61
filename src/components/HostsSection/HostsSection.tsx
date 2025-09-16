@@ -80,7 +80,7 @@ function defaultHosts(): Host[] {
     {
       id: "host-rimon",
       name: "Rimon",
-      photo: "/hosts/team.webp",
+      photo: "/hosts/rimon.webp",
       altDa: "Rimon – vært på Fyrrehaven 61",
       altEn: "Rimon – host at Fyrrehaven 61",
       roleDa: "Vært",
@@ -96,7 +96,11 @@ function defaultHosts(): Host[] {
           textEn: "Same-day replies",
         },
         { kind: "years", value: "3+" },
-        { kind: "lang", textDa: "Arabisk, Dansk & Engelsk", textEn: "Arabic, Danish & English" },
+        {
+          kind: "lang",
+          textDa: "Arabisk, Dansk & Engelsk",
+          textEn: "Arabic, Danish & English",
+        },
       ],
     },
   ];
