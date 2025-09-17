@@ -21,14 +21,40 @@ export default function House({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
   /* -------- SEO (kun meta) -------- */
-  const seoTitle = t(
-    "Sommerhuset – udendørs opvarmet pool, vildmarksbad & sauna | Fyrrehaven 61",
-    "The House – outdoor heated pool, hot tub & sauna | Fyrrehaven 61"
-  );
+const seoTitle = t(
+  "Sommerhuset – pool, vildmarksbad & sauna | Fyrrehaven 61",
+  "The House – pool, hot tub & sauna | Fyrrehaven 61"
+);
+
   const seoDescription = t(
     "Sommerhus til 10 med udendørs opvarmet pool (1. maj–1. oktober), brændefyret vildmarksbad og el-sauna. Familievenligt tæt på skov og strand. Book via Airbnb.",
     "Holiday home for 10 with an outdoor heated pool (May 1–Oct 1), wood-fired hot tub and electric sauna. Family-friendly near forest and beach. Book on Airbnb."
   );
+const seoKeywords =
+  lang === "da"
+    ? [
+        "sommerhus fjellerup",
+        "sommerhus med pool",
+        "opvarmet udendørs pool",
+        "vildmarksbad",
+        "sauna",
+        "familievenligt sommerhus",
+        "10 personer",
+        "djursland feriehus",
+        "Fyrrehaven 61",
+        "tæt på strand og skov",
+      ]
+    : [
+        "holiday home Fjellerup",
+        "heated outdoor pool",
+        "hot tub",
+        "sauna",
+        "family friendly",
+        "sleeps 10",
+        "Djursland vacation rental",
+        "Fyrrehaven 61",
+        "near beach and forest",
+      ];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -72,6 +98,8 @@ export default function House({ lang }: { lang: Lang }) {
         description={seoDescription}
         ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.webp"
         jsonLd={jsonLd}
+        robots={{ index: true, follow: true, noarchive: true }}
+        keywords={seoKeywords}
       />
 
       {/* HERO */}
