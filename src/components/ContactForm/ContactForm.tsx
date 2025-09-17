@@ -91,7 +91,7 @@ const EXTRA_SERVICES: ExtraService[] = [
     id: "towels",
     priceDKK: 75,
     icon: "🧼",
-    label: { da: "Håndklæder", en: "Towels" },
+    label: { da: "Håndklæder (stor & lille)", en: "Towels (large & small)" },
   },
   {
     id: "linens-package",
