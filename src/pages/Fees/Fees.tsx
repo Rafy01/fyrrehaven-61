@@ -8,11 +8,36 @@ import { fees } from "../../data/fees";
 export default function Fees({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const path = pathOf(lang, "fees");
-  const seoTitle = t("Gebyroversigt", "Fee List");
-  const seoDescription = t(
-    "Vigtige oplysninger for booking og gebyrer i specifikke situationer.",
-    "Important booking information and fees for specific situations."
+  const seoTitle = t(
+    "Gebyrer & praktiske vilkår – Fyrrehaven 61",
+    "Fees & house rules – Fyrrehaven 61"
   );
+  const seoDescription = t(
+    "Se vores opdaterede gebyroversigt for Fyrrehaven 61: regler for booking, rengøring, sen check-out og særlige situationer. El (4 kr./kWh) og vand (80 kr./m³) afregnes efter forbrug. Ingen fester/kæledyr. Pool åben 1/5–1/10.",
+    "View the updated fee list for Fyrrehaven 61: booking rules, cleaning, late check-out and special cases. Electricity (4 DKK/kWh) and water (80 DKK/m³) are billed by usage. No parties or pets. Outdoor pool open May 1–Oct 1."
+  );
+  const seoKeywords =
+    lang === "da"
+      ? [
+          "gebyrer sommerhus",
+          "gebyroversigt",
+          "rengøringsgebyr",
+          "elforbrug pris",
+          "vandforbrug pris",
+          "sen check-out gebyr",
+          "skader og erstatning",
+          "Fyrrehaven 61 priser",
+        ]
+      : [
+          "holiday home fees",
+          "fee list",
+          "cleaning fee",
+          "electricity usage price",
+          "water usage price",
+          "late check-out fee",
+          "damage and charges",
+          "Fyrrehaven 61 prices",
+        ];
 
   return (
     <>
@@ -29,6 +54,8 @@ export default function Fees({ lang }: { lang: Lang }) {
           description: seoDescription,
           url: `https://fyrrehaven-61.dk${path}`,
         }}
+        robots={{ index: true, follow: true, noarchive: true }}
+        keywords={seoKeywords}
       />
 
       <Container size="3">
