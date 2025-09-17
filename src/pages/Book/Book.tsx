@@ -17,16 +17,44 @@ export default function Book({ lang }: { lang: Lang }) {
   const path = pathOf(lang, "book");
 
   /** ——— SEO ——— */
+  // Title 30–65 tegn
   const seoTitle = t(
-    "Booking – forespørgsel eller Airbnb",
-    "Booking – request or Airbnb"
+    "Booking hos Fyrrehaven 61 – direkte forespørgsel eller Airbnb",
+    "Book Fyrrehaven 61 – direct request or Airbnb"
   );
+
+  // Description 120–320 tegn
   const seoDescription = t(
-    "Send en direkte bookingforespørgsel eller book via Airbnb. Udendørs opvarmet pool (1. maj – 1. okt.), plads til 10.",
-    "Send a direct booking request or book via Airbnb. Outdoor heated pool (May 1 – Oct 1), sleeps 10."
+    "Book direkte hos værterne eller via Airbnb. Udendørs opvarmet pool (1. maj–1. okt.), plads til 10 og familievenligt nær skov og strand. Vi svarer typisk inden for 1 time. El 4 kr./kWh og vand 80 kr./m³ afregnes efter opholdet.",
+    "Book directly with the hosts or via Airbnb. Heated outdoor pool (May 1–Oct 1), sleeps 10 and family-friendly near forest and beach. We usually reply within 1 hour. Electricity 4 DKK/kWh and water 80 DKK/m³ are settled after your stay."
   );
 
-
+  const seoKeywords =
+    lang === "da"
+      ? [
+          "booking sommerhus",
+          "Fyrrehaven 61 booking",
+          "sommerhus Fjellerup",
+          "udendørs opvarmet pool",
+          "vildmarksbad",
+          "sauna",
+          "familievenligt sommerhus",
+          "book direkte",
+          "Airbnb Fjellerup",
+          "Djursland feriehus",
+        ]
+      : [
+          "holiday home booking",
+          "Fyrrehaven 61 booking",
+          "Fjellerup cottage",
+          "heated outdoor pool",
+          "hot tub",
+          "sauna",
+          "family friendly rental",
+          "book direct",
+          "Airbnb Fjellerup",
+          "Djursland holiday home",
+        ];
 
   // Struktureret data
   const jsonLd = {
@@ -55,7 +83,6 @@ export default function Book({ lang }: { lang: Lang }) {
     "Send a direct request – or book via Airbnb if you prefer."
   );
 
-
   // Aktuel måned til kalenderen
 
   return (
@@ -67,6 +94,8 @@ export default function Book({ lang }: { lang: Lang }) {
         description={seoDescription}
         ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3807.webp"
         jsonLd={jsonLd}
+        robots={{ index: true, follow: true, noarchive: true }}
+        keywords={seoKeywords}
       />
 
       <Hero
