@@ -1,14 +1,13 @@
 // scripts/generate-sitemap.ts
 import { writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
-import { pathOf } from "../src/lib/routes";
-import type { Lang } from "../src/lib/lang";
 
-// PROD domæne – sæt i Vercel env: SITE_URL=https://fyrrehaven-61.dk
+/* ---------- Konfiguration ---------- */
 const BASE_URL = process.env.SITE_URL || "https://fyrrehaven-61.dk";
+type Lang = "da" | "en";
 const LANGS: Lang[] = ["da", "en"];
-type ChangeFreq = "daily" | "weekly" | "monthly" | "yearly";
 
+/* ---------- Slugs (samme som i din router) ---------- */
 type PageKey =
   | "home"
   | "house"
@@ -22,6 +21,32 @@ type PageKey =
   | "privacy"
   | "sitemap";
 
+const SLUGS: Record<PageKey, Record<Lang, string>> = {
+  home: { da: "", en: "" },
+  house: { da: "Sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61" },
+  area: { da: "omraadet-skov-og-strand", en: "area-forest-and-beach" },
+  gallery: {
+    da: "galleri-fyrrehaven-61-billeder",
+    en: "gallery-photos-fyrrehaven-61",
+  },
+  faq: { da: "ofte-stillede-sporgsmal", en: "frequently-asked-questions" },
+  contact: { da: "kontakt", en: "contact" },
+  book: { da: "booking", en: "book" },
+  cookies: { da: "cookies", en: "cookies" },
+  fees: { da: "Gebyrer", en: "Fees" },
+//   chat: { da: "chat-ukendte-sporgsmal", en: "chat-unknown-questions" }, // ikke i sitemap
+  privacy: { da: "privatlivspolitik", en: "privacy-policy" },
+  sitemap: { da: "sitemap", en: "sitemap" },
+};
+
+/* Samme pathOf som i appen */
+function pathOf(lang: Lang, key: PageKey): string {
+  const slug = SLUGS[key][lang];
+  return `/${lang}${slug ? `/${slug}` : ""}`;
+}
+
+/* ---------- Sider der skal med i sitemap ---------- */
+type ChangeFreq = "daily" | "weekly" | "monthly" | "yearly";
 const PAGES: Array<{
   key: PageKey;
   priority: number;
@@ -64,6 +89,7 @@ const PAGES: Array<{
   { key: "sitemap", priority: 0.6, changefreq: "weekly" },
 ];
 
+/* ---------- Generator ---------- */
 const nowISO = new Date().toISOString();
 const esc = (s: string) =>
   s
@@ -79,7 +105,7 @@ function buildUrlEntry(
   changefreq: ChangeFreq,
   images?: Array<{ loc: string; title?: string; caption?: string }>
 ) {
-  const primaryLang: Lang = "da"; // vælg dit “kanoniske” sprog
+  const primaryLang: Lang = "da";
   const canonical = abs(pathOf(primaryLang, key));
 
   const alternates = LANGS.map(
@@ -127,7 +153,6 @@ function generatePageSitemap() {
   const body = PAGES.map((p) =>
     buildUrlEntry(p.key, p.priority, p.changefreq, p.images)
   ).join("");
-
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset
   xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
@@ -136,7 +161,6 @@ function generatePageSitemap() {
 >
 ${body}
 </urlset>`.trim();
-
   writePublic("sitemap.xml", xml);
 }
 
@@ -145,10 +169,9 @@ function generateRobots() {
     `User-agent: *
 Allow: /
 
-# Undgå parameter-URL'er i indeks
+# Undgå index af parameter-URL'er
 Disallow: /*?*
 
-# Sitemaps
 Sitemap: ${abs("/sitemap.xml")}
 `.trim() + "\n";
   writePublic("robots.txt", robots);
