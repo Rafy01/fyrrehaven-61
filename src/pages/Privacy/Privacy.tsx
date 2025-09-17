@@ -22,11 +22,44 @@ export default function Privacy({ lang }: { lang: Lang }) {
   const LAST_UPDATED_EN = "16 September 2025";
 
   const path = pathOf(lang, "privacy");
-  const seoTitle = t("Privatlivspolitik", "Privacy Policy");
-  const seoDescription = t(
-    "GDPR-oplysninger om behandling af persondata ved kontakt, booking og ekstra services.",
-    "GDPR information on the processing of personal data for contact, booking and extra services."
+  const seoTitle = t(
+    "Privatlivspolitik – Fyrrehaven 61 | GDPR & persondata",
+    "Privacy Policy – Fyrrehaven 61 | GDPR & personal data"
   );
+  const seoDescription = t(
+    "Læs hvordan vi behandler personoplysninger ved kontakt og booking af Fyrrehaven 61. Vi lagrer henvendelser som e-mail hos Simply, sætter kun nødvendige cookies som udgangspunkt og respekterer dine GDPR-rettigheder.",
+    "Learn how we process personal data when you contact us or book Fyrrehaven 61. We store enquiries as email with Simply, set only necessary cookies by default, and respect your GDPR rights."
+  );
+  const seoKeywords =
+    lang === "da"
+      ? [
+          "privatlivspolitik",
+          "GDPR",
+          "persondata",
+          "databehandling",
+          "dataansvarlig",
+          "databehandler",
+          "GDPR rettigheder",
+          "cookiepolitik",
+          "booking personoplysninger",
+          "Fyrrehaven 61 privatliv",
+          "e-mail opbevaring",
+          "Simply e-mailudbyder",
+        ]
+      : [
+          "privacy policy",
+          "GDPR",
+          "personal data",
+          "data processing",
+          "data controller",
+          "data processor",
+          "GDPR rights",
+          "cookie policy",
+          "booking personal data",
+          "Fyrrehaven 61 privacy",
+          "email storage",
+          "Simply email provider",
+        ];
 
   return (
     <>
@@ -43,6 +76,8 @@ export default function Privacy({ lang }: { lang: Lang }) {
           description: seoDescription,
           url: `https://fyrrehaven-61.dk${path}`,
         }}
+        robots={{ index: false, follow: true, noarchive: true }}
+        keywords={seoKeywords}
       />
 
       <Container size="3">
