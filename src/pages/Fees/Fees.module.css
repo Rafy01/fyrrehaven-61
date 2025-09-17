@@ -31,11 +31,7 @@
   color: #6b7280;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: .35rem .75rem;
-}
+
 
 .row {
   display: contents;
@@ -46,8 +42,7 @@
   border: 1px solid rgba(0,0,0,.08);
   border-radius: 12px;
   padding: .7rem .85rem;
-  display: grid;
-  gap: .15rem;
+  margin-bottom: 5px;
   box-shadow: 0 8px 22px rgba(0,0,0,.06);
 }
 

@@ -127,12 +127,12 @@ export default function Fees({ lang }: { lang: Lang }) {
                           {note && <span className={styles.note}>{note}</span>}
                         </div>
                       )}
-                    </div>
-                    <div className={styles.price}>
-                      {f.amountDKK.toLocaleString(
-                        lang === "da" ? "da-DK" : "en-GB"
-                      )}{" "}
-                      DKK
+                      <div className={styles.price}>
+                        {f.amountDKK.toLocaleString(
+                          lang === "da" ? "da-DK" : "en-GB"
+                        )}{" "}
+                        DKK
+                      </div>
                     </div>
                   </div>
                 );
