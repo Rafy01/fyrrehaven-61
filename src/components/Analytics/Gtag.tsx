@@ -1,6 +1,4 @@
 // components/Analytics/Gtag.tsx
-import React from "react";
-
 const MID = "G-4XD1D0JK9D"; // dit Measurement ID
 
 export default function Gtag() {
