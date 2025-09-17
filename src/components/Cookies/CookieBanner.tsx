@@ -1,3 +1,4 @@
+// components/Cookies/CookieBanner.tsx
 import { useEffect, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Box, Button, Flex, Text } from "@radix-ui/themes";
@@ -8,6 +9,7 @@ import {
   updateConsent,
   readConsent,
   allowed,
+  enableScriptsForConsent, // ← NY
   type ConsentCategories,
 } from "./consent";
 
@@ -30,15 +32,18 @@ export default function CookieBanner({ lang }: Props) {
     } else {
       setPrefs(existing.categories);
       setVisible(false);
+      // aktiver deferred scripts hvis brugeren allerede har valgt tidligere
+      enableScriptsForConsent(lang); // ← NY
     }
   }, [lang]);
 
-  // Eksempel: re-init analytics når samtykke ændres (lyt globalt)
+  // Lyt på ændringer (fx fra andre UI'er) og enable scripts
   useEffect(() => {
     const onChange = () => {
       if (allowed("analytics", lang)) {
-        // initAnalytics();
+        // her kan du evt. kalde initAnalytics();
       }
+      enableScriptsForConsent(lang); // ← NY
     };
     window.addEventListener("fh61:consentchange", onChange as EventListener);
     return () =>
@@ -50,14 +55,17 @@ export default function CookieBanner({ lang }: Props) {
 
   const acceptAll = () => {
     updateConsent({ analytics: true, marketing: true }, lang);
+    enableScriptsForConsent(lang); // ← NY
     setVisible(false);
   };
   const rejectAll = () => {
     updateConsent({ analytics: false, marketing: false }, lang);
+    // (ingen scripts at aktivere)
     setVisible(false);
   };
   const savePrefs = () => {
     updateConsent(prefs, lang);
+    enableScriptsForConsent(lang); // ← NY
     setVisible(false);
     setOpenPrefs(false);
   };

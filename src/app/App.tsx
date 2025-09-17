@@ -11,6 +11,7 @@ import { saveLang, type Lang } from "../lib/lang";
 import CookieBanner from "../components/Cookies/CookieBanner";
 import ScrollMemory from "./ScrollMemory";
 import HashScroll from "./HashScroll";
+import Gtag from "../components/Analytics/Gtag";
 // import ChatWidget from "../components/ChatWidget";
 
 
@@ -28,6 +29,7 @@ export default function App({ lang }: { lang: Lang }) {
 
   return (
     <Theme accentColor="gray" radius="large" appearance="light">
+      <Gtag />
       <Header lang={lang} />
       <HashScroll />
       <main>
