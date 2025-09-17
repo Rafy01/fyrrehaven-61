@@ -259,9 +259,9 @@ export default function Footer({
               <li>
                 <Link
                   className={styles.bottomLink}
-                  to={pathOf(currentLang, "contact")}
+                  to={pathOf(currentLang, "sitemap")}
                 >
-                  {t("Kontakt", "Contact")}
+                  {t("Sitemap", "Sitemap")}
                 </Link>
               </li>
               <li>
