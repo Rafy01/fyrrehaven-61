@@ -39,7 +39,7 @@ export type HeadProps = {
 };
 
 const ogLocale = (l: Lang) => (l === "da" ? "da_DK" : "en_GB");
-const altLocale = (l: Lang) => (l === "da" ? "en_GB" : "da_DK");
+const altLocale = (l: Lang) => (l === "da" ? "da_DK" : "en_GB");
 
 function absUrl(u: string | undefined) {
   if (!u) return undefined;
