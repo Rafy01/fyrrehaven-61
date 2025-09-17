@@ -23,10 +23,40 @@ export default function Area({ lang }: { lang: Lang }) {
     "Området – skov, strand og oplevelser tæt på",
     "Area – forest, beach and nearby experiences"
   );
-  const seoDescription = t(
-    "Fra skovsti ved døren til strand på få minutter. Se kortet og vores bedste tips til udflugter på Djursland.",
-    "From forest trails at your doorstep to the beach in minutes. See the map and our top tips for day trips on Djursland."
-  );
+const seoDescription = t(
+  "Oplev Fjellerup og Djursland fra Fyrrehaven 61: skovstier fra døren, strand i gå- og cykelafstand, og familievenlige attraktioner som Djurs Sommerland, Mols Bjerge og Kattegatcentret. Se kortet og vores bedste lokale tips.",
+  "Explore Fjellerup and Djursland from Fyrrehaven 61: forest trails at the doorstep, a beach within walking and biking distance, and family attractions like Djurs Sommerland, Mols Bjerge and the Kattegat Centre. See the map and our top local tips."
+);
+  const seoKeywords =
+    lang === "da"
+      ? [
+          "Fjellerup",
+          "Djursland",
+          "skov og strand",
+          "familievenlige oplevelser",
+          "Djurs Sommerland",
+          "Mols Bjerge",
+          "Kattegatcentret",
+          "Grenaa",
+          "Ebeltoft",
+          "vandreruter",
+          "cykelruter",
+          "Fyrrehaven 61",
+        ]
+      : [
+          "Fjellerup",
+          "Djursland",
+          "forest and beach",
+          "family attractions",
+          "Djurs Sommerland",
+          "Mols Bjerge",
+          "Kattegat Centre",
+          "Grenaa",
+          "Ebeltoft",
+          "hiking trails",
+          "cycling routes",
+          "Fyrrehaven 61",
+        ];
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "TouristDestination",
@@ -76,6 +106,8 @@ export default function Area({ lang }: { lang: Lang }) {
         description={seoDescription}
         ogImage="/area/area-hero.webp"
         jsonLd={jsonLd}
+        robots={{ index: true, follow: true, noarchive: true }}
+        keywords={seoKeywords}
       />
       <Hero
         title={heroTitle}
