@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./LocationAndDistances.module.css";
 import Buttons from "../Buttons";
+import { pathOf } from "../../lib/routes";
 
 type Lang = "da" | "en";
 
@@ -247,7 +248,7 @@ export default function LocationAndDistances({
           <Buttons
             labelDa={ctaLabelDa ?? "Se området"}
             labelEn={ctaLabelEn ?? "See the area"}
-            href={`/${lang}/area`}
+            href={pathOf(lang, "area")}
             variant="secondary"
           />
         </div>
