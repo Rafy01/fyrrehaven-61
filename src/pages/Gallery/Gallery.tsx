@@ -71,7 +71,7 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
         }}
         media={{
           type: "image",
-          src: "/gallery/hero-cover.webp",
+          src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3807.webp",
           alt: t("Udklip fra galleriet", "Gallery cover collage"),
           title: t(
             "Fyrrehaven 61 – feriehus ved Fjellerup Strand",
