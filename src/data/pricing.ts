@@ -15,22 +15,11 @@ export type DayCode = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
  *  Prioritet (høj → lav) i selve ugen: days[dag] > weekend/weekday > price
  */
 export type WeekPricing = {
-  /** Samme pris alle 7 dage i ugen (ISO-uge, man–søn). */
   price?: number;
-
-  /** Pris for hverdage i ugen. Som standard: man–tor. */
   weekdays?: number;
-
-  /** Pris for weekenddage i ugen. Som standard: fre–lør (se weekendDays). */
   weekend?: number;
-
-  /** Hvilke ugedage regnes som weekend i *denne* uge. Default: ["fri","sat"]. */
   weekendDays?: DayCode[];
-
-  /** Dagsspecifik pris (overrides ovenstående for den valgte dag). */
   days?: Partial<Record<DayCode, number>>;
-
-  /** Valgfri note til internt brug. */
   note?: string;
 };
 
@@ -40,25 +29,13 @@ export type WeekPricing = {
  *  - days: dato → pris (YYYY-MM-DD, overrides alt andet)
  */
 export type YearPricing = {
-  /** Standard for hele året (hvis uge/dags pris ikke er sat). */
   default?: {
-    /** Samme pris alle dage. Hvis sat, trumfer den weekdays/weekend her. */
     price?: number;
-
-    /** Hverdagspris (årsniveau). Som standard: man–tor. */
     weekdays?: number;
-
-    /** Weekendpris (årsniveau). Som standard: fre–lør. */
     weekend?: number;
-
-    /** Hvilke dage der regnes som weekend på årsniveau. Default: ["fri","sat"]. */
     weekendDays?: DayCode[];
   };
-
-  /** ISO-uge (1..53) → ugepris-konfiguration. */
   weeks?: Partial<Record<number, WeekPricing>>;
-
-  /** Enkelt-dags overrides (YYYY-MM-DD → pris). */
   days?: Partial<Record<string, number>>;
 };
 
@@ -72,98 +49,153 @@ export type PricePlan = {
  * Defaults
  * ========= */
 
-/** Standard weekend-dage hvis ikke andet er angivet. */
 export const DEFAULT_WEEKEND: DayCode[] = ["fri", "sat"];
 
 /* =========
- * DIN DATA (eksempel — ret frit!)
+ * Hjælpere til at udfylde days
+ * ========= */
+
+function addRange(
+  store: Partial<Record<string, number>>,
+  fromYMD: string,
+  toYMD: string,
+  price: number
+) {
+  const start = new Date(fromYMD + "T00:00:00");
+  const end = new Date(toYMD + "T00:00:00");
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const ymd = d.toISOString().slice(0, 10);
+    store[ymd] = price;
+  }
+}
+
+function addOne(
+  store: Partial<Record<string, number>>,
+  ymd: string,
+  price: number
+) {
+  store[ymd] = price;
+}
+
+/* =========
+ * Airbnb-matchende priser (ud fra screenshots)
+ * ========= */
+
+const days2025: Partial<Record<string, number>> = {};
+const days2026: Partial<Record<string, number>> = {};
+const days2027: Partial<Record<string, number>> = {};
+
+/** ——— 2025 ——— **/
+
+// SEPTEMBER 2025
+addRange(days2025, "2025-09-01", "2025-09-06", 2090);
+addRange(days2025, "2025-09-07", "2025-09-20", 2090);
+addRange(days2025, "2025-09-21", "2025-09-26", 2200);
+addRange(days2025, "2025-09-27", "2025-09-30", 2500);
+
+// OKTOBER 2025
+addRange(days2025, "2025-10-01", "2025-10-04", 2500);
+addRange(days2025, "2025-10-05", "2025-10-08", 1800);
+addRange(days2025, "2025-10-09", "2025-10-19", 2200); // efterårsferie
+addRange(days2025, "2025-10-20", "2025-10-31", 1800);
+
+// NOVEMBER 2025 — fladt 1.800
+addRange(days2025, "2025-11-01", "2025-11-30", 1800);
+
+// DECEMBER 2025
+addRange(days2025, "2025-12-01", "2025-12-15", 1800);
+addRange(days2025, "2025-12-16", "2025-12-25", 1710);
+addOne(days2025, "2025-12-26", 1140);
+addRange(days2025, "2025-12-27", "2025-12-31", 665);
+
+/** ——— 2026 ——— **/
+
+// JANUAR 2026 — fladt 1.900
+addRange(days2026, "2026-01-01", "2026-01-31", 1900);
+
+// FEBRUAR 2026 — 1.805 m/ vinterferie (uge 7) på 2.090 (man–lør)
+addRange(days2026, "2026-02-01", "2026-02-08", 1805);
+addRange(days2026, "2026-02-09", "2026-02-14", 2090); // man–lør
+addRange(days2026, "2026-02-15", "2026-02-28", 1805);
+
+// MARTS 2026 — fladt 1.805
+addRange(days2026, "2026-03-01", "2026-03-31", 1805);
+
+// APRIL 2026 — 1–5: 2.660, 6–30: 2.280
+addRange(days2026, "2026-04-01", "2026-04-05", 2660);
+addRange(days2026, "2026-04-06", "2026-04-30", 2280);
+
+// MAJ 2026 — fladt 3.325
+addRange(days2026, "2026-05-01", "2026-05-31", 3325);
+
+// JUNI 2026 — fladt 3.325
+addRange(days2026, "2026-06-01", "2026-06-30", 3325);
+
+// JULI–SEPTEMBER 2026 — fladt 3.325 (matcher screenshots)
+addRange(days2026, "2026-07-01", "2026-09-30", 3325);
+
+// (Eksempel på kendt enkelt-dag senere)
+addOne(days2026, "2026-12-31", 4300);
+
+/* =========
+ * Eksporter prisplan
  * ========= */
 
 export const PRICES: PricePlan = {
   currency: "DKK",
   years: {
-    /* =====================
-     *        2025
-     * ===================== */
     2025: {
-      // Fallback for hele året: man–tor billigere, fre–lør dyrere.
+      // Fallback (bruges hvis en dato ikke er specificeret)
       default: {
-        weekdays: 1800,
-        weekend: 2400,
-        weekendDays: ["fri", "sat"], // kan ændres pr. år
+        price: 1800,
+        weekendDays: ["fri", "sat"],
       },
-
-      // ISO-uger (man–søn). Ugepris trumfer år-default i de uger.
+      days: days2025,
+      // Uge 42 noteres kun som reference – days dækker allerede.
       weeks: {
-        // Uge 7: samme pris hele ugen
-        7: { price: 2200, note: "Vinterferie" },
-
-        // Uge 28: høj sæson — hverdage/weekend split
-        28: { weekdays: 2600, weekend: 3200 },
-
-        // Uge 29 + 30: flad ugepris
-        29: { price: 3500 },
-        30: { price: 3500 },
-
-        // Uge 42: efterårsferie med split
-        42: { weekdays: 2200, weekend: 2800 },
-
-        // Uge 52: juleuge – specifikke dagspriser (trumfer alt i denne uge)
-        52: {
-          days: {
-            tue: 2800, // tirsdag
-            wed: 3200, // onsdag
-            thu: 3600, // torsdag
-            fri: 4200, // fredag (lillejuleaften/juledage kan variere)
-            sat: 4200, // lørdag
-          },
-          note: "Juleugen – dagsspecifik",
-        },
-      },
-
-      // Enkelt-dags overrides (YYYY-MM-DD) — højeste prioritet
-      days: {
-        "2025-12-24": 3800, // Juleaften
-        "2025-12-31": 4200, // Nytårsaften
+        42: { price: 2200, note: "Efterårsferie – dækket af days" },
       },
     },
 
-    /* =====================
-     *        2026
-     * ===================== */
     2026: {
+      // Fallback uden for de specificerede perioder
       default: {
-        weekdays: 1850,
-        weekend: 2450,
+        price: 3500, // generel lavsæson; justér hvis du vil splitte weekday/weekend
         weekendDays: ["fri", "sat"],
       },
+      // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
+      days: days2026,
       weeks: {
-        27: { price: 3200 },
-        28: { price: 3600 },
-        29: { weekdays: 3000, weekend: 3600 },
+        // Intet nødvendigt her, men lader feltet stå åbent til fremtidige sæsoner
       },
-      days: {
-        "2026-12-31": 4300,
+    },
+    2027: {
+      // Fallback uden for de specificerede perioder
+      default: {
+        price: 3700, // generel lavsæson; justér hvis du vil splitte weekday/weekend
+        weekendDays: ["fri", "sat"],
+      },
+      // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
+      days: days2027,
+      weeks: {
+        // Intet nødvendigt her, men lader feltet stå åbent til fremtidige sæsoner
       },
     },
   },
 };
 
 /* =========
- * (Valgfrit) Hjælpere — praktisk når vi skal bruge det i kalenderen
+ * Hjælpere (uændret)
  *  Prioritet: dagspris > ugepris > år-default > null
  * ========= */
 
-/** Map JS Date.getDay() → vores DayCode */
 export function dayCodeOf(d: Date): DayCode {
   const i = d.getDay(); // 0=Sun..6=Sat
   return (["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as DayCode[])[i];
 }
 
-/** ISO-uge (1..53) for lokal dato. */
 export function isoWeek(d: Date): number {
   const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  // Torsdag i denne uge afgør uge-nummeret
   const dayNum = tmp.getUTCDay() || 7; // 1..7, hvor 7=søndag
   tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
@@ -173,7 +205,6 @@ export function isoWeek(d: Date): number {
   return weekNo;
 }
 
-/** Hent pris for en given lokal dato. */
 export function getPriceForDate(
   date: Date,
   plan: PricePlan = PRICES
@@ -190,30 +221,21 @@ export function getPriceForDate(
   const w = isoWeek(date);
   const wp = yr.weeks?.[w];
   if (wp) {
-    // 2a) Dag i ugen specifikt
     const dc = dayCodeOf(date);
     if (wp.days && wp.days[dc] != null) return wp.days[dc]!;
-
-    // 2b) Weekend/hverdag split i ugen
     if (wp.weekdays != null || wp.weekend != null) {
       const weekend = wp.weekendDays ?? DEFAULT_WEEKEND;
       const isWeekend = weekend.includes(dc);
       const val = isWeekend ? wp.weekend : wp.weekdays;
       if (val != null) return val!;
     }
-
-    // 2c) Flad ugepris
     if (wp.price != null) return wp.price;
   }
 
   // 3) Års-default
   if (yr.default) {
     const def = yr.default;
-
-    // 3a) Flad årspris
     if (def.price != null) return def.price;
-
-    // 3b) År: weekend/hverdag split
     const weekend = def.weekendDays ?? DEFAULT_WEEKEND;
     const isWeekend = weekend.includes(dayCodeOf(date));
     const val = isWeekend ? def.weekend : def.weekdays;
