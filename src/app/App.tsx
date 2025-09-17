@@ -13,6 +13,7 @@ import ScrollMemory from "./ScrollMemory";
 import HashScroll from "./HashScroll";
 import Gtag from "../components/Analytics/Gtag";
 // import ChatWidget from "../components/ChatWidget";
+import { Analytics } from "@vercel/analytics/next";
 
 
 export default function App({ lang }: { lang: Lang }) {
@@ -32,6 +33,7 @@ export default function App({ lang }: { lang: Lang }) {
       <Gtag />
       <Header lang={lang} />
       <HashScroll />
+      <Analytics />
       <main>
         <Container size="3">
           <Box px="4" py="6">
