@@ -85,7 +85,7 @@ const EXTRA_SERVICES: ExtraService[] = [
     id: "fitted-sheet-mattress",
     priceDKK: 50,
     icon: "🧺",
-    label: { da: "Sengelinned (lagen/madras)", en: "Fitted sheet (mattress)" },
+    label: { da: "Sengelinned på madras", en: "Fitted sheet on mattress" },
   },
   {
     id: "towels",
