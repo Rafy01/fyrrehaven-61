@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:sitemap": "ts-node --transpile-only scripts/generate-sitemap.ts",
+    "postbuild": "npm run generate:sitemap"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -69,4 +71,6 @@
     "src",
     "api"
   ]
+  
 }
+
