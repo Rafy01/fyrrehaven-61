@@ -16,10 +16,38 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
     "Galleri – billeder af hus, pool og omgivelser",
     "Gallery – photos of the house, pool and surroundings"
   );
-  const seoDescription = t(
-    "Se stemningsbilleder fra stue, køkken-alrum, soveværelser samt udendørs pool, vildmarksbad og skov/strand tæt på.",
-    "Browse photos of living areas, bedrooms and the heated outdoor pool, hot tub and nearby forest/beach."
-  );
+const seoDescription = t(
+  "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), brændefyret vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
+  "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool (May 1–Oct 1), wood-fired hot tub, electric sauna and nearby forest and beach in Fjellerup. Get a true feel for the place."
+);
+ const seoKeywords =
+   lang === "da"
+     ? [
+         "Fyrrehaven 61",
+         "galleri",
+         "billeder sommerhus",
+         "udendørs opvarmet pool",
+         "vildmarksbad",
+         "sauna",
+         "Fjellerup",
+         "Djursland",
+         "skov og strand",
+         "familieferie",
+       ]
+     : [
+         "Fyrrehaven 61",
+         "gallery",
+         "holiday home photos",
+         "heated outdoor pool",
+         "hot tub",
+         "sauna",
+         "Fjellerup",
+         "Djursland",
+         "forest and beach",
+         "family holiday",
+       ];
+
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ImageGallery",
@@ -47,6 +75,8 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
         description={seoDescription}
         ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3807.webp"
         jsonLd={jsonLd}
+        robots={{ index: true, follow: true, noarchive: true }}
+        keywords={seoKeywords}
       />
 
       <Hero
