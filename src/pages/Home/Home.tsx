@@ -31,9 +31,37 @@ export default function Home({ lang }: { lang: Lang }) {
     "Fyrrehaven 61 – holiday home for 10 by forest & beach"
   );
   const seoDescription = t(
-    "Familievenligt sommerhus tæt på stranden med indendørs pool og vildmarksbad. Book nemt via Airbnb.",
-    "Family-friendly holiday home near the beach with indoor pool and hot tub. Easy booking via Airbnb."
+    "Familievenligt sommerhus ved Fjellerup Strand med opvarmet udendørs pool (1. maj–1. oktober), brændefyret vildmarksbad og el-sauna. Plads til 10 gæster, 4 soveværelser og lyse fællesrum tæt på skov og stier. Book privat eller via Airbnb.",
+    "Family-friendly holiday home by Fjellerup Beach with a heated outdoor pool (May 1–Oct 1), wood-fired hot tub and electric sauna. Sleeps 10 with 4 bedrooms and bright living areas close to forest trails. Book privately or via Airbnb."
   );
+
+  // Keywords (lav vægt i SEO, men kan bruges i metatag)
+  const seoKeywords =
+    lang === "da"
+      ? [
+          "sommerhus fjellerup",
+          "sommerhus med pool",
+          "opvarmet pool sommerhus",
+          "vildmarksbad sommerhus",
+          "sauna sommerhus",
+          "familievenligt sommerhus",
+          "djursland feriehus",
+          "Fyrrehaven 61",
+          "udlejning privat",
+          "sommerhus tæt på strand",
+        ]
+      : [
+          "holiday home fjellerup",
+          "holiday home with pool",
+          "heated pool holiday home",
+          "wood-fired hot tub",
+          "sauna holiday home",
+          "family friendly cottage",
+          "djursland vacation rental",
+          "Fyrrehaven 61",
+          "private booking",
+          "near beach Denmark",
+        ];
 
   /** ---------- HERO TEKSTER (visuelt indhold) ---------- */
   const heroTitle = t(
@@ -83,8 +111,8 @@ export default function Home({ lang }: { lang: Lang }) {
         description={seoDescription}
         ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3736.webp"
         jsonLd={jsonLd}
-        
-
+        robots={{ index: true, follow: true, noarchive: true }}
+        keywords={seoKeywords}
       />
       <UspStrip
         ariaLabel={t("Hurtige fakta", "Quick facts")}
