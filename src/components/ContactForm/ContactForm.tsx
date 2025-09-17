@@ -51,84 +51,17 @@ const CLEANING_FEE_DKK = 1200;
 const MAX_GUESTS = 10;
 const DIGITS_RE = /[^\d]/g;
 
-/* ─────────────── EKSTRA SERVICES (KUN UI) ─────────────── */
-type ExtraService = {
-  id: string;
-  priceDKK: number;
-  icon?: string; // emoji ikon
-  imgSrc?: string; // alternativt billede (valgfrit)
-  label: { da: string; en: string };
-};
-
-const NO_EXTRAS_ID = "no-extras";
-
-const EXTRA_SERVICES: ExtraService[] = [
-  {
-    id: NO_EXTRAS_ID,
-    priceDKK: 0,
-    icon: "🚫",
-    label: {
-      da: "Ønsker ikke ekstra service",
-      en: "No extra services",
-    },
-  },
-  {
-    id: "bedding-duvet-pillow",
-    priceDKK: 75,
-    icon: "🛌",
-    label: {
-      da: "Sengetøj (dyne + pude)",
-      en: "Bedding (duvet & pillow covers)",
-    },
-  },
-  {
-    id: "fitted-sheet-mattress",
-    priceDKK: 50,
-    icon: "🧺",
-    label: { da: "Sengelinned på madras", en: "Fitted sheet on mattress" },
-  },
-  {
-    id: "towels",
-    priceDKK: 75,
-    icon: "🧼",
-    label: { da: "Håndklæder (stor & lille)", en: "Towels (large & small)" },
-  },
-  {
-    id: "linens-package",
-    priceDKK: 150,
-    icon: "📦",
-    label: {
-      da: "Sengetøj + Sengelinned + Håndklæder",
-      en: "Bedding + Fitted sheet + Towels",
-    },
-  },
-  {
-    id: "hottub-refill",
-    priceDKK: 150,
-    icon: "♨️",
-    label: { da: "Påfyldning af vildmarksbad", en: "Hot tub refill" },
-  },
-  {
-    id: "firewood",
-    priceDKK: 100,
-    icon: "🪵",
-    label: { da: "Træ og optænding", en: "Firewood and kindling" },
-  },
-  {
-    id: "babychair",
-    priceDKK: 0,
-    icon: "🪑",
-    label: { da: "Højstol", en: "High chair" },
-  },
-  {
-    id: "babycot",
-    priceDKK: 0,
-    icon: "👶",
-    label: { da: "Babyseng", en: "Baby cot" },
-  },
-];
-
-type ExtrasState = Record<string, number>; // id → qty
+/* ─────────────── EKSTRA SERVICES (KOMMENTERET UD) ─────────────── */
+// type ExtraService = {
+//   id: string;
+//   priceDKK: number;
+//   icon?: string;
+//   imgSrc?: string;
+//   label: { da: string; en: string };
+// };
+// const NO_EXTRAS_ID = "no-extras";
+// const EXTRA_SERVICES: ExtraService[] = [ /* ... */ ];
+// type ExtrasState = Record<string, number>;
 
 /** Resolve current UI language. */
 function useUiLang(explicit?: Lang): Lang {
@@ -147,31 +80,12 @@ function clampInt(n: number, min: number, max: number) {
   return Math.min(Math.max(n, min), max);
 }
 
-/* ─────────────── FASTE CAP-REGLER ─────────────── */
-const EXTRA_MAX_FIREWOOD = 20;
-const EXTRA_MAX_HOTTUB_REFILL = 1;
-const EXTRA_MAX_BABYCHAIR = 2;
-const EXTRA_MAX_BABYCOT = 1;
-/** Cap pr. service:
- *  - no-extras = 1 (eksklusiv)
- *  - firewood = 20 (uafhængigt af gæster)
- *  - hottub-refill = 1
- *  - babychair = 2
- *  - babycot = 1
- *  - øvrige = antal gæster
- */
-const getExtraCap = (id: string, totalGuests: number) =>
-  id === NO_EXTRAS_ID
-    ? 1
-    : id === "firewood"
-    ? EXTRA_MAX_FIREWOOD
-    : id === "hottub-refill"
-    ? EXTRA_MAX_HOTTUB_REFILL
-    : id === "babychair"
-    ? EXTRA_MAX_BABYCHAIR
-    : id === "babycot"
-    ? EXTRA_MAX_BABYCOT
-    : Math.max(0, totalGuests);
+/* ─────────────── FASTE CAP-REGLER (KOMMENTERET UD) ─────────────── */
+// const EXTRA_MAX_FIREWOOD = 20;
+// const EXTRA_MAX_HOTTUB_REFILL = 1;
+// const EXTRA_MAX_BABYCHAIR = 2;
+// const EXTRA_MAX_BABYCOT = 1;
+// const getExtraCap = (id: string, totalGuests: number) => { /* ... */ };
 
 export default function ContactForm({
   lang: langProp,
@@ -288,7 +202,7 @@ export default function ContactForm({
   const nAdults = toInt(state.adults);
   const nChildren = toInt(state.children);
   const nBabies = toInt(state.babies);
-  const totalGuests = nAdults + nChildren + nBabies;
+  // const totalGuests = nAdults + nChildren + nBabies;
 
   const adultsMax = Math.max(1, MAX_GUESTS - nChildren - nBabies);
   const childrenMax = Math.max(0, MAX_GUESTS - nAdults - nBabies);
@@ -313,134 +227,31 @@ export default function ContactForm({
     onChange("babies", next);
   }
 
-  /* ─────────────── EXTRA SERVICES STATE ─────────────── */
-  const [extras, setExtras] = React.useState<ExtrasState>(() =>
-    Object.fromEntries(EXTRA_SERVICES.map((s) => [s.id, 0]))
-  );
+  /* ─────────────── EXTRA SERVICES STATE (KOMMENTERET UD) ─────────────── */
+  // const [extras, setExtras] = React.useState<ExtrasState>(() =>
+  //   Object.fromEntries(EXTRA_SERVICES.map((s) => [s.id, 0]))
+  // );
+  // React.useEffect(() => { /* cap & eksklusivitet */ }, [totalGuests]);
+  // const extrasTotalDKK = React.useMemo(() => {/* ... */}, [extras, includeCleaning]);
+  // const selectedExtras = React.useMemo(() => {/* ... */}, [extras]);
 
-  // Clamp extras når cap ændres + håndtér eksklusiv "no-extras"
-  React.useEffect(() => {
-    setExtras((prev) => {
-      let changed = false;
-      const next: ExtrasState = { ...prev };
-      // cap pr. id
-      for (const id of Object.keys(next)) {
-        const cap = getExtraCap(id, totalGuests);
-        const v = next[id] ?? 0;
-        if (v > cap) {
-          next[id] = cap;
-          changed = true;
-        }
-      }
-      // eksklusivitet
-      if ((next[NO_EXTRAS_ID] ?? 0) > 0) {
-        for (const id of Object.keys(next)) {
-          if (id !== NO_EXTRAS_ID && next[id] !== 0) {
-            next[id] = 0;
-            changed = true;
-          }
-        }
-      }
-      return changed ? next : prev;
-    });
-  }, [totalGuests]);
+  // Total uden extras
+  const grandTotal = includeCleaning ? totalWithCleaning : baseNightsTotal;
 
-  const extrasTotalDKK = React.useMemo(() => {
-    if (!includeCleaning) return 0; // kun når der er en booking (nætter valgt)
-    return EXTRA_SERVICES.reduce((sum, svc) => {
-      const qty = extras[svc.id] ?? 0;
-      return sum + qty * svc.priceDKK;
-    }, 0);
-  }, [extras, includeCleaning]);
-
-  // Udvalgte extras (bruges i success-view og sendes til API)
-  const selectedExtras = React.useMemo(
-    () =>
-      EXTRA_SERVICES.map((svc) => {
-        const qty = extras[svc.id] ?? 0;
-        if (qty <= 0) return null;
-        return {
-          id: svc.id,
-          qty,
-          unitPriceDKK: svc.priceDKK,
-          label: { da: svc.label.da, en: svc.label.en },
-        };
-      }).filter(Boolean) as Array<{
-        id: string;
-        qty: number;
-        unitPriceDKK: number;
-        label: { da: string; en: string };
-      }>,
-    [extras]
-  );
-
-  const grandTotal = includeCleaning
-    ? totalWithCleaning + extrasTotalDKK
-    : baseNightsTotal;
-
-  /* ─────────────── HORIZONTAL SCROLLER (UI) ─────────────── */
-  const scrollerRef = React.useRef<HTMLDivElement | null>(null);
-  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
-  const [canScrollRight, setCanScrollRight] = React.useState(false);
-
-  const updateScrollShadows = React.useCallback(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 0);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
-  }, []);
-
-  React.useEffect(() => {
-    updateScrollShadows();
-    const el = scrollerRef.current;
-    if (!el) return;
-    const onScroll = () => updateScrollShadows();
-    el.addEventListener("scroll", onScroll, { passive: true });
-    const ro = new ResizeObserver(updateScrollShadows);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      ro.disconnect();
-    };
-  }, [updateScrollShadows]);
-
-  function incExtra(id: string) {
-    setExtras((prev) => {
-      const cap = getExtraCap(id, totalGuests);
-      const current = prev[id] ?? 0;
-      const next = clampInt(current + 1, 0, cap);
-      if (next === current) return prev;
-
-      // eksklusiv "no-extras"
-      if (id === NO_EXTRAS_ID && next > 0) {
-        const cleared: ExtrasState = { ...prev, [NO_EXTRAS_ID]: 1 };
-        for (const k of Object.keys(cleared)) {
-          if (k !== NO_EXTRAS_ID) cleared[k] = 0;
-        }
-        return cleared;
-      }
-      if (id !== NO_EXTRAS_ID && (prev[NO_EXTRAS_ID] ?? 0) > 0) {
-        return { ...prev, [NO_EXTRAS_ID]: 0, [id]: next };
-      }
-      return { ...prev, [id]: next };
-    });
-  }
-  function decExtra(id: string) {
-    setExtras((prev) => {
-      const cap = getExtraCap(id, totalGuests);
-      const current = prev[id] ?? 0;
-      const next = clampInt(current - 1, 0, cap);
-      if (next === current) return prev;
-      return { ...prev, [id]: next };
-    });
-  }
+  /* ─────────────── HORIZONTAL SCROLLER (KUN TIL EXTRAS – KOMMENTERET UD) ─────────────── */
+  // const scrollerRef = React.useRef<HTMLDivElement | null>(null);
+  // const [canScrollLeft, setCanScrollLeft] = React.useState(false);
+  // const [canScrollRight, setCanScrollRight] = React.useState(false);
+  // const updateScrollShadows = React.useCallback(() => { /* ... */ }, []);
+  // React.useEffect(() => { /* ... */ }, [updateScrollShadows]);
+  // function incExtra(id: string) { /* ... */ }
+  // function decExtra(id: string) { /* ... */ }
 
   // Submit
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
-    // Basal validering (besked kræves kun i contact-varianten)
     const missingMsg = isBooking
       ? t(
           "Udfyld venligst navn og e-mail.",
@@ -508,21 +319,8 @@ export default function ContactForm({
         return;
       }
 
-      // NYT: Ekstra services påkrævet
-      const chosenSome =
-        (extras[NO_EXTRAS_ID] ?? 0) > 0 ||
-        EXTRA_SERVICES.some(
-          (s) => s.id !== NO_EXTRAS_ID && (extras[s.id] ?? 0) > 0
-        );
-      if (!chosenSome) {
-        setError(
-          t(
-            "Vælg venligst ekstra service – eller markér “Ønsker ikke ekstra service”.",
-            "Please choose at least one extra service – or tick “No extra services”."
-          )
-        );
-        return;
-      }
+      // Krav om ekstra services (KOMMENTERET UD)
+      // …
 
       if (!state.feesAccepted) {
         setError(
@@ -557,10 +355,7 @@ export default function ContactForm({
             totalWithCleaningDKK: includeCleaning
               ? (selPrice.total ?? 0) + CLEANING_FEE_DKK
               : selPrice.total ?? null,
-            totalWithCleaningAndExtrasDKK:
-              includeCleaning && selPrice.total != null
-                ? (selPrice.total ?? 0) + CLEANING_FEE_DKK + extrasTotalDKK
-                : null,
+            // totalWithCleaningAndExtrasDKK: null, // (ekstra services er deaktiveret)
             breakdown:
               selPrice.breakdown?.map((b) => ({
                 date: b.date.toISOString().slice(0, 10),
@@ -575,28 +370,7 @@ export default function ContactForm({
           : "booking"
         : "inquiry";
 
-      const selectedExtrasForPayload =
-        isBooking && selectedExtras.length > 0
-          ? {
-              items: selectedExtras, // inkluderer evt. no-extras (1 × 0 kr.)
-              totalDKK: extrasTotalDKK,
-            }
-          : (extras[NO_EXTRAS_ID] ?? 0) > 0
-          ? {
-              items: [
-                {
-                  id: NO_EXTRAS_ID,
-                  qty: 1,
-                  unitPriceDKK: 0,
-                  label: {
-                    da: "Ønsker ikke ekstra service",
-                    en: "No extra services",
-                  },
-                },
-              ],
-              totalDKK: 0,
-            }
-          : null;
+      // const selectedExtrasForPayload = null; // (ekstra services deaktiveret)
 
       const res = await fetch(submitUrl, {
         method: "POST",
@@ -624,7 +398,7 @@ export default function ContactForm({
             : undefined,
           stayPurpose: isBooking ? state.stayPurpose.trim() : undefined,
           selection: selectionPayload,
-          extras: selectedExtrasForPayload,
+          // extras: selectedExtrasForPayload, // (deaktiveret)
         }),
       });
 
@@ -668,13 +442,7 @@ export default function ContactForm({
         ? fmtMoney.format(grandTotal)
         : t("—", "—");
 
-    const extrasLines =
-      selectedExtras.map((it) => {
-        const label = lang === "da" ? it.label.da : it.label.en;
-        const unit =
-          it.unitPriceDKK > 0 ? ` (${fmtMoney.format(it.unitPriceDKK)})` : "";
-        return `${it.qty} × ${label}${unit}`;
-      }) ?? [];
+    // const extrasLines = []; // (deaktiveret)
 
     return (
       <div
@@ -724,24 +492,9 @@ export default function ContactForm({
               <dt>{t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}</dt>
               <dd>{cleaningStr}</dd>
             </div>
-            <div>
-              <dt>{t("Ekstra services", "Extras")}</dt>
-              <dd>
-                {includeCleaning
-                  ? fmtMoney.format(extrasTotalDKK)
-                  : t("—", "—")}
-                {selectedExtras.length > 0 && (
-                  <>
-                    <br />
-                    <ul style={{ margin: 0, paddingLeft: "1.1rem" }}>
-                      {extrasLines.map((line, i) => (
-                        <li key={i}>{line}</li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-              </dd>
-            </div>
+
+            {/* Ekstra services-sektion er fjernet */}
+
             <div>
               <dt>{t("Estimeret total", "Estimated total")}</dt>
               <dd>{totalStr}</dd>
@@ -906,116 +659,13 @@ export default function ContactForm({
               </output>
             </div>
           </div>
-          {/* EKSTRA SERVICES – HORIZONTAL SCROLL */}
-          <div className={styles.row} aria-labelledby="extras-label">
-            <div className={styles.header}>
-              <label
-                id="extras-label"
-                className={styles.label}
-                data-required="true"
-              >
-                {t("Ekstra services", "Extra services")}
-              </label>
-              <p className={styles.title} aria-live="polite">
-                {t(
-                  "Vælg ekstra services eller markér “Ønsker ikke ekstra service”. Scroll vandret for flere.",
-                  "Choose extra services or tick “No extra services”. Scroll horizontally for more."
-                )}
-              </p>
-            </div>
 
-            <div
-              className={[
-                styles.extrasWrap,
-                canScrollLeft ? styles["is-scrollable-left"] : "",
-                canScrollRight ? styles["is-scrollable-right"] : "",
-              ].join(" ")}
-            >
-              <div
-                ref={scrollerRef}
-                className={styles.extrasScroller}
-                role="group"
-                aria-roledescription="carousel"
-                onScroll={updateScrollShadows}
-              >
-                {EXTRA_SERVICES.map((svc) => {
-                  const qty = extras[svc.id] ?? 0;
-                  const label = lang === "da" ? svc.label.da : svc.label.en;
-                  const priceStr =
-                    svc.priceDKK > 0
-                      ? fmtMoney.format(svc.priceDKK)
-                      : t("Gratis", "Free");
-                  const cap = getExtraCap(svc.id, totalGuests);
+          {/* EKSTRA SERVICES – HELE BLOKKEN ER DEAKTIVERET */}
+          {/*
+          <div className={styles.row} aria-labelledby="extras-label"> … </div>
+          */}
 
-                  const isNoExtras = svc.id === NO_EXTRAS_ID;
-                  const disabledByNoExtras =
-                    !isNoExtras && (extras[NO_EXTRAS_ID] ?? 0) > 0;
-
-                  return (
-                    <div key={svc.id} className={styles.extraCard}>
-                      <div className={styles.extraThumb} aria-hidden="true">
-                        {svc.imgSrc ? (
-                          <img src={svc.imgSrc} alt="" />
-                        ) : (
-                          <span>{svc.icon ?? "✨"}</span>
-                        )}
-                      </div>
-
-                      <div className={styles.extraMeta}>
-                        <div className={styles.extraLabel}>{label}</div>
-                        <div className={styles.extraPrice}>
-                          {priceStr}
-                          {svc.priceDKK > 0 ? t(" / stk.", " / each") : ""}
-                        </div>
-                      </div>
-
-                      <div className={styles.extraCounter}>
-                        <button
-                          type="button"
-                          className={styles.extraBtn}
-                          onClick={() => decExtra(svc.id)}
-                          aria-label={t(
-                            `Minus én ${label}`,
-                            `Decrease ${label}`
-                          )}
-                          disabled={qty <= 0 || disabledByNoExtras}
-                          data-variant="minus"
-                        >
-                          –
-                        </button>
-                        <output
-                          className={styles.extraQty}
-                          aria-live="polite"
-                          data-animate={qty > 0 ? "pop" : undefined}
-                        >
-                          {qty}
-                        </output>
-                        <button
-                          type="button"
-                          className={styles.extraBtn}
-                          onClick={() => incExtra(svc.id)}
-                          aria-label={t(
-                            `Plus én ${label} (max ${cap})`,
-                            `Increase ${label} (max ${cap})`
-                          )}
-                          disabled={qty >= cap || disabledByNoExtras}
-                          data-variant="plus"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Hints */}
-              <div className={styles.extrasHintLeft} aria-hidden />
-              <div className={styles.extrasHintRight} aria-hidden />
-            </div>
-          </div>
-          {/* Samlet prisboks */}
-          {/* Samlet prisboks – 4 kolonner på én linje */}
+          {/* Samlet prisboks – 3 felter (Pris, Rengøring, Total) */}
           <div
             className={styles.totalsBox}
             role="group"
@@ -1047,17 +697,7 @@ export default function ContactForm({
               </output>
             </div>
 
-            <div className={styles.totalItem}>
-              <span className={styles.tLabel}>
-                <span className={styles.tTop}>{t("Ekstra", "Extras")}</span>
-                <span className={styles.tSub}>
-                  {t("(services)", "(services)")}
-                </span>
-              </span>
-              <output className={styles.tValue} aria-live="polite">
-                {includeCleaning ? fmtMoney.format(extrasTotalDKK) : "—"}
-              </output>
-            </div>
+            {/* Extras-kolonnen er fjernet */}
 
             <div className={`${styles.totalItem} ${styles.em}`}>
               <span className={styles.tLabel}>
@@ -1073,6 +713,7 @@ export default function ContactForm({
               </output>
             </div>
           </div>
+
           {/* Formål med opholdet (påkrævet, kun booking) */}
           <div className={styles.row}>
             <label
