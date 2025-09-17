@@ -499,6 +499,7 @@
 .card .extraLabel {
   font-weight: 700;
   color: var(--text);
+  
 }
 .card .extraPrice {
   color: var(--muted);
@@ -588,9 +589,19 @@
 
 @media (max-width: 450px) {
   .card .extraCard {
-    width: clamp(180px, 80vw, 2px);
+    width: clamp(145px, 80vw, 2px);
   }
-  
+  .card .extraLabel {
+    font-size: 0.8rem;
+  }
+  .card .extraPrice {
+    font-size: 0.82rem;
+  }
+  .card .extraBtn {
+    width: 30px;
+    height: 30px;
+    font-size: 12px; 
+  }
 }
 
 /* Hold lys finish i dark mode */
