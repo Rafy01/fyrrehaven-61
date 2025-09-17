@@ -83,6 +83,8 @@ export default function Home({ lang }: { lang: Lang }) {
         description={seoDescription}
         ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3736.webp"
         jsonLd={jsonLd}
+        
+
       />
       <UspStrip
         ariaLabel={t("Hurtige fakta", "Quick facts")}

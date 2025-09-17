@@ -1,4 +1,7 @@
-export type { Lang } from "./lang"; // ⟵ re-eksportér Lang
+// src/lib/routes.ts
+
+// Re-eksportér Lang for andre moduler, og importér den lokalt som type
+export type { Lang } from "./lang";
 import type { Lang } from "./lang";
 
 export type PageKey =
@@ -12,14 +15,13 @@ export type PageKey =
   | "cookies"
   | "fees"
   | "chat"
-  | "privacy";
+  | "privacy"
+  | "sitemap";
 
-/** Lokale slugs pr. side pr. sprog.
- *  Tip: vi bruger ASCII (omraadet) for simplicity. Du kan godt bruge diakritiske tegn hvis du ønsker.
- */
+/** Lokale slugs pr. side pr. sprog (brug lowercase ASCII + bindestreger) */
 export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   home: { da: "", en: "" },
-  house: { da: "Sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61" },
+  house: { da: "sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61" },
   area: { da: "omraadet-skov-og-strand", en: "area-forest-and-beach" },
   gallery: {
     da: "galleri-fyrrehaven-61-billeder",
@@ -29,18 +31,19 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   contact: { da: "kontakt", en: "contact" },
   book: { da: "booking", en: "book" },
   cookies: { da: "cookies", en: "cookies" },
-  fees: { da: "Gebyrer", en: "Fees" },
+  fees: { da: "gebyrer", en: "fees" },
   chat: { da: "chat-ukendte-sporgsmal", en: "chat-unknown-questions" },
   privacy: { da: "privatlivspolitik", en: "privacy-policy" },
+  sitemap: { da: "sitemap", en: "sitemap" },
 };
 
 /** Byg sti for en given side og sprog. */
 export function pathOf(lang: Lang, key: PageKey): string {
-  const slug = SLUGS[key][lang];
+  const slug = SLUGS[key][lang] ?? "";
   return `/${lang}${slug ? `/${slug}` : ""}`;
 }
 
-/** Reverse lookup: slug -> page key per sprog */
+/** Reverse lookup: slug -> page key pr. sprog */
 const REVERSE: Record<Lang, Record<string, PageKey>> = {
   da: Object.fromEntries(
     Object.entries(SLUGS).map(([k, v]) => [v.da || "", k as PageKey])
@@ -50,17 +53,19 @@ const REVERSE: Record<Lang, Record<string, PageKey>> = {
   ),
 };
 
-/** Find {lang, key} ud fra en pathname. Returnerer null hvis det ikke ligner vores struktur. */
+/** Find {lang, key} ud fra en pathname. Returnerer null hvis ikke vores struktur. */
 export function parsePath(
   pathname: string
 ): { lang: Lang; key: PageKey } | null {
   const parts = pathname.replace(/^\/+/, "").split("/");
   const langSeg = (parts[0] || "") as Lang;
   if (langSeg !== "da" && langSeg !== "en") return null;
+
   const slug = decodeURIComponent(parts[1] || "");
   const key = REVERSE[langSeg][slug];
   if (key) return { lang: langSeg, key };
-  // tom slug = home
+
+  // Tom slug = home
   if (!slug) return { lang: langSeg, key: "home" };
   return null;
 }
