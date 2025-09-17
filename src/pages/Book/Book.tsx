@@ -65,7 +65,7 @@ export default function Book({ lang }: { lang: Lang }) {
         path={path}
         title={seoTitle}
         description={seoDescription}
-        ogImage="/og-book.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3807.webp"
         jsonLd={jsonLd}
       />
 
@@ -122,7 +122,7 @@ export default function Book({ lang }: { lang: Lang }) {
             <Heading as="h3" size="3" mb="1">
               {t("Praktisk", "Good to know")}
             </Heading>
-            <Text >
+            <Text>
               {t(
                 "Udendørs pool er opvarmet ca. 29 °C og åben 1. maj – 1. oktober. Maks. 10 personer. Ingen fester.",
                 "Outdoor pool heated to ~29 °C and open May 1 – Oct 1. Max 10 guests. No parties."

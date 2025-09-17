@@ -214,7 +214,7 @@ export default function Footer({
               <h3 className={styles.colTitle}>{t("Praktisk", "Practical")}</h3>
               <ul className={styles.list}>
                 <li>
-                  <Link className={styles.link} to={pathOf(currentLang, "faq")}>
+                  <Link className={styles.link} to={pathOf(currentLang, "house")}>
                     {t("Husregler", "House rules")}
                   </Link>
                 </li>

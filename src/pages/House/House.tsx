@@ -70,7 +70,7 @@ export default function House({ lang }: { lang: Lang }) {
         path={pathOf(lang, "house")}
         title={seoTitle}
         description={seoDescription}
-        ogImage="/og-house.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.webp"
         jsonLd={jsonLd}
       />
 

@@ -81,7 +81,7 @@ export default function Home({ lang }: { lang: Lang }) {
         path={pathOf(lang, "home")}
         title={seoTitle}
         description={seoDescription}
-        ogImage="/og-home.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3736.webp"
         jsonLd={jsonLd}
       />
       <UspStrip

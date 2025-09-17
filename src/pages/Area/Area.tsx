@@ -74,7 +74,7 @@ export default function Area({ lang }: { lang: Lang }) {
         path={path}
         title={seoTitle}
         description={seoDescription}
-        ogImage="/og-area.jpg"
+        ogImage="/area/area-hero.webp"
         jsonLd={jsonLd}
       />
       <Hero

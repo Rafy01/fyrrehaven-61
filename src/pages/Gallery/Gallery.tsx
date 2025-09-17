@@ -45,7 +45,7 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
         path={path}
         title={seoTitle}
         description={seoDescription}
-        ogImage="/og-gallery.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3807.webp"
         jsonLd={jsonLd}
       />
 
