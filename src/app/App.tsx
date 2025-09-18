@@ -13,7 +13,8 @@ import ScrollMemory from "./ScrollMemory";
 import HashScroll from "./HashScroll";
 import Gtag from "../components/Analytics/Gtag";
 // import ChatWidget from "../components/ChatWidget";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
+
 
 
 export default function App({ lang }: { lang: Lang }) {
