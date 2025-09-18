@@ -109,7 +109,7 @@ export default function Home({ lang }: { lang: Lang }) {
         path={pathOf(lang, "home")}
         title={seoTitle}
         description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3736.webp"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3736.jpg"
         jsonLd={jsonLd}
         robots={{ index: true, follow: true, noarchive: true }}
         keywords={seoKeywords}
