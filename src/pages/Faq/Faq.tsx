@@ -26,7 +26,7 @@ export default function Faq({ lang }: { lang: Lang }) {
         path={path}
         title={seoTitle}
         description={seoDescription}
-        ogImage="/og-faq.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage.jpg"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "FAQPage",

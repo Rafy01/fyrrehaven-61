@@ -46,7 +46,7 @@ export default function Fees({ lang }: { lang: Lang }) {
         path={path}
         title={seoTitle}
         description={seoDescription}
-        ogImage="/og-fees.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage.jpg"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebPage",

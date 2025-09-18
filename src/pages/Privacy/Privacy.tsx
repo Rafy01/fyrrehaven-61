@@ -68,7 +68,7 @@ export default function Privacy({ lang }: { lang: Lang }) {
         path={path}
         title={seoTitle}
         description={seoDescription}
-        ogImage="/og-privacy.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage.jpg"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebPage",
