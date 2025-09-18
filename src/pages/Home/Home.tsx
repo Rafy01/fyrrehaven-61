@@ -1,7 +1,4 @@
-import {
-  Separator,
-  Container,
-} from "@radix-ui/themes";
+import { Separator, Container } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import Highlights from "../../components/Highlights"; // ← NYT
@@ -109,7 +106,7 @@ export default function Home({ lang }: { lang: Lang }) {
         path={pathOf(lang, "home")}
         title={seoTitle}
         description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
         jsonLd={jsonLd}
         robots={{ index: true, follow: true, noarchive: true }}
         keywords={seoKeywords}
@@ -336,4 +333,3 @@ export default function Home({ lang }: { lang: Lang }) {
     </>
   );
 }
-

@@ -155,7 +155,7 @@ export default function Sitemap({ lang }: { lang: Lang }) {
         path={path}
         title={seoTitle}
         description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
         jsonLd={jsonLd}
       />
 

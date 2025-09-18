@@ -11,41 +11,40 @@ export default function ContactPage({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
   const path = pathOf(lang, "contact");
 
-     const seoTitle = t(
-       "Kontakt Fyrrehaven 61 – spørgsmål om booking og ophold",
-       "Contact Fyrrehaven 61 – questions about booking and stays"
-     );
-     const seoDescription = t(
-       "Har du spørgsmål til datoer, priser, faciliteter eller særlige ønsker? Send os en besked via formularen — vi svarer typisk samme dag. Al kommunikation foregår via e-mail, og dine oplysninger behandles efter vores privatlivspolitik.",
-       "Got questions about dates, pricing, amenities or special requests? Send us a message — we usually reply the same day. All communication is handled by email and your data is processed under our privacy policy."
-     );
-     const seoKeywords =
-       lang === "da"
-         ? [
-             "kontakt",
-             "Fyrrehaven 61",
-             "sommerhus Fjellerup",
-             "spørgsmål booking",
-             "udlejning sommerhus",
-             "familievenligt sommerhus",
-             "pool vildmarksbad sauna",
-             "Djursland ferie",
-             "book direkte",
-             "Airbnb kontakt",
-           ]
-         : [
-             "contact",
-             "Fyrrehaven 61",
-             "holiday home Fjellerup",
-             "booking questions",
-             "holiday rental",
-             "family friendly cottage",
-             "pool hot tub sauna",
-             "Djursland Denmark",
-             "book direct",
-             "Airbnb contact",
-           ];
-
+  const seoTitle = t(
+    "Kontakt Fyrrehaven 61 – spørgsmål om booking og ophold",
+    "Contact Fyrrehaven 61 – questions about booking and stays"
+  );
+  const seoDescription = t(
+    "Har du spørgsmål til datoer, priser, faciliteter eller særlige ønsker? Send os en besked via formularen — vi svarer typisk samme dag. Al kommunikation foregår via e-mail, og dine oplysninger behandles efter vores privatlivspolitik.",
+    "Got questions about dates, pricing, amenities or special requests? Send us a message — we usually reply the same day. All communication is handled by email and your data is processed under our privacy policy."
+  );
+  const seoKeywords =
+    lang === "da"
+      ? [
+          "kontakt",
+          "Fyrrehaven 61",
+          "sommerhus Fjellerup",
+          "spørgsmål booking",
+          "udlejning sommerhus",
+          "familievenligt sommerhus",
+          "pool vildmarksbad sauna",
+          "Djursland ferie",
+          "book direkte",
+          "Airbnb kontakt",
+        ]
+      : [
+          "contact",
+          "Fyrrehaven 61",
+          "holiday home Fjellerup",
+          "booking questions",
+          "holiday rental",
+          "family friendly cottage",
+          "pool hot tub sauna",
+          "Djursland Denmark",
+          "book direct",
+          "Airbnb contact",
+        ];
 
   return (
     <>
@@ -54,7 +53,7 @@ export default function ContactPage({ lang }: { lang: Lang }) {
         path={path}
         title={seoTitle}
         description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "ContactPage",

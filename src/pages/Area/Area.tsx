@@ -23,10 +23,10 @@ export default function Area({ lang }: { lang: Lang }) {
     "Området – skov, strand og oplevelser tæt på",
     "Area – forest, beach and nearby experiences"
   );
-const seoDescription = t(
-  "Oplev Fjellerup og Djursland fra Fyrrehaven 61: skovstier fra døren, strand i gå- og cykelafstand, og familievenlige attraktioner som Djurs Sommerland, Mols Bjerge og Kattegatcentret. Se kortet og vores bedste lokale tips.",
-  "Explore Fjellerup and Djursland from Fyrrehaven 61: forest trails at the doorstep, a beach within walking and biking distance, and family attractions like Djurs Sommerland, Mols Bjerge and the Kattegat Centre. See the map and our top local tips."
-);
+  const seoDescription = t(
+    "Oplev Fjellerup og Djursland fra Fyrrehaven 61: skovstier fra døren, strand i gå- og cykelafstand, og familievenlige attraktioner som Djurs Sommerland, Mols Bjerge og Kattegatcentret. Se kortet og vores bedste lokale tips.",
+    "Explore Fjellerup and Djursland from Fyrrehaven 61: forest trails at the doorstep, a beach within walking and biking distance, and family attractions like Djurs Sommerland, Mols Bjerge and the Kattegat Centre. See the map and our top local tips."
+  );
   const seoKeywords =
     lang === "da"
       ? [
@@ -104,7 +104,7 @@ const seoDescription = t(
         path={path}
         title={seoTitle}
         description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage.jpg"
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
         jsonLd={jsonLd}
         robots={{ index: true, follow: true, noarchive: true }}
         keywords={seoKeywords}
