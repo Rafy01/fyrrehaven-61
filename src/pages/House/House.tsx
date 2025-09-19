@@ -14,6 +14,7 @@ import { AIRBNB_URL } from "../../lib/links";
 import styles from "./House.module.css";
 import PracticalInfo from "../../components/PracticalInfo";
 import Facilities from "../../components/Facilities";
+import { getPageMeta } from "../../lib/meta";
 
 type Lang = "da" | "en";
 
@@ -21,15 +22,7 @@ export default function House({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
   /* -------- SEO (kun meta) -------- */
-  const seoTitle = t(
-    "Sommerhuset – pool, vildmarksbad & sauna | Fyrrehaven 61",
-    "The House – pool, hot tub & sauna | Fyrrehaven 61"
-  );
-
-  const seoDescription = t(
-    "Sommerhus til 10 med udendørs opvarmet pool (1. maj–1. oktober), brændefyret vildmarksbad og el-sauna. Familievenligt tæt på skov og strand. Book via Airbnb.",
-    "Holiday home for 10 with an outdoor heated pool (May 1–Oct 1), wood-fired hot tub and electric sauna. Family-friendly near forest and beach. Book on Airbnb."
-  );
+  const Meta = getPageMeta(lang, "house");
   const seoKeywords =
     lang === "da"
       ? [
@@ -60,7 +53,7 @@ export default function House({ lang }: { lang: Lang }) {
     "@context": "https://schema.org",
     "@type": "VacationRental",
     name: "Fyrrehaven 61 – House",
-    description: seoDescription,
+    description: Meta.description,
     url: `https://fyrrehaven-61.dk${pathOf(lang, "house")}`,
     maximumAttendeeCapacity: 10,
     amenityFeature: [
@@ -94,8 +87,8 @@ export default function House({ lang }: { lang: Lang }) {
       <Head
         lang={lang}
         path={pathOf(lang, "house")}
-        title={seoTitle}
-        description={seoDescription}
+        title={Meta.title}
+        description={Meta.description}
         ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.jpg"
         jsonLd={jsonLd}
         robots={{ index: true, follow: true, noarchive: true }}

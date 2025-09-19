@@ -16,6 +16,7 @@ import Reviews from "../../components/Reviews";
 
 import LocationAndDistances from "../../components/LocationAndDistances";
 import PracticalInfo from "../../components/PracticalInfo";
+import { getPageMeta } from "../../lib/meta";
 
 type Lang = "da" | "en";
 
@@ -23,14 +24,7 @@ export default function Home({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
   /** ---------- SEO TEKSTER (kun til meta) ---------- */
-  const seoTitle = t(
-    "Fyrrehaven 61 – sommerhus til 10 personer ved skov og strand",
-    "Fyrrehaven 61 – holiday home for 10 by forest & beach"
-  );
-  const seoDescription = t(
-    "Familievenligt sommerhus ved Fjellerup Strand med opvarmet udendørs pool (1. maj–1. oktober), brændefyret vildmarksbad og el-sauna. Plads til 10 gæster, 4 soveværelser og lyse fællesrum tæt på skov og stier. Book privat eller via Airbnb.",
-    "Family-friendly holiday home by Fjellerup Beach with a heated outdoor pool (May 1–Oct 1), wood-fired hot tub and electric sauna. Sleeps 10 with 4 bedrooms and bright living areas close to forest trails. Book privately or via Airbnb."
-  );
+const meta = getPageMeta(lang, "house");
 
   // Keywords (lav vægt i SEO, men kan bruges i metatag)
   const seoKeywords =
@@ -75,7 +69,7 @@ export default function Home({ lang }: { lang: Lang }) {
     "@context": "https://schema.org",
     "@type": "VacationRental",
     name: "Fyrrehaven 61",
-    description: seoDescription,
+    description: meta.description,
     url: "https://fyrrehaven-61.dk",
     maximumAttendeeCapacity: 10,
     amenityFeature: [
@@ -104,8 +98,8 @@ export default function Home({ lang }: { lang: Lang }) {
       <Head
         lang={lang}
         path={pathOf(lang, "home")}
-        title={seoTitle}
-        description={seoDescription}
+        title={meta.title}
+        description={meta.description}
         ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
         jsonLd={jsonLd}
         robots={{ index: true, follow: true, noarchive: true }}
