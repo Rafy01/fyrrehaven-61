@@ -196,8 +196,6 @@ export default function Head({
     const imageAbs = absUrl(ogImage || site.defaultImage)!;
     const locale = ogLocale(lang);
     const localeAlt = altLocale(lang);
-    const imgW = String(ogImageWidth ?? 1200);
-    const imgH = String(ogImageHeight ?? 630);
 
     upsertMeta({ property: "og:site_name" }, site.name);
     upsertMeta({ property: "og:type" }, "website");
@@ -207,8 +205,8 @@ export default function Head({
     upsertMeta({ property: "og:url" }, canonicalHref);
     upsertMeta({ property: "og:image" }, imageAbs);
     upsertMeta({ property: "og:image:alt" }, ogImageAlt || title);
-    upsertMeta({ property: "og:image:width" }, imgW); // ← NEW
-    upsertMeta({ property: "og:image:height" }, imgH); // ← NEW
+    upsertMeta({ property: "og:image:width" }, "1200");
+    upsertMeta({ property: "og:image:height" }, "630");
     upsertMeta({ property: "og:locale:alternate" }, localeAlt);
 
     upsertMeta({ name: "twitter:card" }, "summary_large_image");
