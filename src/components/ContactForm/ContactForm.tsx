@@ -225,22 +225,7 @@ export default function ContactForm({
 
   // === Min.-nætter: afledte værdier til UI og submit-validering ===
   const minReq = selPrice.minNightsRequired ?? 2;
-  const minOk =
-    selPrice.kind !== "range" || selPrice.isMinNightsSatisfied !== false;
-  const minErrText =
-    !minOk && selPrice.start
-      ? lang === "da"
-        ? `Minimum ${minReq} ${
-            minReq === 1 ? "nat" : "nætter"
-          } ved ankomst ${fmtDateLong.format(selPrice.start)}. Du har valgt ${
-            selPrice.nights ?? 0
-          }.`
-        : `Minimum ${minReq} night${
-            minReq === 1 ? "" : "s"
-          } required for arrival ${fmtDateLong.format(
-            selPrice.start
-          )}. You selected ${selPrice.nights ?? 0}.`
-      : null;
+  
 
   // Submit
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -642,15 +627,7 @@ export default function ContactForm({
                 {selPrice.nights ?? t("—", "N/A")}
               </output>
             </div>
-            {!minOk && minErrText && (
-              <div
-                className={styles.error}
-                role="alert"
-                aria-live="polite"
-                style={{ marginTop: "0.25rem" }}
-              >
-              </div>
-            )}
+            
           </div>
 
           {/* Dropdown EFTER kalenderen */}
