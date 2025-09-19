@@ -21,12 +21,15 @@ export type WeekPricing = {
   weekendDays?: DayCode[];
   days?: Partial<Record<DayCode, number>>;
   note?: string;
+  /** Minimum nætter ved ankomst i denne uge */
+  minNights?: number;
 };
 
 /** Årsniveau:
  *  - default: fallback-priser for hele året (bruges når uge ikke er sat)
  *  - weeks: ISO-uge → WeekPricing
  *  - days: dato → pris (YYYY-MM-DD, overrides alt andet)
+ *  - daysMinNights: dato → min. nætter for ankomstdag (YYYY-MM-DD, højeste prioritet)
  */
 export type YearPricing = {
   default?: {
@@ -34,9 +37,12 @@ export type YearPricing = {
     weekdays?: number;
     weekend?: number;
     weekendDays?: DayCode[];
+    /** Global fallback for min. nætter i året */
+    minNights?: number;
   };
   weeks?: Partial<Record<number, WeekPricing>>;
   days?: Partial<Record<string, number>>;
+  daysMinNights?: Partial<Record<string, number>>;
 };
 
 /** Hele prisplanen (flere år). */
@@ -50,6 +56,32 @@ export type PricePlan = {
  * ========= */
 
 export const DEFAULT_WEEKEND: DayCode[] = ["fri", "sat"];
+
+/** Returnerer min. nætter baseret på ANKOMSTDATO.
+ *  Prioritet: daysMinNights[YYYY-MM-DD] > weeks[w].minNights > default.minNights > GLOBAL_FALLBACK(2)
+ */
+export function getMinNightsForStart(
+  date: Date,
+  plan: PricePlan = PRICES
+): number {
+  const GLOBAL_FALLBACK = 2; // sikrer default 2 nætter, hvis intet andet er sat
+  const y = date.getFullYear();
+  const yr = plan.years[y];
+  if (!yr) return GLOBAL_FALLBACK;
+
+  const ymd = date.toISOString().slice(0, 10);
+  if (yr.daysMinNights && yr.daysMinNights[ymd] != null) {
+    return yr.daysMinNights[ymd]!;
+  }
+
+  const w = isoWeek(date);
+  const wp = yr.weeks?.[w];
+  if (wp?.minNights != null) return wp.minNights;
+
+  if (yr.default?.minNights != null) return yr.default.minNights;
+
+  return GLOBAL_FALLBACK;
+}
 
 /* =========
  * Hjælpere til at udfylde days
@@ -77,6 +109,21 @@ function addOne(
   store[ymd] = price;
 }
 
+/** Helper til at udfylde dags-specifikke min.-nætter */
+function addRangeMinNights(
+  store: Partial<Record<string, number>>,
+  fromYMD: string,
+  toYMD: string,
+  minNights: number
+) {
+  const start = new Date(fromYMD + "T00:00:00");
+  const end = new Date(toYMD + "T00:00:00");
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const ymd = d.toISOString().slice(0, 10);
+    store[ymd] = minNights;
+  }
+}
+
 /* =========
  * Airbnb-matchende priser (ud fra screenshots)
  * ========= */
@@ -84,6 +131,11 @@ function addOne(
 const days2025: Partial<Record<string, number>> = {};
 const days2026: Partial<Record<string, number>> = {};
 const days2027: Partial<Record<string, number>> = {};
+
+// Mulighed for dags-specifik min. nætter
+const daysMinNights2025: Partial<Record<string, number>> = {};
+const daysMinNights2026: Partial<Record<string, number>> = {};
+const daysMinNights2027: Partial<Record<string, number>> = {};
 
 /** ——— 2025 ——— **/
 
@@ -137,6 +189,23 @@ addRange(days2026, "2026-07-01", "2026-09-30", 3325);
 // (Eksempel på kendt enkelt-dag senere)
 addOne(days2026, "2026-12-31", 4300);
 
+/** ——— JULEFERIE MIN. NÆTTER (3) ——— **/
+
+// Juleferie 2025 → 20/12–31/12 (3 nætter)
+addRangeMinNights(daysMinNights2025, "2025-12-20", "2025-12-31", 3);
+
+// Fortsættelse af juleferien ind i 2026 → 01/01–03/01 (3 nætter)
+addRangeMinNights(daysMinNights2026, "2026-01-01", "2026-01-03", 3);
+
+// Juleferie 2026 → 20/12–31/12 (3 nætter)
+addRangeMinNights(daysMinNights2026, "2026-12-20", "2026-12-31", 3);
+
+// Fortsættelse ind i 2027 → 01/01–03/01 (3 nætter)
+addRangeMinNights(daysMinNights2027, "2027-01-01", "2027-01-03", 3);
+
+// Juleferie 2027 → 20/12–31/12 (3 nætter)
+addRangeMinNights(daysMinNights2027, "2027-12-20", "2027-12-31", 3);
+
 /* =========
  * Eksporter prisplan
  * ========= */
@@ -149,11 +218,28 @@ export const PRICES: PricePlan = {
       default: {
         price: 1800,
         weekendDays: ["fri", "sat"],
+        minNights: 2, // globalt default minimum booking
       },
       days: days2025,
-      // Uge 42 noteres kun som reference – days dækker allerede.
+      daysMinNights: daysMinNights2025,
       weeks: {
-        42: { price: 2200, note: "Efterårsferie – dækket af days" },
+        // VINTERFERIE (uge 7)
+        7: { minNights: 3 },
+
+        // SOMMERFERIE (uge 27–32)
+        27: { minNights: 6 },
+        28: { minNights: 6 },
+        29: { minNights: 6 },
+        30: { minNights: 6 },
+        31: { minNights: 6 },
+        32: { minNights: 6 },
+
+        // EFTERÅRSFERIE (uge 42) – behold prisnote
+        42: {
+          price: 2200,
+          note: "Efterårsferie – dækket af days",
+          minNights: 3,
+        },
       },
     },
 
@@ -162,23 +248,52 @@ export const PRICES: PricePlan = {
       default: {
         price: 3500, // generel lavsæson; justér hvis du vil splitte weekday/weekend
         weekendDays: ["fri", "sat"],
+        minNights: 2, // globalt default minimum booking
       },
       // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
       days: days2026,
+      daysMinNights: daysMinNights2026,
       weeks: {
-        // Intet nødvendigt her, men lader feltet stå åbent til fremtidige sæsoner
+        // VINTERFERIE (uge 7)
+        7: { minNights: 3 },
+
+        // SOMMERFERIE (uge 27–32)
+        27: { minNights: 6 },
+        28: { minNights: 6 },
+        29: { minNights: 6 },
+        30: { minNights: 6 },
+        31: { minNights: 6 },
+        32: { minNights: 6 },
+
+        // EFTERÅRSFERIE (uge 42)
+        42: { minNights: 3 },
       },
     },
+
     2027: {
       // Fallback uden for de specificerede perioder
       default: {
         price: 3700, // generel lavsæson; justér hvis du vil splitte weekday/weekend
         weekendDays: ["fri", "sat"],
+        minNights: 2, // globalt default minimum booking
       },
       // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
       days: days2027,
+      daysMinNights: daysMinNights2027,
       weeks: {
-        // Intet nødvendigt her, men lader feltet stå åbent til fremtidige sæsoner
+        // VINTERFERIE (uge 7)
+        7: { minNights: 3 },
+
+        // SOMMERFERIE (uge 27–32)
+        27: { minNights: 6 },
+        28: { minNights: 6 },
+        29: { minNights: 6 },
+        30: { minNights: 6 },
+        31: { minNights: 6 },
+        32: { minNights: 6 },
+
+        // EFTERÅRSFERIE (uge 42)
+        42: { minNights: 3 },
       },
     },
   },

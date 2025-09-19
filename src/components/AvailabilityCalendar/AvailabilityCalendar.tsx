@@ -2,7 +2,7 @@
 import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import type { Lang } from "../../lib/lang";
-import { getPriceForDate } from "../../data/pricing";
+import { getPriceForDate, getMinNightsForStart } from "../../data/pricing";
 
 /* ─── Types ─── */
 type ApiEvent = {
@@ -51,6 +51,11 @@ export type SelectionPrice = {
   total?: number | null;
   breakdown?: Array<{ date: Date; price: number | null }>;
   hasMissing?: boolean;
+
+  /** NYE felter: min.-nætter validering for ankomstdatoen */
+  minNightsRequired?: number;
+  isMinNightsSatisfied?: boolean;
+  validationError?: string;
 };
 
 type Props = {
@@ -257,6 +262,11 @@ export default function AvailabilityCalendar({
   // --- Selection state ---
   const [sel, setSel] = React.useState<Selection | null>(null);
 
+  // --- NY: lokal valideringsfejl for min. nætter ---
+  const [validationError, setValidationError] = React.useState<string | null>(
+    null
+  );
+
   const emitSelection = React.useCallback(
     (next: Selection | null) => {
       setSel(next);
@@ -371,18 +381,20 @@ export default function AvailabilityCalendar({
     [lang]
   );
 
-  // Emit pris KUN når sel ændrer sig (ingen afhængighed af callback-identitet)
+  // Emit pris + min.-nætter validering
   React.useEffect(() => {
     const send = (payload: SelectionPrice) => {
       onPriceRef.current?.(payload);
     };
 
     if (!sel) {
+      setValidationError(null);
       send({ kind: "none" });
       return;
     }
 
     if (sel.kind === "single") {
+      setValidationError(null);
       const day = startOfDay(sel.date);
       const price = getPriceForDate(day);
       send({
@@ -393,6 +405,8 @@ export default function AvailabilityCalendar({
         total: price ?? null,
         breakdown: [{ date: day, price }],
         hasMissing: price == null,
+        minNightsRequired: 1,
+        isMinNightsSatisfied: true,
       });
       return;
     }
@@ -400,6 +414,7 @@ export default function AvailabilityCalendar({
     const start = startOfDay(sel.start);
     const endEx = sel.end ? startOfDay(sel.end) : undefined;
     if (!endEx || endEx <= start) {
+      setValidationError(null);
       send({
         kind: "range",
         start,
@@ -417,72 +432,101 @@ export default function AvailabilityCalendar({
     const total = breakdown.reduce((sum, it) => sum + (it.price ?? 0), 0);
     const hasMissing = breakdown.some((it) => it.price == null);
 
+    // NY: min. nætter for ankomstdagen
+    const required = getMinNightsForStart(start) ?? 1;
+    const nights = days.length;
+    const isOk = nights >= required;
+
+    const dateStr = start.toLocaleDateString(
+      lang === "da" ? "da-DK" : "en-GB",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }
+    );
+    const errMsg = !isOk
+      ? lang === "da"
+        ? `Minimum ${required} ${
+            required === 1 ? "nat" : "nætter"
+          } ved ankomst ${dateStr}.`
+        : `Minimum ${required} night${
+            required === 1 ? "" : "s"
+          } required for arrival ${dateStr}.`
+      : null;
+
+    setValidationError(errMsg);
+
     send({
       kind: "range",
       start,
       endExclusive: endEx,
-      nights: days.length,
+      nights,
       total: hasMissing && total === 0 ? null : total,
       breakdown,
       hasMissing,
+      minNightsRequired: required,
+      isMinNightsSatisfied: isOk,
+      validationError: errMsg ?? undefined,
     });
-  }, [sel]);
+  }, [sel, lang]);
 
   // Klik-håndtering med bookingvalidering
- function handleDayClick(d: Date) {
-   if (selectionMode === "none") return;
-   const day = startOfDay(d);
+  function handleDayClick(d: Date) {
+    if (selectionMode === "none") return;
+    const day = startOfDay(d);
 
-   // — NEW: Hvis der er et færdigt range, og man klikker inden for det ⇒ deselect
-   if (
-     selectionMode === "range" &&
-     sel?.kind === "range" &&
-     sel.end &&
-     day >= startOfDay(sel.start) &&
-     day <= startOfDay(sel.end)
-   ) {
-     emitSelection(null);
-     return;
-   }
+    // — Hvis der er et færdigt range, og man klikker inden for det ⇒ deselect
+    if (
+      selectionMode === "range" &&
+      sel?.kind === "range" &&
+      sel.end &&
+      day >= startOfDay(sel.start) &&
+      day <= startOfDay(sel.end)
+    ) {
+      emitSelection(null);
+      return;
+    }
 
-   // Forbyd både fortid og i dag (gælder kun for NYT valg; ikke for deselect ovenfor)
-   if (disablePastSelection && day <= today) return;
+    // Forbyd både fortid og i dag (gælder kun for NYT valg; ikke for deselect ovenfor)
+    if (disablePastSelection && day <= today) return;
 
-   const ymd = day.toISOString().slice(0, 10);
-   const isBooked = bookedDays.has(ymd);
+    const ymd = day.toISOString().slice(0, 10);
+    const isBooked = bookedDays.has(ymd);
 
-   if (selectionMode === "single") {
-     if (isBooked) return;
-     const current =
-       sel && sel.kind === "single" && sel.date.getTime() === day.getTime()
-         ? null
-         : ({ kind: "single", date: day } as Selection);
-     emitSelection(current);
-     return;
-   }
+    if (selectionMode === "single") {
+      if (isBooked) return;
+      const current =
+        sel && sel.kind === "single" && sel.date.getTime() === day.getTime()
+          ? null
+          : ({ kind: "single", date: day } as Selection);
+      emitSelection(current);
+      return;
+    }
 
-   // range
-   if (!sel || sel.kind !== "range" || sel.end) {
-     if (isBooked) return;
-     emitSelection({ kind: "range", start: day });
-     return;
-   }
+    // range
+    if (!sel || sel.kind !== "range" || sel.end) {
+      if (isBooked) return;
+      emitSelection({ kind: "range", start: day });
+      return;
+    }
 
-   const start = startOfDay(sel.start);
+    const start = startOfDay(sel.start);
 
-   if (day.getTime() === start.getTime()) {
-     emitSelection(null);
-     return;
-   }
+    if (day.getTime() === start.getTime()) {
+      emitSelection(null);
+      return;
+    }
 
-   if (!rangeIsFree(start, day, bookedDays)) return;
+    if (!rangeIsFree(start, day, bookedDays)) return;
 
-   if (day < start) {
-     emitSelection({ kind: "range", start: day, end: start });
-   } else {
-     emitSelection({ kind: "range", start, end: day });
-   }
- }
+    if (day < start) {
+      emitSelection({ kind: "range", start: day, end: start });
+    } else {
+      emitSelection({ kind: "range", start, end: day });
+    }
+  }
+
   // helpers til selected styling
   function isSingleSelected(d: Date): boolean {
     return sel?.kind === "single" && sel.date.getTime() === d.getTime();
@@ -561,14 +605,14 @@ export default function AvailabilityCalendar({
                   sel?.kind === "range" &&
                   sel.start &&
                   !sel.end;
-                  
+
                 const inCurrentRange =
                   selectionMode === "range" &&
                   sel?.kind === "range" &&
                   sel.end &&
                   d >= startOfDay(sel.start) &&
                   d <= startOfDay(sel.end);
-                
+
                 // Klikbarhed
                 let canClick = selectionMode !== "none";
                 if (disablePastSelection && d <= today) canClick = false;
@@ -586,6 +630,8 @@ export default function AvailabilityCalendar({
                     ) {
                       canClick = false;
                     }
+                    // (Bevidst: Vi begrænser ikke klik baseret på min. nætter her,
+                    //  men viser i stedet en klar fejlbesked under kalenderen.)
                   }
                 }
                 if (inCurrentRange) canClick = true;
@@ -652,7 +698,7 @@ export default function AvailabilityCalendar({
                         selectionMode === "single" ? selectedSingle : undefined
                       }
                       disabled={disabled}
-                       style={cursorStyle}
+                      style={cursorStyle}
                       onClick={() => handleDayClick(d)}
                     />
                   </div>
@@ -712,6 +758,13 @@ export default function AvailabilityCalendar({
           </div>
         )}
       </div>
+
+      {/* NY: Min.-nætter fejl under kalenderen */}
+      {validationError && (
+        <div className={styles.error} role="alert" aria-live="polite">
+          {validationError}
+        </div>
+      )}
 
       {!bookings && (
         <div className={styles.loading}>{t("Henter…", "Loading…")}</div>
