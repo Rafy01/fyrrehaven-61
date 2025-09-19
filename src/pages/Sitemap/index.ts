@@ -1,1 +1,1 @@
-export { default } from "./Sitemap";
+export * from "./Sitemap";
