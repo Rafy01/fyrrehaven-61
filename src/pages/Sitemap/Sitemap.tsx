@@ -172,3 +172,6 @@ Sitemap: ${abs("/sitemap.xml")}
 
 generatePageSitemap();
 generateRobots();
+
+/* Gør filen til et modul for at tilfredsstille tsconfig `isolatedModules` */
+export {};
