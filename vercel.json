@@ -4,7 +4,7 @@
     { "source": "/api/(.*)", "destination": "/api/$1" },
 
     {
-      "source": "/(da|en)(/.*)?",
+      "source": "/(sitemap\\.xml|robots\\.txt)$",
       "has": [
         {
           "type": "header",
@@ -12,7 +12,7 @@
           "value": "(?i).*(bot|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|Discord|TelegramBot|Pinterest|embedly|quora\\slink\\spreview|vkShare|Google-InspectionTool|googleweblight|bingbot).*"
         }
       ],
-      "destination": "/api/share-meta"
+      "destination": "/$1"
     },
 
     { "source": "/((?!api).*)", "destination": "/" }
