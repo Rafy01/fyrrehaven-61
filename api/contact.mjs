@@ -187,12 +187,12 @@ export default async function handler(req, res) {
       return;
     }
 
-    // SMTP setup (uforandret)
+    // SMTP setup
     const host = reqEnv("SMTP_HOST");
     const port = Number(process.env.SMTP_PORT || 587);
     const user = reqEnv("SMTP_USER");
     const pass = reqEnv("SMTP_PASS");
-    const from = reqEnv("MAIL_FROM");
+    const from = reqEnv("MAIL_FROM"); // skal være på eget domæne
     const to = reqEnv("MAIL_TO");
 
     const secure =
@@ -214,6 +214,9 @@ export default async function handler(req, res) {
         minVersion: "TLSv1.2",
         ...(tlsInsecure ? { rejectUnauthorized: false } : {}),
       },
+      ...(String(process.env.SMTP_DEBUG || "").toLowerCase() === "true"
+        ? { logger: true, debug: true }
+        : {}),
     });
 
     await transporter.verify();
@@ -469,16 +472,22 @@ export default async function handler(req, res) {
       `Fee list accepted: ${yn(Boolean(feesAccepted), lang)}\n\n` +
       `— Besked / Message —\n${messageForMail || "—"}\n`;
 
+    // 1) Admin-mail
     const infoAdmin = await transporter.sendMail({
-      from,
+      from, // skal være mailbox på dit domæne
+      sender: from, // tydelig alignment
+      envelope: { from, to }, // eksplicit kuvert
       to,
       subject: subjectAdmin,
       html: htmlAdmin,
       text: textAdmin,
-      replyTo: email,
+      replyTo: email, // svar fra jer går til gæsten
+      headers: {
+        "X-Campaign": "website-contact",
+      },
     });
 
-    /** Auto-reply til afsender (uforandret tekstligt) */
+    /** 2) Auto-reply til afsender (fejl må IKKE sluges) */
     const siteName = process.env.SITE_NAME || "Fyrrehaven 61";
     const subjectUser =
       lang === "da"
@@ -508,22 +517,39 @@ export default async function handler(req, res) {
             isBookingReq ? "booking request" : "message"
           }. We’ll get back to you shortly.\n\n${siteName}\nhttps://fyrrehaven-61.dk`;
 
-    try {
-      await transporter.sendMail({
-        from,
-        to: email,
-        subject: subjectUser,
-        html: htmlUser,
-        text: textUser,
-        replyTo: to,
-      });
-    } catch (autoErr) {
-      console.error("MAIL_AUTOREPLY_ERROR", autoErr);
-    }
+    const autoInfo = await transporter.sendMail({
+      from, // samme domæne som DKIM/SPF
+      sender: from,
+      envelope: { from, to: email },
+      to: email,
+      subject: subjectUser,
+      html: htmlUser,
+      text: textUser,
+      replyTo: to, // svar fra gæsten går til jer
+      headers: {
+        "Auto-Submitted": "auto-replied",
+        "X-Auto-Response-Suppress": "All",
+      },
+    });
 
-    res.status(200).json({ ok: true, id: infoAdmin.messageId || null });
+    // 3) Returnér hvad der faktisk skete
+    res.status(200).json({
+      ok: true,
+      admin: {
+        id: infoAdmin?.messageId || null,
+        accepted: infoAdmin?.accepted || [],
+        rejected: infoAdmin?.rejected || [],
+        response: infoAdmin?.response || null,
+      },
+      autoReply: {
+        id: autoInfo?.messageId || null,
+        accepted: autoInfo?.accepted || [],
+        rejected: autoInfo?.rejected || [],
+        response: autoInfo?.response || null,
+      },
+    });
   } catch (err) {
-    console.error("MAIL_ERROR", err);
+    console.error("MAIL_ERROR", err?.response || err);
     const msg = String(err && err.message ? err.message : err);
 
     if (msg.startsWith("ENV_MISSING:")) {
@@ -534,6 +560,19 @@ export default async function handler(req, res) {
       });
       return;
     }
+
+    // Hvis fejlen opstod under autorespons, giv 502 så det er tydeligt i klienten
+    if (
+      msg.includes("ECONN") ||
+      msg.includes("ENOTFOUND") ||
+      msg.includes("MAIL")
+    ) {
+      res
+        .status(502)
+        .json({ ok: false, error: "MAIL_DELIVERY_ERROR", detail: msg });
+      return;
+    }
+
     res.status(500).json({ ok: false, error: "MAIL_ERROR", detail: msg });
   }
 }
