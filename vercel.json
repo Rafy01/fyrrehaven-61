@@ -15,7 +15,8 @@
       "destination": "/api/share-meta"
     },
 
-    { "source": "/((?!api).*)", "destination": "/" }
+
+    { "source": "/((?!api)(?!.*\\..*).*)", "destination": "/" }
   ],
   "headers": [
     {
