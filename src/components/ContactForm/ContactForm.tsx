@@ -51,18 +51,6 @@ const CLEANING_FEE_DKK = 1200;
 const MAX_GUESTS = 10;
 const DIGITS_RE = /[^\d]/g;
 
-/* ─────────────── EKSTRA SERVICES (KOMMENTERET UD) ─────────────── */
-// type ExtraService = {
-//   id: string;
-//   priceDKK: number;
-//   icon?: string;
-//   imgSrc?: string;
-//   label: { da: string; en: string };
-// };
-// const NO_EXTRAS_ID = "no-extras";
-// const EXTRA_SERVICES: ExtraService[] = [ /* ... */ ];
-// type ExtrasState = Record<string, number>;
-
 /** Resolve current UI language. */
 function useUiLang(explicit?: Lang): Lang {
   const { i18n } = useTranslation();
@@ -79,13 +67,6 @@ function clampInt(n: number, min: number, max: number) {
   if (!Number.isFinite(n)) n = min;
   return Math.min(Math.max(n, min), max);
 }
-
-/* ─────────────── FASTE CAP-REGLER (KOMMENTERET UD) ─────────────── */
-// const EXTRA_MAX_FIREWOOD = 20;
-// const EXTRA_MAX_HOTTUB_REFILL = 1;
-// const EXTRA_MAX_BABYCHAIR = 2;
-// const EXTRA_MAX_BABYCOT = 1;
-// const getExtraCap = (id: string, totalGuests: number) => { /* ... */ };
 
 export default function ContactForm({
   lang: langProp,
@@ -181,6 +162,18 @@ export default function ContactForm({
       }),
     [lang]
   );
+
+  // Lang dato til fejlbeskeder (fx "14. oktober 2025")
+  const fmtDateLong = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+    [lang]
+  );
+
   const fmtMoney = React.useMemo(
     () =>
       new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
@@ -227,25 +220,27 @@ export default function ContactForm({
     onChange("babies", next);
   }
 
-  /* ─────────────── EXTRA SERVICES STATE (KOMMENTERET UD) ─────────────── */
-  // const [extras, setExtras] = React.useState<ExtrasState>(() =>
-  //   Object.fromEntries(EXTRA_SERVICES.map((s) => [s.id, 0]))
-  // );
-  // React.useEffect(() => { /* cap & eksklusivitet */ }, [totalGuests]);
-  // const extrasTotalDKK = React.useMemo(() => {/* ... */}, [extras, includeCleaning]);
-  // const selectedExtras = React.useMemo(() => {/* ... */}, [extras]);
-
   // Total uden extras
   const grandTotal = includeCleaning ? totalWithCleaning : baseNightsTotal;
 
-  /* ─────────────── HORIZONTAL SCROLLER (KUN TIL EXTRAS – KOMMENTERET UD) ─────────────── */
-  // const scrollerRef = React.useRef<HTMLDivElement | null>(null);
-  // const [canScrollLeft, setCanScrollLeft] = React.useState(false);
-  // const [canScrollRight, setCanScrollRight] = React.useState(false);
-  // const updateScrollShadows = React.useCallback(() => { /* ... */ }, []);
-  // React.useEffect(() => { /* ... */ }, [updateScrollShadows]);
-  // function incExtra(id: string) { /* ... */ }
-  // function decExtra(id: string) { /* ... */ }
+  // === Min.-nætter: afledte værdier til UI og submit-validering ===
+  const minReq = selPrice.minNightsRequired ?? 2;
+  const minOk =
+    selPrice.kind !== "range" || selPrice.isMinNightsSatisfied !== false;
+  const minErrText =
+    !minOk && selPrice.start
+      ? lang === "da"
+        ? `Minimum ${minReq} ${
+            minReq === 1 ? "nat" : "nætter"
+          } ved ankomst ${fmtDateLong.format(selPrice.start)}. Du har valgt ${
+            selPrice.nights ?? 0
+          }.`
+        : `Minimum ${minReq} night${
+            minReq === 1 ? "" : "s"
+          } required for arrival ${fmtDateLong.format(
+            selPrice.start
+          )}. You selected ${selPrice.nights ?? 0}.`
+      : null;
 
   // Submit
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -307,6 +302,7 @@ export default function ContactForm({
         return;
       }
 
+      // Datoer valgt?
       const startISO = selPrice.start?.toISOString().slice(0, 10) ?? "";
       const endISO = selPrice.endExclusive?.toISOString().slice(0, 10) ?? "";
       if (!startISO || !endISO || !selPrice.nights || selPrice.nights <= 0) {
@@ -319,8 +315,25 @@ export default function ContactForm({
         return;
       }
 
-      // Krav om ekstra services (KOMMENTERET UD)
-      // …
+      // Min.-nætter opfyldt?
+      if (selPrice.isMinNightsSatisfied === false) {
+        // Brug kalenderens egen tekst hvis sat – ellers generér vores
+        const msg =
+          selPrice.validationError ??
+          (lang === "da"
+            ? `Minimum ${minReq} ${
+                minReq === 1 ? "nat" : "nætter"
+              } ved ankomst ${fmtDateLong.format(
+                selPrice.start!
+              )}. Vælg venligst en længere periode.`
+            : `Minimum ${minReq} night${
+                minReq === 1 ? "" : "s"
+              } required for arrival ${fmtDateLong.format(
+                selPrice.start!
+              )}. Please choose a longer stay.`);
+        setError(msg);
+        return;
+      }
 
       if (!state.feesAccepted) {
         setError(
@@ -355,7 +368,11 @@ export default function ContactForm({
             totalWithCleaningDKK: includeCleaning
               ? (selPrice.total ?? 0) + CLEANING_FEE_DKK
               : selPrice.total ?? null,
-            // totalWithCleaningAndExtrasDKK: null, // (ekstra services er deaktiveret)
+            // min.-nætter metadata til server-side validering/logning
+            minNightsRequired: selPrice.minNightsRequired ?? 2,
+            isMinNightsSatisfied:
+              selPrice.isMinNightsSatisfied ?? selPrice.nights != null,
+            validationError: selPrice.validationError ?? null,
             breakdown:
               selPrice.breakdown?.map((b) => ({
                 date: b.date.toISOString().slice(0, 10),
@@ -369,8 +386,6 @@ export default function ContactForm({
           ? "other"
           : "booking"
         : "inquiry";
-
-      // const selectedExtrasForPayload = null; // (ekstra services deaktiveret)
 
       const res = await fetch(submitUrl, {
         method: "POST",
@@ -398,7 +413,6 @@ export default function ContactForm({
             : undefined,
           stayPurpose: isBooking ? state.stayPurpose.trim() : undefined,
           selection: selectionPayload,
-          // extras: selectedExtrasForPayload, // (deaktiveret)
         }),
       });
 
@@ -441,8 +455,6 @@ export default function ContactForm({
       includeCleaning || selPrice.total != null
         ? fmtMoney.format(grandTotal)
         : t("—", "—");
-
-    // const extrasLines = []; // (deaktiveret)
 
     return (
       <div
@@ -492,8 +504,6 @@ export default function ContactForm({
               <dt>{t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}</dt>
               <dd>{cleaningStr}</dd>
             </div>
-
-            {/* Ekstra services-sektion er fjernet */}
 
             <div>
               <dt>{t("Estimeret total", "Estimated total")}</dt>
@@ -578,33 +588,7 @@ export default function ContactForm({
               />
             </div>
           </div>
-          {/* Dropdown EFTER kalenderen */}
-          <div className={styles.row}>
-            <label
-              className={styles.label}
-              htmlFor="cf-purpose"
-              data-required="true"
-            >
-              {t("Formål", "Purpose")}
-            </label>
-            <div className={styles.selectWrap}>
-              <select
-                id="cf-purpose"
-                className={styles.select}
-                value={purpose}
-                onChange={(e) => setPurpose(e.target.value as Purpose)}
-                required
-              >
-                <option value="booking">
-                  {t("Booking forespørgsel", "Booking request")}
-                </option>
-                <option value="other">{t("Andet", "Other")}</option>
-              </select>
-              <span className={styles.chev} aria-hidden>
-                ▾
-              </span>
-            </div>
-          </div>
+
           {/* Ankomst/Afrejse visning */}
           <div className={styles.rowGroup}>
             <div className={styles.row}>
@@ -649,7 +633,7 @@ export default function ContactForm({
               />
             </div>
 
-            {/* Nætter lige under afrejse */}
+            {/* Nætter + min.-nætter inline fejl */}
             <div className={styles.inlineMeta} aria-live="polite">
               <span className={styles.metaLabel}>
                 {t("Nætter:", "Nights:")}
@@ -657,6 +641,44 @@ export default function ContactForm({
               <output className={styles.metaValue}>
                 {selPrice.nights ?? t("—", "N/A")}
               </output>
+            </div>
+            {!minOk && minErrText && (
+              <div
+                className={styles.error}
+                role="alert"
+                aria-live="polite"
+                style={{ marginTop: "0.25rem" }}
+              >
+                {minErrText}
+              </div>
+            )}
+          </div>
+
+          {/* Dropdown EFTER kalenderen */}
+          <div className={styles.row}>
+            <label
+              className={styles.label}
+              htmlFor="cf-purpose"
+              data-required="true"
+            >
+              {t("Formål", "Purpose")}
+            </label>
+            <div className={styles.selectWrap}>
+              <select
+                id="cf-purpose"
+                className={styles.select}
+                value={purpose}
+                onChange={(e) => setPurpose(e.target.value as Purpose)}
+                required
+              >
+                <option value="booking">
+                  {t("Booking forespørgsel", "Booking request")}
+                </option>
+                <option value="other">{t("Andet", "Other")}</option>
+              </select>
+              <span className={styles.chev} aria-hidden>
+                ▾
+              </span>
             </div>
           </div>
 
@@ -696,8 +718,6 @@ export default function ContactForm({
                 {includeCleaning ? fmtMoney.format(CLEANING_FEE_DKK) : "—"}
               </output>
             </div>
-
-            {/* Extras-kolonnen er fjernet */}
 
             <div className={`${styles.totalItem} ${styles.em}`}>
               <span className={styles.tLabel}>
@@ -972,7 +992,6 @@ export default function ContactForm({
           {error}
         </div>
       )}
-
       <div className={styles.actions}>
         <Buttons
           buttonType="submit"
