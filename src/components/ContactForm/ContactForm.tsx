@@ -223,8 +223,24 @@ export default function ContactForm({
   // Total uden extras
   const grandTotal = includeCleaning ? totalWithCleaning : baseNightsTotal;
 
-  // === Min.-nætter: krav-værdi til submit-validering ===
+  // === Min.-nætter: afledte værdier til UI og submit-validering ===
   const minReq = selPrice.minNightsRequired ?? 2;
+  const minOk =
+    selPrice.kind !== "range" || selPrice.isMinNightsSatisfied !== false;
+  const minErrText =
+    !minOk && selPrice.start
+      ? lang === "da"
+        ? `Minimum ${minReq} ${
+            minReq === 1 ? "nat" : "nætter"
+          } ved ankomst ${fmtDateLong.format(selPrice.start)}. Du har valgt ${
+            selPrice.nights ?? 0
+          }.`
+        : `Minimum ${minReq} night${
+            minReq === 1 ? "" : "s"
+          } required for arrival ${fmtDateLong.format(
+            selPrice.start
+          )}. You selected ${selPrice.nights ?? 0}.`
+      : null;
 
   // Submit
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -301,6 +317,7 @@ export default function ContactForm({
 
       // Min.-nætter opfyldt?
       if (selPrice.isMinNightsSatisfied === false) {
+        // Brug kalenderens egen tekst hvis sat – ellers generér vores
         const msg =
           selPrice.validationError ??
           (lang === "da"
@@ -616,7 +633,7 @@ export default function ContactForm({
               />
             </div>
 
-            {/* Nætter */}
+            {/* Nætter + min.-nætter inline fejl */}
             <div className={styles.inlineMeta} aria-live="polite">
               <span className={styles.metaLabel}>
                 {t("Nætter:", "Nights:")}
@@ -625,6 +642,15 @@ export default function ContactForm({
                 {selPrice.nights ?? t("—", "N/A")}
               </output>
             </div>
+            {!minOk && minErrText && (
+              <div
+                className={styles.error}
+                role="alert"
+                aria-live="polite"
+                style={{ marginTop: "0.25rem" }}
+              >
+              </div>
+            )}
           </div>
 
           {/* Dropdown EFTER kalenderen */}
@@ -654,6 +680,11 @@ export default function ContactForm({
               </span>
             </div>
           </div>
+
+          {/* EKSTRA SERVICES – HELE BLOKKEN ER DEAKTIVERET */}
+          {/*
+          <div className={styles.row} aria-labelledby="extras-label"> … </div>
+          */}
 
           {/* Samlet prisboks – 3 felter (Pris, Rengøring, Total) */}
           <div
@@ -893,6 +924,47 @@ export default function ContactForm({
         </div>
       )}
 
+      {/* Gebyr-liste accept (obligatorisk — KUN i booking-variant) */}
+      {isBooking && (
+        <div className={styles.row}>
+          <label className={styles.checkbox}>
+            <input
+              type="checkbox"
+              checked={state.feesAccepted}
+              onChange={(e) => onChange("feesAccepted", e.target.checked)}
+              required
+            />
+            <span>
+              {lang === "da" ? (
+                <>
+                  Jeg har læst og accepterer{" "}
+                  <a
+                    href={pathOf(lang, "fees")}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    gebyroversigten
+                  </a>
+                  .
+                </>
+              ) : (
+                <>
+                  I have read and accept the{" "}
+                  <a
+                    href={pathOf(lang, "fees")}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    fee list
+                  </a>
+                  .
+                </>
+              )}
+            </span>
+          </label>
+        </div>
+      )}
+
       {/* GDPR — behandling (obligatorisk) */}
       <div className={styles.row}>
         <label className={styles.checkbox}>
@@ -919,7 +991,6 @@ export default function ContactForm({
           {error}
         </div>
       )}
-
       <div className={styles.actions}>
         <Buttons
           buttonType="submit"
