@@ -1,177 +1,112 @@
-// scripts/generate-sitemap.ts
-import { writeFileSync, mkdirSync } from "fs";
-import { join } from "path";
+import React from "react";
+import { Helmet } from "react-helmet-async";
+import { SLUGS } from "../../lib/routes";
 
-/* ---------- Konfiguration ---------- */
-const BASE_URL = process.env.SITE_URL || "https://fyrrehaven-61.dk";
-type Lang = "da" | "en";
-const LANGS: Lang[] = ["da", "en"];
+type Props = { lang: "da" | "en" };
 
-/* ---------- Slugs (samme som i din router) ---------- */
-type PageKey =
-  | "home"
-  | "house"
-  | "area"
-  | "gallery"
-  | "faq"
-  | "contact"
-  | "book"
-  | "cookies"
-  | "fees"
-  | "privacy";
-
-const SLUGS: Record<PageKey, Record<Lang, string>> = {
-  home: { da: "", en: "" },
-  house: { da: "sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61" },
-  area: { da: "omraadet-skov-og-strand", en: "area-forest-and-beach" },
-  gallery: {
-    da: "galleri-fyrrehaven-61-billeder",
-    en: "gallery-photos-fyrrehaven-61",
+const labels = {
+  da: {
+    title: "Sitemap",
+    home: "Forside",
+    house: "Sommerhuset",
+    area: "Området",
+    gallery: "Galleri",
+    faq: "FAQ",
+    contact: "Kontakt",
+    book: "Booking",
+    cookies: "Cookies",
+    fees: "Gebyrer",
+    privacy: "Privatlivspolitik",
+    xml: "XML sitemap",
   },
-  faq: { da: "ofte-stillede-sporgsmal", en: "frequently-asked-questions" },
-  contact: { da: "kontakt", en: "contact" },
-  book: { da: "booking", en: "book" },
-  cookies: { da: "cookies", en: "cookies" },
-  fees: { da: "gebyrer", en: "fees" },
-  privacy: { da: "privatlivspolitik", en: "privacy-policy" },
+  en: {
+    title: "Sitemap",
+    home: "Home",
+    house: "The house",
+    area: "Area",
+    gallery: "Gallery",
+    faq: "FAQ",
+    contact: "Contact",
+    book: "Book",
+    cookies: "Cookies",
+    fees: "Fees",
+    privacy: "Privacy policy",
+    xml: "XML sitemap",
+  },
+} as const;
+
+const Sitemap: React.FC<Props> = ({ lang }) => {
+  const L = labels[lang];
+
+  // Hjælper til at bygge absolut sti pr. side
+  const href = (key: keyof typeof SLUGS) =>
+    `/${lang}${SLUGS[key][lang] ? `/${SLUGS[key][lang]}` : ""}`;
+
+  return (
+    <>
+      <Helmet>
+        <title>{L.title}</title>
+        {/* HTML-sitemap som side: noindex (brug /sitemap.xml til bots) */}
+        <meta name="robots" content="noindex,follow" />
+        <link rel="canonical" href={`https://fyrrehaven-61.dk/${lang}`} />
+        <link
+          rel="alternate"
+          href="https://fyrrehaven-61.dk/da"
+          hrefLang="da"
+        />
+        <link
+          rel="alternate"
+          href="https://fyrrehaven-61.dk/en"
+          hrefLang="en"
+        />
+        <link
+          rel="alternate"
+          href={`https://fyrrehaven-61.dk/${lang}`}
+          hrefLang="x-default"
+        />
+      </Helmet>
+
+      <main className="container mx-auto px-4 py-10">
+        <h1 className="text-3xl font-semibold mb-6">{L.title}</h1>
+        <ul className="list-disc pl-6 space-y-2">
+          <li>
+            <a href={href("home")}>{L.home}</a>
+          </li>
+          <li>
+            <a href={href("house")}>{L.house}</a>
+          </li>
+          <li>
+            <a href={href("area")}>{L.area}</a>
+          </li>
+          <li>
+            <a href={href("gallery")}>{L.gallery}</a>
+          </li>
+          <li>
+            <a href={href("faq")}>{L.faq}</a>
+          </li>
+          <li>
+            <a href={href("contact")}>{L.contact}</a>
+          </li>
+          <li>
+            <a href={href("book")}>{L.book}</a>
+          </li>
+          <li>
+            <a href={href("fees")}>{L.fees}</a>
+          </li>
+          <li>
+            <a href={href("privacy")}>{L.privacy}</a>
+          </li>
+          <li>
+            <a href={href("cookies")}>{L.cookies}</a>
+          </li>
+          <li>
+            <a href="/sitemap.xml">{L.xml}</a>
+          </li>
+        </ul>
+      </main>
+    </>
+  );
 };
 
-function pathOf(lang: Lang, key: PageKey): string {
-  const slug = SLUGS[key][lang];
-  return `/${lang}${slug ? `/${slug}` : ""}`;
-}
-
-/* ---------- Sider der skal med i sitemap ---------- */
-type ChangeFreq = "daily" | "weekly" | "monthly" | "yearly";
-const PAGES: Array<{
-  key: PageKey;
-  priority: number;
-  changefreq: ChangeFreq;
-  images?: Array<{ loc: string; title?: string; caption?: string }>;
-}> = [
-  {
-    key: "home",
-    priority: 1.0,
-    changefreq: "daily",
-    images: [
-      {
-        loc: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.webp",
-        title: "Fyrrehaven 61 – udendørs pool & wellness",
-        caption:
-          "Forsidebillede: opvarmet udendørs pool, vildmarksbad og sauna.",
-      },
-    ],
-  },
-  {
-    key: "house",
-    priority: 0.95,
-    changefreq: "monthly",
-    images: [
-      {
-        loc: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.webp",
-        title: "Sommerhuset – plads til 10",
-        caption: "Sengepladser, køkken, ophold, pool, sauna og vildmarksbad.",
-      },
-    ],
-  },
-  { key: "book", priority: 0.9, changefreq: "daily" },
-  { key: "fees", priority: 0.8, changefreq: "monthly" },
-  { key: "privacy", priority: 0.5, changefreq: "yearly" },
-  { key: "cookies", priority: 0.5, changefreq: "yearly" },
-  { key: "area", priority: 0.7, changefreq: "monthly" },
-  { key: "gallery", priority: 0.7, changefreq: "monthly" },
-  { key: "faq", priority: 0.6, changefreq: "monthly" },
-  { key: "contact", priority: 0.7, changefreq: "monthly" },
-];
-
-const nowISO = new Date().toISOString();
-const esc = (s: string) =>
-  s
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-const abs = (u: string) => (u.startsWith("http") ? u : `${BASE_URL}${u}`);
-
-function buildUrlEntry(
-  key: PageKey,
-  priority: number,
-  changefreq: ChangeFreq,
-  images?: Array<{ loc: string; title?: string; caption?: string }>
-) {
-  const primaryLang: Lang = "da";
-  const canonical = abs(pathOf(primaryLang, key));
-
-  const alternates = LANGS.map(
-    (l) =>
-      `<xhtml:link rel="alternate" hreflang="${l}" href="${esc(
-        abs(pathOf(l, key))
-      )}"/>`
-  ).join("");
-
-  const xDefault = `<xhtml:link rel="alternate" hreflang="x-default" href="${esc(
-    canonical
-  )}"/>`;
-
-  const imageTags =
-    images
-      ?.map((im) => {
-        const parts = [
-          `<image:loc>${esc(abs(im.loc))}</image:loc>`,
-          im.title ? `<image:title>${esc(im.title)}</image:title>` : "",
-          im.caption ? `<image:caption>${esc(im.caption)}</image:caption>` : "",
-        ].join("");
-        return `<image:image>${parts}</image:image>`;
-      })
-      .join("") ?? "";
-
-  return `
-  <url>
-    <loc>${esc(canonical)}</loc>
-    ${alternates}
-    ${xDefault}
-    <lastmod>${nowISO}</lastmod>
-    <changefreq>${changefreq}</changefreq>
-    <priority>${priority.toFixed(2)}</priority>
-    ${imageTags}
-  </url>`;
-}
-
-function writePublic(file: string, contents: string) {
-  mkdirSync(join(process.cwd(), "public"), { recursive: true });
-  writeFileSync(join(process.cwd(), "public", file), contents, "utf8");
-  console.log(`✓ wrote /public/${file}`);
-}
-
-function generatePageSitemap() {
-  const body = PAGES.map((p) =>
-    buildUrlEntry(p.key, p.priority, p.changefreq, p.images)
-  ).join("");
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset
-  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-  xmlns:xhtml="http://www.w3.org/1999/xhtml"
-  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
->
-${body}
-</urlset>`.trim();
-  writePublic("sitemap.xml", xml);
-}
-
-function generateRobots() {
-  const robots = `User-agent: *
-Allow: /
-
-# Undgå index af parameter-URL'er
-Disallow: /*?*
-
-Sitemap: ${abs("/sitemap.xml")}
-`;
-  writePublic("robots.txt", robots);
-}
-
-generatePageSitemap();
-generateRobots();
-
-/* Gør filen til et modul for at tilfredsstille tsconfig `isolatedModules` */
-export {};
+// 🔧 Default export for at matche importen i main.tsx
+export default Sitemap;

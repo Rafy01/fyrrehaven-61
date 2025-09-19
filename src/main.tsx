@@ -30,7 +30,7 @@ import Sitemap from "./pages/Sitemap/Sitemap";
 
 import { pickInitialLang } from "./lib/lang";
 import { SLUGS } from "./lib/routes";
-
+  
 // Hjælper til at lave child routes pr. sprog
 const langRoutes = (lang: "da" | "en") => [
   { index: true, element: <Home lang={lang} /> },
