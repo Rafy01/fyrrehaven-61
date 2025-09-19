@@ -225,6 +225,7 @@ export default function ContactForm({
 
   // === Min.-nætter: afledte værdier til UI og submit-validering ===
   const minReq = selPrice.minNightsRequired ?? 2;
+  
 
   // Submit
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -527,14 +528,6 @@ export default function ContactForm({
             <dt>{t("Land", "Country")}</dt>
             <dd>{countryLabel(state.countryIso, uiLang)}</dd>
           </div>
-
-          {/* NYT: vis beskeden i contact-varianten */}
-          {!isBooking && state.message.trim() && (
-            <div>
-              <dt>{t("Besked", "Message")}</dt>
-              <dd>{state.message}</dd>
-            </div>
-          )}
         </dl>
 
         <Buttons
@@ -634,6 +627,7 @@ export default function ContactForm({
                 {selPrice.nights ?? t("—", "N/A")}
               </output>
             </div>
+            
           </div>
 
           {/* Dropdown EFTER kalenderen */}
