@@ -139,23 +139,53 @@ function eachDay(start: Date, endExclusive: Date): Date[] {
 
 /* ─── API → bookings ─── */
 function looksLikeBooking(ev: ApiEvent): boolean {
-  const t = ev.title.toLowerCase();
-  const positive =
+  const t = (ev.title || "").toLowerCase();
+
+  // Kategorier
+  const isReserved =
     t.includes("airbnb") ||
     t.includes("dancenter") ||
     t.includes("campaya") ||
     t.includes("sol og strand") ||
     t.includes("udlejning") ||
-    t.includes("privat") ||
-    t.includes("reserved") ||
-    t.includes("not available");
-  if (!positive) return false;
+    t.includes("reserved");
+
+  // Flere varianter fra ICS for blokeringer
+  const isBlocked =
+    t.includes("not available") ||
+    t.includes("unavailable") ||
+    t.includes("blocked") ||
+    t.includes("owner hold");
 
   const start = new Date(ev.start);
   const end = new Date(ev.end);
   const durMs = end.getTime() - start.getTime();
+
+  // Korte timed events (<20h) er ikke bookinger
   if (!ev.allDay && durMs < 20 * 3600 * 1000) return false;
 
+  // Fjern "i dag" hvis det kun er en enkelt dags blokering (no same-day check-in)
+  const today = startOfDay(new Date());
+  const s = startOfDay(start);
+  const e = startOfDay(end);
+  const isSingleDay = e.getTime() - s.getTime() === 24 * 3600 * 1000;
+
+  const hintsNoCheckin =
+    t.includes("no check-in") ||
+    t.includes("no checkin") ||
+    t.includes("check-in not allowed") ||
+    t.includes("checkin not allowed");
+
+  if (
+    (isBlocked || hintsNoCheckin) &&
+    isSingleDay &&
+    s.getTime() === today.getTime()
+  ) {
+    // Ignorér dagens enkelt-dags blokering fra Airbnb-regler
+    return false;
+  }
+
+  // Negativliste (ikke bookinger)
   const neg =
     t.includes("rengøring") ||
     t.includes("rengoring") ||
@@ -163,7 +193,10 @@ function looksLikeBooking(ev: ApiEvent): boolean {
     t.includes("meeting") ||
     t.includes("fotograf") ||
     t.includes("levering");
-  return !neg;
+
+  if (neg) return false;
+
+  return isReserved || isBlocked;
 }
 function toBooking(ev: ApiEvent): Booking {
   const s = startOfDay(new Date(ev.start));
