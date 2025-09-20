@@ -1,14 +1,7 @@
-// /api/ical.mjs  (ESM – passer til din opsætning)
-// Henter en offentlig iCloud/Apple Calendar (webcal://) ICS, parser VEVENTs og returnerer JSON.
+// /api/ical.mjs
+// Henter en ICS-kalender (Airbnb eller webcal), parser VEVENTs og returnerer JSON.
 
 const REQ_TIMEOUT_MS = 15000;
-
-/** Kræv env-variabel */
-function reqEnv(k) {
-  const v = process.env[k];
-  if (!v) throw new Error(`ENV_MISSING:${k}`);
-  return v;
-}
 
 /** Fold ICS-linjer (RFC5545: continuation lines begynder med space) */
 function unfoldIcs(icsText) {
@@ -44,7 +37,6 @@ function parseIcsDate(val, tzid) {
   const ss = Number(val.slice(13, 15) || "0");
   const isUtc = val.endsWith("Z");
 
-  // Uden Z og uden tz-bibliotek: tolker som lokal tid (typisk fint for Danmark).
   const date = isUtc
     ? new Date(Date.UTC(y, m, d, hh, mm, ss))
     : new Date(y, m, d, hh, mm, ss);
@@ -82,8 +74,7 @@ function parseEvents(icsText) {
     }
     if (!cur) continue;
 
-    // Split key;params:value
-    // Eksempel: DTSTART;TZID=Europe/Copenhagen:20250905T140000
+    // key;params:value
     const m = line.match(/^([^:;]+)(?:;([^:]+))?:(.*)$/);
     if (!m) continue;
     const [, key, paramStr = "", value] = m;
@@ -120,7 +111,7 @@ function parseEvents(icsText) {
         break;
       }
       case "STATUS":
-        cur.status = value;
+        cur.status = value; // Airbnb bruger sjældent STATUS, men skader ikke
         break;
       case "TRANSP":
         cur.transp = value;
@@ -130,7 +121,7 @@ function parseEvents(icsText) {
     }
   }
 
-  // Map til “rene” objekter
+  // Map til “rene” objekter som din frontend forventer
   return events.map((e) => ({
     id: e.uid || `${e.summary || "event"}-${e.dtstart?.date?.toISOString()}`,
     title: e.summary || "",
@@ -167,10 +158,15 @@ export default async function handler(req, res) {
       return;
     }
 
-    const rawUrl = reqEnv("ICAL_URL"); // fx webcal://pXX-caldav.icloud.com/...
+    // Brug ENV hvis sat; ellers falder vi tilbage til din Airbnb-ICS
+    const rawUrl =
+      process.env.ICAL_URL ||
+      "https://www.airbnb.dk/calendar/ical/753979717276295801.ics?s=96fba3a2d2bd50b6e5f75ee483059169";
+
+    // webcal:// -> https:// (Airbnb bruger https i forvejen)
     const url = rawUrl.replace(/^webcal:\/\//i, "https://");
 
-    // Valgfri range (mindsker payload): /api/ical?start=2025-09-01&end=2025-10-01
+    // Valgfri range: /api/ical?start=2025-09-01&end=2025-10-01
     const { start, end } = req.query ?? {};
 
     const ctrl = new AbortController();
@@ -180,6 +176,7 @@ export default async function handler(req, res) {
       method: "GET",
       headers: {
         "User-Agent": "Fyrrehaven-61/1.0 (+https://fyrrehaven-61.dk)",
+        Accept: "text/calendar, text/plain, */*",
       },
       signal: ctrl.signal,
     }).catch((err) => {
@@ -197,7 +194,7 @@ export default async function handler(req, res) {
     const events = parseEvents(ics);
     const filtered = filterByRange(events, start, end);
 
-    // Sæt lidt caching for hurtighed (15 min på edge)
+    // Cache på edge i 15 min
     res.setHeader("Cache-Control", "public, max-age=0, s-maxage=900");
     res.status(200).json({
       ok: true,
@@ -208,16 +205,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("ICAL_ERROR", err);
     const msg = String(err && err.message ? err.message : err);
-    if (msg.startsWith("ENV_MISSING:")) {
-      res
-        .status(500)
-        .json({
-          ok: false,
-          error: "ENV_MISSING",
-          detail: msg.replace("ENV_MISSING:", "Missing env: "),
-        });
-      return;
-    }
+
     res.status(500).json({ ok: false, error: "ICAL_ERROR", detail: msg });
   }
 }
