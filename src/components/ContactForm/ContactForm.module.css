@@ -246,7 +246,7 @@
 /* ——— Samlet prisboks — 4 kolonner på én linje ——— */
 .totalsBox {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)); /* ← 4 felter på én række */
+  grid-template-columns: repeat(1, minmax(0, 1fr)); /* ← 4 felter på én række */
   gap: 12px;
   align-items: start;
 }
@@ -255,6 +255,8 @@
   align-items: baseline;
   gap: 10px;
   min-width: 0;
+    border-bottom: solid 1px rgba(15, 23, 42, 0.08);
+
 }
 
 /* 2-linjers label */
