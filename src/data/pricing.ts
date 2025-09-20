@@ -1,5 +1,3 @@
-// src/data/pricing.ts
-
 /* =========
  * Typer
  * ========= */
@@ -25,11 +23,36 @@ export type WeekPricing = {
   minNights?: number;
 };
 
+/** Last minute rabat — procent baseret på hvor tæt vi er på datoen. */
+export type LastMinuteTier = {
+  /** Hvis antal hele dage til datoen er <= denne værdi, så brug denne rabat i % */
+  daysOrLess: number;
+  /** Rabat i procent (0–100) */
+  percentOff: number;
+};
+
+export type LastMinuteRule = {
+  /** Inklusiv datointerval i YYYY-MM-DD */
+  from: string;
+  to: string;
+  /** Trin (f.eks. 14→10%, 7→20%, 3→30%). Vælger automatisk det højeste match. */
+  tiers: LastMinuteTier[];
+  /**
+   * Valgfri: begræns til bestemte dage.
+   * - "weekend" = bruger årets weekendDays (eller DEFAULT_WEEKEND)
+   * - "weekday" = alle andre end weekend
+   * - "all"     = alle dage (default hvis udeladt)
+   * - DayCode[] = præcise ugedage (fx ["fri","sat"])
+   */
+  days?: DayCode[] | "weekend" | "weekday" | "all";
+};
+
 /** Årsniveau:
  *  - default: fallback-priser for hele året (bruges når uge ikke er sat)
  *  - weeks: ISO-uge → WeekPricing
  *  - days: dato → pris (YYYY-MM-DD, overrides alt andet)
  *  - daysMinNights: dato → min. nætter for ankomstdag (YYYY-MM-DD, højeste prioritet)
+ *  - lastMinuteRules: valgfri last-minute rabatter (default: ingen)
  */
 export type YearPricing = {
   default?: {
@@ -43,6 +66,8 @@ export type YearPricing = {
   weeks?: Partial<Record<number, WeekPricing>>;
   days?: Partial<Record<string, number>>;
   daysMinNights?: Partial<Record<string, number>>;
+  /** Valgfri liste af last-minute regler for året (default = ingen rabat) */
+  lastMinuteRules?: LastMinuteRule[];
 };
 
 /** Hele prisplanen (flere år). */
@@ -158,7 +183,7 @@ addRange(days2025, "2025-11-01", "2025-11-30", 1800);
 addRange(days2025, "2025-12-01", "2025-12-15", 1800);
 addRange(days2025, "2025-12-16", "2025-12-25", 1710);
 addOne(days2025, "2025-12-26", 1140);
-addRange(days2025, "2025-12-27", "2025-12-31", 665);
+addRange(days2025, "2025-12-27", "2025-12-31", 5000);
 
 /** ——— 2026 ——— **/
 
@@ -187,7 +212,8 @@ addRange(days2026, "2026-06-01", "2026-06-30", 3325);
 addRange(days2026, "2026-07-01", "2026-09-30", 3325);
 
 // (Eksempel på kendt enkelt-dag senere)
-addOne(days2026, "2026-12-31", 4300);
+addRange(days2026, "2026-12-27", "2026-12-31", 5000);
+addOne(days2026, "2026-12-31", 5500); // nytårsaften 2026
 
 /** ——— JULEFERIE MIN. NÆTTER (3) ——— **/
 
@@ -214,27 +240,35 @@ export const PRICES: PricePlan = {
   currency: "DKK",
   years: {
     2025: {
-      // Fallback (bruges hvis en dato ikke er specificeret)
       default: {
         price: 1800,
         weekendDays: ["fri", "sat"],
-        minNights: 2, // globalt default minimum booking
+        minNights: 2,
       },
       days: days2025,
       daysMinNights: daysMinNights2025,
-      weeks: {
-        // VINTERFERIE (uge 7)
-        7: { minNights: 3 },
 
-        // SOMMERFERIE (uge 27–32)
+      // ★ NYT: 20% rabat fra 1. oktober til og med 31. december 2025
+      lastMinuteRules: [
+        {
+          from: "2025-09-20",
+          to: "2025-12-31",
+          days: "all", // gælder alle ugedage
+          tiers: [
+            // stort threshold => rabat gælder for hele perioden (ikke kun “x dage før”)
+            { daysOrLess: 14, percentOff: 44 },
+          ],
+        },
+      ],
+
+      weeks: {
+        7: { minNights: 3 },
         27: { minNights: 6 },
         28: { minNights: 6 },
         29: { minNights: 6 },
         30: { minNights: 6 },
         31: { minNights: 6 },
         32: { minNights: 6 },
-
-        // EFTERÅRSFERIE (uge 42) – behold prisnote
         42: {
           price: 2200,
           note: "Efterårsferie – dækket af days",
@@ -253,6 +287,7 @@ export const PRICES: PricePlan = {
       // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
       days: days2026,
       daysMinNights: daysMinNights2026,
+      // lastMinuteRules: [] // <- default ingen rabat
       weeks: {
         // VINTERFERIE (uge 7)
         7: { minNights: 3 },
@@ -280,6 +315,7 @@ export const PRICES: PricePlan = {
       // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
       days: days2027,
       daysMinNights: daysMinNights2027,
+      // lastMinuteRules: [] // <- default ingen rabat
       weeks: {
         // VINTERFERIE (uge 7)
         7: { minNights: 3 },
@@ -300,7 +336,7 @@ export const PRICES: PricePlan = {
 };
 
 /* =========
- * Hjælpere (uændret)
+ * Hjælpere (uændret + last-minute)
  *  Prioritet: dagspris > ugepris > år-default > null
  * ========= */
 
@@ -320,6 +356,80 @@ export function isoWeek(d: Date): number {
   return weekNo;
 }
 
+/* ─── Last-minute helpers ─── */
+
+function startOfDayLocal(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function parseYMD(ymd: string): Date {
+  return new Date(ymd + "T00:00:00");
+}
+
+function isWithinYMD(date: Date, fromYMD: string, toYMD: string): boolean {
+  const x = startOfDayLocal(date);
+  return x >= parseYMD(fromYMD) && x <= parseYMD(toYMD);
+}
+
+/** Anvend evt. last-minute rabat (i procent) på en grundpris. */
+function applyLastMinuteDiscount(
+  date: Date,
+  base: number | null,
+  plan: PricePlan
+): number | null {
+  if (base == null) return base;
+
+  const y = date.getFullYear();
+  const yr = plan.years[y];
+  const rules = yr?.lastMinuteRules;
+  if (!rules || rules.length === 0) return base; // default: ingen rabat
+
+  const today = startOfDayLocal(new Date());
+  const target = startOfDayLocal(date);
+  const daysUntil = Math.floor((target.getTime() - today.getTime()) / 86400000);
+  if (daysUntil < 0) return base; // ingen rabat for fortid
+
+  // Brug årets weekenddefinition hvis en regel siger "weekend"
+  const yearWeekend =
+    yr?.default?.weekendDays && yr.default.weekendDays.length > 0
+      ? yr.default.weekendDays
+      : DEFAULT_WEEKEND;
+
+  const dc = dayCodeOf(date);
+  let maxPercent = 0;
+
+  for (const r of rules) {
+    if (!isWithinYMD(date, r.from, r.to)) continue;
+
+    // Dagsfilter
+    let dayOk = true;
+    if (r.days && r.days !== "all") {
+      if (r.days === "weekend") {
+        dayOk = yearWeekend.includes(dc);
+      } else if (r.days === "weekday") {
+        dayOk = !yearWeekend.includes(dc);
+      } else {
+        dayOk = (r.days as DayCode[]).includes(dc);
+      }
+    }
+    if (!dayOk) continue;
+
+    // Find bedste (største) procent der matcher daysUntil
+    let tierPct = 0;
+    for (const t of r.tiers) {
+      if (daysUntil <= t.daysOrLess) {
+        tierPct = Math.max(tierPct, t.percentOff);
+      }
+    }
+    maxPercent = Math.max(maxPercent, tierPct);
+  }
+
+  if (maxPercent <= 0) return base;
+
+  // Rund af til heltal som resten af prisplanen
+  return Math.round(base * (1 - maxPercent / 100));
+}
+
 export function getPriceForDate(
   date: Date,
   plan: PricePlan = PRICES
@@ -330,32 +440,66 @@ export function getPriceForDate(
 
   // 1) Dags-override (YYYY-MM-DD)
   const ymd = date.toISOString().slice(0, 10);
-  if (yr.days && yr.days[ymd] != null) return yr.days[ymd]!;
+  if (yr.days && yr.days[ymd] != null)
+    return applyLastMinuteDiscount(date, yr.days[ymd]!, plan);
 
   // 2) Ugepris
   const w = isoWeek(date);
   const wp = yr.weeks?.[w];
   if (wp) {
     const dc = dayCodeOf(date);
-    if (wp.days && wp.days[dc] != null) return wp.days[dc]!;
+    if (wp.days && wp.days[dc] != null)
+      return applyLastMinuteDiscount(date, wp.days[dc]!, plan);
+
     if (wp.weekdays != null || wp.weekend != null) {
       const weekend = wp.weekendDays ?? DEFAULT_WEEKEND;
       const isWeekend = weekend.includes(dc);
       const val = isWeekend ? wp.weekend : wp.weekdays;
-      if (val != null) return val!;
+      if (val != null) return applyLastMinuteDiscount(date, val!, plan);
     }
-    if (wp.price != null) return wp.price;
+    if (wp.price != null) return applyLastMinuteDiscount(date, wp.price, plan);
   }
 
   // 3) Års-default
   if (yr.default) {
     const def = yr.default;
-    if (def.price != null) return def.price;
+    if (def.price != null)
+      return applyLastMinuteDiscount(date, def.price, plan);
     const weekend = def.weekendDays ?? DEFAULT_WEEKEND;
     const isWeekend = weekend.includes(dayCodeOf(date));
     const val = isWeekend ? def.weekend : def.weekdays;
-    if (val != null) return val!;
+    if (val != null) return applyLastMinuteDiscount(date, val!, plan);
   }
 
   return null;
 }
+
+/* =========
+ * Brug af lastMinuteRules (eksempler – IKKE aktiv som standard)
+ * =========
+ *
+ * // 1) Kun weekender (bruger year's weekendDays el. DEFAULT_WEEKEND)
+ * years[2025].lastMinuteRules = [
+ *   {
+ *     from: "2025-09-19",
+ *     to:   "2025-11-30",
+ *     days: "weekend",
+ *     tiers: [
+ *       { daysOrLess: 14, percentOff: 10 },
+ *       { daysOrLess: 7,  percentOff: 20 },
+ *       { daysOrLess: 3,  percentOff: 30 },
+ *     ],
+ *   },
+ * ];
+ *
+ * // 2) Hele uger/alle dage i et datointerval
+ * years[2026].lastMinuteRules = [
+ *   {
+ *     from: "2026-04-01",
+ *     to:   "2026-04-30",
+ *     days: "all", // eller udelad 'days'
+ *     tiers: [{ daysOrLess: 10, percentOff: 15 }],
+ *   },
+ * ];
+ *
+ */
