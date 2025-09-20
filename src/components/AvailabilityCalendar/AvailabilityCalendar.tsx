@@ -139,64 +139,35 @@ function eachDay(start: Date, endExclusive: Date): Date[] {
 
 /* ─── API → bookings ─── */
 function looksLikeBooking(ev: ApiEvent): boolean {
+  // Alt fra kalenderen tæller som reservation/blokering,
+  // undtagen "i dag" hvis det er den særlige samme-dags blokering.
+  const start = new Date(ev.start);
+  const end = new Date(ev.end);
+
+  const s = startOfDay(start);
+  const e = startOfDay(end);
+  const today = startOfDay(new Date());
+
+  const isSingleDay = e.getTime() - s.getTime() === 24 * 3600 * 1000;
+
+  // Tekst-hints som Airbnb typisk bruger til generelle blokeringer
   const t = (ev.title || "").toLowerCase();
-
-  // Kategorier
-  const isReserved =
-    t.includes("airbnb") ||
-    t.includes("dancenter") ||
-    t.includes("campaya") ||
-    t.includes("sol og strand") ||
-    t.includes("udlejning") ||
-    t.includes("reserved");
-
-  // Flere varianter fra ICS for blokeringer
-  const isBlocked =
+  const isNoCheckinWord =
     t.includes("not available") ||
     t.includes("unavailable") ||
     t.includes("blocked") ||
-    t.includes("owner hold");
-
-  const start = new Date(ev.start);
-  const end = new Date(ev.end);
-  const durMs = end.getTime() - start.getTime();
-
-  // Korte timed events (<20h) er ikke bookinger
-  if (!ev.allDay && durMs < 20 * 3600 * 1000) return false;
-
-  // Fjern "i dag" hvis det kun er en enkelt dags blokering (no same-day check-in)
-  const today = startOfDay(new Date());
-  const s = startOfDay(start);
-  const e = startOfDay(end);
-  const isSingleDay = e.getTime() - s.getTime() === 24 * 3600 * 1000;
-
-  const hintsNoCheckin =
     t.includes("no check-in") ||
     t.includes("no checkin") ||
     t.includes("check-in not allowed") ||
     t.includes("checkin not allowed");
 
-  if (
-    (isBlocked || hintsNoCheckin) &&
-    isSingleDay &&
-    s.getTime() === today.getTime()
-  ) {
-    // Ignorér dagens enkelt-dags blokering fra Airbnb-regler
+  // → Ignorér KUN hvis det er "i dag", enkelt-dag og ligner no-checkin-blokering
+  if (s.getTime() === today.getTime() && isSingleDay && isNoCheckinWord) {
     return false;
   }
 
-  // Negativliste (ikke bookinger)
-  const neg =
-    t.includes("rengøring") ||
-    t.includes("rengoring") ||
-    t.includes("møde") ||
-    t.includes("meeting") ||
-    t.includes("fotograf") ||
-    t.includes("levering");
-
-  if (neg) return false;
-
-  return isReserved || isBlocked;
+  // Ellers: ALT andet fra ICS skal blokere (vises som reserveret)
+  return true;
 }
 function toBooking(ev: ApiEvent): Booking {
   const s = startOfDay(new Date(ev.start));
