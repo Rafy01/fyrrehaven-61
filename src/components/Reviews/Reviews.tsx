@@ -2,7 +2,6 @@ import { useMemo, useRef } from "react";
 import styles from "./Reviews.module.css";
 import Buttons from "../Buttons";
 import { reviews as allReviews, type ReviewItem } from "../../data/reviews";
-import { AIRBNB_URL } from "../../lib/links";
 
 export type ReviewsProps = {
   lang: "da" | "en";
@@ -174,7 +173,7 @@ export default function Reviews({
           variant="secondary"
           labelDa="Se alle anmeldelser på Airbnb"
           labelEn="See all reviews on Airbnb"
-          href={AIRBNB_URL}
+          href="https://www.airbnb.dk/h/fyrrehaven-61"
           external
         />
       </div>

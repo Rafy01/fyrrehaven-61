@@ -5,7 +5,6 @@ import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
-import { AIRBNB_URL } from "../../lib/links";
 
 
 // Hvis du har en index-barrel for AvailabilityCalendar, kan du bruge
@@ -21,8 +20,8 @@ export default function Book({ lang }: { lang: Lang }) {
   /** ——— SEO ——— */
   // Title 30–65 tegn
   const seoTitle = t(
-    "Booking hos Fyrrehaven 61 – direkte forespørgsel eller Airbnb",
-    "Book Fyrrehaven 61 – direct request or Airbnb"
+    "Booking hos Fyrrehaven 61 – direkte forespørgsel",
+    "Book Fyrrehaven 61 – direct request"
   );
 
   // Description 120–320 tegn
@@ -115,15 +114,11 @@ export default function Book({ lang }: { lang: Lang }) {
         //   to: pathOf(lang, "book") + "#booking",
         // }}
         // Brug ekstern href til Airbnb for at undgå router-redirects
-        secondaryCta={
-          AIRBNB_URL
-            ? {
-                label: t("Booking Airbnb", "Booking Airbnb"),
-                href: AIRBNB_URL,
-                external: true,
-              }
-            : undefined
-        }
+        secondaryCta={{
+          label: t("Booking Airbnb", "Booking Airbnb"),
+          href: "https://www.airbnb.dk/h/fyrrehaven-61",
+          external: true,
+        }}
         media={{
           type: "image",
           src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3807.webp",

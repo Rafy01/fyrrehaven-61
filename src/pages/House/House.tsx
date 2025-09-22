@@ -10,7 +10,6 @@ import {
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
-import { AIRBNB_URL } from "../../lib/links";
 import styles from "./House.module.css";
 import PracticalInfo from "../../components/PracticalInfo";
 import Facilities from "../../components/Facilities";
@@ -120,7 +119,7 @@ export default function House({ lang }: { lang: Lang }) {
         }}
         secondaryCta={{
           label: t("Book | Airbnb", "Book | Airbnb"),
-          href: AIRBNB_URL,
+          href: "https://www.airbnb.dk/h/fyrrehaven-61",
           external: true,
         }}
         media={{

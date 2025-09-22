@@ -1,9 +1,8 @@
 import { Separator, Container } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
-import Highlights from "../../components/Highlights"; // ← NYT
+import Highlights from "../../components/Highlights"; 
 import { pathOf } from "../../lib/routes";
-// import { AIRBNB_URL } from "../../lib/links";
 import UspStrip from "../../components/UspStrip";
 import {
   ClockIcon,

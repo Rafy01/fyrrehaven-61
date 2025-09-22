@@ -5,7 +5,6 @@ import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
 import Gallery from "../../components/Gallery/Gallery";
 import { galleryItemsFromAlbum } from "../../data/gallery";
-import { AIRBNB_URL } from "../../lib/links";
 import styles from "./Gallery.module.css";
 
 export default function GalleryPage({ lang }: { lang: Lang }) {
@@ -90,9 +89,8 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
           t("Skov & strand i nærheden", "Forest & beach nearby"),
         ]}
         primaryCta={{
-          label: t("Book via Airbnb", "Book on Airbnb"),
-          href: AIRBNB_URL,
-          external: true,
+          label: t("Book privat", "Book direct"),
+          to: `${pathOf(lang, "book")}`,
         }}
         secondaryCta={{
           label: t("Se billederne", "See photos"),

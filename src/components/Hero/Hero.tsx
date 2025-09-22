@@ -5,7 +5,6 @@ import Buttons from "../Buttons";
 import { useTranslation } from "react-i18next";
 import { type Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
-import { AIRBNB_URL } from "../../lib/links";
 
 export type HeroCTA = {
   label: string;
@@ -160,7 +159,7 @@ export default function Hero({
                     <Buttons
                       labelDa="Book via Airbnb"
                       labelEn="Book on Airbnb"
-                      href={AIRBNB_URL}
+                      href="https://www.airbnb.dk/h/fyrrehaven-61"
                       external
                     />
                     <Buttons

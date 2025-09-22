@@ -4,7 +4,6 @@ import styles from "./Footer.module.css";
 import { useTranslation } from "react-i18next";
 import type { Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
-import { AIRBNB_URL } from "../../lib/links";
 
 export type FooterProps = {
   /** Valgfrit: giv sproget eksplicit. Ellers læses det fra i18n.language. */
@@ -71,7 +70,7 @@ export default function Footer({
             <div className={styles.topRight}>
               {showSuperhost && (
                 <a
-                  href={AIRBNB_URL}
+                  href="https://www.airbnb.dk/h/fyrrehaven-61"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.superhost}
@@ -192,7 +191,7 @@ export default function Footer({
                 <li>
                   <a
                     className={styles.link}
-                    href={AIRBNB_URL}
+                    href="https://www.airbnb.dk/h/fyrrehaven-61"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
