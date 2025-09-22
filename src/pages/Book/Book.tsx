@@ -7,10 +7,12 @@ import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
 import { AIRBNB_URL } from "../../lib/links";
 
+
 // Hvis du har en index-barrel for AvailabilityCalendar, kan du bruge
 //  import AvailabilityCalendar from "../../components/AvailabilityCalendar";
 // men denne direkte sti virker altid:
 import ContactForm from "../../components/ContactForm";
+import BookingProcess from "../../components/BookingProcess/BookingProcess";
 
 export default function Book({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
@@ -97,7 +99,6 @@ export default function Book({ lang }: { lang: Lang }) {
         robots={{ index: true, follow: true, noarchive: true }}
         keywords={seoKeywords}
       />
-
       <Hero
         title={heroTitle}
         subtitle={heroSubtitle}
@@ -134,7 +135,6 @@ export default function Book({ lang }: { lang: Lang }) {
         align="left"
         layout="media-right"
       />
-
       <Container size="3">
         <Box py="6">
           <Heading as="h2" size="4" mb="2">
@@ -167,7 +167,10 @@ export default function Book({ lang }: { lang: Lang }) {
           </div>
         </Box>
       </Container>
-
+      <Container size="3">
+        <BookingProcess lang={lang} />
+      </Container>
+      
       <ContactForm
         lang={lang}
         submitUrl="/api/contact"
