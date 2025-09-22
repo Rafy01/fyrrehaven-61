@@ -184,6 +184,15 @@ export default function ContactForm({
     [lang]
   );
 
+  // Lokal YYYY-MM-DD uden timezone (bruges til mails/server)
+  const ymdLocal = React.useCallback((d?: Date | null) => {
+    if (!d) return null;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+  }, []);
+
   /* ─────────────── BASE & TOTALS ─────────────── */
   const baseNightsTotal = selPrice.total ?? 0;
   const includeCleaning = !!(selPrice.nights && selPrice.nights > 0);
@@ -195,7 +204,6 @@ export default function ContactForm({
   const nAdults = toInt(state.adults);
   const nChildren = toInt(state.children);
   const nBabies = toInt(state.babies);
-  // const totalGuests = nAdults + nChildren + nBabies;
 
   const adultsMax = Math.max(1, MAX_GUESTS - nChildren - nBabies);
   const childrenMax = Math.max(0, MAX_GUESTS - nAdults - nBabies);
@@ -286,10 +294,10 @@ export default function ContactForm({
         return;
       }
 
-      // Datoer valgt?
-      const startISO = selPrice.start?.toISOString().slice(0, 10) ?? "";
-      const endISO = selPrice.endExclusive?.toISOString().slice(0, 10) ?? "";
-      if (!startISO || !endISO || !selPrice.nights || selPrice.nights <= 0) {
+      // Datoer valgt? (brug lokal YYYY-MM-DD)
+      const startYMD = ymdLocal(selPrice.start) ?? "";
+      const endYMD = ymdLocal(selPrice.endExclusive) ?? "";
+      if (!startYMD || !endYMD || !selPrice.nights || selPrice.nights <= 0) {
         setError(
           t(
             "Vælg venligst en periode i kalenderen (ankomst og afrejse).",
@@ -301,7 +309,6 @@ export default function ContactForm({
 
       // Min.-nætter opfyldt?
       if (selPrice.isMinNightsSatisfied === false) {
-        // Brug kalenderens egen tekst hvis sat – ellers generér vores
         const msg =
           selPrice.validationError ??
           (lang === "da"
@@ -343,9 +350,9 @@ export default function ContactForm({
     try {
       const selectionPayload = isBooking
         ? {
-            start: selPrice.start?.toISOString().slice(0, 10) ?? null,
-            endExclusive:
-              selPrice.endExclusive?.toISOString().slice(0, 10) ?? null,
+            // Brug lokal YYYY-MM-DD (ingen UTC-skift)
+            start: ymdLocal(selPrice.start),
+            endExclusive: ymdLocal(selPrice.endExclusive),
             nights: selPrice.nights ?? null,
             baseNightsTotalDKK: selPrice.total ?? null,
             cleaningFeeDKK: includeCleaning ? CLEANING_FEE_DKK : 0,
@@ -359,7 +366,7 @@ export default function ContactForm({
             validationError: selPrice.validationError ?? null,
             breakdown:
               selPrice.breakdown?.map((b) => ({
-                date: b.date.toISOString().slice(0, 10),
+                date: ymdLocal(b.date)!, // lokal dato
                 price: b.price,
               })) ?? [],
           }
@@ -663,11 +670,6 @@ export default function ContactForm({
               </span>
             </div>
           </div>
-
-          {/* EKSTRA SERVICES – HELE BLOKKEN ER DEAKTIVERET */}
-          {/*
-          <div className={styles.row} aria-labelledby="extras-label"> … </div>
-          */}
 
           {/* Samlet prisboks – 3 felter (Pris, Rengøring, Total) */}
           <div
