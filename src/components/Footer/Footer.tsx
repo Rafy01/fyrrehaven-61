@@ -213,7 +213,10 @@ export default function Footer({
               <h3 className={styles.colTitle}>{t("Praktisk", "Practical")}</h3>
               <ul className={styles.list}>
                 <li>
-                  <Link className={styles.link} to={pathOf(currentLang, "house")}>
+                  <Link
+                    className={styles.link}
+                    to={pathOf(currentLang, "house")}
+                  >
                     {t("Husregler", "House rules")}
                   </Link>
                 </li>
@@ -230,7 +233,22 @@ export default function Footer({
           <div className={styles.bottomRow}>
             <Flex gap="2" wrap="wrap" align="center">
               <Text size="2" color="gray">
-                © {year} Fyrrehaven 61.
+                © {year}{" "}
+                <Link
+                  to={`/guest/${currentLang}/${
+                    currentLang === "da" ? "velkomst" : "welcome"
+                  }`}
+                  style={{
+                    color: "inherit",
+                    textDecoration: "none",
+                    fontWeight: "inherit",
+                    fontSize: "inherit",
+                  }}
+                  aria-label="Gæsteside"
+                >
+                  Fyrrehaven 61
+                </Link>
+                .
               </Text>
               <Text size="2" color="gray">
                 {t("Alle rettigheder forbeholdes.", "All rights reserved.")}

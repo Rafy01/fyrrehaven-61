@@ -624,3 +624,60 @@
   white-space:nowrap !important;
   border:0 !important;
 }
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.groupLabel {
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+.groupItems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.panelGroup {
+  margin-top: 1rem;
+}
+
+.panelGroupLabel {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+.ddContent {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+  padding: 6px 0;
+  z-index: 1000;
+}
+
+
+.ddItem {
+  all: unset;
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #111; /* eller brug din eksisterende farve */
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.ddItem:hover {
+  background-color: #f3f4f6;
+}

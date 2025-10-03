@@ -1,5 +1,3 @@
-// src/main.tsx
-
 import React from "react";
 import ReactDOM from "react-dom/client";
 import {
@@ -28,13 +26,15 @@ import Privacy from "./pages/Privacy";
 import Fees from "./pages/Fees";
 import Sitemap from "./pages/Sitemap/Sitemap";
 
+// Gæstesider
+import GuestWelcome from "./pages/guest/Welcome";
+
+// Routing helpers
 import { pickInitialLang } from "./lib/lang";
-import { SLUGS } from "./lib/routes";
-  
-// Hjælper til at lave child routes pr. sprog
+import { SLUGS, GUEST_PAGES } from "./lib/routes";
+
 const langRoutes = (lang: "da" | "en") => [
   { index: true, element: <Home lang={lang} /> },
-
   { path: SLUGS.house[lang], element: <House lang={lang} /> },
   { path: SLUGS.area[lang], element: <Area lang={lang} /> },
   { path: SLUGS.gallery[lang], element: <Gallery lang={lang} /> },
@@ -47,18 +47,28 @@ const langRoutes = (lang: "da" | "en") => [
   { path: SLUGS.sitemap[lang], element: <Sitemap lang={lang} /> },
 ];
 
+const guestRoutes = (lang: "da" | "en") => [
+  { path: GUEST_PAGES.welcome[lang], element: <GuestWelcome lang={lang} /> },
+];
+
 const router = createBrowserRouter([
-  // Root redirect til /{da|en}
   { path: "/", loader: () => redirect(`/${pickInitialLang()}`) },
 
-  // Sprog-rodsider med children
   { path: "/da", element: <App lang="da" />, children: langRoutes("da") },
   { path: "/en", element: <App lang="en" />, children: langRoutes("en") },
 
-  // Debug
-  { path: "/debug/chat", element: <ChatDebug /> },
+  {
+    path: "/guest/da",
+    element: <App lang="da" guest />,
+    children: guestRoutes("da"),
+  },
+  {
+    path: "/guest/en",
+    element: <App lang="en" guest />,
+    children: guestRoutes("en"),
+  },
 
-  // Catch-all
+  { path: "/debug/chat", element: <ChatDebug /> },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 

@@ -10,23 +10,23 @@ import { type Lang, saveLang } from "../../lib/lang";
 import { pathOf, switchLangPath } from "../../lib/routes";
 import Buttons from "../Buttons";
 
-export default function Header({ lang }: { lang: Lang }) {
+type Props = {
+  lang: Lang;
+  guest?: boolean;
+};
+
+export default function Header({ lang, guest = false }: Props) {
   const { i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Scroll hide/show
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const lastY = useRef<number>(
     typeof window !== "undefined" ? window.scrollY : 0
   );
   const idleTimer = useRef<number | null>(null);
-
-  // Mobile menu
   const [open, setOpen] = useState(false);
-
-  // Language dropdown (for trigger-anim)
   const [langOpen, setLangOpen] = useState(false);
 
   useEffect(() => {
@@ -34,18 +34,13 @@ export default function Header({ lang }: { lang: Lang }) {
       const y = window.scrollY;
       const delta = y - lastY.current;
       setScrolled(y > 8);
-
       if (!open) {
-        if (delta > 5 && y > 120) setHidden(true); // down => hide
-        if (delta < -5) setHidden(false); // up   => show
+        if (delta > 5 && y > 120) setHidden(true);
+        if (delta < -5) setHidden(false);
       }
       lastY.current = y;
-
       if (idleTimer.current) window.clearTimeout(idleTimer.current);
-      idleTimer.current = window.setTimeout(
-        () => setHidden(false),
-        5000
-      ) as unknown as number;
+      idleTimer.current = window.setTimeout(() => setHidden(false), 5000);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
@@ -58,19 +53,6 @@ export default function Header({ lang }: { lang: Lang }) {
     if (open) setHidden(false);
   }, [open]);
 
-  // Nav links (ALTID unikke sprog-slugs via pathOf)
-  const navItems = useMemo(() => {
-    const t = (da: string, en: string) => (lang === "da" ? da : en);
-    return [
-      { to: pathOf(lang, "house"), label: t("Huset", "The House") },
-      { to: pathOf(lang, "area"), label: t("Området", "Area") },
-      { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery") },
-      { to: pathOf(lang, "faq"), label: "FAQ" },
-      { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact") },
-    ];
-  }, [lang]);
-
-  // Language switch (behold samme side, map slug korrekt)
   const switchLang = (next: Lang) => {
     if (next === lang) return;
     saveLang(next);
@@ -79,6 +61,33 @@ export default function Header({ lang }: { lang: Lang }) {
     navigate(nextPath);
     setOpen(false);
   };
+
+  const t = (da: string, en: string) => (lang === "da" ? da : en);
+
+  const navItems = useMemo(() => {
+    const publicItems = [
+      { to: pathOf(lang, "house"), label: t("Huset", "The House") },
+      { to: pathOf(lang, "area"), label: t("Området", "Area") },
+      { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery") },
+      { to: pathOf(lang, "faq"), label: "FAQ" },
+      { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact") },
+    ];
+
+  if (guest) {
+  return [
+    { to: `/guest/${lang}/velkomst`, label: t("Velkomst", "Welcome") },
+    { to: `/guest/${lang}/manual`, label: t("Manual", "Manual") },
+    {
+      to: `/guest/${lang}/pool-vildmarksbad`,
+      label: t("Pool & Vildmarksbad", "Pool & Hot Tub"),
+    },
+    { to: `/guest/${lang}/sauna`, label: "Sauna" },
+    { to: `/guest/${lang}/contact`, label: t("Kontakt", "Contact") },
+  ];
+}
+
+    return publicItems;
+  }, [lang, guest, t]);
 
   const flag = lang === "da" ? "🇩🇰" : "🇬🇧";
 
@@ -91,7 +100,6 @@ export default function Header({ lang }: { lang: Lang }) {
       ].join(" ")}
     >
       <div className={styles.inner}>
-        {/* Brand */}
         <Link
           to={pathOf(lang, "home")}
           className={styles.brand}
@@ -105,7 +113,7 @@ export default function Header({ lang }: { lang: Lang }) {
             }}
           />
         </Link>
-        {/* Desktop nav */}
+
         <nav className={`${styles.nav} ${styles.navPrimary}`} aria-label="Main">
           {navItems.map((item) => (
             <NavLink
@@ -121,18 +129,18 @@ export default function Header({ lang }: { lang: Lang }) {
             </NavLink>
           ))}
 
-          {/* IMPORTANT: use SPA link, not href */}
-          <Buttons
-            labelDa="Book nu"
-            labelEn="Book now"
-            to={pathOf(lang, "book")}
-            buttonType="button"
-          />
+          {!guest && (
+            <Buttons
+              labelDa="Book nu"
+              labelEn="Book now"
+              to={pathOf(lang, "book")}
+              buttonType="button"
+            />
+          )}
 
-          {/* Language dropdown */}
+          {/* Sprogvælger som dropdown */}
           <DropdownMenu.Root open={langOpen} onOpenChange={setLangOpen}>
             <DropdownMenu.Trigger asChild>
-              {/* EXPLICIT TYPE */}
               <button
                 type="button"
                 className={styles.langTrigger}
@@ -164,21 +172,13 @@ export default function Header({ lang }: { lang: Lang }) {
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </nav>
-        {/* Mobile/Tablet burger + panel */}
+
+        {/* Mobilmenu */}
         <Dialog.Root open={open} onOpenChange={setOpen}>
-          {/* NOT a Dialog.Trigger — we control it ourselves */}
           <button
             type="button"
             className={styles.menuBtn}
-            aria-label={
-              open
-                ? lang === "da"
-                  ? "Luk menu"
-                  : "Close menu"
-                : lang === "da"
-                ? "Åbn menu"
-                : "Open menu"
-            }
+            aria-label={open ? "Luk menu" : "Åbn menu"}
             aria-expanded={open}
             aria-controls="mobile-menu-panel"
             data-open={open}
@@ -187,20 +187,15 @@ export default function Header({ lang }: { lang: Lang }) {
             <span className={styles.burger} aria-hidden="true" />
           </button>
 
-          {/* Overlay/panel are positioned *under* the sticky header */}
           <Dialog.Overlay className={styles.overlay} />
           <Dialog.Content
             id="mobile-menu-panel"
             className={styles.panel}
-            aria-label={lang === "da" ? "Mobilmenu" : "Mobile menu"}
+            aria-label="Mobilmenu"
           >
-            <Dialog.Title className={styles.srOnly}>
-              {lang === "da" ? "Menu" : "Menu"}
-            </Dialog.Title>
+            <Dialog.Title className={styles.srOnly}>Menu</Dialog.Title>
             <Dialog.Description className={styles.srOnly}>
-              {lang === "da"
-                ? "Hovednavigation for siden"
-                : "Main navigation for the site"}
+              Hovednavigation for siden
             </Dialog.Description>
 
             <nav className={styles.panelNav}>
@@ -222,34 +217,45 @@ export default function Header({ lang }: { lang: Lang }) {
             </nav>
 
             <div className={styles.panelFooter}>
-              <Buttons
-                to={pathOf(lang, "book")}
-                onClick={() => setOpen(false)}
-                className={styles.ctaLink}
-                labelDa="Book"
-                labelEn="Book"
-                buttonType="button"
-                fullWidth
-              />
+              {!guest && (
+                <Buttons
+                  to={pathOf(lang, "book")}
+                  onClick={() => setOpen(false)}
+                  className={styles.ctaLink}
+                  labelDa="Book"
+                  labelEn="Book"
+                  buttonType="button"
+                  fullWidth
+                />
+              )}
 
-              <div className={styles.langGroup}>
-                <button
-                  type="button"
-                  className={styles.langChip}
-                  onClick={() => switchLang("da")}
-                  aria-label="Switch to Danish"
+              {/* sprogvælger på mobil */}
+              <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                  <button type="button" className={styles.langTriggerMobile}>
+                    <span className={styles.flag}>{flag}</span>
+                    <ChevronDownIcon />
+                  </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content
+                  sideOffset={6}
+                  align="end"
+                  className={styles.ddContent}
                 >
-                  <span className={styles.flag}>🇩🇰</span> DA
-                </button>
-                <button
-                  type="button"
-                  className={styles.langChip}
-                  onClick={() => switchLang("en")}
-                  aria-label="Switch to English"
-                >
-                  <span className={styles.flag}>🇬🇧</span> EN
-                </button>
-              </div>
+                  <DropdownMenu.Item
+                    onSelect={() => switchLang("da")}
+                    className={styles.ddItem}
+                  >
+                    <span style={{ marginRight: 8 }}>🇩🇰</span> Dansk
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    onSelect={() => switchLang("en")}
+                    className={styles.ddItem}
+                  >
+                    <span style={{ marginRight: 8 }}>🇬🇧</span> English
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Root>
             </div>
           </Dialog.Content>
         </Dialog.Root>

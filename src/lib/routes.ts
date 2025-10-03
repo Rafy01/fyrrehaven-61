@@ -1,5 +1,3 @@
-// src/lib/routes.ts
-
 // Re-eksportér Lang for andre moduler, og importér den lokalt som type
 export type { Lang } from "./lang";
 import type { Lang } from "./lang";
@@ -18,7 +16,7 @@ export type PageKey =
   | "privacy"
   | "sitemap";
 
-/** Lokale slugs pr. side pr. sprog (brug lowercase ASCII + bindestreger) */
+// Public slugs pr. side pr. sprog
 export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   home: { da: "", en: "" },
   house: { da: "sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61" },
@@ -37,13 +35,18 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   sitemap: { da: "sitemap", en: "sitemap" },
 };
 
-/** Byg sti for en given side og sprog. */
+// Gæste-sider (separat fordi de har præfikset `/guest`)
+export const GUEST_PAGES: Record<"welcome", Record<Lang, string>> = {
+  welcome: { da: "velkomst", en: "welcome" },
+};
+
+// Bruges til at lave URL-stier for public sider
 export function pathOf(lang: Lang, key: PageKey): string {
   const slug = SLUGS[key][lang] ?? "";
   return `/${lang}${slug ? `/${slug}` : ""}`;
 }
 
-/** Reverse lookup: slug -> page key pr. sprog */
+// Reverse lookup: slug -> page key
 const REVERSE: Record<Lang, Record<string, PageKey>> = {
   da: Object.fromEntries(
     Object.entries(SLUGS).map(([k, v]) => [v.da || "", k as PageKey])
@@ -53,7 +56,7 @@ const REVERSE: Record<Lang, Record<string, PageKey>> = {
   ),
 };
 
-/** Find {lang, key} ud fra en pathname. Returnerer null hvis ikke vores struktur. */
+// Find {lang, key} ud fra public path
 export function parsePath(
   pathname: string
 ): { lang: Lang; key: PageKey } | null {
@@ -65,14 +68,33 @@ export function parsePath(
   const key = REVERSE[langSeg][slug];
   if (key) return { lang: langSeg, key };
 
-  // Tom slug = home
   if (!slug) return { lang: langSeg, key: "home" };
   return null;
 }
 
-/** Skift sprog men bevar samme side (mapper slug korrekt). */
+// Bruges til sprogskift – understøtter både public og guest
 export function switchLangPath(pathname: string, next: Lang): string {
-  const parsed = parsePath(pathname);
-  const key: PageKey = parsed?.key ?? "home";
+  const parts = pathname.replace(/^\/+/, "").split("/");
+
+  // Hvis det er gæste-side
+  if (parts[0] === "guest") {
+    const currentLang = parts[1] as Lang;
+    const guestSlug = parts[2] || "";
+
+    const matchingKey = Object.entries(GUEST_PAGES).find(
+      ([, slugs]) => slugs[currentLang] === guestSlug
+    )?.[0] as keyof typeof GUEST_PAGES;
+
+    if (matchingKey) {
+      const newSlug = GUEST_PAGES[matchingKey][next];
+      return `/guest/${next}/${newSlug}`;
+    }
+
+    return `/guest/${next}`; // fallback hvis ukendt slug
+  }
+
+  // Ellers: public side
+  const parsedPublic = parsePath(pathname);
+  const key: PageKey = parsedPublic?.key ?? "home";
   return pathOf(next, key);
 }

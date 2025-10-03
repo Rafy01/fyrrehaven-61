@@ -15,9 +15,8 @@ import Gtag from "../components/Analytics/Gtag";
 // import ChatWidget from "../components/ChatWidget";
 import { Analytics } from "@vercel/analytics/react";
 
+  export default function App({ lang, guest = false }: { lang: Lang; guest?: boolean }) {
 
-
-export default function App({ lang }: { lang: Lang }) {
   const { i18n } = useTranslation();
   const location = useLocation();
 
@@ -32,7 +31,7 @@ export default function App({ lang }: { lang: Lang }) {
   return (
     <Theme accentColor="gray" radius="large" appearance="light">
       <Gtag />
-      <Header lang={lang} />
+      <Header lang={lang} guest={guest} />
       <HashScroll />
       <Analytics />
       <main>
