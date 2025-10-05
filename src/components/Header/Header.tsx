@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import styles from "./Header.module.css";
 
 import { type Lang, saveLang } from "../../lib/lang";
-import { pathOf, switchLangPath } from "../../lib/routes";
+import { pathOf, switchLangPath, GUEST_PAGES } from "../../lib/routes";
 import Buttons from "../Buttons";
 
 type Props = {
@@ -62,30 +62,36 @@ export default function Header({ lang, guest = false }: Props) {
     setOpen(false);
   };
 
-  const t = useCallback((da: string, en: string) => (lang === "da" ? da : en), [lang]);
+  const t = useCallback(
+    (da: string, en: string) => (lang === "da" ? da : en),
+    [lang]
+  );
 
   const navItems = useMemo(() => {
-    const publicItems = [
+    if (guest) {
+      return [
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.welcome[lang]}`,
+          label: t("Velkomst", "Welcome"),
+        },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.manual[lang]}`,
+          label: t("Manual", "Manual"),
+        },
+        { to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`, label: t("Pool", "Pool") },
+        { to: `/guest/${lang}/${GUEST_PAGES.sauna[lang]}`, label: t("Sauna", "Sauna") },
+        { to: `/guest/${lang}/${GUEST_PAGES.spa[lang]}`, label: t("Vildmarksbad", "Hot Tub") },
+        { to: `/guest/${lang}/${GUEST_PAGES.contact[lang]}`, label: t("Kontakt", "Contact") },
+      ];
+    }
+
+    return [
       { to: pathOf(lang, "house"), label: t("Huset", "The House") },
       { to: pathOf(lang, "area"), label: t("Området", "Area") },
       { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery") },
       { to: pathOf(lang, "faq"), label: "FAQ" },
       { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact") },
     ];
-
-  if (guest) {
-  return [
-    { to: `/guest/${lang}/velkomst`, label: t("Velkomst", "Welcome") },
-    { to: `/guest/${lang}/manual`, label: t("Manual", "Manual") },
-    
-    { to: `/guest/${lang}/pool`, label: t("Pool", "Pool") },
-    { to: `/guest/${lang}/sauna`, label: t("Sauna", "Sauna") },
-    { to: `/guest/${lang}/spa`, label: t("Vildmarksbad", "Hot Tub") },
-    { to: `/guest/${lang}/contact`, label: t("Kontakt", "Contact") },
-  ];
-}
-
-    return publicItems;
   }, [lang, guest, t]);
 
   const flag = lang === "da" ? "🇩🇰" : "🇬🇧";
@@ -137,7 +143,6 @@ export default function Header({ lang, guest = false }: Props) {
             />
           )}
 
-          {/* Sprogvælger som dropdown */}
           <DropdownMenu.Root open={langOpen} onOpenChange={setLangOpen}>
             <DropdownMenu.Trigger asChild>
               <button
@@ -172,7 +177,6 @@ export default function Header({ lang, guest = false }: Props) {
           </DropdownMenu.Root>
         </nav>
 
-        {/* Mobilmenu */}
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <button
             type="button"
@@ -228,7 +232,6 @@ export default function Header({ lang, guest = false }: Props) {
                 />
               )}
 
-              {/* sprogvælger på mobil */}
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                   <button type="button" className={styles.langTriggerMobile}>

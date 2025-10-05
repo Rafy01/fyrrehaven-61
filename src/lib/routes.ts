@@ -36,9 +36,13 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
 };
 
 // Gæste-sider (separat fordi de har præfikset `/guest`)
-export const GUEST_PAGES: Record<"welcome" | "manual", Record<Lang, string>> = {
+export const GUEST_PAGES: Record<"welcome" | "manual" | "pool" | "sauna" | "spa" | "contact", Record<Lang, string>> = {
   welcome: { da: "velkomst", en: "welcome" },
   manual: { da: "manual", en: "manual" },
+  pool: { da: "pool", en: "pool" },
+  sauna: { da: "sauna", en: "sauna" },
+  spa: { da: "vildmarksbad", en: "hot-tub" },
+  contact: { da: "kontakt", en: "contact" },
 };
 
 // Bruges til at lave URL-stier for public sider
