@@ -6,9 +6,9 @@ import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
 import type { Lang } from "../../lib/lang";
 import QuickFilters from "../../components/QuickFilters";
-import ActivitiesGrid from "../../components/ActivitiesGrid";
+import ActivitiesGrid from "../../components/ActivitiesGrid/ActivitiesGrid";
 import type { TagId } from "../../lib/tags";
-import type { Activity } from "../../components/Accordion/Accordion";
+import type { Activity } from "../../components/ActivitiesGrid/ActivitiesGrid";
 // import { ATTRACTIONS } from "../../lib/attractions"; // ← henter listen
 // import { ATTRACTIONS } from "../../lib/attractions"; // ← henter listen
 import { ATTRACTIONS } from "../../data/attractions"; // ← henter listen
