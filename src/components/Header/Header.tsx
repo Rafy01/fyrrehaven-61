@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -62,7 +62,7 @@ export default function Header({ lang, guest = false }: Props) {
     setOpen(false);
   };
 
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = useCallback((da: string, en: string) => (lang === "da" ? da : en), [lang]);
 
   const navItems = useMemo(() => {
     const publicItems = [
@@ -79,9 +79,9 @@ export default function Header({ lang, guest = false }: Props) {
     { to: `/guest/${lang}/manual`, label: t("Manual", "Manual") },
     {
       to: `/guest/${lang}/pool-vildmarksbad`,
-      label: t("Pool & Vildmarksbad", "Pool & Hot Tub"),
+      label: t("Wellness", "Wellness"),
     },
-    { to: `/guest/${lang}/sauna`, label: "Sauna" },
+    { to: `/guest/${lang}/sauna`, label: t("Sauna", "Sauna") },
     { to: `/guest/${lang}/contact`, label: t("Kontakt", "Contact") },
   ];
 }
