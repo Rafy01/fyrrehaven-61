@@ -28,6 +28,7 @@ import Sitemap from "./pages/Sitemap/Sitemap";
 
 // Gæstesider
 import GuestWelcome from "./pages/guest/Welcome";
+import GuestManual from "./pages/guest/Manual";
 
 // Routing helpers
 import { pickInitialLang } from "./lib/lang";
@@ -49,6 +50,7 @@ const langRoutes = (lang: "da" | "en") => [
 
 const guestRoutes = (lang: "da" | "en") => [
   { path: GUEST_PAGES.welcome[lang], element: <GuestWelcome lang={lang} /> },
+  { path: GUEST_PAGES.manual[lang], element: <GuestManual lang={lang} /> },
 ];
 
 const router = createBrowserRouter([

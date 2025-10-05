@@ -77,11 +77,10 @@ export default function Header({ lang, guest = false }: Props) {
   return [
     { to: `/guest/${lang}/velkomst`, label: t("Velkomst", "Welcome") },
     { to: `/guest/${lang}/manual`, label: t("Manual", "Manual") },
-    {
-      to: `/guest/${lang}/pool-vildmarksbad`,
-      label: t("Wellness", "Wellness"),
-    },
+    
+    { to: `/guest/${lang}/pool`, label: t("Pool", "Pool") },
     { to: `/guest/${lang}/sauna`, label: t("Sauna", "Sauna") },
+    { to: `/guest/${lang}/spa`, label: t("Vildmarksbad", "Hot Tub") },
     { to: `/guest/${lang}/contact`, label: t("Kontakt", "Contact") },
   ];
 }

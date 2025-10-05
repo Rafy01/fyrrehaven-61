@@ -1,1 +1,1 @@
-export { default } from "./ActivitiesGrid";
+export { default } from "../Accordion/Accordion";

@@ -1,0 +1,67 @@
+.wrapper {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.subtext {
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+.quickLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.linkButton {
+  padding: 0.5rem 1rem;
+  border: 2px solid #cfae00;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #000;
+  background-color: transparent;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.linkButton:hover {
+  background-color: #f7f2c6;
+}
+
+.noticeBox {
+  background-color: #fef3c7;
+  border-left: 4px solid #facc15;
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.noticeBox ol {
+  padding-left: 1.2rem;
+  margin-top: 0.5rem;
+}
+
+.noticeBox a {
+  color: #1e40af;
+  text-decoration: underline;
+}
+
+.mapBlock {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.mapImage {
+  width: 100%;
+  max-width: 600px;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
