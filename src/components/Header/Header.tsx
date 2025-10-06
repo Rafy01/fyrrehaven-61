@@ -81,7 +81,7 @@ export default function Header({ lang, guest = false }: Props) {
         { to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`, label: t("Pool", "Pool") },
         { to: `/guest/${lang}/${GUEST_PAGES.sauna[lang]}`, label: t("Sauna", "Sauna") },
         { to: `/guest/${lang}/${GUEST_PAGES.spa[lang]}`, label: t("Vildmarksbad", "Hot Tub") },
-        { to: `/guest/${lang}/${GUEST_PAGES.contact[lang]}`, label: t("Kontakt", "Contact") },
+        { to: `/guest/${lang}/${GUEST_PAGES.practicalInfo[lang]}`, label: t("Praktisk info", "Practical Info") },
       ];
     }
 
