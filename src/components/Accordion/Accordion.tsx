@@ -20,7 +20,12 @@ export default function Accordion({ items, defaultOpenId }: AccordionProps) {
   const handleValueChange = (value: string) => {
     const el = itemRefs.current[value];
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const rect = el.getBoundingClientRect();
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+      const offsetTop = rect.top + scrollTop - 80; // 80px offset for header
+
+      window.scrollTo({ top: offsetTop, behavior: "smooth" });
     }
   };
 
