@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 import Accordion from "../../../components/Accordion/Accordion";
 import Form, { type Field } from "../../../components/Form/Form";
 
-
 const POOL_SEASON = {
   start: new Date("2025-05-01"),
   end: new Date("2025-10-01"),
@@ -23,12 +22,15 @@ export default function CheckInOut() {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
   const [poolOpen, setPoolOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(true); // default true for SSR
+  const [isMobile, setIsMobile] = useState(true);
+
+  const [isSending, setIsSending] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setPoolOpen(isPoolOpen());
 
-    // Check device width (client-side only)
     if (typeof window !== "undefined") {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
@@ -49,11 +51,50 @@ export default function CheckInOut() {
     );
   }
 
-  const handleSubmit = (
+  const handleSubmit = async (
     values: Record<string, string | FileList | boolean>
   ) => {
-    console.log("Form submitted:", values);
-    // TODO: Send to backend/email
+    setIsSending(true);
+    setSuccess(false);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+
+      for (const key in values) {
+        const value = values[key];
+
+        if (value instanceof FileList) {
+          Array.from(value).forEach((file) => formData.append(key, file));
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+
+      const res = await fetch("/api/checkin", {
+        method: "POST",
+        body: formData,
+      });
+
+    if (!res.ok) {
+      let errorMessage = lang === "da" ? "Ukendt fejl" : "Unknown error";
+      try {
+        const data = await res.json();
+        errorMessage = data?.detail || errorMessage;
+      } catch {
+        // Ingen JSON body – behold standardbesked
+      }
+      setError(errorMessage);
+      return;
+    }
+
+      setSuccess(true);
+    } catch (err: any) {
+      console.error("Submit error:", err);
+      setError(err?.message || "Noget gik galt.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const fields: Field[] = [
@@ -194,6 +235,29 @@ export default function CheckInOut() {
           onSubmit={handleSubmit}
           submitLabel={t("Send aflæsning", "Submit reading")}
         />
+
+        {isSending && (
+          <p style={{ textAlign: "center", color: "#888", marginTop: "1rem" }}>
+            {t("Sender aflæsning...", "Submitting reading...")}
+          </p>
+        )}
+
+        {success && (
+          <p style={{ textAlign: "center", color: "green", marginTop: "1rem" }}>
+            ✅{" "}
+            {t(
+              "Tak! Din aflæsning er sendt.",
+              "Thanks! Your reading has been sent."
+            )}
+          </p>
+        )}
+
+        {error && (
+          <p style={{ textAlign: "center", color: "red", marginTop: "1rem" }}>
+            ❌ {t("Fejl:", "Error:")} {error}
+          </p>
+        )}
+
         <Accordion items={accordionItems as any} />
       </div>
     </>
