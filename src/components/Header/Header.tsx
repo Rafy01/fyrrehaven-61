@@ -231,33 +231,24 @@ export default function Header({ lang, guest = false }: Props) {
                   fullWidth
                 />
               )}
-
-              <DropdownMenu.Root>
-                <DropdownMenu.Trigger asChild>
-                  <button type="button" className={styles.langTriggerMobile}>
-                    <span className={styles.flag}>{flag}</span>
-                    <ChevronDownIcon />
-                  </button>
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content
-                  sideOffset={6}
-                  align="end"
-                  className={styles.ddContent}
+              <div className={styles.langGroup}>
+                <button
+                  type="button"
+                  className={styles.langChip}
+                  onClick={() => switchLang("da")}
+                  aria-current={lang === "da"}
                 >
-                  <DropdownMenu.Item
-                    onSelect={() => switchLang("da")}
-                    className={styles.ddItem}
-                  >
-                    <span style={{ marginRight: 8 }}>🇩🇰</span> Dansk
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    onSelect={() => switchLang("en")}
-                    className={styles.ddItem}
-                  >
-                    <span style={{ marginRight: 8 }}>🇬🇧</span> English
-                  </DropdownMenu.Item>
-                </DropdownMenu.Content>
-              </DropdownMenu.Root>
+                  🇩🇰 Dansk
+                </button>
+                <button
+                  type="button"
+                  className={styles.langChip}
+                  onClick={() => switchLang("en")}
+                  aria-current={lang === "en"}
+                >
+                  🇬🇧 English
+                </button>
+              </div>
             </div>
           </Dialog.Content>
         </Dialog.Root>
