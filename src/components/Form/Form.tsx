@@ -244,9 +244,9 @@ export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
         <Buttons
           label={
             values["checkType"] === "checkin"
-              ? t("Send tjek-ind", "Submit check-in")
+              ? t("Tjek-ind", "Check-in")
               : values["checkType"] === "checkout"
-              ? t("Send tjek-ud", "Submit check-out")
+              ? t("Tjek-ud", "Check-out")
               : submitLabel
           }
           buttonType="submit"
