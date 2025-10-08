@@ -27,6 +27,7 @@ export default function CheckInOut() {
   const [isSending, setIsSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(0); // 🔁 Brugt til at nulstille formen
 
   useEffect(() => {
     setPoolOpen(isPoolOpen());
@@ -63,7 +64,6 @@ export default function CheckInOut() {
 
       for (const key in values) {
         const value = values[key];
-
         if (value instanceof FileList) {
           Array.from(value).forEach((file) => formData.append(key, file));
         } else {
@@ -76,19 +76,20 @@ export default function CheckInOut() {
         body: formData,
       });
 
-    if (!res.ok) {
-      let errorMessage = lang === "da" ? "Ukendt fejl" : "Unknown error";
-      try {
-        const data = await res.json();
-        errorMessage = data?.detail || errorMessage;
-      } catch {
-        // Ingen JSON body – behold standardbesked
+      if (!res.ok) {
+        let errorMessage = lang === "da" ? "Ukendt fejl" : "Unknown error";
+        try {
+          const data = await res.json();
+          errorMessage = data?.detail || errorMessage;
+        } catch {
+          // Ingen JSON body – behold standardbesked
+        }
+        setError(errorMessage);
+        return;
       }
-      setError(errorMessage);
-      return;
-    }
 
       setSuccess(true);
+      setFormKey((k) => k + 1); // 🧼 Nulstil formularen
     } catch (err: any) {
       console.error("Submit error:", err);
       setError(err?.message || "Noget gik galt.");
@@ -231,6 +232,7 @@ export default function CheckInOut() {
           {t("Tjek-ind og ud", "Check-in and out")}
         </h1>
         <Form
+          key={formKey} // 🧼 Force reset
           fields={fields}
           onSubmit={handleSubmit}
           submitLabel={t("Send aflæsning", "Submit reading")}
