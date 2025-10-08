@@ -33,6 +33,7 @@ import Pool from "./pages/guest/Pool";
 import Sauna from "./pages/guest/Sauna";
 import Spa from "./pages/guest/Spa";
 import PracticalInfo from "./pages/guest/Practical-Info";
+import CheckInOut from "./pages/guest/CheckInOut";
 
 // Routing helpers
 import { pickInitialLang } from "./lib/lang";
@@ -60,6 +61,7 @@ const guestRoutes = (lang: "da" | "en") => [
   { path: GUEST_PAGES.sauna[lang], element: <Sauna lang={lang} /> },
   { path: GUEST_PAGES.spa[lang], element: <Spa lang={lang} /> },
   { path: GUEST_PAGES.practicalInfo[lang], element: <PracticalInfo lang={lang} /> },
+  { path: GUEST_PAGES.checkInOut[lang], element: <CheckInOut /> },
 ];
 
 const router = createBrowserRouter([
