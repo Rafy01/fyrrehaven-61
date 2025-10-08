@@ -27,7 +27,7 @@
 }
 .selectIcon {
   position: absolute;
-  right: 2rem;
+  right: 1rem;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
