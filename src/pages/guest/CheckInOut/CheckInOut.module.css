@@ -1,0 +1,17 @@
+/* src/pages/guest/CheckInOut.module.css */
+
+.wrapper {
+  max-width: 100px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.accordionBlock {
+  margin-top: 2rem;
+}
+
+.mobileOnly {
+  padding: 4rem 1rem;
+  text-align: center;
+  font-size: 1.2rem;
+}
