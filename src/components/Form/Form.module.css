@@ -188,12 +188,3 @@ input[type="file"] {
   overflow-wrap: anywhere;
 }
 
-/* Mobile */
-@media (max-width: 640px) {
-  .form {
-    padding: 1.25rem;
-    border-radius: 12px;
-    margin: 1rem;
-  }
-
-}
