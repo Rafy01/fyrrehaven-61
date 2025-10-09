@@ -10,6 +10,8 @@
   transition: transform 0.35s ease, opacity 0.25s ease, background 0.25s ease,
     backdrop-filter 0.25s ease;
   will-change: transform, opacity;
+  padding-bottom: env(safe-area-inset-bottom);
+
 }
 .inner {
   max-width: 1100px;
@@ -19,6 +21,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  padding-top: max(env(safe-area-inset-top), 0.75rem);
+
 }
 .brand {
   display: inline-flex;
