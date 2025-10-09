@@ -6,6 +6,7 @@ import Head from "../../../lib/Head";
 import { useTranslation } from "react-i18next";
 import Accordion from "../../../components/Accordion/Accordion";
 import Form, { type Field } from "../../../components/Form/Form";
+import styles from "./CheckInOut.module.css";
 
 const POOL_SEASON = {
   start: new Date("2025-05-01"),
@@ -189,8 +190,9 @@ export default function CheckInOut() {
       title: t("Placering af EL-måler", "Location of electricity meter"),
       content: (
         <img
-          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/el-maaler.webp"
+          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3418.webp"
           alt={t("EL-måler placering", "Electricity meter location")}
+          className={styles.image}
         />
       ),
     },
@@ -199,8 +201,9 @@ export default function CheckInOut() {
       title: t("Placering af vandmåler (hus)", "Water meter location (house)"),
       content: (
         <img
-          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/vand-hus.webp"
+          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3411.webp"
           alt={t("Vandmåler i huset", "Water meter in house")}
+          className={styles.image}
         />
       ),
     },
@@ -211,6 +214,7 @@ export default function CheckInOut() {
         <img
           src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/vand-pool.webp"
           alt={t("Vandmåler ved pool", "Water meter at pool")}
+          className={styles.image}
         />
       ),
     },
