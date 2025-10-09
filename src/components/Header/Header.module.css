@@ -331,6 +331,7 @@
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
   box-shadow: -24px 0 48px rgba(0, 0, 0, 0.2);
   animation: panelIn 0.38s cubic-bezier(0.2, 0.8, 0.2, 1.05) both;
+  overflow: hidden;
 }
 .panel[data-state="closed"] {
   animation: panelOut 0.22s ease both;
@@ -403,6 +404,11 @@
   overscroll-behavior: contain;
 
   scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+    flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem 0;
   scrollbar-width: thin;
 }
 .panelNav::-webkit-scrollbar {
