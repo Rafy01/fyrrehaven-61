@@ -316,7 +316,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  height: 100vh;
+  height: 100svh;
   min-height: 100dvh;
   max-height: 100svh;
   background: rgba(255, 255, 255, 0.9);
