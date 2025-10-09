@@ -31,7 +31,7 @@
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  color: #6b7280; /* grå */
+  color: #000000; /* grå */
 }
 
 .selectWrapper {

@@ -168,7 +168,7 @@ export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
             ) : field.type === "select" ? (
               <div className={styles.selectWrapper}>
                 <select {...common} className={styles.select}>
-                  <option value="">–</option>
+                  <option value="">{t("Vælg", "Choose")}</option>
                   {field.options.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
