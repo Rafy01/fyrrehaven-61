@@ -332,6 +332,7 @@
   box-shadow: -24px 0 48px rgba(0, 0, 0, 0.2);
   animation: panelIn 0.38s cubic-bezier(0.2, 0.8, 0.2, 1.05) both;
   overflow: hidden;
+  padding-top: max(1rem, env(safe-area-inset-top));
 }
 .panel[data-state="closed"] {
   animation: panelOut 0.22s ease both;
@@ -394,21 +395,17 @@
 
 /* === SCROLL i midterfeltet, kun når der er brug for det === */
 .panelNav {
-  padding: 0.25rem 0;
+  flex: 1;
   display: grid;
   gap: 0.2rem;
-
+  padding: 1rem 0;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 
   scrollbar-gutter: stable both-edges;
-  scrollbar-width: thin;
-    flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 1rem 0;
   scrollbar-width: thin;
 }
 .panelNav::-webkit-scrollbar {
