@@ -22,9 +22,7 @@ export default function Header({ lang, guest = false }: Props) {
 
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const lastY = useRef<number>(
-    typeof window !== "undefined" ? window.scrollY : 0
-  );
+  const lastY = useRef(typeof window !== "undefined" ? window.scrollY : 0);
   const idleTimer = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -78,13 +76,24 @@ export default function Header({ lang, guest = false }: Props) {
           to: `/guest/${lang}/${GUEST_PAGES.manual[lang]}`,
           label: t("Manual", "Manual"),
         },
-        { to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`, label: t("Pool", "Pool") },
-        { to: `/guest/${lang}/${GUEST_PAGES.sauna[lang]}`, label: t("Sauna", "Sauna") },
-        { to: `/guest/${lang}/${GUEST_PAGES.spa[lang]}`, label: t("Vildmarksbad", "Hot Tub") },
-        { to: `/guest/${lang}/${GUEST_PAGES.practicalInfo[lang]}`, label: t("Praktisk info", "Practical Info") },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`,
+          label: t("Pool", "Pool"),
+        },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.sauna[lang]}`,
+          label: t("Sauna", "Sauna"),
+        },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.spa[lang]}`,
+          label: t("Vildmarksbad", "Hot Tub"),
+        },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.practicalInfo[lang]}`,
+          label: t("Praktisk info", "Practical Info"),
+        },
       ];
     }
-
     return [
       { to: pathOf(lang, "house"), label: t("Huset", "The House") },
       { to: pathOf(lang, "area"), label: t("Området", "Area") },
