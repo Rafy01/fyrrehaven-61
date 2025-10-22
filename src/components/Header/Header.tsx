@@ -103,7 +103,7 @@ export default function Header({ lang, guest = false }: Props) {
       { to: pathOf(lang, "house"), label: t("Huset", "The House") },
       { to: pathOf(lang, "area"), label: t("Området", "Area") },
       { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery") },
-      { to: pathOf(lang, "faq"), label: "FAQ" },
+      // { to: pathOf(lang, "faq"), label: "FAQ" },
       { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact") },
     ];
   }, [lang, guest, t]);
