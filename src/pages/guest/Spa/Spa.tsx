@@ -167,6 +167,7 @@ export default function Spa({ lang }: Props) {
         )}
         lang={lang}
         path=""
+        noindex
       />
 
       <div className={styles.wrapper}>

@@ -47,6 +47,7 @@ export default function PoolPage({ lang }: { lang: Lang }) {
           "Sådan bruger og åbner I poolen ved sommerhuset.",
           "How to use and open the pool at the holiday home."
         )}
+        noindex
       />
 
       <div className={styles.wrapper}>

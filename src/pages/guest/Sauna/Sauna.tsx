@@ -231,7 +231,7 @@ export default function GuestSaunaPage({ lang }: { lang: Lang }) {
 
   return (
     <>
-      <Head title={title} description={description} lang={"da"} path={""} />
+      <Head title={title} description={description} lang={"da"} path={""} noindex/>
 
       <div className={styles.wrapper}>
         <h1>{title}</h1>

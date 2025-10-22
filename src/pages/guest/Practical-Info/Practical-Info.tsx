@@ -159,6 +159,7 @@ export default function PracticalInfo({ lang }: Props) {
         )}
         lang={lang}
         path=""
+        noindex
       />
       <div className={styles.wrapper}>
         <h1>{t("Praktisk info", "Practical Info")}</h1>
