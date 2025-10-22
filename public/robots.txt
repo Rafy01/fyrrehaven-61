@@ -1,0 +1,7 @@
+// public/robots.txt
+User-agent: *
+Allow: /
+
+Disallow: /guest/
+
+Sitemap: https://fyrrehaven-61.dk/sitemap.xml

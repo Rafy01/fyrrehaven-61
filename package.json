@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "postbuild": "npm run generate:sitemap",
-    "generate:sitemap": "tsx scripts/generate-sitemap.ts"
+    "generate:sitemap": "node scripts/generate-sitemap.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

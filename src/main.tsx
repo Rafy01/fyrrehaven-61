@@ -24,7 +24,7 @@ import ChatDebug from "./pages/ChatDebug";
 import Book from "./pages/Book";
 import Privacy from "./pages/Privacy";
 import Fees from "./pages/Fees";
-import Sitemap from "./pages/Sitemap/Sitemap";
+import Sitemap from "./pages/Sitemap/Sitemap.mjs";
 
 // Gæstesider
 import GuestWelcome from "./pages/guest/Welcome";
@@ -38,7 +38,6 @@ import CheckInOut from "./pages/guest/CheckInOut";
 // Routing helpers
 import { pickInitialLang } from "./lib/lang";
 import { SLUGS, GUEST_PAGES } from "./lib/routes";
-
 
 const langRoutes = (lang: "da" | "en") => [
   { index: true, element: <Home lang={lang} /> },
@@ -60,7 +59,10 @@ const guestRoutes = (lang: "da" | "en") => [
   { path: GUEST_PAGES.pool[lang], element: <Pool lang={lang} /> },
   { path: GUEST_PAGES.sauna[lang], element: <Sauna lang={lang} /> },
   { path: GUEST_PAGES.spa[lang], element: <Spa lang={lang} /> },
-  { path: GUEST_PAGES.practicalInfo[lang], element: <PracticalInfo lang={lang} /> },
+  {
+    path: GUEST_PAGES.practicalInfo[lang],
+    element: <PracticalInfo lang={lang} />,
+  },
   { path: GUEST_PAGES.checkInOut[lang], element: <CheckInOut /> },
 ];
 

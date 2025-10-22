@@ -1,1 +1,1 @@
-export * from "./Sitemap";
+export * from "./Sitemap.mjs";
