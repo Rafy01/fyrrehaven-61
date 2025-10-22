@@ -1,56 +1,165 @@
-// src/pages/Cookies.tsx
-
-import { Container, Heading, Text, Button } from "@radix-ui/themes";
+import { useEffect } from "react";
+import { Container, Heading, Text, Separator } from "@radix-ui/themes";
 import type { Lang } from "../../lib/lang";
 import Head from "../../lib/Head";
 import { pathOf } from "../../lib/routes";
-import * as CookieConsent from "vanilla-cookieconsent"; // ✅ korrekt
+import * as CookieConsent from "vanilla-cookieconsent";
 
-export default function CookiesPage({ lang }: { lang: Lang }) {
+export default function Cookies({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
-  const seoTitle = t("Cookies hos Fyrrehaven 61", "Cookies at Fyrrehaven 61");
-  const seoDesc = t(
-    "Læs om vores brug af cookies og administrer dine valg.",
-    "Read about our use of cookies and manage your choices."
-  );
+  useEffect(() => {
+    CookieConsent.run({
+      revision: 1,
+      guiOptions: {
+        consentModal: {
+          layout: "box",
+          position: "bottom center",
+        },
+        preferencesModal: {
+          layout: "box",
+          position: "right",
+        },
+      },
+      categories: {
+        necessary: {
+          enabled: true,
+          readOnly: true,
+        },
+        analytics: {
+          enabled: false,
+          readOnly: false,
+        },
+        marketing: {
+          enabled: false,
+          readOnly: false,
+        },
+      },
+      language: {
+        default: lang,
+        translations: {
+          da: {
+            consentModal: {
+              title: "Vi bruger cookies",
+              description:
+                "Vi bruger nødvendige cookies for at få siden til at fungere, samt valgfrie cookies til statistik og marketing.",
+              acceptAllBtn: "Accepter alle",
+              showPreferencesBtn: "Indstil cookies",
+            },
+            preferencesModal: {
+              title: "Cookieindstillinger",
+              closeIconLabel: "Luk",
+              savePreferencesBtn: "Gem præferencer",
+              sections: [
+                {
+                  title: "Nødvendige cookies",
+                  description: "Påkrævet for at siden fungerer.",
+                  linkedCategory: "necessary",
+                },
+                {
+                  title: "Statistik",
+                  description: "Hjælper os med at forstå brugen af siden.",
+                  linkedCategory: "analytics",
+                },
+                {
+                  title: "Marketing",
+                  description: "Bruges til personaliseret indhold og annoncer.",
+                  linkedCategory: "marketing",
+                },
+              ],
+            },
+          },
+          en: {
+            consentModal: {
+              title: "We use cookies",
+              description:
+                "We use necessary cookies to make the site work, and optional cookies for analytics and marketing.",
+              acceptAllBtn: "Accept all",
+              showPreferencesBtn: "Set preferences",
+            },
+            preferencesModal: {
+              title: "Cookie settings",
+              closeIconLabel: "Close",
+              savePreferencesBtn: "Save preferences",
+              sections: [
+                {
+                  title: "Necessary cookies",
+                  description: "Required for the site to function.",
+                  linkedCategory: "necessary",
+                },
+                {
+                  title: "Analytics",
+                  description: "Helps us understand site usage.",
+                  linkedCategory: "analytics",
+                },
+                {
+                  title: "Marketing",
+                  description: "Used for personalised content and advertising.",
+                  linkedCategory: "marketing",
+                },
+              ],
+            },
+          },
+        },
+      },
+    });
+  }, [lang]);
 
   return (
     <>
       <Head
         lang={lang}
         path={pathOf(lang, "cookies")}
-        title={seoTitle}
-        description={seoDesc}
+        title={t("Cookies hos Fyrrehaven 61", "Cookies at Fyrrehaven 61")}
+        description={t(
+          "Læs om vores brug af cookies og administrer dine valg.",
+          "Read about our use of cookies and manage your choices."
+        )}
       />
 
       <Container size="3" px="4" py="6">
-        <Heading as="h1" size="8" mb="4">
-          {seoTitle}
-        </Heading>
-        <Text size="3" color="gray" as="p" mb="5">
-          {t(
-            "Vi bruger nødvendige cookies for at få siden til at fungere, samt valgfrie cookies til statistik og marketing.",
-            "We use necessary cookies to make the site work, and optional cookies for analytics and marketing."
-          )}
-        </Text>
+        <header>
+          <Heading as="h1" size="8" mb="2">
+            {t("Cookies hos Fyrrehaven 61", "Cookies at Fyrrehaven 61")}
+          </Heading>
+          <Text size="3" color="gray">
+            {t(
+              "Her kan du læse om vores brug af cookies og hvordan du ændrer dine præferencer.",
+              "Here you can read about our use of cookies and how to manage your preferences."
+            )}
+          </Text>
+        </header>
 
-        <Button
-          variant="surface"
-          onClick={() => CookieConsent.showPreferences()}
-        >
-          {t(
-            "Rediger dine cookieindstillinger",
-            "Edit your cookie preferences"
-          )}
-        </Button>
+        <Separator my="5" size="4" />
 
-        <Text size="2" color="gray" mt="6" as="p">
-          {t(
-            "Statistik og marketing cookies aktiveres kun, hvis du accepterer dem. Du kan til enhver tid ændre dine valg.",
-            "Analytics and marketing cookies are only activated if you accept them. You can change your preferences at any time."
-          )}
-        </Text>
+        <section>
+          <Heading as="h2" size="5" mb="2">
+            {t("Typer af cookies", "Types of cookies")}
+          </Heading>
+          <ul style={{ listStyle: "disc", paddingLeft: "1.5rem" }}>
+            <li>
+              <strong>{t("Nødvendige", "Necessary")}: </strong>
+              {t(
+                "Påkrævede for at siden fungerer.",
+                "Required for the site to function."
+              )}
+            </li>
+            <li>
+              <strong>{t("Statistik", "Analytics")}: </strong>
+              {t(
+                "Hjælper os med at forstå brugen af siden.",
+                "Helps us understand how the site is used."
+              )}
+            </li>
+            <li>
+              <strong>{t("Marketing", "Marketing")}: </strong>
+              {t(
+                "Bruges til personaliserede annoncer og indhold.",
+                "Used for personalised content and advertising."
+              )}
+            </li>
+          </ul>
+        </section>
       </Container>
     </>
   );
