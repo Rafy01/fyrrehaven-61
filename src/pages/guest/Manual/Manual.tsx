@@ -5,6 +5,7 @@ import Accordion from "../../../components/Accordion/Accordion";
 import type { Lang } from "../../../lib/lang";
 import styles from "./Manual.module.css";
 import Buttons from "../../../components/Buttons";
+import Hero from "../../../components/Hero";
 
 type Props = { lang: Lang };
 
@@ -17,6 +18,26 @@ export default function Manual({ lang }: Props) {
       : "Important info for your stay: meter readings, access, house rules and more.";
 
   const t = (da: string, en: string) => (lang === "da" ? da : en);
+
+    const heroTitle = t(
+      "Tak for I har valgt vores sommerhus!",
+      "Thank you for choosing our summer house!"
+    );
+    const heroSubtitle = t(
+      "Her er lidt info omkring hvordan I behandler huset – I må meget gerne følge os på sociale medier og dele jeres oplevelse med #fyrrehaven61",
+      "We look forward to welcoming you in beautiful and relaxing surroundings – here’s a bit of practical info!"
+    );
+  const domain =
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_BASE_URL) || "";
+
+  const SaunaUrl =
+    `${domain}/guest/${lang}/${lang === "da" ? "sauna" : "sauna"}`;
+  const hottubUrl =
+    `${domain}/guest/${lang}/${lang === "da" ? "vildmarksbad" : "hot-tub"}`;
+  const poolUrl =
+    `${domain}/guest/${lang}/${lang === "da" ? "pool" : "pool"}`;
 
   const duringStayItems = [
     {
@@ -325,39 +346,27 @@ export default function Manual({ lang }: Props) {
         ogImageAlt={t("Manual billede", "Manual image")}
         noindex
       />
+
+      <Hero title={heroTitle} subtitle={heroSubtitle} />
       <div className={styles.wrapper}>
         <div className={styles.header}>
-          <h1>
-            {lang === "da"
-              ? "Tak for I har valgt vores sommerhus!"
-              : "Thank you for choosing our holiday home!"}
-          </h1>
-          <p className={styles.subtext}>
-            {lang === "da"
-              ? "Her er lidt info omkring hvordan I behandler huset – I må meget gerne følge os på sociale medier og dele jeres oplevelse med "
-              : "Here’s some info on how to treat the house – Feel free to follow us on social media and share your experience using "}
-            <span style={{ fontWeight: 600, textDecoration: "underline" }}>
-              #fyrrehaven61
-            </span>
-          </p>
-
           <div className={styles.quickLinks}>
             <Buttons
-              href="#"
-              labelDa="🎲 Aktiviteter"
-              labelEn="🎲 Activities"
+              to={poolUrl}
+              labelDa="Pool"
+              labelEn="Pool"
               variant="secondary"
             />
             <Buttons
-              href="#"
-              labelDa="🕐  Før afrejse"
-              labelEn="🕐  Before departure"
+              to={hottubUrl}
+              labelDa="Vildmarksbad"
+              labelEn="Hot Tub"
               variant="secondary"
             />
             <Buttons
-              href="#"
-              labelDa="Wellness brug og regler"
-              labelEn="Wellness usage and rules"
+              to={SaunaUrl}
+              labelDa="Sauna"
+              labelEn="Sauna"
               variant="secondary"
             />
           </div>
