@@ -24,7 +24,6 @@ import ChatDebug from "./pages/ChatDebug";
 import Book from "./pages/Book";
 import Privacy from "./pages/Privacy";
 import Fees from "./pages/Fees";
-import Sitemap from "./pages/Sitemap/Sitemap.mjs";
 
 // Gæstesider
 import GuestWelcome from "./pages/guest/Welcome";
@@ -50,7 +49,6 @@ const langRoutes = (lang: "da" | "en") => [
   { path: SLUGS.cookies[lang], element: <CookiesPage lang={lang} /> },
   { path: SLUGS.privacy[lang], element: <Privacy lang={lang} /> },
   { path: SLUGS.fees[lang], element: <Fees lang={lang} /> },
-  { path: SLUGS.sitemap[lang], element: <Sitemap lang={lang} /> },
 ];
 
 const guestRoutes = (lang: "da" | "en") => [
