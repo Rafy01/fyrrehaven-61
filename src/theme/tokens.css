@@ -33,5 +33,5 @@ html {
 #filters,
 #map,
 #trips {
-  scroll-margin-top: 90px; /* justér til din header-højde */
+  scroll-margin-top: 90px; 
 }

@@ -4,7 +4,7 @@ import styles from "./Hero.module.css";
 import Buttons from "../Buttons";
 import { useTranslation } from "react-i18next";
 import { type Lang } from "../../lib/lang";
-import { pathOf } from "../../lib/routes";
+
 
 export type HeroCTA = {
   label: string;
@@ -62,11 +62,8 @@ export default function Hero({
   media,
   dense = false,
   align = "left",
-  lang,
 }: HeroProps) {
-  const { i18n } = useTranslation();
-  const currentLang: Lang =
-    lang ?? (i18n.language?.toLowerCase().startsWith("da") ? "da" : "en");
+  useTranslation();
 
   const rowClass = [
     styles.row,
@@ -155,19 +152,7 @@ export default function Hero({
                   </>
                 ) : (
                   <>
-                    {/* Default CTA’er – tosprogede via Buttons */}
-                    <Buttons
-                      labelDa="Book via Airbnb"
-                      labelEn="Book on Airbnb"
-                      href="https://www.airbnb.dk/h/fyrrehaven-61"
-                      external
-                    />
-                    <Buttons
-                      variant="secondary"
-                      labelDa="Se huset"
-                      labelEn="See the house"
-                      to={pathOf(currentLang, "house")}  
-                    />
+                   
                   </>
                 )}
               </Flex>

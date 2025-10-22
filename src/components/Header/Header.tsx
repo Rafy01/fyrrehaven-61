@@ -38,7 +38,12 @@ export default function Header({ lang, guest = false }: Props) {
       }
       lastY.current = y;
       if (idleTimer.current) window.clearTimeout(idleTimer.current);
-      idleTimer.current = window.setTimeout(() => setHidden(false), 5000);
+      idleTimer.current = window.setTimeout(() => {
+        setHidden(false);
+        if (!open && window.innerWidth <= 1024) {
+          setOpen(true); // Åbn mobilmenu efter inaktivitet
+        }
+      }, 5000);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {

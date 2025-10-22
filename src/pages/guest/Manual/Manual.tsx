@@ -407,7 +407,7 @@ export default function Manual({ lang }: Props) {
       <div className={styles.manualContainer}>
         <h1>{t("Manual til jeres ophold", "Manual for your stay")}</h1>
         <Accordion items={duringStayItems} defaultOpenId="wifi" />
-        <h2>{t("Efter endt ophold", "After your stay")}</h2>
+        <h2 id="theend">{t("Efter endt ophold", "After your stay")}</h2>
         <Accordion items={afterStayItems} />
       </div>
     </>
