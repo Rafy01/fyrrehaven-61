@@ -1,9 +1,12 @@
+// src/pages/Cookies.tsx
+
 import { useEffect } from "react";
 import { Container, Heading, Text, Separator } from "@radix-ui/themes";
 import type { Lang } from "../../lib/lang";
 import Head from "../../lib/Head";
 import { pathOf } from "../../lib/routes";
 import * as CookieConsent from "vanilla-cookieconsent";
+import "vanilla-cookieconsent/dist/cookieconsent.css";
 
 export default function Cookies({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
@@ -15,6 +18,7 @@ export default function Cookies({ lang }: { lang: Lang }) {
         consentModal: {
           layout: "box",
           position: "bottom center",
+          equalWeightButtons: true,
         },
         preferencesModal: {
           layout: "box",
@@ -40,10 +44,11 @@ export default function Cookies({ lang }: { lang: Lang }) {
         translations: {
           da: {
             consentModal: {
-              title: "Vi bruger cookies",
+              title: "Vi bruger cookies 🍪",
               description:
                 "Vi bruger nødvendige cookies for at få siden til at fungere, samt valgfrie cookies til statistik og marketing.",
               acceptAllBtn: "Accepter alle",
+              acceptNecessaryBtn: "Afvis",
               showPreferencesBtn: "Indstil cookies",
             },
             preferencesModal: {
@@ -71,11 +76,12 @@ export default function Cookies({ lang }: { lang: Lang }) {
           },
           en: {
             consentModal: {
-              title: "We use cookies",
+              title: "We use cookies 🍪",
               description:
                 "We use necessary cookies to make the site work, and optional cookies for analytics and marketing.",
               acceptAllBtn: "Accept all",
-              showPreferencesBtn: "Set preferences",
+              acceptNecessaryBtn: "Reject all",
+              showPreferencesBtn: "Manage preferences",
             },
             preferencesModal: {
               title: "Cookie settings",

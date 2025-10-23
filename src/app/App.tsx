@@ -42,34 +42,21 @@ export default function App({
    CookieConsent.run({
      revision: 1,
      autoShow: true,
-     showAlways: true, // 👈 tving altid visning
      guiOptions: {
        consentModal: {
          layout: "box",
          position: "bottom center",
          equalWeightButtons: true,
-         flipButtons: false,
        },
        preferencesModal: {
          layout: "box",
          position: "right",
-         equalWeightButtons: true,
-         flipButtons: false,
        },
      },
      categories: {
-       necessary: {
-         enabled: true,
-         readOnly: true,
-       },
-       analytics: {
-         enabled: false,
-         readOnly: false,
-       },
-       marketing: {
-         enabled: false,
-         readOnly: false,
-       },
+       necessary: { enabled: true, readOnly: true },
+       analytics: { enabled: false },
+       marketing: { enabled: false },
      },
      language: {
        default: lang,
@@ -79,14 +66,9 @@ export default function App({
              title: "Vi bruger cookies 🍪",
              description:
                "Vi bruger cookies for at forbedre din oplevelse. Du bestemmer selv, hvilke du vil acceptere.",
-             primaryBtn: {
-               text: "Accepter alle",
-               role: "accept_all",
-             },
-             secondaryBtn: {
-               text: "Afvis",
-               role: "accept_necessary",
-             },
+             acceptAllBtn: "Accepter alle",
+             acceptNecessaryBtn: "Afvis",
+             showPreferencesBtn: "Indstil cookies",
            },
            preferencesModal: {
              title: "Cookieindstillinger",
@@ -126,14 +108,9 @@ export default function App({
              title: "We use cookies 🍪",
              description:
                "We use cookies to improve your experience. You decide what to accept.",
-             primaryBtn: {
-               text: "Accept all",
-               role: "accept_all",
-             },
-             secondaryBtn: {
-               text: "Decline",
-               role: "accept_necessary",
-             },
+             acceptAllBtn: "Accept all",
+             acceptNecessaryBtn: "Reject all",
+             showPreferencesBtn: "Manage preferences",
            },
            preferencesModal: {
              title: "Cookie settings",
@@ -161,8 +138,7 @@ export default function App({
                },
                {
                  title: "Marketing",
-                 description:
-                   "These cookies are used to show relevant ads.",
+                 description: "These cookies are used to show relevant ads.",
                  linkedCategory: "marketing",
                },
              ],
