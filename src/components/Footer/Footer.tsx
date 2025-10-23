@@ -81,7 +81,7 @@ export default function Footer({
                 >
                   <img
                     className={styles.superhostBadge}
-                    src="superhost.webp"
+                    src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/superhost-1.webp"
                     alt="Airbnb Superhost"
                   />
                 </a>
