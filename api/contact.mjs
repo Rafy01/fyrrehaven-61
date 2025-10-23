@@ -54,7 +54,7 @@ const SIGNATURE_HTML = `
       <tbody>
         <tr>
           <td style="margin: 0.1px; padding: 10px 0px;">
-            <img width="500" src="https://fyrrehaven-61.dk/wp-content/uploads/365480BBE754414FA58777FD7DD1100F.png" alt="Best regards," style="max-width: 100%; height: auto;">
+            <img width="500" src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/best_regards.png" alt="Best regards," style="max-width: 100%; height: auto;">
           </td>
         </tr>
       </tbody>
@@ -68,7 +68,7 @@ const SIGNATURE_HTML = `
                 <tr>
                   <td valign="top" style="margin: 0.1px; padding: 0px 12px 0px 0px; cursor: pointer;">
                     <a href="fyrrehaven-61.dk" target="_blank">
-                      <img src="https://fyrrehaven-61.dk/wp-content/uploads/logo_trans_white_comp-1.png" width="100" alt="" style="display: block; min-width: 100px; max-width: 100%; height: auto;">
+                      <img src="https://media.fyrrehaven-61.dk/logo_trans_white/" width="100" alt="" style="display: block; min-width: 100px; max-width: 100%; height: auto;">
                     </a>
                   </td>
                   <td valign="top" style="border-left: 1px solid rgb(126,119,38); margin: 0.1px; padding: 0 0 0 12px; font-family: Tahoma, Geneva, sans-serif; color: rgb(0,0,1);">
