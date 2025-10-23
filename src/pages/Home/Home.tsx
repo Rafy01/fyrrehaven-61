@@ -206,8 +206,8 @@ const meta = getPageMeta(lang, "house");
             {
               title: t("Brændefyret vildmarksbad", "Wood-fired hot tub"),
               body: t(
-                "Autentisk spa-oplevelse med brænde – afslapning under stjernehimlen.",
-                "Authentic wood-fired soak — unwind under the stars."
+                "Autentisk spa oplevelse med brænde og afslapning under stjernehimlen.",
+                "Authentic spa experience with wood fire and relaxation under the stars."
               ),
               media: {
                 kind: "image",
@@ -220,17 +220,17 @@ const meta = getPageMeta(lang, "house");
               },
             },
             {
-              title: t("Sauna på el", "Electric sauna"),
+              title: t("Sauna", "Sauna"),
               body: t(
-                "Hurtig opvarmning og nem betjening – perfekt efter pool eller hav.",
-                "Heats quickly and easy to use — perfect after pool or sea."
+                "Hurtig opvarmning og nem betjening, perfekt efter pool eller strand.",
+                "Quick heating and easy to use, perfect after pool or beach."
               ),
               media: {
                 kind: "image",
                 src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3731.webp",
                 alt: t(
-                  "El-sauna i sommerhuset",
-                  "Electric sauna in the holiday home"
+                  "Sauna i sommerhuset",
+                  "Sauna in the holiday home"
                 ),
                 aspect: "4 / 3",
               },
@@ -238,8 +238,8 @@ const meta = getPageMeta(lang, "house");
             {
               title: t("Fantastisk område", "Fantastic surroundings"),
               body: t(
-                "Skov og strand tæt på – stier, natur og ro i kort afstand.",
-                "Forest and beach nearby — trails, nature and calm close by."
+                "Skov og strand tæt på stier, natur og ro i kort afstand.",
+                "Forest and beach close to trails, nature and tranquility nearby."
               ),
               media: {
                 kind: "image",
@@ -258,7 +258,7 @@ const meta = getPageMeta(lang, "house");
       <GalleryTeaser
         title={t("Billeder", "Photos")}
         subtitle={t(
-          "Få et hurtigt indtryk – se stue, pool, vildmarksbad og omgivelser.",
+          "Få et hurtigt indtryk - se stue, pool, vildmarksbad og omgivelser.",
           "Get a quick feel—see the living room, pool, hot tub and surroundings."
         )}
         items={[

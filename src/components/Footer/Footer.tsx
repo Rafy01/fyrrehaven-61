@@ -302,7 +302,7 @@ function InstaIcon() {
   return (
     <svg
       width="25"
-      height="auto"
+      height="25"
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"
@@ -319,7 +319,7 @@ function FbIcon() {
   return (
     <svg
       width="35"
-      height="auto"
+      height="35"
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"
@@ -336,7 +336,7 @@ function TiktokIcon() {
   return (
     <svg
       width="25"
-      height="auto"
+      height="25"
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"

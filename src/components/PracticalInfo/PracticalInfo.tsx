@@ -145,7 +145,7 @@ function defaultItems(): PracticalInfoItem[] {
       icon: "Wifi",
       titleDa: "Hurtigt Wi-Fi",
       titleEn: "Fast Wi-Fi",
-      textDa: "Stabilt net i hele huset – også udenfor",
+      textDa: "Stabilt net i hele huset også udenfor",
       textEn: "Reliable coverage across the house and outside",
     },
     {
