@@ -984,7 +984,7 @@ export default function ContactForm({
           variant="primary"
           label={
             isBooking
-              ? t("Send booking", "Send booking")
+              ? t("Send forspørgsel", "Send request")
               : t("Send besked", "Send message")
           }
           ariaLabel={t("Send formularen", "Submit the form")}
