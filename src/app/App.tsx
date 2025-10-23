@@ -44,13 +44,13 @@ export default function App({
      autoShow: true,
      guiOptions: {
        consentModal: {
-         layout: "box",
-         position: "bottom center",
+         layout: "box ",
+         position: "right",
          equalWeightButtons: true,
        },
        preferencesModal: {
          layout: "box",
-         position: "right",
+         position: "center",
        },
      },
      categories: {
