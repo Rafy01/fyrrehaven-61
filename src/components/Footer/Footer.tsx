@@ -31,9 +31,9 @@ export default function Footer({
   const year = new Date().getFullYear();
 
   const s = {
-    instagram: socials?.instagram || "",
-    facebook: socials?.facebook || "",
-    tiktok: socials?.tiktok || "",
+    instagram: socials?.instagram || "https://www.instagram.com/fyrrehaven61/",
+    facebook: socials?.facebook || "http://facebook.com/fyrrehaven61",
+    tiktok: socials?.tiktok || "https://www.tiktok.com/@fyrrehaven61",
     youtube: socials?.youtube || "",
   };
 
@@ -86,60 +86,6 @@ export default function Footer({
                   />
                 </a>
               )}
-
-              <div
-                className={styles.socials}
-                aria-label={t("Sociale medier", "Social media")}
-              >
-                {s.instagram && (
-                  <a
-                    href={s.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialBtn}
-                    aria-label="Instagram"
-                    title="Instagram"
-                  >
-                    <InstaIcon />
-                  </a>
-                )}
-                {s.facebook && (
-                  <a
-                    href={s.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialBtn}
-                    aria-label="Facebook"
-                    title="Facebook"
-                  >
-                    <FbIcon />
-                  </a>
-                )}
-                {s.tiktok && (
-                  <a
-                    href={s.tiktok}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialBtn}
-                    aria-label="TikTok"
-                    title="TikTok"
-                  >
-                    <TiktokIcon />
-                  </a>
-                )}
-                {s.youtube && (
-                  <a
-                    href={s.youtube}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialBtn}
-                    aria-label="YouTube"
-                    title="YouTube"
-                  >
-                    <YoutubeIcon />
-                  </a>
-                )}
-              </div>
             </div>
           </div>
 
@@ -226,6 +172,59 @@ export default function Footer({
                   </Link>
                 </li>
               </ul>
+              <div
+                className={styles.socials}
+                aria-label={t("Sociale medier", "Social media")}
+              >
+                {s.instagram && (
+                  <a
+                    href={s.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="Instagram"
+                    title="Instagram"
+                  >
+                    <InstaIcon />
+                  </a>
+                )}
+                {s.facebook && (
+                  <a
+                    href={s.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="Facebook"
+                    title="Facebook"
+                  >
+                    <FbIcon />
+                  </a>
+                )}
+                {s.tiktok && (
+                  <a
+                    href={s.tiktok}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="TikTok"
+                    title="TikTok"
+                  >
+                    <TiktokIcon />
+                  </a>
+                )}
+                {s.youtube && (
+                  <a
+                    href={s.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="YouTube"
+                    title="YouTube"
+                  >
+                    <YoutubeIcon />
+                  </a>
+                )}
+              </div>
             </nav>
           </div>
 
@@ -302,8 +301,8 @@ export default function Footer({
 function InstaIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="25"
+      height="auto"
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"
@@ -319,8 +318,8 @@ function InstaIcon() {
 function FbIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="35"
+      height="auto"
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"
@@ -336,8 +335,8 @@ function FbIcon() {
 function TiktokIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="25"
+      height="auto"
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"
