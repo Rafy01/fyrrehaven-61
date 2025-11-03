@@ -281,6 +281,12 @@
   margin-top: -1px;
   white-space: nowrap;
 }
+.tWarning {
+  font-weight: 750;
+  color: var(--gold-500);
+  margin-top: 10px;
+
+}
 
 /* Værdi til højre */
 .tValue {

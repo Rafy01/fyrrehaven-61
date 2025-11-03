@@ -717,6 +717,23 @@ export default function ContactForm({
                   : "—"}
               </output>
             </div>
+
+            <div className={`${styles.totalItem} ${styles.em}`}>
+              <span className={styles.tLabel}>
+                <span className={styles.tWarning}>
+                  {t(
+                    "Overstående priser er eksklusive forbrug (EL, vand og evt. ekstra services)",
+                    "The above prices exclude consumption (electricity, water, and any additional services)"
+                  )}
+                </span>
+                <span className={styles.tWarning}>
+                  {t(
+                    "EL, vand og evt. ekstra services afregnes særskilt efter opholdet",
+                    "Electricity, water, and any additional services will be settled separately after the stay"
+                  )}
+                </span>
+              </span>
+            </div>
           </div>
 
           {/* Formål med opholdet (påkrævet, kun booking) */}
