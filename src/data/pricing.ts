@@ -21,6 +21,8 @@ export type WeekPricing = {
   note?: string;
   /** Minimum nætter ved ankomst i denne uge */
   minNights?: number;
+  /** Valgfri: rengøringsgebyr specifikt for denne uge */
+  cleaningFeeDKK?: number;
 };
 
 /** Last minute rabat — procent baseret på hvor tæt vi er på datoen. */
@@ -52,6 +54,7 @@ export type LastMinuteRule = {
  *  - weeks: ISO-uge → WeekPricing
  *  - days: dato → pris (YYYY-MM-DD, overrides alt andet)
  *  - daysMinNights: dato → min. nætter for ankomstdag (YYYY-MM-DD, højeste prioritet)
+ *  - daysCleaningFeeDKK: dato → specifikt rengøringsgebyr
  *  - lastMinuteRules: valgfri last-minute rabatter (default: ingen)
  */
 export type YearPricing = {
@@ -62,10 +65,13 @@ export type YearPricing = {
     weekendDays?: DayCode[];
     /** Global fallback for min. nætter i året */
     minNights?: number;
+    /** Standard rengøringsgebyr for året */
+    cleaningFeeDKK?: number;
   };
   weeks?: Partial<Record<number, WeekPricing>>;
   days?: Partial<Record<string, number>>;
   daysMinNights?: Partial<Record<string, number>>;
+  daysCleaningFeeDKK?: Partial<Record<string, number>>;
   /** Valgfri liste af last-minute regler for året (default = ingen rabat) */
   lastMinuteRules?: LastMinuteRule[];
 };
@@ -81,6 +87,7 @@ export type PricePlan = {
  * ========= */
 
 export const DEFAULT_WEEKEND: DayCode[] = ["fri", "sat"];
+export const DEFAULT_CLEANING_FEE_DKK = 1500;
 
 /** Returnerer min. nætter baseret på ANKOMSTDATO.
  *  Prioritet: daysMinNights[YYYY-MM-DD] > weeks[w].minNights > default.minNights > GLOBAL_FALLBACK(2)
@@ -149,6 +156,7 @@ function addRangeMinNights(
   }
 }
 
+
 /* =========
  * Airbnb-matchende priser (ud fra screenshots)
  * ========= */
@@ -161,6 +169,11 @@ const days2027: Partial<Record<string, number>> = {};
 const daysMinNights2025: Partial<Record<string, number>> = {};
 const daysMinNights2026: Partial<Record<string, number>> = {};
 const daysMinNights2027: Partial<Record<string, number>> = {};
+
+// Mulighed for dags-specifik rengøring
+const daysCleaningFee2025: Partial<Record<string, number>> = {};
+const daysCleaningFee2026: Partial<Record<string, number>> = {};
+const daysCleaningFee2027: Partial<Record<string, number>> = {};
 
 /** ——— 2025 ——— **/
 
@@ -187,8 +200,11 @@ addRange(days2025, "2025-12-27", "2025-12-31", 5000);
 
 /** ——— 2026 ——— **/
 
-// JANUAR 2026 — fladt 1.900
-addRange(days2026, "2026-01-01", "2026-01-31", 1900);
+// JANUAR 2026 — fladt 750
+addRange(days2026, "2026-01-01", "2026-01-31", 750);
+addRangeCleaning(daysCleaningFee2026, "2026-01-01", "2026-01-31", 1000);
+
+
 
 // FEBRUAR 2026 — 1.805 m/ vinterferie (uge 7) på 2.090 (man–lør)
 addRange(days2026, "2026-02-01", "2026-02-08", 1805);
@@ -214,6 +230,9 @@ addRange(days2026, "2026-07-01", "2026-09-30", 3325);
 // (Eksempel på kendt enkelt-dag senere)
 addRange(days2026, "2026-12-27", "2026-12-31", 5000);
 addOne(days2026, "2026-12-31", 5500); // nytårsaften 2026
+
+/** ——— 2027 ——— **/
+/* Her kan du senere udfylde days2027 ligesom 2026, hvis du vil. */
 
 /** ——— JULEFERIE MIN. NÆTTER (3) ——— **/
 
@@ -244,9 +263,11 @@ export const PRICES: PricePlan = {
         price: 1800,
         weekendDays: ["fri", "sat"],
         minNights: 2,
+        cleaningFeeDKK: DEFAULT_CLEANING_FEE_DKK,
       },
       days: days2025,
       daysMinNights: daysMinNights2025,
+      daysCleaningFeeDKK: daysCleaningFee2025,
 
       // ★ NYT: 20% rabat fra 1. oktober til og med 31. december 2025
       lastMinuteRules: [
@@ -283,10 +304,12 @@ export const PRICES: PricePlan = {
         price: 3500, // generel lavsæson; justér hvis du vil splitte weekday/weekend
         weekendDays: ["fri", "sat"],
         minNights: 2, // globalt default minimum booking
+        cleaningFeeDKK: DEFAULT_CLEANING_FEE_DKK,
       },
       // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
       days: days2026,
       daysMinNights: daysMinNights2026,
+      daysCleaningFeeDKK: daysCleaningFee2026,
       // lastMinuteRules: [] // <- default ingen rabat
       weeks: {
         // VINTERFERIE (uge 7)
@@ -311,10 +334,12 @@ export const PRICES: PricePlan = {
         price: 3700, // generel lavsæson; justér hvis du vil splitte weekday/weekend
         weekendDays: ["fri", "sat"],
         minNights: 2, // globalt default minimum booking
+        cleaningFeeDKK: DEFAULT_CLEANING_FEE_DKK,
       },
       // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
       days: days2027,
       daysMinNights: daysMinNights2027,
+      daysCleaningFeeDKK: daysCleaningFee2027,
       // lastMinuteRules: [] // <- default ingen rabat
       weeks: {
         // VINTERFERIE (uge 7)
@@ -369,6 +394,21 @@ function parseYMD(ymd: string): Date {
 function isWithinYMD(date: Date, fromYMD: string, toYMD: string): boolean {
   const x = startOfDayLocal(date);
   return x >= parseYMD(fromYMD) && x <= parseYMD(toYMD);
+}
+
+/** Helper til at udfylde dags-specifik rengøring */
+function addRangeCleaning(
+  store: Partial<Record<string, number>>,
+  fromYMD: string,
+  toYMD: string,
+  fee: number
+) {
+  const start = new Date(fromYMD + "T00:00:00");
+  const end = new Date(toYMD + "T00:00:00");
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const ymd = d.toISOString().slice(0, 10);
+    store[ymd] = fee;
+  }
 }
 
 /** Anvend evt. last-minute rabat (i procent) på en grundpris. */
@@ -472,6 +512,35 @@ export function getPriceForDate(
   }
 
   return null;
+}
+
+/** Rengøringsgebyr for en given dato.
+ * Prioritet: dags-specifik > uge-specifik > år-default > global default.
+ */
+export function getCleaningFeeForDate(
+  date: Date,
+  plan: PricePlan = PRICES
+): number {
+  const y = date.getFullYear();
+  const yr = plan.years[y];
+  if (!yr) return DEFAULT_CLEANING_FEE_DKK;
+
+  const ymd = date.toISOString().slice(0, 10);
+
+  // 1) Dags-specifik rengøring
+  const dayFee = yr.daysCleaningFeeDKK?.[ymd];
+  if (typeof dayFee === "number") return dayFee;
+
+  // 2) Uge-specifik rengøring
+  const w = isoWeek(date);
+  const wp = yr.weeks?.[w];
+  if (wp?.cleaningFeeDKK != null) return wp.cleaningFeeDKK;
+
+  // 3) Års-default
+  if (yr.default?.cleaningFeeDKK != null) return yr.default.cleaningFeeDKK;
+
+  // 4) Global fallback
+  return DEFAULT_CLEANING_FEE_DKK;
 }
 
 /* =========

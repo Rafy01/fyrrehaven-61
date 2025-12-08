@@ -5,7 +5,6 @@ import styles from "./ContactForm.module.css";
 import type { Lang } from "../../lib/lang";
 import { useTranslation } from "react-i18next";
 
-
 import type { ISO2, UiLang } from "../../lib/countryCodes";
 import {
   allCountries,
@@ -20,6 +19,12 @@ import AvailabilityCalendar, {
   type SelectionPrice,
 } from "../AvailabilityCalendar/AvailabilityCalendar";
 import { pathOf } from "../../lib/routes";
+
+// ⬇️ NYT: importér cleaning-fee fra pricing
+import {
+  DEFAULT_CLEANING_FEE_DKK,
+  getCleaningFeeForDate,
+} from "../../data/pricing";
 
 type Purpose = "inquiry" | "booking" | "other";
 
@@ -48,7 +53,6 @@ type FormState = {
   stayPurpose: string;
 };
 
-const CLEANING_FEE_DKK = 1200;
 const MAX_GUESTS = 10;
 const DIGITS_RE = /[^\d]/g;
 
@@ -197,8 +201,14 @@ export default function ContactForm({
   /* ─────────────── BASE & TOTALS ─────────────── */
   const baseNightsTotal = selPrice.total ?? 0;
   const includeCleaning = !!(selPrice.nights && selPrice.nights > 0);
+
+  // Brug år/dato-specifikt rengøringsfee, ellers global default
+  const cleaningFeeDKK = selPrice.start
+    ? getCleaningFeeForDate(selPrice.start)
+    : DEFAULT_CLEANING_FEE_DKK;
+
   const totalWithCleaning = includeCleaning
-    ? baseNightsTotal + CLEANING_FEE_DKK
+    ? baseNightsTotal + cleaningFeeDKK
     : baseNightsTotal;
 
   /* ─────────────── GUEST CAP (max 10 personer) ─────────────── */
@@ -230,7 +240,7 @@ export default function ContactForm({
   }
 
   // Total uden extras
-  const grandTotal = includeCleaning ? totalWithCleaning : baseNightsTotal;
+  const grandTotal = totalWithCleaning;
 
   // === Min.-nætter: afledte værdier til UI og submit-validering ===
   const minReq = selPrice.minNightsRequired ?? 2;
@@ -356,9 +366,9 @@ export default function ContactForm({
             endExclusive: ymdLocal(selPrice.endExclusive),
             nights: selPrice.nights ?? null,
             baseNightsTotalDKK: selPrice.total ?? null,
-            cleaningFeeDKK: includeCleaning ? CLEANING_FEE_DKK : 0,
+            cleaningFeeDKK: includeCleaning ? cleaningFeeDKK : 0,
             totalWithCleaningDKK: includeCleaning
-              ? (selPrice.total ?? 0) + CLEANING_FEE_DKK
+              ? (selPrice.total ?? 0) + cleaningFeeDKK
               : selPrice.total ?? null,
             // min.-nætter metadata til server-side validering/logning
             minNightsRequired: selPrice.minNightsRequired ?? 2,
@@ -440,7 +450,7 @@ export default function ContactForm({
     const nightsPriceStr =
       selPrice.total != null ? fmtMoney.format(selPrice.total) : t("—", "—");
     const cleaningStr = includeCleaning
-      ? fmtMoney.format(CLEANING_FEE_DKK)
+      ? fmtMoney.format(cleaningFeeDKK)
       : t("—", "—");
 
     const totalStr =
@@ -536,7 +546,7 @@ export default function ContactForm({
             <dd>{countryLabel(state.countryIso, uiLang)}</dd>
           </div>
 
-          {/* NYT: vis beskeden i contact-varianten */}
+          {/* Kontakt-variant: vis besked */}
           {!isBooking && state.message.trim() && (
             <div>
               <dt>{t("Besked", "Message")}</dt>
@@ -700,7 +710,7 @@ export default function ContactForm({
                 </span>
               </span>
               <output className={styles.tValue} aria-live="polite">
-                {includeCleaning ? fmtMoney.format(CLEANING_FEE_DKK) : "—"}
+                {includeCleaning ? fmtMoney.format(cleaningFeeDKK) : "—"}
               </output>
             </div>
 
