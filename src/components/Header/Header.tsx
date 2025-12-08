@@ -27,30 +27,41 @@ export default function Header({ lang, guest = false }: Props) {
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
 
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      const delta = y - lastY.current;
-      setScrolled(y > 8);
-      if (!open) {
-        if (delta > 5 && y > 120) setHidden(true);
-        if (delta < -5) setHidden(false);
-      }
-      lastY.current = y;
-      if (idleTimer.current) window.clearTimeout(idleTimer.current);
+useEffect(() => {
+  const onScroll = () => {
+    const y = window.scrollY;
+    const delta = y - lastY.current;
+
+    setScrolled(y > 8);
+
+    // Kun skjul/show header, hvis menu IKKE er åben
+    if (!open) {
+      if (delta > 5 && y > 120) setHidden(true);
+      if (delta < -5) setHidden(false);
+    }
+
+    lastY.current = y;
+
+    // Nulstil idle-timer
+    if (idleTimer.current) window.clearTimeout(idleTimer.current);
+
+    // Start kun idle-timer, hvis menuen er lukket
+    if (!open) {
       idleTimer.current = window.setTimeout(() => {
+        // Efter 5 sek. inaktivitet: vis header igen
         setHidden(false);
-        if (!open && window.innerWidth <= 1024) {
-          setOpen(true); // Åbn mobilmenu efter inaktivitet
-        }
+        // 👇 VIGTIGT: vi rører IKKE ved `setOpen` her
+        // før var her: if (!open && window.innerWidth <= 1024) setOpen(true);
       }, 5000);
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (idleTimer.current) window.clearTimeout(idleTimer.current);
-    };
-  }, [open]);
+    }
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  return () => {
+    window.removeEventListener("scroll", onScroll);
+    if (idleTimer.current) window.clearTimeout(idleTimer.current);
+  };
+}, [open]);
 
   useEffect(() => {
     if (open) setHidden(false);
