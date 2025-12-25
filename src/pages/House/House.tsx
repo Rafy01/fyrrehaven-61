@@ -235,7 +235,7 @@ export default function House({ lang }: { lang: Lang }) {
 
               <Card variant="surface">
                 <Heading as="h3" size="3">
-                  {t("Vildmarksbad", "Hot tub")}
+                  {t("EL-Vildmarksbad", " Electric hot tub")}
                 </Heading>
                 <ul className={styles.list}>
                   <li>{t("Op til 6 personer", "Up to 6 people")}</li>

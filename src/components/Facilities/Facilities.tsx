@@ -76,8 +76,8 @@ export default function Facilities({ lang }: { lang: Lang }) {
           en: "Outdoor pool heated ~29°C (1 May – 1 Oct) with cover",
         },
         {
-          da: "Brændefyret vildmarksbad (op til 6 pers.) med lys og massage",
-          en: "Wood-fired hot tub (up to 6) with lights and massage",
+          da: "Elektrisk vildmarksbad (op til 6 pers.) med lys og massage",
+          en: "Electric hot tub (up to 6) with lights and massage",
         },
         {
           da: "El-sauna (op til ca. 8 pers.) – mulighed for lidt vand på stenene",
