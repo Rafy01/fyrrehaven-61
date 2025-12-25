@@ -204,17 +204,17 @@ const meta = getPageMeta(lang, "house");
               },
             },
             {
-              title: t("Brændefyret vildmarksbad", "Wood-fired hot tub"),
+              title: t("Elektrisk vildmarksbad", "Electric hot tub"),
               body: t(
-                "Autentisk spa oplevelse med brænde og afslapning under stjernehimlen.",
-                "Authentic spa experience with wood fire and relaxation under the stars."
+                "Autentisk spa oplevelse med elektrisk opvarmning og afslapning under stjernehimlen.",
+                "Authentic spa experience with electric heating and relaxation under the stars."
               ),
               media: {
                 kind: "image",
                 src: "/highlights/hot-tub-wood.webp",
                 alt: t(
-                  "Brændefyret vildmarksbad ved Fjellerup Strand",
-                  "Wood-fired hot tub at Fjellerup Strand"
+                  "Elektrisk vildmarksbad ved Fjellerup Strand",
+                  "Electric hot tub at Fjellerup Strand"
                 ),
                 aspect: "4 / 3",
               },
@@ -276,7 +276,7 @@ const meta = getPageMeta(lang, "house");
           },
           {
             src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3696.webp",
-            alt: t("Brændefyret vildmarksbad", "Wood-fired hot tub"),
+            alt: t("Elektrisk vildmarksbad", "Electric hot tub"),
           },
           {
             src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3709.webp",

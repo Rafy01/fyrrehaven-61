@@ -64,7 +64,7 @@ export default function House({ lang }: { lang: Lang }) {
       },
       {
         "@type": "LocationFeatureSpecification",
-        name: t("Brændefyret vildmarksbad", "Wood-fired hot tub"),
+        name: t("Elektrisk vildmarksbad", "Electric hot tub"),
         value: true,
       },
       {
@@ -101,8 +101,8 @@ export default function House({ lang }: { lang: Lang }) {
           "The House – sleeps 10, outdoor pool & wellness"
         )}
         subtitle={t(
-          "4 soveværelser + hems. Udendørs opvarmet pool (1. maj–1. oktober), brændefyret vildmarksbad og el-sauna.",
-          "4 bedrooms + loft. Outdoor heated pool (May 1–Oct 1), wood-fired hot tub and electric sauna."
+          "4 soveværelser + hems. Udendørs opvarmet pool (1. maj–1. oktober), Elektrisk vildmarksbad og el-sauna.",
+          "4 bedrooms + loft. Outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna."
         )}
         badges={[
           t("10 gæster", "10 guests"),
@@ -239,7 +239,7 @@ export default function House({ lang }: { lang: Lang }) {
                 </Heading>
                 <ul className={styles.list}>
                   <li>{t("Op til 6 personer", "Up to 6 people")}</li>
-                  <li>{t("Opvarmes med brænde", "Wood-fired heating")}</li>
+                  <li>{t("Opvarmes med EL", "Electric heating")}</li>
                   <li>
                     {t("Massagefunktion og lys", "Massage jets and lighting")}
                   </li>

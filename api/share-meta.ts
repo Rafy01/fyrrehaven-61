@@ -61,8 +61,8 @@ const META: Record<
       en: "Fyrrehaven 61 – holiday home for 10 by forest & beach",
     },
     desc: {
-      da: "Familievenligt sommerhus ved Fjellerup Strand med opvarmet udendørs pool (1. maj–1. oktober), brændefyret vildmarksbad og el-sauna. Plads til 10 gæster, 4 soveværelser og lyse fællesrum tæt på skov og stier. Book privat eller via Airbnb.",
-      en: "Family-friendly holiday home by Fjellerup Beach with a heated outdoor pool (May 1–Oct 1), wood-fired hot tub and electric sauna. Sleeps 10 with 4 bedrooms and bright living areas close to forest trails. Book privately or via Airbnb.",
+      da: "Familievenligt sommerhus ved Fjellerup Strand med opvarmet udendørs pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Plads til 10 gæster, 4 soveværelser og lyse fællesrum tæt på skov og stier. Book privat eller via Airbnb.",
+      en: "Family-friendly holiday home by Fjellerup Beach with a heated outdoor pool (May 1–Oct 1), electric hot tub and electric sauna. Sleeps 10 with 4 bedrooms and bright living areas close to forest trails. Book privately or via Airbnb.",
     },
     image: OG_IMAGE,
   },
@@ -72,8 +72,8 @@ const META: Record<
       en: "The House – pool, hot tub & sauna | Fyrrehaven 61",
     },
     desc: {
-      da: "Sommerhus til 10 med udendørs opvarmet pool (1. maj–1. oktober), brændefyret vildmarksbad og el-sauna. Familievenligt tæt på skov og strand. Book via Airbnb.",
-      en: "Holiday home for 10 with an outdoor heated pool (May 1–Oct 1), wood-fired hot tub and electric sauna. Family-friendly near forest and beach. Book on Airbnb.",
+      da: "Sommerhus til 10 med udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Familievenligt tæt på skov og strand. Book via Airbnb.",
+      en: "Holiday home for 10 with an outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna. Family-friendly near forest and beach. Book on Airbnb.",
     },
     image: OG_IMAGE,
   },
@@ -94,8 +94,8 @@ const META: Record<
       en: "Gallery – photos of the house, pool and surroundings",
     },
     desc: {
-      da: "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool, brændefyret vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup.",
-      en: "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool, wood-fired hot tub, electric sauna and nearby forest & beach in Fjellerup.",
+      da: "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool, elektrisk vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup.",
+      en: "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool, electric hot tub, electric sauna and nearby forest & beach in Fjellerup.",
     },
     image: OG_IMAGE,
   },

@@ -136,8 +136,8 @@ const practicalInfoUrl =
 
         <Typography>
           {t(
-            "Husk: I skal selv sørge for brænde til vildmarksbadet.",
-            "Note: You must bring your own firewood for the hot tub."
+            "Husk: I skal ikke bruge brønde til vildmarksbadet, da det varmes elektrisk.",
+            "Note: You must not bring your own firewood for the hot tub as it is heated electrically."
           )}
         </Typography>
 

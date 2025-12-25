@@ -158,8 +158,8 @@ export default function Privacy({ lang }: { lang: Lang }) {
               <li>
                 <strong>{t("Ekstra services", "Extra services")}:</strong>{" "}
                 {t(
-                  "Valgte ydelser og mængder (sengetøj, sengelinned, håndklæder, pakker, brænde m.v.).",
-                  "Selected services and quantities (bedding, bed linen, towels, bundles, firewood, etc.)."
+                  "Valgte ydelser og mængder (sengetøj, sengelinned, håndklæder, pakker m.v.).",
+                  "Selected services and quantities (bedding, bed linen, towels, bundles, etc.)."
                 )}
               </li>
               <li>

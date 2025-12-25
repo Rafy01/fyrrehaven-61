@@ -16,8 +16,8 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
     "Gallery – photos of the house, pool and surroundings"
   );
   const seoDescription = t(
-    "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), brændefyret vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
-    "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool (May 1–Oct 1), wood-fired hot tub, electric sauna and nearby forest and beach in Fjellerup. Get a true feel for the place."
+    "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
+    "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool (May 1–Oct 1), electric hot tub, electric sauna and nearby forest and beach in Fjellerup. Get a true feel for the place."
   );
   const seoKeywords =
     lang === "da"

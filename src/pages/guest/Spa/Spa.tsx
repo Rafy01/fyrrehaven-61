@@ -22,8 +22,8 @@ export default function Spa({ lang }: Props) {
             <p>
               <strong>{t("Bemærk!", "Note!")}</strong>{" "}
               {t(
-                "I skal selv have brænde med til vildmarksbad med mindre i har bestilt det igennem os. Karret er rent og klar ved ankomst.",
-                "You must bring your own firewood for the hot tub unless you have ordered it through us. The tub is clean and ready at arrival."
+                "I skal ikke selv have brænde med til vildmarksbad med da det varmes elektrisk. Karret er rent og klar ved ankomst.",
+                "You must not bring your own firewood for the hot tub as it is heated electrically. The tub is clean and ready at arrival."
               )}
             </p>
 

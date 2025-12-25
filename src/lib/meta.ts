@@ -31,7 +31,7 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
     da: {
       title: "Fyrrehaven 61 – sommerhus til 10 personer ved skov og strand",
       description:
-        "Familievenligt sommerhus ved Fjellerup Strand med opvarmet udendørs pool (1. maj–1. oktober), brændefyret vildmarksbad og el-sauna. Plads til 10 gæster, 4 soveværelser og lyse fællesrum tæt på skov og stier. Book privat eller via Airbnb.",
+        "Familievenligt sommerhus ved Fjellerup Strand med opvarmet udendørs pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Plads til 10 gæster, 4 soveværelser og lyse fællesrum tæt på skov og stier. Book privat eller via Airbnb.",
       keywords: [
         "sommerhus fjellerup",
         "sommerhus med pool",
@@ -89,14 +89,14 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
     da: {
       title: "Sommerhuset – pool, vildmarksbad & sauna | Fyrrehaven 61",
       description:
-        "Sommerhus til 10 med udendørs opvarmet pool (1. maj–1. oktober), brændefyret vildmarksbad og el-sauna. Familievenligt tæt på skov og strand. Book via Airbnb.",
+        "Sommerhus til 10 med udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Familievenligt tæt på skov og strand. Book via Airbnb.",
       image: OG_IMG,
       imageAlt: "Udendørs poolområde ved sommerhuset",
     },
     en: {
       title: "The House – pool, hot tub & sauna | Fyrrehaven 61",
       description:
-        "Holiday home for 10 with an outdoor heated pool (May 1–Oct 1), wood-fired hot tub and electric sauna. Family-friendly near forest and beach. Book on Airbnb.",
+        "Holiday home for 10 with an outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna. Family-friendly near forest and beach. Book on Airbnb.",
       image: OG_IMG,
       imageAlt: "Outdoor pool area at the house",
     },
@@ -125,14 +125,14 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
     da: {
       title: "Galleri – billeder af hus, pool og omgivelser",
       description:
-        "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), brændefyret vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
+        "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
       image: OG_IMG,
       imageAlt: "Udklip fra galleriet",
     },
     en: {
       title: "Gallery – photos of the house, pool and surroundings",
       description:
-        "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool (May 1–Oct 1), wood-fired hot tub, electric sauna and nearby forest and beach in Fjellerup. Get a true feel for the place.",
+        "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool (May 1–Oct 1), electric hot tub, electric sauna and nearby forest and beach in Fjellerup. Get a true feel for the place.",
       image: OG_IMG,
       imageAlt: "Gallery cover collage",
     },
