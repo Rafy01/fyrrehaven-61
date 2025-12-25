@@ -201,18 +201,21 @@ addRange(days2025, "2025-12-27", "2025-12-31", 5000);
 /** ——— 2026 ——— **/
 
 // JANUAR 2026 — fladt 750
-addRange(days2026, "2026-01-01", "2026-01-31", 750);
+addRange(days2026, "2026-01-01", "2026-01-31", 1000);
 addRangeCleaning(daysCleaningFee2026, "2026-01-01", "2026-01-31", 1000);
 
 
 
 // FEBRUAR 2026 — 1.805 m/ vinterferie (uge 7) på 2.090 (man–lør)
-addRange(days2026, "2026-02-01", "2026-02-08", 1805);
+addRange(days2026, "2026-02-01", "2026-02-08", 1000);
+addRangeCleaning(daysCleaningFee2026, "2026-02-01", "2026-02-08", 1000);
 addRange(days2026, "2026-02-09", "2026-02-14", 2090); // man–lør
-addRange(days2026, "2026-02-15", "2026-02-28", 1805);
+addRange(days2026, "2026-02-15", "2026-02-28", 1000);
+addRangeCleaning(daysCleaningFee2026, "2026-02-15", "2026-02-28", 1000);
 
 // MARTS 2026 — fladt 1.805
-addRange(days2026, "2026-03-01", "2026-03-31", 1805);
+addRange(days2026, "2026-03-01", "2026-03-31", 1000);
+addRangeCleaning(daysCleaningFee2026, "2026-03-01", "2026-03-31", 1000);
 
 // APRIL 2026 — 1–5: 2.660, 6–30: 2.280
 addRange(days2026, "2026-04-01", "2026-04-05", 2660);
