@@ -1,10 +1,13 @@
-# Fyrrehaven-61 crawler policy
-# Keep search engines out of backend endpoints and non-public guest routes.
+# robots.txt for Fyrrehaven 61
+# Allow search engines to crawl the public marketing site,
+# but avoid indexing backend, API and guest pages.
 
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /guest/
+Disallow: /api
+Disallow: /debug
+Disallow: /guest
 
-# Reduce crawler pressure on the site.
-Crawl-delay: 10
+# Sitemap and recommended preferred host.
+Sitemap: https://fyrrehaven-61.dk/sitemap.xml
+Host: fyrrehaven-61.dk

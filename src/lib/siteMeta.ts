@@ -7,6 +7,8 @@
 export const site = {
   name: "Fyrrehaven 61",
   baseUrl: "https://fyrrehaven-61.dk", // skift til https://fyrrehaven-61.dk ved deploy
+  description:
+    "Fyrrehaven 61 er et familievenligt feriehus i Danmark med opvarmet pool, vildmarksbad og sauna. Perfekt for gæster fra Danmark, Norge og Tyskland.",
   twitter: "", // fx "@fyrrehaven61" ellers tom streng
   defaultImage: "/og-default.jpg",
   robots: "index, follow",
