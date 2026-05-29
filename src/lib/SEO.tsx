@@ -42,13 +42,13 @@ export function SEO({
       {/* Title & meta */}
       <title>{title}</title>
       <meta name="description" content={description} />
-      {noindex && <meta name="robots" content="index,follow" />}
+      {noindex && <meta name="robots" content="noindex,nofollow" />}
 
       {/* Canonical + hreflang */}
       <link rel="canonical" href={canonical} />
-      <link rel="alternate" hrefLang="da" href={altDa} />
-      <link rel="alternate" hrefLang="en" href={altEn} />
-      <link rel="alternate" hrefLang="x-default" href={canonical} />
+      <link rel="alternate" hrefLang="da-DK" href={altDa} />
+      <link rel="alternate" hrefLang="en-GB" href={altEn} />
+      <link rel="alternate" hrefLang="x-default" href={altEn} />
 
       {/* Open Graph */}
       <meta property="og:site_name" content={site.name} />
