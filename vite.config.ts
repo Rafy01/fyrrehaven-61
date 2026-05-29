@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     sitemapPlugin({
       hostname: "https://fyrrehaven-61.dk",
-      generateRobotsTxt: true,
+      generateRobotsTxt: false,
       exclude: ["/guest/**"], // udeluk gæstesider
     }),
   ],
