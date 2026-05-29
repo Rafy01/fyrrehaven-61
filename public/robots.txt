@@ -1,0 +1,12 @@
+# robots.txt for Fyrrehaven 61
+# Allow search engines to crawl the public marketing site,
+# but avoid indexing internal API/debug/guest pages.
+
+User-agent: *
+Allow: /
+Disallow: /api
+Disallow: /debug
+Disallow: /guest
+
+Sitemap: https://fyrrehaven-61.dk/sitemap.xml
+Host: fyrrehaven-61.dk
