@@ -23,34 +23,34 @@ export default function Home({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
   /** ---------- SEO TEKSTER (kun til meta) ---------- */
-const meta = getPageMeta(lang, "house");
+  const meta = getPageMeta(lang, "home");
 
   // Keywords (lav vægt i SEO, men kan bruges i metatag)
   const seoKeywords =
     lang === "da"
       ? [
+          "feriehus danmark",
           "sommerhus fjellerup",
-          "sommerhus med pool",
+          "familieferie danmark",
+          "feriehus for norske familier",
+          "feriehus for tyske gæster",
           "opvarmet pool sommerhus",
           "vildmarksbad sommerhus",
           "sauna sommerhus",
-          "familievenligt sommerhus",
           "djursland feriehus",
           "Fyrrehaven 61",
-          "udlejning privat",
-          "sommerhus tæt på strand",
         ]
       : [
-          "holiday home fjellerup",
-          "holiday home with pool",
+          "Denmark holiday home",
+          "holiday home Fjellerup",
+          "Norway to Denmark holiday",
+          "Germany to Denmark vacation",
+          "family holiday Denmark",
           "heated pool holiday home",
-          "wood-fired hot tub",
+          "hot tub rental",
           "sauna holiday home",
-          "family friendly cottage",
-          "djursland vacation rental",
+          "Djursland vacation rental",
           "Fyrrehaven 61",
-          "private booking",
-          "near beach Denmark",
         ];
 
   /** ---------- HERO TEKSTER (visuelt indhold) ---------- */

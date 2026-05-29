@@ -29,20 +29,20 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
   /* HOME */
   home: {
     da: {
-      title: "Fyrrehaven 61 – sommerhus til 10 personer ved skov og strand",
+      title: "Fyrrehaven 61 – feriehus i Danmark til 10 personer ved Fjellerup Strand",
       description:
-        "Familievenligt sommerhus ved Fjellerup Strand med opvarmet udendørs pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Plads til 10 gæster, 4 soveværelser og lyse fællesrum tæt på skov og stier. Book privat eller via Airbnb.",
+        "Familievenligt feriehus på Djursland med opvarmet udendørs pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Perfekt for familier fra Danmark, Norge og Tyskland, med plads til 10 gæster og kort afstand til strand og skov.",
       keywords: [
+        "feriehus danmark",
         "sommerhus fjellerup",
-        "sommerhus med pool",
+        "familieferie danmark",
+        "feriehus for norske familier",
+        "feriehus for tyske gæster",
         "opvarmet pool sommerhus",
         "vildmarksbad sommerhus",
         "sauna sommerhus",
-        "familievenligt sommerhus",
         "djursland feriehus",
         "Fyrrehaven 61",
-        "udlejning privat",
-        "sommerhus tæt på strand",
       ],
       image: OG_IMG,
       imageAlt: "Fyrrehaven 61 sommerhus ved Fjellerup Strand",
@@ -56,20 +56,20 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
       },
     },
     en: {
-      title: "Fyrrehaven 61 – holiday home for 10 by forest & beach",
+      title: "Fyrrehaven 61 – Denmark holiday home for 10 by Fjellerup Beach",
       description:
-        "Family-friendly holiday home by Fjellerup Beach with a heated outdoor pool (May 1–Oct 1), wood-fired hot tub and electric sauna. Sleeps 10 with 4 bedrooms and bright living areas close to forest trails. Book privately or via Airbnb.",
+        "Family-friendly holiday home in Denmark with a heated outdoor pool (May 1–Oct 1), electric hot tub and electric sauna. Popular with families from Denmark, Norway and Germany, just minutes from Fjellerup Beach and the forest.",
       keywords: [
-        "holiday home fjellerup",
-        "holiday home with pool",
+        "Denmark holiday home",
+        "holiday home Fjellerup",
+        "Norway to Denmark holiday",
+        "Germany to Denmark vacation",
+        "family holiday Denmark",
         "heated pool holiday home",
-        "wood-fired hot tub",
+        "hot tub rental",
         "sauna holiday home",
-        "family friendly cottage",
-        "djursland vacation rental",
+        "Djursland vacation rental",
         "Fyrrehaven 61",
-        "private booking",
-        "near beach Denmark",
       ],
       image: OG_IMG,
       imageAlt: "Fyrrehaven 61 holiday home by Fjellerup Beach",
@@ -87,16 +87,37 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
   /* HOUSE */
   house: {
     da: {
-      title: "Sommerhuset – pool, vildmarksbad & sauna | Fyrrehaven 61",
+      title: "Sommerhuset – pool, vildmarksbad og sauna i Danmark | Fyrrehaven 61",
       description:
-        "Sommerhus til 10 med udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Familievenligt tæt på skov og strand. Book via Airbnb.",
+        "Sommerhus til 10 på Djursland med udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Familievenligt feriehus i Danmark, godt for danske, norske og tyske gæster, tæt på skov, strand og lokale attraktioner.",
+      keywords: [
+        "feriehus i Danmark",
+        "sommerhus for norske familier",
+        "tyske feriehus gæster",
+        "udendørs opvarmet pool",
+        "vildmarksbad",
+        "el-sauna",
+        "familievenligt sommerhus",
+        "10 personer",
+        "Fyrrehaven 61",
+      ],
       image: OG_IMG,
       imageAlt: "Udendørs poolområde ved sommerhuset",
     },
     en: {
-      title: "The House – pool, hot tub & sauna | Fyrrehaven 61",
+      title: "The House – pool, hot tub & sauna in Denmark | Fyrrehaven 61",
       description:
-        "Holiday home for 10 with an outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna. Family-friendly near forest and beach. Book on Airbnb.",
+        "Holiday home for 10 in Denmark with an outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna. Family-friendly rental ideal for guests from Denmark, Norway and Germany, close to forest and beach.",
+      keywords: [
+        "holiday home in Denmark",
+        "family friendly rental",
+        "Norwegian guests",
+        "German guests",
+        "heated outdoor pool",
+        "hot tub",
+        "electric sauna",
+        "Fyrrehaven 61",
+      ],
       image: OG_IMG,
       imageAlt: "Outdoor pool area at the house",
     },
@@ -107,14 +128,32 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
     da: {
       title: "Området – skov, strand og oplevelser tæt på",
       description:
-        "Skovsti ved huset, strand i cykelafstand og masser af udflugter for hele familien. Se kortet og vores bedste tips til oplevelser på Djursland.",
+        "Skovsti direkte fra huset, badevenlig strand på Djursland og mange familievenlige aktiviteter i nærheden. Gode oplevelser for danske, norske og tyske feriegæster på kort afstand.",
+      keywords: [
+        "skov og strand",
+        "Djursland oplevelser",
+        "familieferie Danmark",
+        "norske feriegæster",
+        "tyske feriegæster",
+        "cykelruter",
+        "vandreruter",
+      ],
       image: OG_IMG,
       imageAlt: "Skov og strand ved Fjellerup",
     },
     en: {
-      title: "Area – forest, beach and nearby experiences",
+      title: "Area – forest, beach and nearby family experiences",
       description:
-        "Forest trails from the house, a bikeable beach and plenty of family-friendly day trips. See the map and our top tips around Djursland.",
+        "Forest trails from the house, a beach within easy reach and many family-friendly attractions nearby. Great for travelers from Denmark, Norway and Germany visiting Djursland.",
+      keywords: [
+        "forest and beach",
+        "Djursland experiences",
+        "Denmark family holiday",
+        "Norway to Denmark",
+        "Germany to Denmark",
+        "hiking trails",
+        "cycling routes",
+      ],
       image: OG_IMG,
       imageAlt: "Beach and forest at Fjellerup",
     },
@@ -125,14 +164,32 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
     da: {
       title: "Galleri – billeder af hus, pool og omgivelser",
       description:
-        "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
+        "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og nærliggende natur. Et feriehus i Danmark, populært hos danske, norske og tyske familier.",
+      keywords: [
+        "galleri feriehus",
+        "billeder sommerhus",
+        "pool billeder",
+        "vildmarksbad billeder",
+        "Danmark feriehus",
+        "norske gæster",
+        "tyske gæster",
+      ],
       image: OG_IMG,
       imageAlt: "Udklip fra galleriet",
     },
     en: {
       title: "Gallery – photos of the house, pool and surroundings",
       description:
-        "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool (May 1–Oct 1), electric hot tub, electric sauna and nearby forest and beach in Fjellerup. Get a true feel for the place.",
+        "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool (May 1–Oct 1), electric hot tub, electric sauna and nearby forest and beach. A holiday home in Denmark popular with families from Denmark, Norway and Germany.",
+      keywords: [
+        "holiday home gallery",
+        "vacation home photos",
+        "pool photos",
+        "hot tub photos",
+        "Denmark holiday home",
+        "Norwegian families",
+        "German families",
+      ],
       image: OG_IMG,
       imageAlt: "Gallery cover collage",
     },
@@ -161,14 +218,30 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
     da: {
       title: "Kontakt Fyrrehaven 61 – spørgsmål om booking og ophold",
       description:
-        "Har du spørgsmål til datoer, priser, faciliteter eller særlige ønsker? Send os en besked via formularen — vi svarer typisk samme dag. Al kommunikation foregår via e-mail, og dine oplysninger behandles efter vores privatlivspolitik.",
+        "Kontakt os for spørgsmål om datoer, priser, faciliteter eller særlige ønsker. Vi svarer typisk samme dag, også for gæster fra Danmark, Norge og Tyskland.",
+      keywords: [
+        "kontakt feriehus",
+        "booking forespørgsel",
+        "Fyrrehaven 61 kontakt",
+        "norske gæster",
+        "tyske gæster",
+        "Danmark feriehus",
+      ],
       image: OG_IMG,
       imageAlt: "Familien bag huset",
     },
     en: {
       title: "Contact Fyrrehaven 61 – questions about booking and stays",
       description:
-        "Got questions about dates, pricing, amenities or special requests? Send us a message — we usually reply the same day. All communication is handled by email and your data is processed under our privacy policy.",
+        "Contact us with questions about dates, pricing, amenities or special requests. We usually reply the same day, also for guests from Denmark, Norway and Germany.",
+      keywords: [
+        "contact holiday home",
+        "booking inquiry",
+        "Fyrrehaven 61 contact",
+        "Norwegian guests",
+        "German guests",
+        "Denmark holiday home",
+      ],
       image: OG_IMG,
       imageAlt: "The family behind the house",
     },
@@ -179,14 +252,32 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
     da: {
       title: "Booking hos Fyrrehaven 61 – direkte forespørgsel eller Airbnb",
       description:
-        "Book direkte hos værterne eller via Airbnb. Udendørs opvarmet pool (1. maj–1. okt.), plads til 10 og familievenligt nær skov og strand. Vi svarer typisk inden for 1 time. El 4 kr./kWh og vand 80 kr./m³ afregnes efter opholdet.",
+        "Book direkte hos værterne eller via Airbnb. Udendørs opvarmet pool (1. maj–1. okt.), plads til 10 og familievenligt nær skov og strand på Djursland. Ideelt for danske, norske og tyske ferier.",
+      keywords: [
+        "booking sommerhus",
+        "Fyrrehaven 61 booking",
+        "feriehus Danmark",
+        "booking direkte",
+        "Airbnb Fjellerup",
+        "norske gæster",
+        "tyske gæster",
+      ],
       image: OG_IMG,
       imageAlt: "Booking af feriehus ved Fjellerup",
     },
     en: {
       title: "Book Fyrrehaven 61 – direct request or Airbnb",
       description:
-        "Book directly with the hosts or via Airbnb. Heated outdoor pool (May 1–Oct 1), sleeps 10 and family-friendly near forest and beach. We usually reply within 1 hour. Electricity 4 DKK/kWh and water 80 DKK/m³ are settled after your stay.",
+        "Book directly with the hosts or via Airbnb. Heated outdoor pool (May 1–Oct 1), sleeps 10 and family-friendly near forest and beach in Denmark. Ideal for families from Denmark, Norway and Germany.",
+      keywords: [
+        "holiday home booking",
+        "Fyrrehaven 61 booking",
+        "Denmark holiday home",
+        "book direct",
+        "Airbnb Fjellerup",
+        "Norwegian guests",
+        "German guests",
+      ],
       image: OG_IMG,
       imageAlt: "Book the holiday home in Fjellerup",
     },
