@@ -1,0 +1,10 @@
+# Fyrrehaven-61 crawler policy
+# Keep search engines out of backend endpoints and non-public guest routes.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /guest/
+
+# Reduce crawler pressure on the site.
+Crawl-delay: 10

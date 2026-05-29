@@ -19,8 +19,10 @@
     { "source": "/((?!api)(?!.*\\..*).*)", "destination": "/" }
   ],
   "headers": [
-    {
-      "source": "/(.*)",
+    {      "source": "/api/(.*)",
+      "headers": [{ "key": "x-robots-tag", "value": "noindex, nofollow" }]
+    },
+    {      "source": "/(.*)",
       "has": [{ "type": "host", "value": "test.fyrrehaven-61.dk" }],
       "headers": [{ "key": "x-robots-tag", "value": "noindex, nofollow" }]
     }
