@@ -119,31 +119,222 @@ export function validateContactPayload(body) {
     };
   }
 
+  const consent =
+    body.consent === true || String(body.consent || "").toLowerCase() === "true";
+  if (!consent) {
+    return {
+      ok: false,
+      status: 400,
+      error: "MISSING_CONSENT",
+      detail: "Consent is required to process contact or booking requests.",
+    };
+  }
+
+  const purpose = String(body.purpose || body.context || "").toLowerCase();
+  const isBooking =
+    purpose === "booking" ||
+    Boolean(body.selection) ||
+    Boolean(body.guests) ||
+    Boolean(body.stayPurpose);
+
   const message = String(body.message || "").trim();
-  if (!message && !body.selection) {
+  if (!isBooking && !message) {
     return {
       ok: false,
       status: 400,
       error: "INVALID_MESSAGE",
-      detail: "Message is required for non-booking contact forms.",
+      detail: "Message is required for contact forms.",
     };
   }
-  if (message.length > 5000) {
-    return {
-      ok: false,
-      status: 400,
-      error: "MESSAGE_TOO_LONG",
-      detail: "Message is too long.",
-    };
+
+  if (message) {
+    if (message.length > 5000) {
+      return {
+        ok: false,
+        status: 400,
+        error: "MESSAGE_TOO_LONG",
+        detail: "Message is too long.",
+      };
+    }
+    const links = message.match(/https?:\/\//gi) || [];
+    if (links.length > 3) {
+      return {
+        ok: false,
+        status: 400,
+        error: "TOO_MANY_LINKS",
+        detail: "Message contains too many links.",
+      };
+    }
   }
-  const links = message.match(/https?:\/\//gi) || [];
-  if (links.length > 3) {
-    return {
-      ok: false,
-      status: 400,
-      error: "TOO_MANY_LINKS",
-      detail: "Message contains too many links.",
+
+  if (isBooking) {
+    const parseIntValue = (value) => {
+      if (typeof value === "number" && Number.isInteger(value)) return value;
+      if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+        return Number.parseInt(value.trim(), 10);
+      }
+      return null;
     };
+
+    const parseNumber = (value) => {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    };
+
+    const isValidYmd = (value) => {
+      if (typeof value !== "string") return false;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const date = new Date(`${value}T00:00:00Z`);
+      if (Number.isNaN(date.getTime())) return false;
+      const [year, month, day] = value.split("-").map(Number);
+      return (
+        date.getUTCFullYear() === year &&
+        date.getUTCMonth() + 1 === month &&
+        date.getUTCDate() === day
+      );
+    };
+
+    const guests = body.guests;
+    if (!guests || typeof guests !== "object") {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_GUESTS",
+        detail: "Guest information is required for booking requests.",
+      };
+    }
+
+    const adults = parseIntValue(guests.adults);
+    const children = parseIntValue(guests.children) ?? 0;
+    const babies = parseIntValue(guests.babies) ?? 0;
+    if (adults === null || adults < 1) {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_ADULTS",
+        detail: "Booking requests must include at least one adult.",
+      };
+    }
+    if (children < 0 || babies < 0) {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_GUESTS",
+        detail: "Guest counts must be valid non-negative numbers.",
+      };
+    }
+    if (adults + children + babies > 10) {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_GUEST_TOTAL",
+        detail: "Booking requests may not exceed 10 guests.",
+      };
+    }
+
+    const stayPurpose = String(body.stayPurpose || "").trim();
+    if (!stayPurpose || stayPurpose.length < 5) {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_STAY_PURPOSE",
+        detail: "Please provide a short purpose for your stay.",
+      };
+    }
+
+    const feesAccepted =
+      body.feesAccepted === true ||
+      String(body.feesAccepted || "").toLowerCase() === "true";
+    if (!feesAccepted) {
+      return {
+        ok: false,
+        status: 400,
+        error: "MISSING_FEES_ACCEPTANCE",
+        detail: "Fees acceptance is required for booking requests.",
+      };
+    }
+
+    const selection = body.selection;
+    if (!selection || typeof selection !== "object") {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_SELECTION",
+        detail: "Booking requests must include a selected stay period.",
+      };
+    }
+
+    const start = String(selection.start || "").trim();
+    const endExclusive = String(selection.endExclusive || "").trim();
+    const nights = parseIntValue(selection.nights);
+    if (!isValidYmd(start) || !isValidYmd(endExclusive) || nights === null || nights < 1) {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_SELECTION",
+        detail: "Selected booking dates must be valid and include at least one night.",
+      };
+    }
+
+    const startDate = new Date(`${start}T00:00:00Z`);
+    const endDate = new Date(`${endExclusive}T00:00:00Z`);
+    if (endDate <= startDate) {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_DATES",
+        detail: "Check-out must be after check-in.",
+      };
+    }
+
+    const baseTotal = parseNumber(selection.baseNightsTotalDKK);
+    const cleaningFee = parseNumber(selection.cleaningFeeDKK);
+    const totalWithCleaning = parseNumber(selection.totalWithCleaningDKK);
+    if (baseTotal === null || baseTotal < 0) {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_TOTAL",
+        detail: "Booking total must be a valid number.",
+      };
+    }
+    if (cleaningFee === null || cleaningFee < 0) {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_CLEANING_FEE",
+        detail: "Cleaning fee must be a valid number.",
+      };
+    }
+    if (
+      totalWithCleaning !== null &&
+      totalWithCleaning < baseTotal + cleaningFee
+    ) {
+      return {
+        ok: false,
+        status: 400,
+        error: "INVALID_BOOKING_TOTAL",
+        detail: "Booking total must be at least the room total plus cleaning.",
+      };
+    }
+
+    if (Array.isArray(selection.breakdown)) {
+      for (const item of selection.breakdown) {
+        if (
+          !item ||
+          typeof item !== "object" ||
+          !isValidYmd(String(item.date || "")) ||
+          parseNumber(item.price) === null
+        ) {
+          return {
+            ok: false,
+            status: 400,
+            error: "INVALID_BOOKING_BREAKDOWN",
+            detail: "Booking price breakdown is malformed.",
+          };
+        }
+      }
+    }
   }
 
   return { ok: true };
