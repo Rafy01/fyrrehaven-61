@@ -1,0 +1,84 @@
+/* src/components/BookingProcess/BookingProcess.module.css */
+
+.wrap {
+  border: 1px solid var(--gray-a5, #e5e7eb);
+  border-radius: 12px;
+  padding: 1.25rem;
+  background: var(--color-panel, #fff);
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.lead {
+  margin: 0.5rem 0 1rem;
+  color: var(--gray-11, #52525b);
+  font-size: 14px;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--gray-a2, #fafafa);
+}
+
+.badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  background: var(--accent-9, #d4af37);
+  color: #fff;
+}
+
+.itemTitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 16px;
+}
+
+.itemBody {
+  color: var(--gray-12, #3f3f46);
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.note {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--yellow-a2, #fffbea);
+  border: 1px solid var(--yellow-a5, #fde68a);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.note a {
+  text-decoration: underline;
+}
+
+@media (min-width: 768px) {
+  .wrap {
+    padding: 1.5rem;
+  }
+  .title {
+    font-size: 22px;
+  }
+}

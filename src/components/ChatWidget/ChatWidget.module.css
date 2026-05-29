@@ -1,0 +1,248 @@
+/* src/components/ChatWidget/ChatWidget.module.css */
+.wrap {
+  position: fixed;
+  inset: auto 16px 16px auto;
+  z-index: 70;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* — Floating Action Button — */
+.fab {
+  appearance: none;
+  border: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #0b0f14;
+  background: radial-gradient(
+    120% 120% at 80% 10%,
+    #fff 0,
+    #f5f7ff 35%,
+    #e6ecff 70%,
+    #d9e2ff 100%
+  );
+  box-shadow: 0 12px 30px rgba(20, 28, 40, 0.25);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
+}
+.fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 38px rgba(20, 28, 40, 0.28);
+}
+.fab:active {
+  transform: translateY(0);
+}
+[data-open="1"] .fab {
+  opacity: 0.6;
+}
+
+/* — Panel — */
+.panel {
+  position: absolute;
+  right: 0;
+  bottom: 72px;
+  width: clamp(280px, 38vw, 380px);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(246, 248, 255, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(30, 41, 59, 0.12);
+  box-shadow: 0 24px 70px rgba(10, 16, 28, 0.35);
+  opacity: 0;
+  transform: translateY(12px) scale(0.98);
+  pointer-events: none;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+[data-open="1"] .panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* messages */
+.messages {
+  max-height: min(60vh, 520px);
+  overflow: auto;
+  padding: 12px 12px 8px;
+  display: grid;
+  gap: 10px;
+  background: radial-gradient(
+      60% 40% at 80% -10%,
+      rgba(255, 255, 255, 0.8),
+      transparent 60%
+    ),
+    linear-gradient(#f9fbff, #f5f7fb);
+}
+
+.msgUser,
+.msgBot {
+  display: flex;
+}
+.msgUser {
+  justify-content: flex-end;
+}
+.bubble {
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  line-height: 1.35;
+  font-size: 14.5px;
+  white-space: pre-wrap;
+}
+.msgUser .bubble {
+  background: linear-gradient(150deg, #e6f0ff, #e9f6ff);
+  color: #0a1525;
+  border: 1px solid rgba(60, 100, 160, 0.18);
+}
+.msgBot .bubble {
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: #0b0f14;
+}
+
+/* header row */
+.head {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px 8px;
+  background: linear-gradient(180deg, #ffffff, #f6f8ff);
+  border-bottom: 1px solid rgba(30, 41, 59, 0.08);
+}
+.title {
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+.iconBtn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #0b0f14;
+}
+.iconBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* input row */
+.inputRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 10px;
+  background: linear-gradient(180deg, #f8faff, #f3f6ff);
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+.inputRow input[type="text"] {
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: #fff;
+  outline: none;
+  font-size: 14.5px;
+}
+.inputRow input[type="text"]:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px rgba(52, 97, 255, 0.18);
+}
+.inputRow button[type="submit"] {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 0 14px;
+  background: linear-gradient(160deg, #161f45, #243c8f);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.inputRow button[type="submit"]:hover {
+  filter: brightness(1.04);
+}
+
+/* quick chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px 6px;
+  background: linear-gradient(180deg, #fff, #f8faff);
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+.chip {
+  font-size: 12.5px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  cursor: pointer;
+}
+.chip:hover {
+  background: #f6f7ff;
+}
+
+/* ... eksisterende styles fra tidligere svar ... */
+
+.card {
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  padding: 12px;
+  max-width: 85%;
+  box-shadow: 0 6px 18px rgba(10, 16, 28, 0.06);
+}
+.cardTitle {
+  font-weight: 750;
+  margin-bottom: 4px;
+}
+.cardText {
+  color: #374151;
+  font-size: 13.5px;
+  margin-bottom: 8px;
+}
+.btnRow {
+  display: flex;
+  gap: 8px;
+}
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #fff;
+  background: linear-gradient(160deg, #161f45, #243c8f);
+  font-weight: 700;
+  border: 0;
+}
+.ghostBtn {
+  appearance: none;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  background: #fff;
+  color: #0b0f14;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.ghostBtn:hover {
+  background: #f7f9ff;
+}
+.msgBody strong {
+  font-weight: 800; /* or 700 */
+}
+
+/* if you had a too-broad weight somewhere, this wins */
+.botBubble .msgBody strong {
+  font-weight: 800;
+}

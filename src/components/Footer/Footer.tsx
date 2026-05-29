@@ -4,7 +4,6 @@ import styles from "./Footer.module.css";
 import { useTranslation } from "react-i18next";
 import type { Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
-import { AIRBNB_URL } from "../../lib/links";
 
 export type FooterProps = {
   /** Valgfrit: giv sproget eksplicit. Ellers læses det fra i18n.language. */
@@ -32,9 +31,9 @@ export default function Footer({
   const year = new Date().getFullYear();
 
   const s = {
-    instagram: socials?.instagram || "",
-    facebook: socials?.facebook || "",
-    tiktok: socials?.tiktok || "",
+    instagram: socials?.instagram || "https://www.instagram.com/fyrrehaven61/",
+    facebook: socials?.facebook || "http://facebook.com/fyrrehaven61",
+    tiktok: socials?.tiktok || "https://www.tiktok.com/@fyrrehaven61",
     youtube: socials?.youtube || "",
   };
 
@@ -55,7 +54,7 @@ export default function Footer({
               />
               <div>
                 <Text size="5" weight="bold">
-                  Fyrrehaven 61
+                  Fjellerup Strand
                 </Text>
                 <div className={styles.tagline}>
                   <Text size="2" color="gray">
@@ -71,7 +70,7 @@ export default function Footer({
             <div className={styles.topRight}>
               {showSuperhost && (
                 <a
-                  href={AIRBNB_URL}
+                  href="https://www.airbnb.dk/h/fyrrehaven-61"
                   target="_blank"
                   rel="noopener noreferrer"
                   className={styles.superhost}
@@ -80,11 +79,99 @@ export default function Footer({
                     "See our Airbnb profile (Superhost)"
                   )}
                 >
-                  <SuperhostIcon />
-                  <span>Airbnb Superhost</span>
+                  <img
+                    className={styles.superhostBadge}
+                    src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/superhost-1.webp"
+                    alt="Airbnb Superhost"
+                  />
                 </a>
               )}
+            </div>
+          </div>
 
+          {/* Link-sektioner */}
+          <div className={styles.linksRow}>
+            <nav className={styles.col} aria-label={t("Udforsk", "Explore")}>
+              <h3 className={styles.colTitle}>{t("Udforsk", "Explore")}</h3>
+              <ul className={styles.list}>
+                <li>
+                  <Link
+                    className={styles.link}
+                    to={pathOf(currentLang, "house")}
+                  >
+                    {t("Sommerhuset", "The House")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={styles.link}
+                    to={pathOf(currentLang, "area")}
+                  >
+                    {t("Området", "Area")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={styles.link}
+                    to={pathOf(currentLang, "gallery")}
+                  >
+                    {t("Galleri", "Gallery")}
+                  </Link>
+                </li>
+                <li>
+                  <Link className={styles.link} to={pathOf(currentLang, "faq")}>
+                    FAQ
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+
+            <nav
+              className={styles.col}
+              aria-label={t("Kontakt & booking", "Contact & booking")}
+            >
+              <h3 className={styles.colTitle}>
+                {t("Kontakt & booking", "Contact & booking")}
+              </h3>
+              <ul className={styles.list}>
+                <li>
+                  <a
+                    className={styles.link}
+                    href="https://www.airbnb.dk/h/fyrrehaven-61"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t("Book via Airbnb", "Book on Airbnb")}
+                  </a>
+                </li>
+                <li>
+                  <Link
+                    className={styles.link}
+                    to={pathOf(currentLang, "contact")}
+                  >
+                    {t("Kontakt os", "Contact us")}
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+
+            <nav className={styles.col} aria-label={t("Praktisk", "Practical")}>
+              <h3 className={styles.colTitle}>{t("Praktisk", "Practical")}</h3>
+              <ul className={styles.list}>
+                <li>
+                  <Link
+                    className={styles.link}
+                    to={pathOf(currentLang, "house")}
+                  >
+                    {t("Husregler", "House rules")}
+                  </Link>
+                </li>
+                <li>
+                  <Link className={styles.link} to={pathOf(currentLang, "faq")}>
+                    {t("Ofte stillede spørgsmål", "Frequently asked questions")}
+                  </Link>
+                </li>
+              </ul>
               <div
                 className={styles.socials}
                 aria-label={t("Sociale medier", "Social media")}
@@ -138,89 +225,6 @@ export default function Footer({
                   </a>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Link-sektioner */}
-          <div className={styles.linksRow}>
-            <nav className={styles.col} aria-label={t("Udforsk", "Explore")}>
-              <h3 className={styles.colTitle}>{t("Udforsk", "Explore")}</h3>
-              <ul className={styles.list}>
-                <li>
-                  <Link
-                    className={styles.link}
-                    to={pathOf(currentLang, "house")}
-                  >
-                    {t("Sommerhuset", "The House")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className={styles.link}
-                    to={pathOf(currentLang, "area")}
-                  >
-                    {t("Området", "Area")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className={styles.link}
-                    to={pathOf(currentLang, "gallery")}
-                  >
-                    {t("Galleri", "Gallery")}
-                  </Link>
-                </li>
-                <li>
-                  <Link className={styles.link} to={pathOf(currentLang, "faq")}>
-                    FAQ
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-
-            <nav
-              className={styles.col}
-              aria-label={t("Kontakt & booking", "Contact & booking")}
-            >
-              <h3 className={styles.colTitle}>
-                {t("Kontakt & booking", "Contact & booking")}
-              </h3>
-              <ul className={styles.list}>
-                <li>
-                  <a
-                    className={styles.link}
-                    href={AIRBNB_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {t("Book via Airbnb", "Book on Airbnb")}
-                  </a>
-                </li>
-                <li>
-                  <Link
-                    className={styles.link}
-                    to={pathOf(currentLang, "contact")}
-                  >
-                    {t("Kontakt os", "Contact us")}
-                  </Link>
-                </li>
-              </ul>
-            </nav>
-
-            <nav className={styles.col} aria-label={t("Praktisk", "Practical")}>
-              <h3 className={styles.colTitle}>{t("Praktisk", "Practical")}</h3>
-              <ul className={styles.list}>
-                <li>
-                  <Link className={styles.link} to={pathOf(currentLang, "faq")}>
-                    {t("Husregler", "House rules")}
-                  </Link>
-                </li>
-                <li>
-                  <Link className={styles.link} to={pathOf(currentLang, "faq")}>
-                    {t("Ofte stillede spørgsmål", "Frequently asked questions")}
-                  </Link>
-                </li>
-              </ul>
             </nav>
           </div>
 
@@ -228,7 +232,22 @@ export default function Footer({
           <div className={styles.bottomRow}>
             <Flex gap="2" wrap="wrap" align="center">
               <Text size="2" color="gray">
-                © {year} Fyrrehaven 61.
+                © {year}{" "}
+                <Link
+                  to={`/guest/${currentLang}/${
+                    currentLang === "da" ? "velkomst" : "welcome"
+                  }`}
+                  style={{
+                    color: "inherit",
+                    textDecoration: "none",
+                    fontWeight: "inherit",
+                    fontSize: "inherit",
+                  }}
+                  aria-label="Gæsteside"
+                >
+                  Fyrrehaven 61
+                </Link>
+                .
               </Text>
               <Text size="2" color="gray">
                 {t("Alle rettigheder forbeholdes.", "All rights reserved.")}
@@ -238,26 +257,35 @@ export default function Footer({
             <ul className={styles.bottomLinks}>
               {/* Erstat # med rigtige ruter når klar */}
               <li>
-                <a className={styles.bottomLink} href="#">
+                <Link
+                  className={styles.bottomLink}
+                  to={pathOf(currentLang, "privacy")}
+                >
                   {t("Privatliv", "Privacy")}
-                </a>
-              </li>
-              <li>
-                <a className={styles.bottomLink} href="#">
-                  {t("Vilkår", "Terms")}
-                </a>
-              </li>
-              <li>
-                <a className={styles.bottomLink} href="#">
-                  {t("Cookies", "Cookies")}
-                </a>
+                </Link>
               </li>
               <li>
                 <Link
                   className={styles.bottomLink}
-                  to={pathOf(currentLang, "contact")}
+                  to={pathOf(currentLang, "cookies")}
                 >
-                  {t("Kontakt", "Contact")}
+                  {t("Cookies", "Cookies")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  className={styles.bottomLink}
+                  to={pathOf(currentLang, "sitemap")}
+                >
+                  {t("Sitemap", "Sitemap")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  className={styles.bottomLink}
+                  to={pathOf(currentLang, "fees")}
+                >
+                  {t("Gebyr", "Fees")}
                 </Link>
               </li>
             </ul>
@@ -270,28 +298,11 @@ export default function Footer({
 
 /* ====== Ikoner (små, inline SVG’er) ====== */
 
-function SuperhostIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        fill="currentColor"
-        d="M12 2l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 16.8 6.4 19.2 7.5 13 3 8.6l6.2-.9L12 2z"
-      />
-    </svg>
-  );
-}
-
 function InstaIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="25"
+      height="25"
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"
@@ -307,8 +318,8 @@ function InstaIcon() {
 function FbIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="35"
+      height="35"
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"
@@ -324,8 +335,8 @@ function FbIcon() {
 function TiktokIcon() {
   return (
     <svg
-      width="18"
-      height="18"
+      width="25"
+      height="25"
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"

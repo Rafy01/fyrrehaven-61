@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+
+    {
+      "source": "/(da|en)(/.*)?",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(bot|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|Discord|TelegramBot|Pinterest|embedly|quora\\slink\\spreview|vkShare|Google-InspectionTool|googleweblight|bingbot).*"
+        }
+      ],
+      "destination": "/api/share-meta"
+    },
+
+
+    { "source": "/((?!api)(?!.*\\..*).*)", "destination": "/" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "test.fyrrehaven-61.dk" }],
+      "headers": [{ "key": "x-robots-tag", "value": "noindex, nofollow" }]
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}

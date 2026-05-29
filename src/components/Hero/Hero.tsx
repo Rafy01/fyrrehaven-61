@@ -4,8 +4,7 @@ import styles from "./Hero.module.css";
 import Buttons from "../Buttons";
 import { useTranslation } from "react-i18next";
 import { type Lang } from "../../lib/lang";
-import { pathOf } from "../../lib/routes";
-import { AIRBNB_URL } from "../../lib/links";
+
 
 export type HeroCTA = {
   label: string;
@@ -20,6 +19,7 @@ type ImageMedia = {
   type?: "image";
   src: string;
   alt?: string; // brug "" hvis rent dekorativt
+  title?: string; // valgfrit title-attribut
 };
 
 type VideoMedia = {
@@ -62,11 +62,8 @@ export default function Hero({
   media,
   dense = false,
   align = "left",
-  lang,
 }: HeroProps) {
-  const { i18n } = useTranslation();
-  const currentLang: Lang =
-    lang ?? (i18n.language?.toLowerCase().startsWith("da") ? "da" : "en");
+  useTranslation();
 
   const rowClass = [
     styles.row,
@@ -155,19 +152,7 @@ export default function Hero({
                   </>
                 ) : (
                   <>
-                    {/* Default CTA’er – tosprogede via Buttons */}
-                    <Buttons
-                      labelDa="Book via Airbnb"
-                      labelEn="Book on Airbnb"
-                      href={AIRBNB_URL}
-                      external
-                    />
-                    <Buttons
-                      variant="secondary"
-                      labelDa="Se huset"
-                      labelEn="See the house"
-                      to={pathOf(currentLang, "house")}  
-                    />
+                   
                   </>
                 )}
               </Flex>
@@ -194,11 +179,11 @@ export default function Hero({
                       className={styles.mediaEl}
                       src={media.src}
                       alt={media.alt ?? ""}
+                      title={media.title ?? ""}
                       loading="eager"
                     />
                   )}
                 </div>
-                {media.alt ? <figcaption className={styles.caption}>{media.alt}</figcaption> : null}
               </figure>
             )}
           </div>

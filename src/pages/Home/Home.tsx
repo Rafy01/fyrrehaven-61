@@ -1,17 +1,21 @@
-import {
-  Box,
-  Flex,
-  Grid,
-  Heading,
-  Text,
-  Card,
-  Separator,
-  Container,
-} from "@radix-ui/themes";
+import { Separator, Container } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
+import Highlights from "../../components/Highlights"; 
 import { pathOf } from "../../lib/routes";
-import { AIRBNB_URL } from "../../lib/links";
+import UspStrip from "../../components/UspStrip";
+import {
+  ClockIcon,
+  LightningBoltIcon,
+  LockClosedIcon,
+  StarFilledIcon,
+} from "@radix-ui/react-icons";
+import GalleryTeaser from "../../components/GalleryTeaser";
+import Reviews from "../../components/Reviews";
+
+import LocationAndDistances from "../../components/LocationAndDistances";
+import PracticalInfo from "../../components/PracticalInfo";
+import { getPageMeta } from "../../lib/meta";
 
 type Lang = "da" | "en";
 
@@ -19,14 +23,35 @@ export default function Home({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
 
   /** ---------- SEO TEKSTER (kun til meta) ---------- */
-  const seoTitle = t(
-    "Fyrrehaven 61 – sommerhus til 10 personer ved skov og strand",
-    "Fyrrehaven 61 – holiday home for 10 by forest & beach"
-  );
-  const seoDescription = t(
-    "Familievenligt sommerhus tæt på stranden med indendørs pool og vildmarksbad. Book nemt via Airbnb.",
-    "Family-friendly holiday home near the beach with indoor pool and hot tub. Easy booking via Airbnb."
-  );
+const meta = getPageMeta(lang, "house");
+
+  // Keywords (lav vægt i SEO, men kan bruges i metatag)
+  const seoKeywords =
+    lang === "da"
+      ? [
+          "sommerhus fjellerup",
+          "sommerhus med pool",
+          "opvarmet pool sommerhus",
+          "vildmarksbad sommerhus",
+          "sauna sommerhus",
+          "familievenligt sommerhus",
+          "djursland feriehus",
+          "Fyrrehaven 61",
+          "udlejning privat",
+          "sommerhus tæt på strand",
+        ]
+      : [
+          "holiday home fjellerup",
+          "holiday home with pool",
+          "heated pool holiday home",
+          "wood-fired hot tub",
+          "sauna holiday home",
+          "family friendly cottage",
+          "djursland vacation rental",
+          "Fyrrehaven 61",
+          "private booking",
+          "near beach Denmark",
+        ];
 
   /** ---------- HERO TEKSTER (visuelt indhold) ---------- */
   const heroTitle = t(
@@ -43,7 +68,7 @@ export default function Home({ lang }: { lang: Lang }) {
     "@context": "https://schema.org",
     "@type": "VacationRental",
     name: "Fyrrehaven 61",
-    description: seoDescription,
+    description: meta.description,
     url: "https://fyrrehaven-61.dk",
     maximumAttendeeCapacity: 10,
     amenityFeature: [
@@ -72,26 +97,69 @@ export default function Home({ lang }: { lang: Lang }) {
       <Head
         lang={lang}
         path={pathOf(lang, "home")}
-        title={seoTitle}
-        description={seoDescription}
-        ogImage="/og-home.jpg"
+        title={meta.title}
+        description={meta.description}
+        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
         jsonLd={jsonLd}
+        robots={{ index: true, follow: true, noarchive: true }}
+        keywords={seoKeywords}
       />
-
+      <UspStrip
+        ariaLabel={t("Hurtige fakta", "Quick facts")}
+        items={[
+          {
+            icon: <LightningBoltIcon />,
+            text: t(
+              "Lynhurtigt svar på henvendelser",
+              "Lightning-fast replies"
+            ),
+            ariaLabel: t(
+              "Vi svarer hurtigt på alle henvendelser",
+              "We reply quickly to all inquiries"
+            ),
+          },
+          {
+            icon: <LockClosedIcon />,
+            text: t(
+              "Nem indtjekning (nøgleboks)",
+              "Easy self check-in (key box)"
+            ),
+            ariaLabel: t(
+              "Gæster modtager kode til nøgleboks og kan tjekke ind uden vært til stede",
+              "Guests receive a key box code and can check in without the host present"
+            ),
+          },
+          {
+            icon: <StarFilledIcon />,
+            text: t("4,8+ stjerner på Airbnb", "4.8+ stars on Airbnb"),
+            ariaLabel: t(
+              "Gæsterne giver os over 4,8 stjerner på Airbnb",
+              "Guests rate us 4.8+ stars on Airbnb"
+            ),
+          },
+          {
+            icon: <ClockIcon />,
+            text: t("+3 års værts erfaring", "+3 years hosting experience"),
+            ariaLabel: t(
+              "Mere end tre års erfaring som værter",
+              "More than three years of hosting experience"
+            ),
+          },
+        ]}
+      />
       {/* HERO – separat visuel titel/undertekst + badges/CTA’er */}
       <Hero
         title={heroTitle}
         subtitle={heroSubtitle}
         badges={[
-          t("Plads til 10 personer", "Sleeps 10"),
-          t("Indendørs pool", "Indoor pool"),
-          t("Vildmarksbad", "Hot tub"),
-          t("Tæt på strand", "Near the beach"),
+          t("10 gæster", "10 guests"),
+          t("4 soveværelser", "4 bedrooms"),
+          t("2 badværelser", "2 bathrooms"),
+          t("Pool-Vildmarksbad-Sauna", "Pool-Hottub-Sauna"),
         ]}
         primaryCta={{
-          label: t("Book via Airbnb", "Book on Airbnb"),
-          href: AIRBNB_URL,
-          external: true,
+          label: t("Book nu", "Book now"),
+          href: pathOf(lang, "book"),
         }}
         secondaryCta={{
           label: t("Se huset", "See the house"),
@@ -99,7 +167,11 @@ export default function Home({ lang }: { lang: Lang }) {
         }}
         media={{
           type: "image",
-          src: "/Fyrrehaven hero.webp",
+          src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3736.webp",
+          title: t(
+            "Fyrrehaven 61 – feriehus ved Fjellerup Strand",
+            "Fyrrehaven 61 – holiday home by Fjellerup Beach"
+          ),
           alt: t(
             "Skov og strand ved sommerhuset",
             "Forest and beach near the house"
@@ -110,61 +182,147 @@ export default function Home({ lang }: { lang: Lang }) {
 
       <Separator size="4" />
 
-      {/* FEATURES – almindeligt sideindhold, uafhængigt af SEO/Hero */}
-      <Box asChild>
-        <section aria-label={t("Højdepunkter", "Highlights")}>
-          <Container size="3">
-            <Box py="6">
-              <Grid columns={{ initial: "1", md: "2" }} gap="4">
-                <FeatureCard
-                  title={t("Indendørs pool", "Indoor pool")}
-                  body={t(
-                    "Poolen kan bruges året rundt – perfekt til børnefamilier og regnvejrsdage.",
-                    "Heated indoor pool for year-round fun — perfect for families and rainy days."
-                  )}
-                />
-                <FeatureCard
-                  title={t(
-                    "Vildmarksbad under stjernerne",
-                    "Hot tub under the stars"
-                  )}
-                  body={t(
-                    "Slap af i det udendørs vildmarksbad efter en dag på stranden eller i skoven.",
-                    "Unwind in the outdoor hot tub after a day at the beach or in the woods."
-                  )}
-                />
-                <FeatureCard
-                  title={t("Skov og strand tæt på", "Forest & beach nearby")}
-                  body={t(
-                    "Roligt skovområde med stier – og kort cykeltur til stranden.",
-                    "Quiet forest area with trails — and a short bike ride to the beach."
-                  )}
-                />
-                <FeatureCard
-                  title={t("Plads til 10 gæster", "Room for 10 guests")}
-                  body={t(
-                    "Fire soveværelser + hems. God plads til to familier eller tre generationer.",
-                    "Four bedrooms + loft. Great for two families or multi-generational trips."
-                  )}
-                />
-              </Grid>
-
-              {/* Ekstra CTA under features */}
-            </Box>
-          </Container>
-        </section>
-      </Box>
+      {/* Højdepunkter / Highlights – opdateret til dine 4 punkter */}
+      <Container size="3">
+        <Highlights
+          title={t("Højdepunkter", "Highlights")}
+          items={[
+            {
+              title: t("Opvarmet udendørs pool", "Heated outdoor pool"),
+              body: t(
+                "Åben 1. maj – 1. oktober. Perfekt efter strandturen.",
+                "Open May 1 – Oct 1. Perfect after a beach day."
+              ),
+              media: {
+                kind: "image",
+                src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3720.webp",
+                alt: t(
+                  "Opvarmet udendørs pool – åben 1. maj til 1. oktober",
+                  "Heated outdoor pool – open May 1 to Oct 1"
+                ),
+                aspect: "4 / 3",
+              },
+            },
+            {
+              title: t("Elektrisk vildmarksbad", "Electric hot tub"),
+              body: t(
+                "Autentisk spa oplevelse med elektrisk opvarmning og afslapning under stjernehimlen.",
+                "Authentic spa experience with electric heating and relaxation under the stars."
+              ),
+              media: {
+                kind: "image",
+                src: "/highlights/hot-tub-wood.webp",
+                alt: t(
+                  "Elektrisk vildmarksbad ved Fjellerup Strand",
+                  "Electric hot tub at Fjellerup Strand"
+                ),
+                aspect: "4 / 3",
+              },
+            },
+            {
+              title: t("Sauna", "Sauna"),
+              body: t(
+                "Hurtig opvarmning og nem betjening, perfekt efter pool eller strand.",
+                "Quick heating and easy to use, perfect after pool or beach."
+              ),
+              media: {
+                kind: "image",
+                src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3731.webp",
+                alt: t(
+                  "Sauna i sommerhuset",
+                  "Sauna in the holiday home"
+                ),
+                aspect: "4 / 3",
+              },
+            },
+            {
+              title: t("Fantastisk område", "Fantastic surroundings"),
+              body: t(
+                "Skov og strand tæt på stier, natur og ro i kort afstand.",
+                "Forest and beach close to trails, nature and tranquility nearby."
+              ),
+              media: {
+                kind: "image",
+                src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3663.webp",
+                alt: t(
+                  "Skov og strand tæt på sommerhuset",
+                  "Forest and beach close to the holiday home"
+                ),
+                aspect: "4 / 3",
+              },
+            },
+          ]}
+        />
+      </Container>
+      <Separator size="4" />
+      <GalleryTeaser
+        title={t("Billeder", "Photos")}
+        subtitle={t(
+          "Få et hurtigt indtryk - se stue, pool, vildmarksbad og omgivelser.",
+          "Get a quick feel—see the living room, pool, hot tub and surroundings."
+        )}
+        items={[
+          {
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3669.webp",
+            alt: t("Stue med lysindfald", "Living room with daylight"),
+          },
+          {
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3668.webp",
+            alt: t("Køkken-alrum", "Kitchen-living area"),
+          },
+          {
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3692.webp",
+            alt: t("Opvarmet udendørs pool", "Heated outdoor pool"),
+          },
+          {
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3696.webp",
+            alt: t("Elektrisk vildmarksbad", "Electric hot tub"),
+          },
+          {
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3709.webp",
+            alt: t("El-sauna", "Electric sauna"),
+          },
+          {
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/2c0c5a11-59f7-4ddf-9fda-10068650f7a1.webp",
+            alt: t("Skovsti mod stranden", "Forest path to the beach"),
+          },
+          // du kan have flere – +N overlay vises automatisk hvis items.length > max
+        ]}
+        cta={{
+          label: t("Åbn galleri", "Open gallery"),
+          to: pathOf(lang, "gallery"),
+        }}
+        align="center"
+      />
+      {/* Din oprindelige FEATURES-sektion forbliver uændret */}
+      <Separator size="4" />
+      <Reviews
+        lang={lang}
+        title={lang === "da" ? "Gæsterne siger" : "What our guests say"}
+        average={4.8}
+      />
+      <PracticalInfo
+        lang={lang}
+        variant="teaser"
+        maxItems={6}
+        ctaHref={pathOf(lang, "house")}
+        ctaLabelDa="Læs mere om huset"
+        ctaLabelEn="Read more about the house"
+      />
+      <LocationAndDistances
+        lang={lang}
+        mapEmbedUrl="https://www.google.com/maps/d/embed?mid=144jHAnieVKibH7nlt3mRpmImcWVoKic&ehbc=2E312F"
+        mapLinkUrl="https://www.google.com/maps/d/viewer?mid=144jHAnieVKibH7nlt3mRpmImcWVoKic"
+        directionsTo="Fyrrehaven 61, 8500"
+        title={
+          lang === "da" ? "Beliggenhed & afstande" : "Location & distances"
+        }
+        subtitle={
+          lang === "da"
+            ? "Skovområde med stier – kort tur til stranden."
+            : "Forest area with trails — a short walk to the beach."
+        }
+      />
     </>
-  );
-}
-
-function FeatureCard({ title, body }: { title: string; body: string }) {
-  return (
-    <Card size="3" variant="surface">
-      <Flex direction="column" gap="2">
-        <Heading size="4">{title}</Heading>
-        <Text color="gray">{body}</Text>
-      </Flex>
-    </Card>
   );
 }

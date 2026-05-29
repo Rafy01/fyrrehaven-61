@@ -1,0 +1,133 @@
+.wrap {
+  padding-block: clamp(1rem, 0.6rem + 1.2vw, 2rem);
+}
+
+.header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+.hLeft {
+  display: grid;
+  gap: 0.25rem;
+}
+.hTitle {
+  margin: 0;
+  font-size: clamp(1.25rem, 1rem + 1vw, 1.7rem);
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+.hSubtitle {
+  margin: 0;
+  color: var(--gray-700, #666);
+}
+
+.hRight {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.navBtn {
+  appearance: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.navBtn:hover {
+  background: #f6f6f6;
+}
+
+.row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 340px);
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  align-items: stretch; /* ← stræk kort til samme højde */
+}
+.navBtn:focus,
+.row:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* ---- Card: flex-col så vi kan pinne .source i bunden ---- */
+.card {
+  scroll-snap-align: start;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+  padding: 0.85rem;
+  display: flex; /* ← skift fra grid til flex */
+  flex-direction: column;
+  gap: 0.55rem;
+  min-height: 240px; /* lidt højde for stabil bund */
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 0 0 auto; /* topdelen må ikke strække */
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #eef0f2;
+  color: #333;
+  font-weight: 800;
+}
+.meta {
+  display: grid;
+  line-height: 1.1;
+}
+.name {
+  font-weight: 700;
+}
+.date {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+  color: #918821;
+}
+.star {
+  display: block;
+}
+
+.text {
+  margin: 0;
+  color: #111;
+  flex: 1 1 auto; /* ← fylder midterpladsen */
+}
+
+.source {
+  margin-top: auto; /* ← skub til bunden */
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  color: #6b7280;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.cta {
+  margin-top: 0.9rem;
+  display: flex;
+  justify-content: center;
+}

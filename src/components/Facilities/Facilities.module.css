@@ -1,0 +1,85 @@
+.wrap {
+  padding-block: clamp(1rem, 0.8rem + 1.2vw, 2.2rem);
+}
+
+.header {
+  display: grid;
+  gap: .4rem;
+  margin-bottom: .8rem;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.4rem, 1.1rem + 1vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--gray-700, #5f6b76);
+}
+
+/* Grid af kategorier */
+.grid {
+  display: grid;
+  gap: .8rem;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.card {
+  grid-column: span 12;
+  background: rgba(255,255,255,.78);
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 8px 22px rgba(0,0,0,.06);
+}
+
+.cardTitle {
+  margin: 0 0 .5rem 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+
+.list {
+  --bullet: var(--gold-500, #e0b64b);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: .4rem;
+}
+
+.item {
+  position: relative;
+  padding-left: 1.4rem;
+}
+.item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: .38rem;
+  width: .8rem;
+  height: .8rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff 0 30%, var(--bullet) 32% 100%);
+  box-shadow: 0 0 0 2px rgba(0,0,0,.05);
+}
+
+@media (min-width: 720px) {
+  .card { grid-column: span 6; }
+}
+
+@media (min-width: 1060px) {
+  .card { grid-column: span 4; }
+}
+
+/* Kompakt variant */
+.compact .card {
+  padding: .8rem;
+}
+.compact .list {
+  gap: .3rem;
+}

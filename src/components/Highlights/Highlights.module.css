@@ -1,0 +1,85 @@
+.wrap{
+  padding-block: clamp(1.25rem, 1rem + 1.5vw, 2.25rem);
+}
+
+.header{
+  display: grid; gap: .4rem; margin-bottom: 1rem;
+}
+.center{ text-align: center; }
+.hTitle{ letter-spacing: -.01em; }
+.hSubtitle{ max-width: 60ch; margin: 0; }
+.center .hSubtitle{ margin-inline: auto; }
+
+/* Grid: 1 / 2 / 4 kolonner */
+.grid{
+  display: grid;
+  gap: .9rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 700px){
+  .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (min-width: 1040px){
+  .grid{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+}
+
+.card{
+  background: color-mix(in srgb, white 92%, transparent);
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.06);
+  overflow: clip;
+  display: flex;
+  flex-direction: column;
+}
+.cardBody{
+  display: grid; gap: .6rem;
+  padding: .9rem .95rem .8rem;
+  color: inherit; text-decoration: none;
+}
+.cardBody:hover{ background: rgba(0,0,0,.02); }
+.cardBody:focus-visible{ outline: 3px solid var(--focus); outline-offset: 4px; border-radius: 14px; }
+
+/* Media (ikon/billede) */
+.media{ margin: 0; }
+.iconBox{
+  inline-size: 44px; block-size: 44px;
+  border-radius: 12px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--gold-500) 22%, white);
+  border: 1px solid color-mix(in srgb, var(--gold-500) 40%, transparent);
+}
+.iconBox :where(svg){ width: 22px; height: 22px; color: var(--ink-900); }
+
+.imgFrame{
+  width: 100%;
+  aspect-ratio: var(--aspect, 4 / 3);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f1f1f1;
+}
+.img{
+  width: 100%; height: 100%; object-fit: cover;
+  display: block;
+  transform: scale(1.0001);
+}
+
+/* Tekst */
+.badge{
+  display: inline-block;
+  font-size: .75rem; font-weight: 700;
+  padding: .1rem .45rem;
+  border-radius: 999px;
+  background: rgba(0,0,0,.06);
+}
+.title{ margin: 0; }
+.body{ margin: 0; }
+
+/* CTA placeret i bunden */
+.ctaRow{
+  padding: 0 .95rem .95rem;
+  margin-top: auto;
+}
+
+/* Kompakt variant */
+.dense .wrap{ padding-block: .75rem; }

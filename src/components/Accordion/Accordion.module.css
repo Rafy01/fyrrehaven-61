@@ -1,0 +1,116 @@
+.accordionRoot {
+  width: 100%;
+}
+
+.accordionItem {
+  border-radius: 12px 0px 12px 0px;
+  background: #fff;
+  margin-top: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.accordionItem:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.accordionHeader {
+  margin: 0;
+}
+
+.accordionTrigger {
+  all: unset;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 1rem 0rem; /* match med .accordionInner */
+  font-size: 1.1rem;
+  font-weight: 600;
+  background: linear-gradient(to right, #fafafa, #f5f5f5);
+  color: #1a1a1a;
+  cursor: pointer;
+  border-radius: 12px 12px 0px 0px;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.accordionTrigger:hover {
+  background: linear-gradient(to right, #f3f3f3, #eeeeee);
+  transform: scale(1.01);
+}
+
+.chevron {
+  width: 20px;
+  height: 20px;
+  margin-right: 1rem;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  color: #888;
+}
+
+.accordionTrigger[data-state="open"] .chevron {
+  transform: rotate(540deg) scale(1.2);
+  color: #7e7726;
+}
+
+.accordionContent {
+  overflow: hidden;
+  background-color: #fff;
+  animation-duration: 300ms;
+  animation-timing-function: ease-out;
+  will-change: height, opacity;
+  border-top: 1px solid #eee;
+}
+
+.accordionContent[data-state="open"] {
+  animation-name: slideDown;
+}
+
+.accordionContent[data-state="closed"] {
+  animation-name: slideUp; 
+}
+
+.accordionInner {
+  padding: 1rem 1.5rem; /* match med .accordionTrigger */
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* 📱 Responsivt */
+@media (max-width: 600px) {
+  .accordionTrigger {
+    font-size: 1rem;
+    padding: 0.75rem 0rem;
+  }
+
+  .accordionInner {
+    padding: 0.75rem 1rem;
+  }
+
+  .chevron {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-accordion-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}

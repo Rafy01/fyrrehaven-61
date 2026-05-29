@@ -1,0 +1,43 @@
+/* Grid med 2 kolonner på mobil, 3 på desktop */
+.albumGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 960px) {
+  .albumGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Kortet er et <figure> → NULSTIL UA-margins, og clip alt indhold */
+.albumCard {
+  margin: 0;                 /* ⬅️ vigtig: fjern UA figure-margins */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 20px;
+  overflow: hidden;          /* ⬅️ clip billede til de runde hjørner */
+  min-width: 0;              /* ⬅️ tillad at børn må krympe i gridcelle */
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  transition: box-shadow .18s ease, transform .18s ease;
+}
+.albumCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
+}
+
+/* Label under thumbnail */
+.albumCaption {
+  margin: 0 4px 2px;
+  font-weight: 750;
+  letter-spacing: 0.005em;
+  color: #0f172a;
+  font-size: 0.98rem;
+}
+
+/* Mindre afstand på helt små skærme */
+@media (max-width: 420px) {
+  .albumGrid { gap: 12px; }
+}

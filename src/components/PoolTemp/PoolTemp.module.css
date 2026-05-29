@@ -1,0 +1,101 @@
+.card{
+  --ring: rgba(37,99,235,.25);
+  --bg: #fff;
+  --fg: #0f172a;
+  --muted: #64748b;
+
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.06);
+  padding: 14px 16px;
+  max-width: 360px;
+}
+
+.card[data-stale="1"]{
+  opacity: .9;
+  outline: 2px dashed rgba(148,163,184,.5);
+  outline-offset: 4px;
+}
+
+.rowTop{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.title{
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+
+.badge{
+  font-size: .78rem;
+  font-weight: 800;
+  color: #0b1220;
+  background: #e5f0ff;
+  border: 1px solid #cfe0ff;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.main{
+  display:flex;
+  align-items:center;
+  gap: 14px;
+  padding: 6px 0 2px;
+}
+
+.icon{
+  font-size: 28px;
+  line-height: 1;
+}
+
+.valueWrap{
+  display:flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.value{
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+
+.valueDim{
+  font-size: 38px;
+  font-weight: 900;
+  color: #cbd5e1;
+}
+
+.unit{
+  font-size: 16px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.meta{
+  margin-top: 4px;
+  display:flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: .86rem;
+}
+
+.warn{
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.batt{
+  font-variant-numeric: tabular-nums;
+}
+
+.age{
+  font-variant-numeric: tabular-nums;
+}

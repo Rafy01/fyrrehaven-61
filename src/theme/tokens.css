@@ -1,11 +1,37 @@
-:root{
-  --sand-50:#FAFAF7; --sand-0:#FFFFFF;
-  --ink-900:#1B1B1B; --ink-600:#545454; --divider:#EAEAEA;
-  --gold-500:#918821; --gold-600:#7B721C; --gold-700:#635C17;
-  --forest-500:#4C6B33; --forest-100:#EEF3ED;
-  --coast-500:#2F6F91; --coast-100:#EAF4FA;
-  --success:#2E7D32; --error:#C62828; --focus:#2563EB;
+:root {
+  --sand-50: #fafaf7;
+  --sand-0: #ffffff;
+  --ink-900: #1b1b1b;
+  --ink-600: #545454;
+  --divider: #eaeaea;
+  --gold-500: #918821;
+  --gold-600: #7b721c;
+  --gold-700: #635c17;
+  --forest-500: #4c6b33;
+  --forest-100: #eef3ed;
+  --coast-500: #2f6f91;
+  --coast-100: #eaf4fa;
+  --success: #2e7d32;
+  --error: #c62828;
+  --focus: #918821;
   --radius: 12px;
 }
-html,body,#root{height:100%;}
-body{background:var(--sand-50); color:var(--ink-900);}
+html,
+body,
+#root {
+  height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+}
+body {
+  background: var(--sand-50);
+  color: var(--ink-900);
+  font-family: Arial, Helvetica, sans-serif;
+}
+html {
+  scroll-behavior: smooth;
+}
+#filters,
+#map,
+#trips {
+  scroll-margin-top: 90px; 
+}

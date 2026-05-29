@@ -42,7 +42,7 @@ export function SEO({
       {/* Title & meta */}
       <title>{title}</title>
       <meta name="description" content={description} />
-      {noindex && <meta name="robots" content="noindex,nofollow" />}
+      {noindex && <meta name="robots" content="index,follow" />}
 
       {/* Canonical + hreflang */}
       <link rel="canonical" href={canonical} />

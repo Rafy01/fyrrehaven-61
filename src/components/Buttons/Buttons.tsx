@@ -6,13 +6,13 @@ import type { Lang } from "../../lib/lang";
 
 export type ButtonSize = "sm" | "md" | "lg";
 
-/** Navigation-union: enten to=intern rute, href=ekstern URL, eller ingen (ren onClick) */
+/** Navigation: enten intern `to`, ekstern `href`, eller ingen (kun onClick) */
 type LinkLike =
   | { to: string; href?: never; external?: never }
   | { href: string; to?: never; external?: boolean }
   | { to?: never; href?: never; external?: never };
 
-/** Label-union: vælg én strategi */
+/** Label: vælg én strategi */
 type LabelByString = {
   label: string;
   labelDa?: never;
@@ -47,16 +47,20 @@ export type ButtonProps = LinkLike &
     onClick?: () => void;
     ariaLabel?: string;
     className?: string;
+    /** Sæt til "submit" når knappen skal indsende en form */
+    buttonType?: "button" | "submit" | "reset";
   };
 
-function classNames(...xs: Array<string | false | undefined>): string {
+function cx(...xs: Array<string | false | undefined>): string {
   return xs.filter(Boolean).join(" ");
 }
 
 function sizeClass(size: ButtonSize): string {
-  if (size === "sm") return styles["s-sm"];
-  if (size === "lg") return styles["s-lg"];
-  return styles["s-md"];
+  return size === "sm"
+    ? styles["s-sm"]
+    : size === "lg"
+    ? styles["s-lg"]
+    : styles["s-md"];
 }
 
 /** Vælg label ud fra props (+ i18n/lang fallback) */
@@ -67,14 +71,11 @@ function useLabelText(props: LabelInput & { lang?: Lang }) {
   if ("labelDa" in props && "labelEn" in props) {
     const current: Lang =
       props.lang ??
-      (i18n.language && i18n.language.toLowerCase().startsWith("da")
-        ? "da"
-        : "en");
+      (i18n.language?.toLowerCase().startsWith("da") ? "da" : "en");
     return current === "da" ? props.labelDa : props.labelEn;
   }
 
   if ("i18nKey" in props) return t(props.i18nKey);
-  // burde aldrig ske pga. union, men returner tom streng for sikkerhed:
   return "";
 }
 
@@ -88,6 +89,7 @@ function Element({
   onClick,
   children,
   className,
+  buttonType,
 }: {
   to?: string;
   href?: string;
@@ -98,6 +100,7 @@ function Element({
   onClick?: () => void;
   children: React.ReactNode;
   className: string;
+  buttonType?: "button" | "submit" | "reset";
 }) {
   const isDisabled = !!(disabled || loading);
 
@@ -137,7 +140,7 @@ function Element({
 
   return (
     <button
-      type="button"
+      type={buttonType ?? "button"}
       onClick={onClick}
       aria-label={ariaLabel}
       disabled={isDisabled}
@@ -158,12 +161,13 @@ export default function Buttons(props: ButtonProps) {
     loading,
     className,
     ariaLabel,
+    buttonType,
     ...rest
   } = props;
 
   const labelText = useLabelText(rest as LabelInput & { lang?: Lang });
 
-  const cls = classNames(
+  const classes = cx(
     styles.btn,
     variant === "primary" ? styles.primary : styles.secondary,
     sizeClass(size),
@@ -176,9 +180,10 @@ export default function Buttons(props: ButtonProps) {
   return (
     <Element
       {...rest}
-      className={cls}
+      className={classes}
       ariaLabel={computedAria}
       loading={loading}
+      buttonType={buttonType}
     >
       {loading ? (
         <span className={styles.spinner} aria-hidden="true" />
@@ -199,18 +204,13 @@ export default function Buttons(props: ButtonProps) {
   );
 }
 
-/* Named helpers hvis du vil skrive <Primary/>/<Secondary/> */
-function cleanNavProps<T extends ButtonProps>(props: T): T {
-  const copy = { ...props };
-  if (copy.to === undefined) delete copy.to;
-  if (copy.href === undefined) delete copy.href;
-  if (copy.external === undefined) delete copy.external;
-  return copy;
+/* ===== Named helpers ===== */
+export type PrimaryProps = Omit<ButtonProps, "variant">;
+export function Primary(p: PrimaryProps) {
+  return <Buttons {...(p as ButtonProps)} variant="primary" />;
 }
 
-export function Primary(p: Omit<ButtonProps, "variant">) {
-  return <Buttons {...cleanNavProps(p)} variant="primary" />;
-}
-export function Secondary(p: Omit<ButtonProps, "variant">) {
-  return <Buttons {...cleanNavProps(p)} variant="secondary" />;
+export type SecondaryProps = Omit<ButtonProps, "variant">;
+export function Secondary(p: SecondaryProps) {
+  return <Buttons {...(p as ButtonProps)} variant="secondary" />;
 }

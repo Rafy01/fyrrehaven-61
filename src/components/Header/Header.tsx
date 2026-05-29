@@ -1,74 +1,72 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { Text } from "@radix-ui/themes";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { useTranslation } from "react-i18next";
 import styles from "./Header.module.css";
 
 import { type Lang, saveLang } from "../../lib/lang";
-import { pathOf, switchLangPath } from "../../lib/routes";
+import { pathOf, switchLangPath, GUEST_PAGES } from "../../lib/routes";
 import Buttons from "../Buttons";
 
-export default function Header({ lang }: { lang: Lang }) {
+type Props = {
+  lang: Lang;
+  guest?: boolean;
+};
+
+export default function Header({ lang, guest = false }: Props) {
   const { i18n } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Scroll hide/show
   const [hidden, setHidden] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const lastY = useRef<number>(
-    typeof window !== "undefined" ? window.scrollY : 0
-  );
+  const lastY = useRef(typeof window !== "undefined" ? window.scrollY : 0);
   const idleTimer = useRef<number | null>(null);
-
-  // Mobile menu
   const [open, setOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
 
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      const delta = y - lastY.current;
-      setScrolled(y > 8);
+useEffect(() => {
+  const onScroll = () => {
+    const y = window.scrollY;
+    const delta = y - lastY.current;
 
-      if (!open) {
-        if (delta > 5 && y > 120) setHidden(true); // down => hide
-        if (delta < -5) setHidden(false); // up   => show
-      }
-      lastY.current = y;
+    setScrolled(y > 8);
 
-      if (idleTimer.current) window.clearTimeout(idleTimer.current);
-      idleTimer.current = window.setTimeout(
-        () => setHidden(false),
-        5000
-      ) as unknown as number;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (idleTimer.current) window.clearTimeout(idleTimer.current);
-    };
-  }, [open]);
+    // Kun skjul/show header, hvis menu IKKE er åben
+    if (!open) {
+      if (delta > 5 && y > 120) setHidden(true);
+      if (delta < -5) setHidden(false);
+    }
+
+    lastY.current = y;
+
+    // Nulstil idle-timer
+    if (idleTimer.current) window.clearTimeout(idleTimer.current);
+
+    // Start kun idle-timer, hvis menuen er lukket
+    if (!open) {
+      idleTimer.current = window.setTimeout(() => {
+        // Efter 5 sek. inaktivitet: vis header igen
+        setHidden(false);
+        // 👇 VIGTIGT: vi rører IKKE ved `setOpen` her
+        // før var her: if (!open && window.innerWidth <= 1024) setOpen(true);
+      }, 5000);
+    }
+  };
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  return () => {
+    window.removeEventListener("scroll", onScroll);
+    if (idleTimer.current) window.clearTimeout(idleTimer.current);
+  };
+}, [open]);
 
   useEffect(() => {
     if (open) setHidden(false);
   }, [open]);
 
-  // Nav links (ALTID unikke sprog-slugs via pathOf)
-  const navItems = useMemo(() => {
-    const t = (da: string, en: string) => (lang === "da" ? da : en);
-    return [
-      { to: pathOf(lang, "house"), label: t("Huset", "The House") },
-      { to: pathOf(lang, "area"), label: t("Området", "Area") },
-      { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery") },
-      { to: pathOf(lang, "faq"), label: "FAQ" },
-      { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact") },
-    ];
-  }, [lang]);
-
-  // Language switch (behold samme side, map slug korrekt)
   const switchLang = (next: Lang) => {
     if (next === lang) return;
     saveLang(next);
@@ -77,6 +75,49 @@ export default function Header({ lang }: { lang: Lang }) {
     navigate(nextPath);
     setOpen(false);
   };
+
+  const t = useCallback(
+    (da: string, en: string) => (lang === "da" ? da : en),
+    [lang]
+  );
+
+  const navItems = useMemo(() => {
+    if (guest) {
+      return [
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.welcome[lang]}`,
+          label: t("Velkomst", "Welcome"),
+        },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.manual[lang]}`,
+          label: t("Manual", "Manual"),
+        },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`,
+          label: t("Pool", "Pool"),
+        },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.sauna[lang]}`,
+          label: t("Sauna", "Sauna"),
+        },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.spa[lang]}`,
+          label: t("Vildmarksbad", "Hot Tub"),
+        },
+        {
+          to: `/guest/${lang}/${GUEST_PAGES.practicalInfo[lang]}`,
+          label: t("Praktisk info", "Practical Info"),
+        },
+      ];
+    }
+    return [
+      { to: pathOf(lang, "house"), label: t("Huset", "The House") },
+      { to: pathOf(lang, "area"), label: t("Området", "Area") },
+      { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery") },
+      // { to: pathOf(lang, "faq"), label: "FAQ" },
+      { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact") },
+    ];
+  }, [lang, guest, t]);
 
   const flag = lang === "da" ? "🇩🇰" : "🇬🇧";
 
@@ -89,7 +130,6 @@ export default function Header({ lang }: { lang: Lang }) {
       ].join(" ")}
     >
       <div className={styles.inner}>
-        {/* Brand */}
         <Link
           to={pathOf(lang, "home")}
           className={styles.brand}
@@ -97,36 +137,44 @@ export default function Header({ lang }: { lang: Lang }) {
         >
           <img
             src="/logo_trans.png"
-            alt=""
+            alt="Fyrrehaven 61 - logo"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
           />
-        
-          
         </Link>
 
-        {/* Desktop nav */}
         <nav className={`${styles.nav} ${styles.navPrimary}`} aria-label="Main">
           {navItems.map((item) => (
-            <Link key={item.to} to={item.to} className={styles.link}>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                [styles.link, isActive && styles.linkActive]
+                  .filter(Boolean)
+                  .join(" ")
+              }
+            >
               {item.label}
-            </Link>
+            </NavLink>
           ))}
 
-          <Buttons
-            labelDa="Book nu"
-            labelEn="Book now"
-            href={"https://www.airbnb.dk/h/fyrrehaven-61"}
-            external
-          />
+          {!guest && (
+            <Buttons
+              labelDa="Book nu"
+              labelEn="Book now"
+              to={pathOf(lang, "book")}
+              buttonType="button"
+            />
+          )}
 
-          {/* Language dropdown */}
-          <DropdownMenu.Root>
+          <DropdownMenu.Root open={langOpen} onOpenChange={setLangOpen}>
             <DropdownMenu.Trigger asChild>
               <button
+                type="button"
                 className={styles.langTrigger}
                 aria-label="Change language"
+                data-state={langOpen ? "open" : "closed"}
               >
                 <span className={styles.flag}>{flag}</span>
                 <ChevronDownIcon />
@@ -154,78 +202,76 @@ export default function Header({ lang }: { lang: Lang }) {
           </DropdownMenu.Root>
         </nav>
 
-        {/* Mobile/Tablet burger + panel */}
         <Dialog.Root open={open} onOpenChange={setOpen}>
-          <Dialog.Trigger asChild>
-            <button
-              className={styles.menuBtn}
-              aria-label={
-                open
-                  ? lang === "da"
-                    ? "Luk menu"
-                    : "Close menu"
-                  : lang === "da"
-                  ? "Åbn menu"
-                  : "Open menu"
-              }
-              data-open={open}
-            >
-              <span className={styles.burger} aria-hidden="true" />
-            </button>
-          </Dialog.Trigger>
+          <button
+            type="button"
+            className={styles.menuBtn}
+            aria-label={open ? "Luk menu" : "Åbn menu"}
+            aria-expanded={open}
+            aria-controls="mobile-menu-panel"
+            data-open={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            <span className={styles.burger} aria-hidden="true" />
+          </button>
 
           <Dialog.Overlay className={styles.overlay} />
-          <Dialog.Content className={styles.panel} aria-label="Mobile menu">
-            <div className={styles.panelHeader}>
-              <Text weight="bold">{lang === "da" ? "Menu" : "Menu"}</Text>
-              <button
-                className={styles.closeBtn}
-                aria-label={lang === "da" ? "Luk menu" : "Close menu"}
-                onClick={() => setOpen(false)}
-              >
-                <Cross2Icon />
-              </button>
-            </div>
+          <Dialog.Content
+            id="mobile-menu-panel"
+            className={styles.panel}
+            aria-label="Mobilmenu"
+          >
+            <Dialog.Title className={styles.srOnly}>Menu</Dialog.Title>
+            <Dialog.Description className={styles.srOnly}>
+              Hovednavigation for siden
+            </Dialog.Description>
 
             <nav className={styles.panelNav}>
               {navItems.map((item) => (
-                <Link
+                <NavLink
                   key={item.to}
                   to={item.to}
-                  className={styles.panelLink}
+                  className={({ isActive }) =>
+                    [styles.panelLink, isActive && styles.panelLinkActive]
+                      .filter(Boolean)
+                      .join(" ")
+                  }
                   onClick={() => setOpen(false)}
                 >
                   <span>{item.label}</span>
                   <span aria-hidden="true">›</span>
-                </Link>
+                </NavLink>
               ))}
             </nav>
 
             <div className={styles.panelFooter}>
-              <a
-                href={"www.airbnb.dk/h/fyrrehaven-61"}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => setOpen(false)}
-              >
-                <button className={styles.cta}>
-                  {lang === "da" ? "Book" : "Book"}
-                </button>
-              </a>
+              {!guest && (
+                <Buttons
+                  to={pathOf(lang, "book")}
+                  onClick={() => setOpen(false)}
+                  className={styles.ctaLink}
+                  labelDa="Book"
+                  labelEn="Book"
+                  buttonType="button"
+                  fullWidth
+                />
+              )}
               <div className={styles.langGroup}>
                 <button
+                  type="button"
                   className={styles.langChip}
                   onClick={() => switchLang("da")}
-                  aria-label="Switch to Danish"
+                  aria-current={lang === "da"}
                 >
-                  <span className={styles.flag}>🇩🇰</span> DA
+                  🇩🇰 Dansk
                 </button>
                 <button
+                  type="button"
                   className={styles.langChip}
                   onClick={() => switchLang("en")}
-                  aria-label="Switch to English"
+                  aria-current={lang === "en"}
                 >
-                  <span className={styles.flag}>🇬🇧</span> EN
+                  🇬🇧 English
                 </button>
               </div>
             </div>
