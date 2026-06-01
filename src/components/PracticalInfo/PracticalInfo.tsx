@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./PracticalInfo.module.css";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 
 /* ---------- Ikoner (små inline SVG’er) ---------- */
 const Icon = {
@@ -268,7 +268,8 @@ export default function PracticalInfo({
   ctaLabelDa,
   ctaLabelEn,
 }: PracticalInfoProps) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const data = items ?? defaultItems();
   const list =
     variant === "teaser" ? data.slice(0, Math.max(1, maxItems)) : data;

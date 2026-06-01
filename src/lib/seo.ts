@@ -120,6 +120,20 @@ export const KEYWORDS: Record<PageKey, Record<Lang, string[]>> = {
       "Denmark vacation home",
       "Fyrrehaven 61",
     ],
+    de: [
+      "Ferienhaus mit Pool",
+      "Whirlpool",
+      "Sauna",
+      "Fjellerup Strand",
+      "Djursland Urlaub",
+      "Familienurlaub",
+      "10 Personen",
+      "private Vermietung",
+      "Ferienhaus",
+      "Außenpool beheizt",
+      "Djurs Sommerland",
+      "Fyrrehaven 61",
+    ],
   },
   house: {
     da: [
@@ -146,6 +160,18 @@ export const KEYWORDS: Record<PageKey, Record<Lang, string[]>> = {
       "terrace",
       "free parking",
     ],
+    de: [
+      "Hausdetails",
+      "Schlafplätze",
+      "29°C Außenpool",
+      "elektrischer Whirlpool",
+      "elektrische Sauna",
+      "familienfreundlich",
+      "voll ausgestattete Küche",
+      "PS5",
+      "Terrasse",
+      "kostenlose Parkplätze",
+    ],
   },
   area: {
     da: [
@@ -164,6 +190,14 @@ export const KEYWORDS: Record<PageKey, Record<Lang, string[]>> = {
       "cycling routes",
       "places to eat Fjellerup",
     ],
+    de: [
+      "Fjellerup Attraktionen",
+      "Strand und Wald",
+      "Djursland Sehenswürdigkeiten",
+      "Wanderwege",
+      "Fahrradwege",
+      "Restaurants Fjellerup",
+    ],
   },
   gallery: {
     da: [
@@ -179,6 +213,13 @@ export const KEYWORDS: Record<PageKey, Record<Lang, string[]>> = {
       "wellness photos",
       "interior",
       "exterior",
+    ],
+    de: [
+      "Bilder Ferienhaus",
+      "Pool Bilder",
+      "Wellness Bilder",
+      "Interieur",
+      "Exterieur",
     ],
   },
   faq: {
@@ -198,10 +239,19 @@ export const KEYWORDS: Record<PageKey, Record<Lang, string[]>> = {
       "house rules",
       "cancellation",
     ],
+    de: [
+      "praktische Infos Ferienhaus",
+      "Check-in",
+      "Reinigung",
+      "Bettwäsche",
+      "Hausregeln",
+      "Stornierung",
+    ],
   },
   contact: {
     da: ["kontakt sommerhus", "bookingforespørgsel", "Fyrrehaven 61 kontakt"],
     en: ["contact holiday home", "booking request", "Fyrrehaven 61 contact"],
+    de: ["Kontakt Ferienhaus", "Buchungsanfrage", "Fyrrehaven 61 Kontakt"],
   },
   book: {
     da: [
@@ -218,25 +268,37 @@ export const KEYWORDS: Record<PageKey, Record<Lang, string[]>> = {
       "calendar",
       "Djursland holiday",
     ],
+    de: [
+      "Ferienhaus buchen",
+      "Preis pro Nacht",
+      "Verfügbarkeit",
+      "Kalender",
+      "Djursland Urlaub",
+    ],
   },
   cookies: {
     da: ["cookies", "cookiepolitik", "samtykke"],
     en: ["cookies", "cookie policy", "consent"],
+    de: ["Cookies", "Cookie-Richtlinie", "Zustimmung"],
   },
   fees: {
     da: ["gebyrer", "rengøringsgebyr", "ekstra omkostninger", "deposition"],
     en: ["fees", "cleaning fee", "extra charges", "deposit"],
+    de: ["Gebühren", "Reinigungsgebühr", "zusätzliche Kosten", "Kaution"],
   },
   privacy: {
     da: ["privatlivspolitik", "GDPR", "databeskyttelse"],
     en: ["privacy policy", "GDPR", "data protection"],
+    de: ["Datenschutzerklärung", "DSGVO", "Datenschutz"],
   },
   sitemap: {
     da: ["sitemap", "oversigt", "SEO", "intern linkstruktur"],
     en: ["sitemap", "overview", "SEO", "internal linking"],
+    de: ["Sitemap", "Übersicht", "SEO", "interne Verlinkung"],
   },
   chat: {
     da: ["chat", "spørgsmål", "support"],
     en: ["chat", "questions", "support"],
+    de: ["Chat", "Fragen", "Support"],
   },
 };

@@ -1,7 +1,7 @@
 // src/lib/countryCodes.ts
 
 /** UI-sprog til labels */
-export type UiLang = "da" | "en";
+export type UiLang = "da" | "en" | "de";
 
 /** ISO 3166-1 alpha-2 koder vi understøtter i UI’et */
 export type ISO2 =

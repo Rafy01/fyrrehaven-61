@@ -2,7 +2,7 @@
 import React from "react";
 import Buttons from "../Buttons";
 import styles from "./ContactForm.module.css";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 import { useTranslation } from "react-i18next";
 
 import type { ISO2, UiLang } from "../../lib/countryCodes";
@@ -59,10 +59,13 @@ const DIGITS_RE = /[^\d]/g;
 /** Resolve current UI language. */
 function useUiLang(explicit?: Lang): Lang {
   const { i18n } = useTranslation();
-  const i18nLang =
-    i18n?.language && i18n.language.toLowerCase().startsWith("da")
+  const i18nLang = i18n?.language
+    ? i18n.language.toLowerCase().startsWith("da")
       ? ("da" as Lang)
-      : ("en" as Lang);
+      : i18n.language.toLowerCase().startsWith("de")
+      ? ("de" as Lang)
+      : ("en" as Lang)
+    : ("en" as Lang);
   return explicit ?? i18nLang ?? "da";
 }
 
@@ -80,7 +83,8 @@ export default function ContactForm({
 }: Props) {
   const ui = useUiLang(langProp);
   const lang: Lang = ui;
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const uiLang: UiLang = lang;
   const isBooking = variant === "booking";
 

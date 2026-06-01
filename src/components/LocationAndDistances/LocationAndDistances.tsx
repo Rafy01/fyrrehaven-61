@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import styles from "./LocationAndDistances.module.css";
 import Buttons from "../Buttons";
 import { pathOf } from "../../lib/routes";
-
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 
 /** Små inline-ikoner (ingen ekstra lib) */
 const Icon = {
@@ -126,7 +125,8 @@ export default function LocationAndDistances({
   ctaLabelDa,
   ctaLabelEn,
 }: LocationAndDistancesProps) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const list = items ?? defaultItems;
 
   // Lazy-load iframe, kun når sektionen er i viewport

@@ -1,6 +1,6 @@
 // src/components/BookingProcess/BookingProcess.tsx
 import * as React from "react";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
 import styles from "./BookingProcess.module.css";
 
@@ -20,7 +20,8 @@ export default function BookingProcess({
   minAge = 25,
   maxGuests = 10,
 }: Props) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   const steps: Array<{ title: string; body: React.ReactNode }> = [
     {

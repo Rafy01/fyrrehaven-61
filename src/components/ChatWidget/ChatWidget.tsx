@@ -1,12 +1,13 @@
 import React from "react";
 import styles from "./ChatWidget.module.css";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 import { SNIPPETS, type Snippet } from "../../data/chat/knowledge";
 
 // Define the Link type if not imported from elsewhere
 type Link = {
   labelDa: string;
   labelEn: string;
+  labelDe?: string;
   to?: string;
   href?: string;
 };
@@ -73,7 +74,8 @@ type Msg = {
 type Props = { lang: Lang };
 
 export default function ChatWidget({ lang }: Props) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   const [open, setOpen] = React.useState<boolean>(false);
   const [hidden, setHidden] = React.useState<boolean>(false);
@@ -91,10 +93,12 @@ export default function ChatWidget({ lang }: Props) {
     },
   ]);
 
-  const chips: string[] =
-    lang === "da"
-      ? ["Check-in", "Pool & wellness", "Området", "El & vand"]
-      : ["Check-in", "Pool & wellness", "The area", "Utilities"];
+  const chips: string[] = [
+    t("Check-in", "Check-in", "Check-in"),
+    t("Pool & wellness", "Pool & wellness", "Pool & Wellness"),
+    t("Området", "The area", "Das Gebiet"),
+    t("El & vand", "Utilities", "Strom & Wasser"),
+  ];
 
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -117,14 +121,29 @@ export default function ChatWidget({ lang }: Props) {
       const { snippet, confidence } = bestMatch(q);
 
       if (snippet && confidence >= 0.6) {
-        const title = lang === "da" ? snippet.titleDa : snippet.titleEn;
-        const body = lang === "da" ? snippet.bodyDa : snippet.bodyEn;
+        const title = chooseLang(
+          lang,
+          snippet.titleDa,
+          snippet.titleEn,
+          snippet.titleEn
+        );
+        const body = chooseLang(
+          lang,
+          snippet.bodyDa,
+          snippet.bodyEn,
+          snippet.bodyEn
+        );
         const linksBlock =
           (snippet.links ?? []).length > 0
             ? "\n\n" +
               (snippet.links as Link[])
                 .map((l: Link) => {
-                  const label = lang === "da" ? l.labelDa : l.labelEn;
+                  const label = chooseLang(
+                    lang,
+                    l.labelDa,
+                    l.labelEn,
+                    l.labelDe
+                  );
                   const url = l.to ?? l.href ?? "#";
                   return `• ${label} → ${url}`;
                 })
@@ -181,7 +200,8 @@ export default function ChatWidget({ lang }: Props) {
               lang,
               text: t(
                 "Det ved jeg ikke endnu — og jeg kunne ikke gemme dit spørgsmål. Prøv igen om lidt.",
-                "I don’t know that yet — and I couldn’t save your question. Please try again."
+                "I don’t know that yet — and I couldn’t save your question. Please try again.",
+                "Das weiß ich noch nicht — und ich konnte Ihre Frage nicht speichern. Bitte versuchen Sie es später noch einmal."
               ),
             },
           ]);
@@ -209,14 +229,17 @@ export default function ChatWidget({ lang }: Props) {
 
   function renderMessage(m: Msg) {
     if (m.role === "card" && m.meta?.q) {
-      const mailSubject =
-        lang === "da"
-          ? "Spørgsmål fra chat (ukendt)"
-          : "Chat question (unknown)";
+      const mailSubject = t(
+        "Spørgsmål fra chat (ukendt)",
+        "Chat question (unknown)",
+        "Chatfrage (unbekannt)"
+      );
       const mailBody =
-        (lang === "da"
-          ? "Hej Fyrrehaven 61,\n\nJeg har dette spørgsmål fra chatten:\n\n"
-          : "Hi Fyrrehaven 61,\n\nI have this question from the chat:\n\n") +
+        t(
+          "Hej Fyrrehaven 61,\n\nJeg har dette spørgsmål fra chatten:\n\n",
+          "Hi Fyrrehaven 61,\n\nI have this question from the chat:\n\n",
+          "Hallo Fyrrehaven 61,\n\nIch habe diese Frage aus dem Chat:\n\n"
+        ) +
         `"${m.meta.q}"\n\n`;
 
       const mailto = `mailto:${encodeURIComponent(
@@ -229,18 +252,22 @@ export default function ChatWidget({ lang }: Props) {
         <div className={styles.msgBot}>
           <div className={styles.card}>
             <div className={styles.cardTitle}>
-              {lang === "da"
-                ? "Vil du kontakte os direkte?"
-                : "Want to contact us directly?"}
+              {t(
+                "Vil du kontakte os direkte?",
+                "Want to contact us directly?",
+                "Möchten Sie uns direkt kontaktieren?"
+              )}
             </div>
             <div className={styles.cardText}>
-              {lang === "da"
-                ? "Du kan sende spørgsmålet på mail – eller kopiere det til udklipsholderen."
-                : "You can send your question by email – or copy it to your clipboard."}
+              {t(
+                "Du kan sende spørgsmålet på mail – eller kopiere det til udklipsholderen.",
+                "You can send your question by email – or copy it to your clipboard.",
+                "Sie können Ihre Frage per E-Mail senden – oder in die Zwischenablage kopieren."
+              )}
             </div>
             <div className={styles.btnRow}>
               <a className={styles.ctaBtn} href={mailto}>
-                📧 {lang === "da" ? "Send pr. mail" : "Send email"}
+                📧 {t("Send pr. mail", "Send email", "Per E-Mail senden")}
               </a>
               <button
                 type="button"
@@ -249,7 +276,7 @@ export default function ChatWidget({ lang }: Props) {
                   navigator.clipboard?.writeText(m.meta?.q ?? "");
                 }}
               >
-                📋 {lang === "da" ? "Kopiér" : "Copy"}
+                📋 {t("Kopiér", "Copy", "Kopieren")}
               </button>
             </div>
           </div>
@@ -300,7 +327,11 @@ export default function ChatWidget({ lang }: Props) {
       <div
         className={styles.panel}
         role="dialog"
-        aria-label={lang === "da" ? "Chat med værterne" : "Chat with hosts"}
+        aria-label={t(
+          "Chat med værterne",
+          "Chat with hosts",
+          "Chat mit den Gastgebern"
+        )}
       >
         <div className={styles.head}>
           <div className={styles.title}>
@@ -309,20 +340,26 @@ export default function ChatWidget({ lang }: Props) {
           <button
             type="button"
             className={styles.iconBtn}
-            aria-label={lang === "da" ? "Minimer" : "Minimize"}
+            aria-label={t("Minimer", "Minimize", "Minimieren")}
             onClick={() => setOpen(false)}
-            title={lang === "da" ? "Minimer" : "Minimize"}
+            title={t("Minimer", "Minimize", "Minimieren")}
           >
             ▽
           </button>
           <button
             type="button"
             className={styles.iconBtn}
-            aria-label={
-              lang === "da" ? "Skjul chat helt" : "Hide chat completely"
-            }
+            aria-label={t(
+              "Skjul chat helt",
+              "Hide chat completely",
+              "Chat komplett ausblenden"
+            )}
             onClick={() => setHidden(true)}
-            title={lang === "da" ? "Skjul chat helt" : "Hide chat completely"}
+            title={t(
+              "Skjul chat helt",
+              "Hide chat completely",
+              "Chat komplett ausblenden"
+            )}
           >
             ✕
           </button>
@@ -337,7 +374,11 @@ export default function ChatWidget({ lang }: Props) {
         <div
           className={styles.chips}
           role="group"
-          aria-label={lang === "da" ? "Hurtige spørgsmål" : "Quick questions"}
+          aria-label={t(
+            "Hurtige spørgsmål",
+            "Quick questions",
+            "Schnelle Fragen"
+          )}
         >
           {chips.map((c) => (
             <button
@@ -358,10 +399,12 @@ export default function ChatWidget({ lang }: Props) {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setInput(e.target.value)
             }
-            placeholder={
-              lang === "da" ? "Skriv et spørgsmål…" : "Ask a question… "
-            }
-            aria-label={lang === "da" ? "Din besked" : "Your message"}
+            placeholder={t(
+              "Skriv et spørgsmål…",
+              "Ask a question… ",
+              "Stellen Sie eine Frage…"
+            )}
+            aria-label={t("Din besked", "Your message", "Ihre Nachricht")}
             onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "enter") {
                 (
@@ -370,7 +413,7 @@ export default function ChatWidget({ lang }: Props) {
               }
             }}
           />
-          <button type="submit">{lang === "da" ? "Send" : "Send"}</button>
+          <button type="submit">{t("Send", "Send", "Senden")}</button>
         </form>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import styles from "./Facilities.module.css";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 
 type Bullet = { da: string; en: string };
 type Category = {
@@ -9,7 +9,8 @@ type Category = {
 };
 
 export default function Facilities({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   // ===== 4 faste kategorier (permanent) =====
   const categories: Category[] = [

@@ -1,4 +1,4 @@
-export type { Lang } from "../lib/lang";
+import type { Lang } from "../lib/lang";
 
 export type AlbumId =
   | "plantegning"

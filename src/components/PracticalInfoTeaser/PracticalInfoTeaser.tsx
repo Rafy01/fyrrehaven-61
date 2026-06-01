@@ -1,5 +1,5 @@
 import styles from "./PracticalInfoTeaser.module.css";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 
 /* ---------- Ikoner (små inline SVG’er) ---------- */
 const Icon = {
@@ -112,7 +112,8 @@ export default function PracticalInfoTeaser({
   title,
   items,
 }: PracticalInfoTeaserProps) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const data = items ?? defaultItems();
 
   return (

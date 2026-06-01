@@ -1,7 +1,7 @@
 // src/components/AvailabilityCalendar/AvailabilityCalendar.tsx
 import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 import { getPriceForDate, getMinNightsForStart } from "../../data/pricing";
 
 /* ─── Types ─── */
@@ -243,7 +243,8 @@ export default function AvailabilityCalendar({
   onSelectionPrice,
   weekNumberColWidth = 15,
 }: Props) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   // Stabil "today"
   const todayRef = React.useRef<Date>(startOfDay(new Date()));

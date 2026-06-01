@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import styles from "./ActivitiesGrid.module.css";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 import type { TagId } from "../../lib/tags";
 
 export type Activity = {
@@ -33,7 +33,8 @@ export default function ActivitiesGrid({
   emptyTextEn = "No results – try fewer filters.",
   className,
 }: ActivitiesGridProps) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   const filtered = useMemo(() => {
     if (!selected.length) return items;

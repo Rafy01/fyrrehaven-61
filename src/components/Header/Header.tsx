@@ -6,7 +6,7 @@ import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { useTranslation } from "react-i18next";
 import styles from "./Header.module.css";
 
-import { type Lang, saveLang } from "../../lib/lang";
+import { chooseLang, type Lang, saveLang } from "../../lib/lang";
 import { pathOf, switchLangPath, GUEST_PAGES } from "../../lib/routes";
 import Buttons from "../Buttons";
 
@@ -77,7 +77,7 @@ useEffect(() => {
   };
 
   const t = useCallback(
-    (da: string, en: string) => (lang === "da" ? da : en),
+    (da: string, en: string, de = en) => chooseLang(lang, da, en, de),
     [lang]
   );
 
@@ -212,7 +212,7 @@ useEffect(() => {
           <button
             type="button"
             className={styles.menuBtn}
-            aria-label={open ? "Luk menu" : "Åbn menu"}
+            aria-label={open ? t("Luk menu", "Close menu", "Menü schließen") : t("Åbn menu", "Open menu", "Menü öffnen")}
             aria-expanded={open}
             aria-controls="mobile-menu-panel"
             data-open={open}
@@ -227,9 +227,13 @@ useEffect(() => {
             className={styles.panel}
             aria-label="Mobilmenu"
           >
-            <Dialog.Title className={styles.srOnly}>Menu</Dialog.Title>
+            <Dialog.Title className={styles.srOnly}>{t("Menu", "Menu", "Menü")}</Dialog.Title>
             <Dialog.Description className={styles.srOnly}>
-              Hovednavigation for siden
+              {t(
+                "Hovednavigation for siden",
+                "Main navigation for the page",
+                "Hauptnavigation für die Seite"
+              )}
             </Dialog.Description>
 
             <nav className={styles.panelNav}>

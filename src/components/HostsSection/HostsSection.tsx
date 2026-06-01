@@ -1,5 +1,5 @@
 import styles from "./HostsSection.module.css";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 
 /* ---------- Ikoner (små inline SVG’er) ---------- */
 const Ico = {
@@ -114,7 +114,8 @@ export default function HostsSection({
   subtitleEn,
   hosts,
 }: HostsSectionProps) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const data = hosts ?? defaultHosts();
 
   return (

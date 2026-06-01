@@ -1,10 +1,11 @@
 import { useMemo, useRef } from "react";
 import styles from "./Reviews.module.css";
 import Buttons from "../Buttons";
+import { chooseLang, type Lang } from "../../lib/lang";
 import { reviews as allReviews, type ReviewItem } from "../../data/reviews";
 
 export type ReviewsProps = {
-  lang: "da" | "en" | "de";
+  lang: Lang;
   title?: string;
   subtitle?: string;
   maxCards?: number; // fx vis 8 på forsiden
@@ -60,7 +61,8 @@ export default function Reviews({
   average,
   showSchema = true,
 }: ReviewsProps) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   // Alle reviews, men tekster vises på valgt sprog
   const reviews: ReviewItem[] = useMemo(
@@ -96,7 +98,12 @@ export default function Reviews({
         },
         review: reviews.map((r) => ({
           "@type": "Review",
-          reviewBody: lang === "da" ? r.textDa : r.textEn,
+          reviewBody:
+          lang === "da"
+            ? r.textDa
+            : lang === "de"
+            ? r.textEn
+            : r.textEn,
           datePublished: r.date,
           reviewRating: { "@type": "Rating", ratingValue: r.rating },
           author: { "@type": "Person", name: r.author },
@@ -160,7 +167,9 @@ export default function Reviews({
               <Stars value={r.rating} />
             </div>
 
-            <p className={styles.text}>{lang === "da" ? r.textDa : r.textEn}</p>
+            <p className={styles.text}>
+            {lang === "da" ? r.textDa : lang === "de" ? r.textEn : r.textEn}
+          </p>
 
             <div className={styles.source}>
               {t("Kilde", "Source")}: {r.source ?? "Airbnb"}
@@ -174,6 +183,7 @@ export default function Reviews({
           variant="secondary"
           labelDa="Se alle anmeldelser på Airbnb"
           labelEn="See all reviews on Airbnb"
+          labelDe="Alle Bewertungen auf Airbnb ansehen"
           href="https://www.airbnb.dk/h/fyrrehaven-61"
           external
         />

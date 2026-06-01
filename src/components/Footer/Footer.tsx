@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Container, Box, Flex, Text } from "@radix-ui/themes";
 import styles from "./Footer.module.css";
 import { useTranslation } from "react-i18next";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
 
 export type FooterProps = {
@@ -25,9 +25,14 @@ export default function Footer({
   showSuperhost = true,
 }: FooterProps) {
   const { i18n } = useTranslation();
-  const currentLang: Lang =
-    lang ?? (i18n.language?.toLowerCase().startsWith("da") ? "da" : "en");
-  const t = (da: string, en: string) => (currentLang === "da" ? da : en);
+  const currentLang: Lang = lang ??
+    (i18n.language?.toLowerCase().startsWith("da")
+      ? "da"
+      : i18n.language?.toLowerCase().startsWith("de")
+      ? "de"
+      : "en");
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(currentLang, da, en, de);
   const year = new Date().getFullYear();
 
   const s = {
