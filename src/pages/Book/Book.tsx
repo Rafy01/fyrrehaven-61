@@ -3,6 +3,7 @@ import { Container, Box, Heading, Text } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
+import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
 
@@ -14,7 +15,8 @@ import ContactForm from "../../components/ContactForm";
 import BookingProcess from "../../components/BookingProcess/BookingProcess";
 
 export default function Book({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const path = pathOf(lang, "book");
 
   /** ——— SEO ——— */
@@ -78,10 +80,11 @@ export default function Book({ lang }: { lang: Lang }) {
   };
 
   /** ——— Hero ——— */
-  const heroTitle = t("Booking", "Booking");
+  const heroTitle = t("Booking", "Booking", "Buchung");
   const heroSubtitle = t(
     "Forespørg direkte hos os – eller book via Airbnb, hvis du foretrækker det.",
-    "Send a direct request – or book via Airbnb if you prefer."
+    "Send a direct request – or book via Airbnb if you prefer.",
+    "Senden Sie eine direkte Anfrage – oder buchen Sie über Airbnb, wenn Sie das bevorzugen."
   );
 
   // Aktuel måned til kalenderen
@@ -104,10 +107,11 @@ export default function Book({ lang }: { lang: Lang }) {
         badges={[
           t(
             "Opvarmet udendørs pool (1/5–1/10)",
-            "Heated outdoor pool (May–Oct)"
+            "Heated outdoor pool (May–Oct)",
+            "Beheizter Außenpool (1.5.–1.10.)"
           ),
-          t("Plads til 10 gæster", "Sleeps 10 guests"),
-          t("Familievenligt", "Family friendly"),
+          t("Plads til 10 gæster", "Sleeps 10 guests", "Platz für 10 Gäste"),
+          t("Familievenligt", "Family friendly", "Familienfreundlich"),
         ]}
         // primaryCta={{
         //   label: t("Anmod om booking", "Request booking"),
@@ -133,12 +137,17 @@ export default function Book({ lang }: { lang: Lang }) {
       <Container size="3">
         <Box py="6">
           <Heading as="h2" size="4" mb="2">
-            {t("Hvordan vil du booke?", "How would you like to book?")}
+            {t(
+              "Hvordan vil du booke?",
+              "How would you like to book?",
+              "Wie möchten Sie buchen?"
+            )}
           </Heading>
           <Text size="2" mb="4" color="gray">
             {t(
               "Du kan enten sende os en direkte forespørgsel via formularen nedenfor, eller du kan booke via Airbnb, hvis du foretrækker det. Vi svarer normalt inden for 1 time",
-              "You can either send us a direct request using the form below, or you can book via Airbnb if you prefer. We usually respond within 1 hour."
+              "You can either send us a direct request using the form below, or you can book via Airbnb if you prefer. We usually respond within 1 hour.",
+              "Sie können uns entweder eine direkte Anfrage über das Formular unten senden oder über Airbnb buchen, wenn Sie es bevorzugen. Wir antworten normalerweise innerhalb einer Stunde."
             )}
           </Text>
           {/* Lille “praktisk” note */}

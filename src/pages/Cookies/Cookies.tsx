@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Container, Heading, Text, Separator } from "@radix-ui/themes";
+import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import Head from "../../lib/Head";
 import { pathOf } from "../../lib/routes";
@@ -9,7 +10,8 @@ import * as CookieConsent from "vanilla-cookieconsent";
 import "vanilla-cookieconsent/dist/cookieconsent.css";
 
 export default function Cookies({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   useEffect(() => {
     CookieConsent.run({

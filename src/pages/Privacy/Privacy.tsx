@@ -1,11 +1,13 @@
 import { Container, Box, Heading, Text, Separator } from "@radix-ui/themes";
 import Head from "../../lib/Head";
+import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
 import styles from "./Privacy.module.css";
 
 export default function Privacy({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   // — Udfyld/tilpas disse ved behov —
   const CONTROLLER_NAME = "Fyrrehaven 61";

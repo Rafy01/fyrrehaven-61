@@ -14,10 +14,12 @@ import styles from "./House.module.css";
 import PracticalInfo from "../../components/PracticalInfo";
 import Facilities from "../../components/Facilities";
 import { getPageMeta } from "../../lib/meta";
+import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 
 export default function House({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   /* -------- SEO (kun meta) -------- */
   const Meta = getPageMeta(lang, "house");
@@ -97,27 +99,29 @@ export default function House({ lang }: { lang: Lang }) {
       <Hero
         title={t(
           "Sommerhuset – plads til 10, udendørs pool & wellness",
-          "The House – sleeps 10, outdoor pool & wellness"
+          "The House – sleeps 10, outdoor pool & wellness",
+          "Das Haus – Platz für 10, Außenpool & Wellness"
         )}
         subtitle={t(
           "4 soveværelser + hems. Udendørs opvarmet pool (1. maj–1. oktober), Elektrisk vildmarksbad og el-sauna.",
-          "4 bedrooms + loft. Outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna."
+          "4 bedrooms + loft. Outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna.",
+          "4 Schlafzimmer + Galerie. Beheizter Außenpool (1. Mai–1. Okt.), elektrischer Whirlpool und Sauna."
         )}
         badges={[
-          t("10 gæster", "10 guests"),
-          t("4 soveværelser", "4 bedrooms"),
-          t("2 badeværelser", "2 bathrooms"),
-          t("Udendørs opvarmet pool", "Outdoor heated pool"),
-          t("Vildmarksbad", "Hot tub"),
-          t("Sauna", "Sauna"),
+          t("10 gæster", "10 guests", "10 Gäste"),
+          t("4 soveværelser", "4 bedrooms", "4 Schlafzimmer"),
+          t("2 badeværelser", "2 bathrooms", "2 Badezimmer"),
+          t("Udendørs opvarmet pool", "Outdoor heated pool", "Beheizter Außenpool"),
+          t("Vildmarksbad", "Hot tub", "Whirlpool"),
+          t("Sauna", "Sauna", "Sauna"),
         ]}
         primaryCta={{
-          label: t("Book privat", "Book privately"),
+          label: t("Book privat", "Book privately", "Privat buchen"),
           href: pathOf(lang, "book"),
           external: false,
         }}
         secondaryCta={{
-          label: t("Book | Airbnb", "Book | Airbnb"),
+          label: t("Book | Airbnb", "Book | Airbnb", "Buchen | Airbnb"),
           href: "https://www.airbnb.dk/h/fyrrehaven-61",
           external: true,
         }}
@@ -126,11 +130,13 @@ export default function House({ lang }: { lang: Lang }) {
           src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.webp",
           alt: t(
             "Udendørs poolområde ved sommerhuset",
-            "Outdoor pool area at the house"
+            "Outdoor pool area at the house",
+            "Außenpoolbereich beim Haus"
           ),
           title: t(
             "Fyrrehaven 61 – feriehus ved Fjellerup Strand",
-            "Fyrrehaven 61 – holiday home by Fjellerup Beach"
+            "Fyrrehaven 61 – holiday home by Fjellerup Beach",
+            "Fyrrehaven 61 – Ferienhaus bei Fjellerup Strand"
           ),
         }}
         align="left"

@@ -3,11 +3,13 @@ import { Container, Box } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
+import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import PoolTemp from "../../components/PoolTemp";
 
 export default function Faq({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const path = pathOf(lang, "faq");
 
   const seoTitle = t(

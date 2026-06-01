@@ -4,10 +4,12 @@ import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import ContactForm from "../../components/ContactForm";
 import HostsSection from "../../components/HostsSection";
+import { chooseLang } from "../../lib/lang";
 import { pathOf, type Lang } from "../../lib/routes";
 
 export default function ContactPage({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const path = pathOf(lang, "contact");
 
   const seoTitle = t(

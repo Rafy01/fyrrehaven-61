@@ -446,6 +446,13 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
       image: OG_IMG,
       imageAlt: "Privacy policy",
     },
+    de: {
+      title: "Datenschutzrichtlinie | Fyrrehaven 61",
+      description:
+        "DSGVO-Informationen zur Verarbeitung personenbezogener Daten bei Kontakt, Buchung und Zusatzleistungen.",
+      image: OG_IMG,
+      imageAlt: "Datenschutzrichtlinie",
+    },
   },
   sitemap: {
     da: {
@@ -462,6 +469,13 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
       image: OG_IMG,
       imageAlt: "Sitemap",
     },
+    de: {
+      title: "Sitemap | Fyrrehaven 61",
+      description:
+        "Übersicht über Seiten, Bereiche und nützliche Links für die schnelle Navigation.",
+      image: OG_IMG,
+      imageAlt: "Sitemap",
+    },
   },
   chat: {
     da: {
@@ -473,6 +487,12 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
     en: {
       title: "Chat | Fyrrehaven 61",
       description: "Ask questions about the house, area and booking.",
+      image: OG_IMG,
+      imageAlt: "Chat",
+    },
+    de: {
+      title: "Chat | Fyrrehaven 61",
+      description: "Stellen Sie Fragen zum Haus, zur Umgebung und zur Buchung.",
       image: OG_IMG,
       imageAlt: "Chat",
     },

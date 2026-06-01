@@ -28,6 +28,12 @@ export function pickInitialLang(): Lang {
   return getStoredLang() ?? getNavigatorLang();
 }
 
+export function chooseLang<T>(lang: Lang, da: T, en: T, de: T): T {
+  if (lang === "da") return da;
+  if (lang === "de") return de;
+  return en;
+}
+
 /** Gem valgt sprog (localStorage + cookie) */
 export function saveLang(lang: Lang) {
   try {

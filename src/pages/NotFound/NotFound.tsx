@@ -1,11 +1,13 @@
 import { Container, Flex, Heading, Text } from "@radix-ui/themes";
 import { Link } from "react-router-dom";
 import Head from "../../lib/Head";
+import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
 
 export default function NotFound({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   return (
     <>
