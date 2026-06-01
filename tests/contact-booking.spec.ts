@@ -1,0 +1,114 @@
+import { test, expect, type Page } from '@playwright/test';
+
+const formatDate = (date: Date, locale: string) =>
+  date.toLocaleDateString(locale);
+
+async function clickCalendarDate(page: Page, date: Date) {
+  const en = formatDate(date, 'en-GB');
+  const da = formatDate(date, 'da-DK');
+  const locator = page.locator(`button[aria-label="${en}"], button[aria-label="${da}"]`);
+  await expect(locator).toHaveCount(1);
+  await locator.click();
+}
+
+test.describe('contact and booking forms', () => {
+  test('contact form sends a valid contact payload and shows confirmation', async ({ page }) => {
+    const requests: any[] = [];
+
+    await page.route('**/api/contact', async (route) => {
+      const request = route.request();
+      const postData = request.postData() ?? '{}';
+      requests.push(JSON.parse(postData));
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
+    });
+
+    await page.goto('/en/contact');
+    await page.fill('#cf-name', 'Playwright Tester');
+    await page.fill('#cf-email', 'test+contact@example.com');
+    await page.selectOption('#cf-country', 'DK');
+    await page.fill('#cf-phone', '12345678');
+    await page.fill('#cf-msg', 'This is a contact form test. Please ignore.');
+    await page.locator('input[type=checkbox]').nth(0).check();
+    await page.click('button[type="submit"]');
+
+    await expect(
+      page.locator('h3', {
+        hasText: /Thanks for your message|Tak for din henvendelse/i,
+      })
+    ).toHaveCount(1);
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).toMatchObject({
+      name: 'Playwright Tester',
+      email: 'test+contact@example.com',
+      countryIso: 'DK',
+      message: 'This is a contact form test. Please ignore.',
+      consent: true,
+    });
+    expect(requests[0].phone).toContain('12345678');
+  });
+
+  test('booking form sends a booking payload and shows booking confirmation', async ({ page }) => {
+    const requests: any[] = [];
+
+    await page.route('**/api/contact', async (route) => {
+      const request = route.request();
+      const postData = request.postData() ?? '{}';
+      requests.push(JSON.parse(postData));
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
+    });
+
+    await page.goto('/en/book');
+
+    const now = new Date();
+    const checkIn = new Date(now);
+    checkIn.setDate(now.getDate() + 2);
+    const checkOut = new Date(now);
+    checkOut.setDate(now.getDate() + 5);
+
+    await clickCalendarDate(page, checkIn);
+    await clickCalendarDate(page, checkOut);
+
+    await page.fill('#cf-staypurpose', 'Family holiday test');
+    await page.fill('#cf-name', 'Playwright Booker');
+    await page.fill('#cf-email', 'test+booking@example.com');
+    await page.selectOption('#cf-country', 'DK');
+    await page.fill('#cf-phone', '12345678');
+    await page.fill('#cf-adults', '2');
+    await page.fill('#cf-children', '2');
+    await page.fill('#cf-babies', '1');
+    await page.locator('input[type=checkbox]').nth(0).check();
+    await page.locator('input[type=checkbox]').nth(1).check();
+    await page.click('button[type="submit"]');
+
+    await expect(
+      page.locator('h3', {
+        hasText: /Thanks for your booking request|Tak for din bookingforespørgsel/i,
+      })
+    ).toHaveCount(1);
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).toMatchObject({
+      name: 'Playwright Booker',
+      email: 'test+booking@example.com',
+      countryIso: 'DK',
+      stayPurpose: 'Family holiday test',
+      consent: true,
+      feesAccepted: true,
+      guests: { adults: 2, children: 2, babies: 1 },
+      purpose: 'booking',
+    });
+    expect(requests[0].phone).toContain('12345678');
+    expect(requests[0].selection).toMatchObject({
+      start: checkIn.toISOString().slice(0, 10),
+      endExclusive: checkOut.toISOString().slice(0, 10),
+      nights: 3,
+    });
+  });
+});
