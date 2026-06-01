@@ -82,6 +82,33 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
         maxVideoPreview: -1,
       },
     },
+    de: {
+      title:
+        "Fyrrehaven 61 – Ferienhaus in Dänemark für 10 Personen nahe Fjellerup Strand",
+      description:
+        "Familienfreundliches Ferienhaus auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool und Sauna. Perfekt für Familien aus Dänemark, Norwegen und Deutschland, nahe Strand und Wald.",
+      keywords: [
+        "Ferienhaus Dänemark",
+        "Sommerhaus Fjellerup",
+        "Familienferien Dänemark",
+        "Ferienhaus für deutsche Gäste",
+        "beheizter Pool Ferienhaus",
+        "Whirlpool Ferienhaus",
+        "Sauna Ferienhaus",
+        "Djursland Ferienhaus",
+        "Fyrrehaven 61",
+      ],
+      image: OG_IMG,
+      imageAlt: "Fyrrehaven 61 Ferienhaus bei Fjellerup Strand",
+      robots: {
+        index: true,
+        follow: true,
+        noarchive: true,
+        maxSnippet: -1,
+        maxImagePreview: "large",
+        maxVideoPreview: -1,
+      },
+    },
   },
 
   /* HOUSE */
@@ -121,6 +148,23 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
       image: OG_IMG,
       imageAlt: "Outdoor pool area at the house",
     },
+    de: {
+      title: "Das Haus – Pool, Whirlpool & Sauna in Dänemark | Fyrrehaven 61",
+      description:
+        "Ferienhaus für 10 Personen auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool und Sauna. Familienfreundliche Unterkunft, ideal für Gäste aus Deutschland, Norwegen und Dänemark.",
+      keywords: [
+        "Ferienhaus Fjellerup",
+        "beheizter Außenpool",
+        "Whirlpool",
+        "Sauna",
+        "familienfreundlich",
+        "10 Personen",
+        "Djursland Urlaub",
+        "Fyrrehaven 61",
+      ],
+      image: OG_IMG,
+      imageAlt: "Außenpoolbereich beim Ferienhaus",
+    },
   },
 
   /* AREA */
@@ -156,6 +200,19 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
       ],
       image: OG_IMG,
       imageAlt: "Beach and forest at Fjellerup",
+    },
+    de: {
+      title: "Region – Wald, Strand und Erlebnisse in der Nähe",
+      description:
+        "Waldwege direkt vom Haus, ein badefreundlicher Strand in der Nähe und viele familienfreundliche Aktivitäten. Tolle Erlebnisse für Gäste aus Dänemark, Norwegen und Deutschland.",
+      keywords: [
+        "Wald und Strand",
+        "Djursland Aktivitäten",
+        "Familienurlaub Dänemark",
+        "deutsche Gäste",
+      ],
+      image: OG_IMG,
+      imageAlt: "Wald und Strand bei Fjellerup",
     },
   },
 
@@ -193,6 +250,19 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
       image: OG_IMG,
       imageAlt: "Gallery cover collage",
     },
+    de: {
+      title: "Galerie – Fotos vom Haus, Pool und der Umgebung",
+      description:
+        "Bilder vom Wohnbereich, der Wohnküche, Schlafzimmern und dem Loft – inklusive beheiztem Außenpool, Whirlpool, Sauna und der nahegelegenen Natur. Beliebt bei Familien aus Dänemark, Norwegen und Deutschland.",
+      keywords: [
+        "Galerie Ferienhaus",
+        "Bilder Sommerhaus",
+        "Pool Fotos",
+        "Whirlpool Bilder",
+      ],
+      image: OG_IMG,
+      imageAlt: "Galerie Übersicht",
+    },
   },
 
   /* FAQ */
@@ -210,6 +280,13 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
         "Answers about check-in, pool & wellness, linens, payment, rules and more.",
       image: OG_IMG,
       imageAlt: "FAQ about Fyrrehaven 61",
+    },
+    de: {
+      title: "FAQ – häufig gestellte Fragen zu Fyrrehaven 61",
+      description:
+        "Antworten zu Check-in, Pool & Wellness, Bettwäsche, Zahlung, Hausregeln und mehr.",
+      image: OG_IMG,
+      imageAlt: "FAQ zu Fyrrehaven 61",
     },
   },
 
@@ -244,6 +321,19 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
       ],
       image: OG_IMG,
       imageAlt: "The family behind the house",
+    },
+    de: {
+      title: "Kontakt Fyrrehaven 61 – Fragen zu Buchung und Aufenthalt",
+      description:
+        "Kontaktieren Sie uns bei Fragen zu Terminen, Preisen, Ausstattung oder speziellen Wünschen. Wir antworten in der Regel am selben Tag, auch für Gäste aus Deutschland, Norwegen und Dänemark.",
+      keywords: [
+        "Kontakt Ferienhaus",
+        "Buchungsanfrage",
+        "Fyrrehaven 61 Kontakt",
+        "deutsche Gäste",
+      ],
+      image: OG_IMG,
+      imageAlt: "Die Familie hinter dem Haus",
     },
   },
 
@@ -281,6 +371,18 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
       image: OG_IMG,
       imageAlt: "Book the holiday home in Fjellerup",
     },
+    de: {
+      title: "Buchung bei Fyrrehaven 61 – direkt oder via Airbnb",
+      description:
+        "Buchen Sie direkt bei den Gastgebern oder über Airbnb. Beheizter Außenpool (1. Mai–1. Okt.), Platz für 10 Personen und familienfreundlich nahe Strand und Wald.",
+      keywords: [
+        "Buchung Ferienhaus",
+        "Fyrrehaven 61 Buchung",
+        "Sommerhaus Dänemark",
+      ],
+      image: OG_IMG,
+      imageAlt: "Buchung des Ferienhauses bei Fjellerup",
+    },
   },
 
   /* The rest (kept concise so META is complete) */
@@ -295,6 +397,13 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
       title: "Cookies | Fyrrehaven 61",
       description:
         "Read about essential and optional cookies on fyrrehaven-61.dk.",
+      image: OG_IMG,
+      imageAlt: "Cookies",
+    },
+    de: {
+      title: "Cookies | Fyrrehaven 61",
+      description:
+        "Lesen Sie über notwendige und optionale Cookies auf fyrrehaven-61.dk.",
       image: OG_IMG,
       imageAlt: "Cookies",
     },
@@ -313,6 +422,13 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
         "Fees that may apply in specific situations plus important booking info.",
       image: OG_IMG,
       imageAlt: "Fees overview",
+    },
+    de: {
+      title: "Gebühren | Fyrrehaven 61",
+      description:
+        "Gebühren, die in bestimmten Situationen anfallen können, sowie wichtige Buchungsinformationen.",
+      image: OG_IMG,
+      imageAlt: "Übersicht der Gebühren",
     },
   },
   privacy: {
