@@ -5,10 +5,11 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "http://127.0.0.1:5173",
 ];
 
-const RATE_LIMIT_WINDOW_MS = Number(process.env.CONTACT_RATE_WINDOW_MS || 60 * 60 * 1000);
-const RATE_LIMIT_MAX = Number(process.env.CONTACT_RATE_LIMIT || 10);
-
 const requestCounts = new Map();
+
+const getRateLimitWindowMs = () =>
+  Number(process.env.CONTACT_RATE_WINDOW_MS || 60 * 60 * 1000);
+const getRateLimitMax = () => Number(process.env.CONTACT_RATE_LIMIT || 10);
 
 function getHeader(req, name) {
   return String(req.headers?.[name.toLowerCase()] ?? "").trim();
@@ -17,7 +18,7 @@ function getHeader(req, name) {
 function isBlockedBotUserAgent(req) {
   const agent = getHeader(req, "user-agent");
   if (!agent) return false;
-  return /\b(bot|crawl|spider|archiver|fetch|monitor|checker|validator|preview|slurp|facebookexternalhit|twitterbot|linkedinbot|whatsapp|slackbot|discord|telegrambot|pinterest|embedly|quora\slink\spreview|vkshare|google-inspection-tool|googleweblight|bingbot)\b/i.test(agent);
+  return /\b(bot|crawl|spider|archiver|fetch|monitor|checker|validator|preview|slurp|facebookexternalhit|twitterbot|linkedinbot|whatsapp|slackbot|discord|telegrambot|pinterest|embedly|quora\slink\spreview|vkshare|google-inspection-tool|googleweblight|bingbot)\b|bot(?=\/|$)/i.test(agent);
 }
 
 export function getRequesterIp(req) {
@@ -342,20 +343,22 @@ export function validateContactPayload(body) {
 
 export function checkRateLimit(ip) {
   const now = Date.now();
+  const windowMs = getRateLimitWindowMs();
+  const max = getRateLimitMax();
   const record = requestCounts.get(ip);
   if (!record || record.expiresAt <= now) {
-    requestCounts.set(ip, { count: 1, expiresAt: now + RATE_LIMIT_WINDOW_MS });
-    return { ok: true, remaining: RATE_LIMIT_MAX - 1 };
+    requestCounts.set(ip, { count: 1, expiresAt: now + windowMs });
+    return { ok: true, remaining: max - 1 };
   }
 
-  if (record.count >= RATE_LIMIT_MAX) {
+  if (record.count >= max) {
     return {
       ok: false,
       retryAfter: Math.ceil((record.expiresAt - now) / 1000),
-      allowed: RATE_LIMIT_MAX,
+      allowed: max,
     };
   }
 
   record.count += 1;
-  return { ok: true, remaining: RATE_LIMIT_MAX - record.count };
+  return { ok: true, remaining: max - record.count };
 }
