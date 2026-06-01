@@ -8,12 +8,13 @@ type Props = {
 };
 
 export default function PracticalInfo({ lang }: Props) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    lang === "da" ? da : lang === "de" ? de : en;
 
   const items = [
     {
       id: "coffee",
-      title: t("Kaffemaskine", "Coffee machine"),
+      title: t("Kaffemaskine", "Coffee machine", "Kaffeemaschine"),
       content: (
         <div className={styles.section}>
           <p>
@@ -28,12 +29,12 @@ export default function PracticalInfo({ lang }: Props) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {t("Se manual her", "View manual here")}
+              {t("Se manual her", "View manual here", "Anleitung hier ansehen")}
             </a>
           </p>
           <img
             src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/bg1.png"
-            alt={t("Kaffemaskine", "Coffee machine")}
+            alt={t("Kaffemaskine", "Coffee machine", "Kaffeemaschine")}
             width={300}
           />
         </div>
@@ -41,7 +42,7 @@ export default function PracticalInfo({ lang }: Props) {
     },
     {
       id: "sofa",
-      title: t("Sovesofa", "Sofa bed"),
+      title: t("Sovesofa", "Sofa bed", "Schlafsofa"),
       content: (
         <div className={styles.section}>
           <p>
@@ -65,7 +66,7 @@ export default function PracticalInfo({ lang }: Props) {
     },
     {
       id: "security",
-      title: t("Overvågning og alarmer", "Surveillance and alarms"),
+      title: t("Overvågning og alarmer", "Surveillance and alarms", "Überwachung und Alarme"),
       content: (
         <ul className={styles.section}>
           <li>
@@ -97,7 +98,7 @@ export default function PracticalInfo({ lang }: Props) {
     },
     {
       id: "sonos",
-      title: t("Sonos-højtaler", "Sonos speaker"),
+      title: t("Sonos-højtaler", "Sonos speaker", "Sonos-Lautsprecher"),
       content: (
         <ul className={styles.section}>
           <li>
@@ -117,7 +118,7 @@ export default function PracticalInfo({ lang }: Props) {
     },
     {
       id: "stove",
-      title: t("Kogeplade fejl", "Cooktop error"),
+      title: t("Kogeplade fejl", "Cooktop error", "Kochfeld-Fehler"),
       content: (
         <p className={styles.section}>
           {t(
@@ -129,7 +130,7 @@ export default function PracticalInfo({ lang }: Props) {
     },
     {
       id: "games",
-      title: t("Brætspil & Playstation", "Board games & Playstation"),
+      title: t("Brætspil & Playstation", "Board games & Playstation", "Brettspiele & PlayStation"),
       content: (
         <ul className={styles.section}>
           <li>
@@ -152,17 +153,18 @@ export default function PracticalInfo({ lang }: Props) {
   return (
     <>
       <Head
-        title={t("Praktisk info", "Practical Info")}
+        title={t("Praktisk info", "Practical Info", "Praktische Infos")}
         description={t(
           "Praktisk information om udstyr og funktioner i huset.",
-          "Practical information about equipment and usage in the house."
+          "Practical information about equipment and usage in the house.",
+          "Praktische Informationen zu Ausstattung und Nutzung im Haus."
         )}
         lang={lang}
         path=""
         noindex
       />
       <div className={styles.wrapper}>
-        <h1>{t("Praktisk info", "Practical Info")}</h1>
+        <h1>{t("Praktisk info", "Practical Info", "Praktische Infos")}</h1>
         <Accordion items={items} />
       </div>
     </>

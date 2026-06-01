@@ -1,9 +1,9 @@
 // src/pages/Book/Book.tsx
 import { Container, Box, Heading, Text } from "@radix-ui/themes";
+import { useTranslation } from "react-i18next";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
-import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
 
@@ -15,49 +15,13 @@ import ContactForm from "../../components/ContactForm";
 import BookingProcess from "../../components/BookingProcess/BookingProcess";
 
 export default function Book({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string, de = en) =>
-    chooseLang(lang, da, en, de);
+  const { t } = useTranslation("book");
   const path = pathOf(lang, "book");
 
   /** ——— SEO ——— */
-  // Title 30–65 tegn
-  const seoTitle = t(
-    "Booking hos Fyrrehaven 61 – direkte forespørgsel",
-    "Book Fyrrehaven 61 – direct request"
-  );
-
-  // Description 120–320 tegn
-  const seoDescription = t(
-    "Book direkte hos værterne eller via Airbnb. Udendørs opvarmet pool (1. maj–1. okt.), plads til 10 og familievenligt nær skov og strand. Vi svarer typisk inden for 1 time. El 4 kr./kWh og vand 80 kr./m³ afregnes efter opholdet.",
-    "Book directly with the hosts or via Airbnb. Heated outdoor pool (May 1–Oct 1), sleeps 10 and family-friendly near forest and beach. We usually reply within 1 hour. Electricity 4 DKK/kWh and water 80 DKK/m³ are settled after your stay.",
-  );
-
-  const seoKeywords =
-    lang === "da"
-      ? [
-          "booking sommerhus",
-          "Fyrrehaven 61 booking",
-          "sommerhus Fjellerup",
-          "udendørs opvarmet pool",
-          "vildmarksbad",
-          "sauna",
-          "familievenligt sommerhus",
-          "book direkte",
-          "Airbnb Fjellerup",
-          "Djursland feriehus",
-        ]
-      : [
-          "holiday home booking",
-          "Fyrrehaven 61 booking",
-          "Fjellerup cottage",
-          "heated outdoor pool",
-          "hot tub",
-          "sauna",
-          "family friendly rental",
-          "book direct",
-          "Airbnb Fjellerup",
-          "Djursland holiday home",
-        ];
+  const seoTitle = t("seo.title");
+  const seoDescription = t("seo.description");
+  const seoKeywords = t("seo.keywords", { returnObjects: true }) as string[];
 
   // Struktureret data
   const jsonLd = {
@@ -80,12 +44,8 @@ export default function Book({ lang }: { lang: Lang }) {
   };
 
   /** ——— Hero ——— */
-  const heroTitle = t("Booking", "Booking", "Buchung");
-  const heroSubtitle = t(
-    "Forespørg direkte hos os – eller book via Airbnb, hvis du foretrækker det.",
-    "Send a direct request – or book via Airbnb if you prefer.",
-    "Senden Sie eine direkte Anfrage – oder buchen Sie über Airbnb, wenn Sie das bevorzugen."
-  );
+  const heroTitle = t("hero.title");
+  const heroSubtitle = t("hero.subtitle");
 
   // Aktuel måned til kalenderen
 
@@ -105,13 +65,9 @@ export default function Book({ lang }: { lang: Lang }) {
         title={heroTitle}
         subtitle={heroSubtitle}
         badges={[
-          t(
-            "Opvarmet udendørs pool (1/5–1/10)",
-            "Heated outdoor pool (May–Oct)",
-            "Beheizter Außenpool (1.5.–1.10.)"
-          ),
-          t("Plads til 10 gæster", "Sleeps 10 guests", "Platz für 10 Gäste"),
-          t("Familievenligt", "Family friendly", "Familienfreundlich"),
+          t("hero.badges.pool"),
+          t("hero.badges.guests"),
+          t("hero.badges.family"),
         ]}
         // primaryCta={{
         //   label: t("Anmod om booking", "Request booking"),
@@ -119,17 +75,14 @@ export default function Book({ lang }: { lang: Lang }) {
         // }}
         // Brug ekstern href til Airbnb for at undgå router-redirects
         secondaryCta={{
-          label: t("Booking Airbnb", "Booking Airbnb"),
+          label: t("hero.airbnbCta"),
           href: "https://www.airbnb.dk/h/fyrrehaven-61",
           external: true,
         }}
         media={{
           type: "image",
           src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3807.webp",
-          alt: t(
-            "Booking af feriehus ved Fjellerup",
-            "Book the holiday home in Fjellerup"
-          ),
+          alt: t("hero.imageAlt"),
         }}
         align="left"
         layout="media-right"
@@ -137,36 +90,22 @@ export default function Book({ lang }: { lang: Lang }) {
       <Container size="3">
         <Box py="6">
           <Heading as="h2" size="4" mb="2">
-            {t(
-              "Hvordan vil du booke?",
-              "How would you like to book?",
-              "Wie möchten Sie buchen?"
-            )}
+            {t("intro.title")}
           </Heading>
           <Text size="2" mb="4" color="gray">
-            {t(
-              "Du kan enten sende os en direkte forespørgsel via formularen nedenfor, eller du kan booke via Airbnb, hvis du foretrækker det. Vi svarer normalt inden for 1 time",
-              "You can either send us a direct request using the form below, or you can book via Airbnb if you prefer. We usually respond within 1 hour.",
-              "Sie können uns entweder eine direkte Anfrage über das Formular unten senden oder über Airbnb buchen, wenn Sie es bevorzugen. Wir antworten normalerweise innerhalb einer Stunde."
-            )}
+            {t("intro.body")}
           </Text>
           {/* Lille “praktisk” note */}
           <div className={styles.note}>
             <Heading as="h3" size="3" mb="1">
-              {t("Praktisk", "Good to know")}
+              {t("intro.noteTitle")}
             </Heading>
             <Text>
-              {t(
-                "Udendørs pool er opvarmet ca. 29 °C og åben 1. maj – 1. oktober. Maks. 10 personer. Ingen fester.",
-                "Outdoor pool heated to ~29 °C and open May 1 – Oct 1. Max 10 guests. No parties."
-              )}
+              {t("intro.notePool")}
             </Text>
             <br />
             <Text>
-              {t(
-                "El: 4 kr./kWh, vand: 80 kr./m³ (afregnes efter opholdet).",
-                "Electricity: 4 DKK/kWh, water: 80 DKK/m³ (settled after your stay)."
-              )}
+              {t("intro.noteUtilities")}
             </Text>
           </div>
         </Box>

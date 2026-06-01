@@ -86,7 +86,7 @@ useEffect(() => {
       return [
         {
           to: `/guest/${lang}/${GUEST_PAGES.welcome[lang]}`,
-          label: t("Velkomst", "Welcome"),
+          label: t("Velkomst", "Welcome", "Willkommen"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.manual[lang]}`,
@@ -102,20 +102,20 @@ useEffect(() => {
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.spa[lang]}`,
-          label: t("Vildmarksbad", "Hot Tub"),
+          label: t("Vildmarksbad", "Hot Tub", "Whirlpool"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.practicalInfo[lang]}`,
-          label: t("Praktisk info", "Practical Info"),
+          label: t("Praktisk info", "Practical Info", "Praktische Infos"),
         },
       ];
     }
     return [
-      { to: pathOf(lang, "house"), label: t("Huset", "The House") },
-      { to: pathOf(lang, "area"), label: t("Området", "Area") },
-      { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery") },
+      { to: pathOf(lang, "house"), label: t("Huset", "The House", "Das Haus") },
+      { to: pathOf(lang, "area"), label: t("Området", "Area", "Umgebung") },
+      { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery", "Galerie") },
       // { to: pathOf(lang, "faq"), label: "FAQ" },
-      { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact") },
+      { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact", "Kontakt") },
     ];
   }, [lang, guest, t]);
 
@@ -163,6 +163,7 @@ useEffect(() => {
             <Buttons
               labelDa="Book nu"
               labelEn="Book now"
+              labelDe="Jetzt buchen"
               to={pathOf(lang, "book")}
               buttonType="button"
             />
@@ -262,6 +263,7 @@ useEffect(() => {
                   className={styles.ctaLink}
                   labelDa="Book"
                   labelEn="Book"
+                  labelDe="Buchen"
                   buttonType="button"
                   fullWidth
                 />

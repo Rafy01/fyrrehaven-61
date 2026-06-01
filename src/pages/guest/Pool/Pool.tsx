@@ -9,29 +9,30 @@ import { guestPathOf } from "../../../lib/routes";
 
 export default function PoolPage({ lang }: { lang: Lang }) {
   const t = useCallback(
-    (da: string, en: string) => (lang === "da" ? da : en),
+    (da: string, en: string, de = en) =>
+      lang === "da" ? da : lang === "de" ? de : en,
     [lang]
   );
 
   const items = [
     {
       id: "duckkey",
-      title: t("Pool tag nøgle", "Pool cover key"),
+      title: t("Pool tag nøgle", "Pool cover key", "Schlüssel für Poolabdeckung"),
       content: (
         <img
           src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/pool_nogle.webp"
-          alt={t("Pool tag nøgle", "Pool cover key")}
+          alt={t("Pool tag nøgle", "Pool cover key", "Schlüssel für Poolabdeckung")}
           className={styles.image}
         />
       ),
     },
     {
       id: "keyhole",
-      title: t("Nøglehul til pooltag", "Keyhole for pool cover"),
+      title: t("Nøglehul til pooltag", "Keyhole for pool cover", "Schlüsselloch für Poolabdeckung"),
       content: (
         <img
           src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/pool_noglehuk.webp"
-          alt={t("Nøglehul til pooltag", "Keyhole for pool cover")}
+          alt={t("Nøglehul til pooltag", "Keyhole for pool cover", "Schlüsselloch für Poolabdeckung")}
           className={styles.image}
         />
       ),
@@ -43,17 +44,18 @@ export default function PoolPage({ lang }: { lang: Lang }) {
       <Head
         lang={lang}
         path={guestPathOf(lang, "pool")}
-        title={t("Pool – Maj 2026", "Pool – May 2026")}
+        title={t("Pool – Maj 2026", "Pool – May 2026", "Pool – Mai 2026")}
         description={t(
           "Sådan bruger og åbner I poolen ved sommerhuset.",
-          "How to use and open the pool at the holiday home."
+          "How to use and open the pool at the holiday home.",
+          "So benutzen und öffnen Sie den Pool am Ferienhaus."
         )}
         noindex
       />
 
       <div className={styles.wrapper}>
         <h1 className={styles.title}>{t("POOL", "POOL")}</h1>
-        <p className={styles.subtitle}>{t("– Maj 2026", "– May 2026")}</p>
+        <p className={styles.subtitle}>{t("– Maj 2026", "– May 2026", "– Mai 2026")}</p>
 
         <div className={styles.warningBox}>
           <strong>
@@ -73,7 +75,7 @@ export default function PoolPage({ lang }: { lang: Lang }) {
         </div>
 
         <section className={styles.section}>
-          <h2>{t("Regler og brug", "Rules and use")}</h2>
+          <h2>{t("Regler og brug", "Rules and use", "Regeln und Nutzung")}</h2>
           <ul>
             <li>
               {t(
@@ -88,7 +90,7 @@ export default function PoolPage({ lang }: { lang: Lang }) {
                 "Pool is automatically filled with water and chemicals"
               )}
             </li>
-            <li>{t("Ingen hovedspring", "No diving")}</li>
+            <li>{t("Ingen hovedspring", "No diving", "Nicht hineinspringen")}</li>
             <li>
               <em>
                 {t(
@@ -101,7 +103,7 @@ export default function PoolPage({ lang }: { lang: Lang }) {
         </section>
 
         <section className={styles.section}>
-          <h2>{t("Klargøring", "Preparation")}</h2>
+          <h2>{t("Klargøring", "Preparation", "Vorbereitung")}</h2>
           <ol>
             <li>
               {t(

@@ -4,12 +4,14 @@ import type { Lang } from "../../../lib/lang";
 import styles from "./Sauna.module.css";
 
 export default function GuestSaunaPage({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    lang === "da" ? da : lang === "de" ? de : en;
 
-  const title = t("Sauna regler og sikkerhed", "Sauna rules and safety");
+  const title = t("Sauna regler og sikkerhed", "Sauna rules and safety", "Sauna-Regeln und Sicherheit");
   const description = t(
     "Læs hvordan du bruger saunaen korrekt og sikkert under opholdet.",
-    "How to use the sauna safely during your stay."
+    "How to use the sauna safely during your stay.",
+    "Lesen Sie, wie Sie die Sauna während Ihres Aufenthalts sicher benutzen."
   );
 
   const rulesContent = (
@@ -209,17 +211,17 @@ export default function GuestSaunaPage({ lang }: { lang: Lang }) {
   const items = [
     {
       id: "rules",
-      title: t("Regler og brug", "Rules and usage"),
+      title: t("Regler og brug", "Rules and usage", "Regeln und Nutzung"),
       content: rulesContent,
     },
     {
       id: "donts",
-      title: t("Hvad du ikke må gøre", "What You Must Not Do"),
+      title: t("Hvad du ikke må gøre", "What You Must Not Do", "Was Sie nicht tun dürfen"),
       content: dontsContent,
     },
     {
       id: "safety",
-      title: t("Vigtige sikkerhedsregler", "Important Safety"),
+      title: t("Vigtige sikkerhedsregler", "Important Safety", "Wichtige Sicherheitsregeln"),
       content: safetyContent,
     },
   ];
@@ -231,7 +233,7 @@ export default function GuestSaunaPage({ lang }: { lang: Lang }) {
 
   return (
     <>
-      <Head title={title} description={description} lang={"da"} path={""} noindex/>
+      <Head title={title} description={description} lang={lang} path={""} noindex/>
 
       <div className={styles.wrapper}>
         <h1>{title}</h1>
@@ -239,7 +241,7 @@ export default function GuestSaunaPage({ lang }: { lang: Lang }) {
 
         <img
           src={imageUrl}
-          alt={t("Sådan bruger du saunaen", "How to use the sauna")}
+          alt={t("Sådan bruger du saunaen", "How to use the sauna", "So benutzen Sie die Sauna")}
           className={styles.image}
         />
 

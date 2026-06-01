@@ -110,7 +110,7 @@ function startOfWeek(d: Date, weekStartsOn: number): Date {
   return addDays(sd, -diff);
 }
 function formatMonthTitle(d: Date, lang: Lang): string {
-  return d.toLocaleDateString(lang === "da" ? "da-DK" : "en-GB", {
+  return d.toLocaleDateString(lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB", {
     month: "long",
     year: "numeric",
   });
@@ -368,19 +368,21 @@ export default function AvailabilityCalendar({
   }, [sel, gridStart, selectionMode]);
 
   const monthTitle = formatMonthTitle(monthBase, lang);
-  const reservedLabel = t("Reserveret", "Reserved");
+  const reservedLabel = t("Reserveret", "Reserved", "Reserviert");
 
   // ugedage
   const WD_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const WD_DA = ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"];
-  const wd = (lang === "da" ? WD_DA : WD_EN)
+  const WD_DE = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+  const WD = lang === "da" ? WD_DA : lang === "de" ? WD_DE : WD_EN;
+  const wd = WD
     .slice(weekStartsOn)
-    .concat((lang === "da" ? WD_DA : WD_EN).slice(0, weekStartsOn));
+    .concat(WD.slice(0, weekStartsOn));
 
   // Kun tal (ingen symbol)
   const fmtNumber = React.useMemo(
     () =>
-      new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
+      new Intl.NumberFormat(lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB", {
         maximumFractionDigits: 0,
       }),
     [lang]
@@ -443,7 +445,7 @@ export default function AvailabilityCalendar({
     const isOk = nights >= required;
 
     const dateStr = start.toLocaleDateString(
-      lang === "da" ? "da-DK" : "en-GB",
+      lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB",
       {
         day: "numeric",
         month: "long",
@@ -455,6 +457,10 @@ export default function AvailabilityCalendar({
         ? `Minimum ${required} ${
             required === 1 ? "nat" : "nætter"
           } ved ankomst ${dateStr}.`
+        : lang === "de"
+        ? `Mindestens ${required} ${
+            required === 1 ? "Nacht" : "Nächte"
+          } bei Anreise ${dateStr}.`
         : `Minimum ${required} night${
             required === 1 ? "" : "s"
           } required for arrival ${dateStr}.`
@@ -549,7 +555,7 @@ export default function AvailabilityCalendar({
       className={styles.wrap}
       data-mode={selectionMode}
       aria-live="polite"
-      aria-label={t("Tilgængelighedskalender", "Availability calendar")}
+      aria-label={t("Tilgængelighedskalender", "Availability calendar", "Verfügbarkeitskalender")}
     >
       <div className={styles.head}>
         <button
@@ -557,7 +563,7 @@ export default function AvailabilityCalendar({
           className={styles.navBtn}
           onClick={prevMonth}
           disabled={!canPrev}
-          aria-label={t("Forrige måned", "Previous month")}
+          aria-label={t("Forrige måned", "Previous month", "Vorheriger Monat")}
         >
           ‹
         </button>
@@ -566,7 +572,7 @@ export default function AvailabilityCalendar({
           type="button"
           className={styles.navBtn}
           onClick={nextMonth}
-          aria-label={t("Næste måned", "Next month")}
+          aria-label={t("Næste måned", "Next month", "Nächster Monat")}
         >
           ›
         </button>
@@ -697,7 +703,7 @@ export default function AvailabilityCalendar({
                       type="button"
                       className={styles.cellBtn}
                       aria-label={d.toLocaleDateString(
-                        lang === "da" ? "da-DK" : "en-GB"
+                        lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB"
                       )}
                       aria-pressed={
                         selectionMode === "single" ? selectedSingle : undefined
@@ -772,7 +778,7 @@ export default function AvailabilityCalendar({
       )}
 
       {!bookings && (
-        <div className={styles.loading}>{t("Henter…", "Loading…")}</div>
+        <div className={styles.loading}>{t("Henter…", "Loading…", "Lädt…")}</div>
       )}
       {error && <div className={styles.error}>{error}</div>}
     </div>

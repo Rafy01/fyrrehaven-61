@@ -12,17 +12,25 @@ type Props = { lang: Lang };
 
 export default function Manual({ lang }: Props) {
   const title =
-    lang === "da" ? "Manual 🧭 Fyrrehaven 61" : "Manual 🧭 Fyrrehaven 61";
+    lang === "da"
+      ? "Manual 🧭 Fyrrehaven 61"
+      : lang === "de"
+      ? "Anleitung 🧭 Fyrrehaven 61"
+      : "Manual 🧭 Fyrrehaven 61";
   const description =
     lang === "da"
       ? "Se vigtig info til dit ophold: el-måler, vandmåler, adgang, regler og mere."
+      : lang === "de"
+      ? "Wichtige Infos für Ihren Aufenthalt: Stromzähler, Wasserzähler, Zugang, Regeln und mehr."
       : "Important info for your stay: meter readings, access, house rules and more.";
 
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    lang === "da" ? da : lang === "de" ? de : en;
 
     const heroTitle = t(
       "Tak for I har valgt vores sommerhus!",
-      "Thank you for choosing our summer house!"
+      "Thank you for choosing our summer house!",
+      "Danke, dass Sie unser Ferienhaus gewählt haben!"
     );
     const heroSubtitle = t(
       "Her er lidt info omkring hvordan I behandler huset – I må meget gerne følge os på sociale medier og dele jeres oplevelse med #fyrrehaven61",
@@ -355,6 +363,7 @@ export default function Manual({ lang }: Props) {
               to={hottubUrl}
               labelDa="Vildmarksbad"
               labelEn="Hot Tub"
+              labelDe="Whirlpool"
               variant="secondary"
             />
             <Buttons
@@ -368,49 +377,59 @@ export default function Manual({ lang }: Props) {
 
         <div className={styles.noticeBox}>
           <p>
-            <strong>{lang === "da" ? "HUSK!" : "NOTE!"}</strong>{" "}
+            <strong>{lang === "da" ? "HUSK!" : lang === "de" ? "WICHTIG!" : "NOTE!"}</strong>{" "}
             {lang === "da"
               ? "Det er jeres ansvar at få aflæst el og vand måler. Glemmer I dette kan I komme til at betale mere end jeres forbrug."
+              : lang === "de"
+              ? "Es liegt in Ihrer Verantwortung, Strom- und Wasserzähler abzulesen. Wenn Sie dies vergessen, kann mehr als Ihr tatsächlicher Verbrauch berechnet werden."
               : "It is your responsibility to read the electricity and water meters. If you forget this, you may be charged for more than your actual usage."}
           </p>
 
           <p>
             {lang === "da"
               ? "Aflæsning skal ske ved tjekind og tjekud via vores hjemmeside. I finder QR-koden ved indgangen eller "
+              : lang === "de"
+              ? "Die Zählerablesung muss beim Check-in und Check-out über unsere Website erfolgen. Den QR-Code finden Sie am Eingang oder "
               : "Meter reading must be done at check-in and check-out via our website. You’ll find the QR code by the entrance or "}
             <a
               href={
                 lang === "da"
                   ? "https://booking.fyrrehaven-61.dk/manual"
+                  : lang === "de"
+                  ? "https://booking.fyrrehaven-61.dk/de/benutzerhandbuch"
                   : "https://booking.fyrrehaven-61.dk/en/manual"
               }
             >
-              {lang === "da" ? "her" : "here"}
+              {lang === "da" ? "her" : lang === "de" ? "hier" : "here"}
             </a>
             .
           </p>
 
           <ol>
             <li>
-              {lang === "da" ? "Aflæs EL tavlen" : "Read the electricity meter"}
+              {lang === "da" ? "Aflæs EL tavlen" : lang === "de" ? "Stromzähler ablesen" : "Read the electricity meter"}
             </li>
             <li>
               {lang === "da"
                 ? "Aflæs Vand i huset"
+                : lang === "de"
+                ? "Wasserzähler im Haus ablesen"
                 : "Read water meter inside house"}
             </li>
             <li>
               {lang === "da"
                 ? "Aflæs vand til pool i skuret"
+                : lang === "de"
+                ? "Pool-Wasserzähler im Schuppen ablesen"
                 : "Read pool water meter in shed"}
             </li>
           </ol>
         </div>
       </div>
       <div className={styles.manualContainer}>
-        <h1>{t("Manual til jeres ophold", "Manual for your stay")}</h1>
+        <h1>{t("Manual til jeres ophold", "Manual for your stay", "Anleitung für Ihren Aufenthalt")}</h1>
         <Accordion items={duringStayItems} defaultOpenId="wifi" />
-        <h2 id="theend">{t("Efter endt ophold", "After your stay")}</h2>
+        <h2 id="theend">{t("Efter endt ophold", "After your stay", "Nach Ihrem Aufenthalt")}</h2>
         <Accordion items={afterStayItems} />
       </div>
     </>

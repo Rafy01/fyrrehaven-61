@@ -13,21 +13,29 @@ type Props = {
 
 export default function GuestWelcome({ lang }: Props) {
   const title =
-    lang === "da" ? "Velkomst – Fyrrehaven 61" : "Welcome – Fyrrehaven 61";
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+    lang === "da"
+      ? "Velkomst – Fyrrehaven 61"
+      : lang === "de"
+      ? "Willkommen – Fyrrehaven 61"
+      : "Welcome – Fyrrehaven 61";
+  const t = (da: string, en: string, de = en) =>
+    lang === "da" ? da : lang === "de" ? de : en;
 
   const heroTitle = t(
     "Velkommen til Fyrrehaven 61!",
-    "Welcome to Fyrrehaven 61!"
+    "Welcome to Fyrrehaven 61!",
+    "Willkommen bei Fyrrehaven 61!"
   );
   const heroSubtitle = t(
     "Vi glæder os til at byde jer velkommen i smukke og afslappende omgivelser – her kommer lidt praktisk info!",
-    "We look forward to welcoming you in beautiful and relaxing surroundings – here’s a bit of practical info!"
+    "We look forward to welcoming you in beautiful and relaxing surroundings – here’s a bit of practical info!",
+    "Wir freuen uns, Sie in einer schönen und entspannten Umgebung willkommen zu heißen – hier kommen ein paar praktische Infos!"
   );
 
 const description = t(
   "Velkommen til jeres ophold i Fyrrehaven 61. Her finder I praktiske informationer om huset, pool, sauna, og meget mere.",
-  "Welcome to your stay at Fyrrehaven 61. Here you’ll find practical information about the house, pool, sauna, and much more."
+  "Welcome to your stay at Fyrrehaven 61. Here you’ll find practical information about the house, pool, sauna, and much more.",
+  "Willkommen zu Ihrem Aufenthalt in Fyrrehaven 61. Hier finden Sie praktische Informationen zum Haus, Pool, zur Sauna und vielem mehr."
 );
 
 const manualUrl = guestPathOf(lang, "manual");
@@ -45,7 +53,7 @@ const practicalInfoUrl = guestPathOf(lang, "practicalInfo");
         title={title}
         description={description}
         ogImage="/images/guest-welcome.jpg"
-        ogImageAlt={t("Velkomst billede", "Welcome image")}
+        ogImageAlt={t("Velkomst billede", "Welcome image", "Willkommensbild")}
         noindex
       />
 
@@ -60,10 +68,10 @@ const practicalInfoUrl = guestPathOf(lang, "practicalInfo");
         </Typography>
 
         <div className={styles.linkCenter}>
-          <Buttons to={manualUrl} label={t("Manualen", "Go to the manual")} />
+          <Buttons to={manualUrl} label={t("Manualen", "Go to the manual", "Zur Anleitung")} />
           <Buttons
             to={practicalInfoUrl}
-            label={t("Praktisk information", "Practical information")}
+            label={t("Praktisk information", "Practical information", "Praktische Informationen")}
             variant="secondary"
           />
         </div>
@@ -118,7 +126,7 @@ const practicalInfoUrl = guestPathOf(lang, "practicalInfo");
             <a href={saunaUrl}>{t("Sauna", "Sauna")}</a>
           </Typography>
           <Typography as="p">
-            <a href={hotTubUrl}>{t("Vildmarksbad", "Hot Tub")}</a>
+            <a href={hotTubUrl}>{t("Vildmarksbad", "Hot Tub", "Whirlpool")}</a>
           </Typography>
         </div>
 
@@ -153,7 +161,7 @@ const practicalInfoUrl = guestPathOf(lang, "practicalInfo");
         <div className={styles.linkCenter}>
           <Buttons
             to={endUrl}
-            label={t("Tjekliste for afrejse", "Departure checklist")}
+            label={t("Tjekliste for afrejse", "Departure checklist", "Checkliste für die Abreise")}
             variant="secondary"
           />
         </div>
@@ -173,7 +181,7 @@ const practicalInfoUrl = guestPathOf(lang, "practicalInfo");
         </Typography>
 
         <Typography variant="h2">
-          {t("Find adressen her:", "Find the address here:")}
+          {t("Find adressen her:", "Find the address here:", "Adresse hier finden:")}
         </Typography>
 
         <img

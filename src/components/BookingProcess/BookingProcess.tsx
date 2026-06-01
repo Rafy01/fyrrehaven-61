@@ -1,6 +1,7 @@
 // src/components/BookingProcess/BookingProcess.tsx
 import * as React from "react";
-import { chooseLang, type Lang } from "../../lib/lang";
+import { useTranslation } from "react-i18next";
+import type { Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
 import styles from "./BookingProcess.module.css";
 
@@ -20,62 +21,38 @@ export default function BookingProcess({
   minAge = 25,
   maxGuests = 10,
 }: Props) {
-  const t = (da: string, en: string, de = en) =>
-    chooseLang(lang, da, en, de);
+  const { t } = useTranslation("book");
+  const values = { minAge, maxGuests, responseHours };
 
   const steps: Array<{ title: string; body: React.ReactNode }> = [
     {
-      title: t("Send forespørgsel", "Send a request"),
-      body: t(
-        "Vælg ønskede datoer i kalenderen og udfyld formularen nedenfor.",
-        "Pick your dates in the calendar and fill in the form below."
-      ),
+      title: t("process.steps.request.title"),
+      body: t("process.steps.request.body"),
     },
     {
-      title: t("Vi gennemgår din forespørgsel", "We review your request"),
+      title: t("process.steps.review.title"),
       body: (
         <>
-          {t(
-            "Vi tjekker tilgængelighed, antal gæster og formål med opholdet.",
-            "We check availability, party size and the purpose of your stay."
-          )}{" "}
-          {t(
-            `Husregler: ingen fester og ingen rene ungdomsgrupper under ${minAge} år. Max ${maxGuests} personer.`,
-            `House rules: no parties and no youth-only groups under ${minAge}. Max ${maxGuests} guests.`
-          )}
+          {t("process.steps.review.bodyIntro")}{" "}
+          {t("process.steps.review.bodyRules", values)}
         </>
       ),
     },
     {
-      title: t(
-        "Svar fra os (typisk inden for 24 timer)",
-        "Our reply (usually within 24 hours)"
-      ),
+      title: t("process.steps.reply.title", values),
       body: (
         <>
-          {t(
-            `Du modtager svar fra os (typisk inden for ${responseHours} timer).`,
-            `You'll hear back from us (usually within ${responseHours} hours).`
-          )}{" "}
-          {t(
-            "Er alt i orden, sender vi en lejekontrakt med pris og praktisk info. Passer datoerne ikke – eller bryder forespørgslen husreglerne – foreslår vi alternativer eller afviser venligt.",
-            "If everything checks out, we send a rental agreement with price and practical info. If the dates don't work—or the request breaks our house rules—we'll suggest alternatives or politely decline."
-          )}
+          {t("process.steps.reply.bodyIntro", values)}{" "}
+          {t("process.steps.reply.bodyDetails")}
         </>
       ),
     },
     {
-      title: t("Du underskriver – vi bekræfter", "You sign – we confirm"),
+      title: t("process.steps.confirm.title"),
       body: (
         <>
-          {t(
-            "Bookingen er først endeligt bekræftet, når lejekontrakten er underskrevet og de aftalte betalinger er modtaget.",
-            "Your booking is confirmed once the rental agreement is signed and payments are received."
-          )}{" "}
-          {t(
-            "Herefter får du velkomstmail med nøgleinfo, adresse og ankomstvejledning.",
-            "After that you'll receive a welcome email with key info, address and arrival instructions."
-          )}
+          {t("process.steps.confirm.bodyIntro")}{" "}
+          {t("process.steps.confirm.bodyDetails")}
         </>
       ),
     },
@@ -84,19 +61,16 @@ export default function BookingProcess({
   return (
     <section className={styles.wrap} aria-labelledby="bp-title">
       <h2 id="bp-title" className={styles.title}>
-        {t("Sådan foregår en booking", "How the booking works")}
+        {t("process.title")}
       </h2>
 
       <p className={styles.lead}>
-        {t(
-          "Det er en forespørgsel – ikke en øjeblikkelig reservation. Vi vender hurtigt tilbage med enten lejekontrakt eller et venligt afslag.",
-          "It's a request, not an instant reservation. We'll quickly reply with either a rental agreement or a polite decline."
-        )}
+        {t("process.lead")}
       </p>
 
       <ol
         className={styles.list}
-        aria-label={t("Bookingproces", "Booking process")}
+        aria-label={t("process.aria")}
       >
         {steps.map((s, i) => (
           <li key={i} className={styles.item}>
@@ -112,18 +86,14 @@ export default function BookingProcess({
       </ol>
 
       <div className={styles.note} role="note">
-        <strong>{t("Husregler kort:", "House rules, short:")}</strong>{" "}
-        {t(
-          `ingen fester, ingen rene ungdomsgrupper under ${minAge} år, og vis hensyn til naboerne. Max ${maxGuests} gæster.`,
-          `no parties, no youth-only groups under ${minAge}, and please respect the neighbours. Max ${maxGuests} guests.`
-        )}{" "}
-        {t("Læs mere her:", "Read more here:")}{" "}
+        <strong>{t("process.note.label")}</strong>{" "}
+        {t("process.note.text", values)} {t("process.note.readMore")}{" "}
         <a href={pathOf(lang, "fees")} target="_blank" rel="noreferrer">
-          {t("gebyroversigt", "fee list")}
+          {t("process.note.fees")}
         </a>{" "}
         ·{" "}
         <a href={pathOf(lang, "privacy")} target="_blank" rel="noreferrer">
-          {t("privatlivspolitik", "privacy policy")}
+          {t("process.note.privacy")}
         </a>
         .
       </div>

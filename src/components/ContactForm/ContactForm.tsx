@@ -164,7 +164,7 @@ export default function ContactForm({
 
   const fmtDate = React.useMemo(
     () =>
-      new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
+      new Intl.DateTimeFormat(lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -175,7 +175,7 @@ export default function ContactForm({
   // Lang dato til fejlbeskeder (fx "14. oktober 2025")
   const fmtDateLong = React.useMemo(
     () =>
-      new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
+      new Intl.DateTimeFormat(lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB", {
         day: "numeric",
         month: "long",
         year: "numeric",
@@ -185,7 +185,7 @@ export default function ContactForm({
 
   const fmtMoney = React.useMemo(
     () =>
-      new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
+      new Intl.NumberFormat(lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB", {
         style: "currency",
         currency: "DKK",
         maximumFractionDigits: 0,
@@ -257,11 +257,13 @@ export default function ContactForm({
     const missingMsg = isBooking
       ? t(
           "Udfyld venligst navn og e-mail.",
-          "Please fill in your name and email."
+          "Please fill in your name and email.",
+          "Bitte geben Sie Name und E-Mail ein."
         )
       : t(
           "Udfyld venligst navn, e-mail og besked.",
-          "Please fill in your name, email and message."
+          "Please fill in your name, email and message.",
+          "Bitte geben Sie Name, E-Mail und Nachricht ein."
         );
 
     if (
@@ -277,7 +279,8 @@ export default function ContactForm({
       setError(
         t(
           "Sæt venligst flueben for samtykke til behandling af dine oplysninger.",
-          "Please check the consent box to allow us to process your information."
+          "Please check the consent box to allow us to process your information.",
+          "Bitte bestätigen Sie die Einwilligung zur Verarbeitung Ihrer Daten."
         )
       );
       return;
@@ -294,7 +297,8 @@ export default function ContactForm({
         setError(
           t(
             "Angiv venligst antal voksne (mindst 1).",
-            "Please enter number of adults (at least 1)."
+            "Please enter number of adults (at least 1).",
+            "Bitte geben Sie die Anzahl der Erwachsenen an (mindestens 1)."
           )
         );
         return;
@@ -303,7 +307,8 @@ export default function ContactForm({
         setError(
           t(
             "Det samlede antal gæster må højst være 10.",
-            "The total number of guests must not exceed 10."
+            "The total number of guests must not exceed 10.",
+            "Die Gesamtzahl der Gäste darf höchstens 10 betragen."
           )
         );
         return;
@@ -316,7 +321,8 @@ export default function ContactForm({
         setError(
           t(
             "Vælg venligst en periode i kalenderen (ankomst og afrejse).",
-            "Please select a period in the calendar (check-in and check-out)."
+            "Please select a period in the calendar (check-in and check-out).",
+            "Bitte wählen Sie einen Zeitraum im Kalender (Anreise und Abreise)."
           )
         );
         return;
@@ -332,6 +338,12 @@ export default function ContactForm({
               } ved ankomst ${fmtDateLong.format(
                 selPrice.start!
               )}. Vælg venligst en længere periode.`
+            : lang === "de"
+            ? `Mindestens ${minReq} ${
+                minReq === 1 ? "Nacht" : "Nächte"
+              } bei Anreise ${fmtDateLong.format(
+                selPrice.start!
+              )}. Bitte wählen Sie einen längeren Aufenthalt.`
             : `Minimum ${minReq} night${
                 minReq === 1 ? "" : "s"
               } required for arrival ${fmtDateLong.format(
@@ -345,7 +357,8 @@ export default function ContactForm({
         setError(
           t(
             "Bekræft venligst at du har læst og accepterer gebyroversigten.",
-            "Please confirm that you have read and accept the fee list."
+            "Please confirm that you have read and accept the fee list.",
+            "Bitte bestätigen Sie, dass Sie die Gebührenübersicht gelesen und akzeptiert haben."
           )
         );
         return;
@@ -354,7 +367,8 @@ export default function ContactForm({
         setError(
           t(
             "Fortæl os venligst kort, hvad opholdet skal bruges til.",
-            "Please briefly tell us the purpose of your stay."
+            "Please briefly tell us the purpose of your stay.",
+            "Bitte beschreiben Sie kurz den Zweck Ihres Aufenthalts."
           )
         );
         return;
@@ -432,7 +446,8 @@ export default function ContactForm({
       setError(
         t(
           "Kunne ikke sende beskeden. Prøv igen om lidt.",
-          "Couldn't send your message. Please try again shortly."
+          "Couldn't send your message. Please try again shortly.",
+          "Die Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es gleich noch einmal."
         )
       );
     } finally {
@@ -472,57 +487,61 @@ export default function ContactForm({
           {isBooking
             ? t(
                 "Tak for din bookingforespørgsel!",
-                "Thanks for your booking request!"
+                "Thanks for your booking request!",
+                "Vielen Dank für Ihre Buchungsanfrage!"
               )
-            : t("Tak for din henvendelse!", "Thanks for your message!")}
+            : t("Tak for din henvendelse!", "Thanks for your message!", "Vielen Dank für Ihre Nachricht!")}
         </h3>
         <p className={styles.sLead}>
           {isBooking
             ? t(
                 "Vi vender tilbage hurtigst muligt. Her er en oversigt over din forespørgsel:",
-                "We’ll get back to you shortly. Here’s a summary of your request:"
+                "We’ll get back to you shortly. Here’s a summary of your request:",
+                "Wir melden uns so schnell wie möglich. Hier ist eine Übersicht Ihrer Anfrage:"
               )
             : t(
                 "Vi vender tilbage hurtigst muligt. Her er en kopi af det, du sendte:",
-                "We'll get back to you as soon as possible. Here's a copy of what you sent:"
+                "We'll get back to you as soon as possible. Here's a copy of what you sent:",
+                "Wir melden uns so schnell wie möglich. Hier ist eine Kopie Ihrer Nachricht:"
               )}
         </p>
 
         {isBooking && (
           <dl className={styles.echo}>
             <div>
-              <dt>{t("Ankomst", "Check-in")}</dt>
+              <dt>{t("Ankomst", "Check-in", "Anreise")}</dt>
               <dd>{startStr}</dd>
             </div>
             <div>
-              <dt>{t("Afrejse", "Check-out")}</dt>
+              <dt>{t("Afrejse", "Check-out", "Abreise")}</dt>
               <dd>{endStr}</dd>
             </div>
             <div>
-              <dt>{t("Nætter", "Nights")}</dt>
+              <dt>{t("Nætter", "Nights", "Nächte")}</dt>
               <dd>{nightsStr}</dd>
             </div>
             <div>
-              <dt>{t("Pris (overnatninger)", "Price (nights)")}</dt>
+              <dt>{t("Pris (overnatninger)", "Price (nights)", "Preis (Übernachtungen)")}</dt>
               <dd>{nightsPriceStr}</dd>
             </div>
             <div>
-              <dt>{t("Rengøring (obligatorisk)", "Cleaning (mandatory)")}</dt>
+              <dt>{t("Rengøring (obligatorisk)", "Cleaning (mandatory)", "Reinigung (obligatorisch)")}</dt>
               <dd>{cleaningStr}</dd>
             </div>
 
             <div>
-              <dt>{t("Estimeret total", "Estimated total")}</dt>
+              <dt>{t("Estimeret total", "Estimated total", "Geschätzter Gesamtpreis")}</dt>
               <dd>{totalStr}</dd>
             </div>
             <div>
-              <dt>{t("Gæster", "Guests")}</dt>
+              <dt>{t("Gæster", "Guests", "Gäste")}</dt>
               <dd>
-                {`${toInt(state.adults)} ${t("voksne", "adults")}, ${toInt(
+                {`${toInt(state.adults)} ${t("voksne", "adults", "Erwachsene")}, ${toInt(
                   state.children
-                )} ${t("børn", "children")}, ${toInt(state.babies)} ${t(
+                )} ${t("børn", "children", "Kinder")}, ${toInt(state.babies)} ${t(
                   "babyer",
-                  "babies"
+                  "babies",
+                  "Babys"
                 )}`}
               </dd>
             </div>
@@ -532,7 +551,7 @@ export default function ContactForm({
         {/* Kontakt-oplysninger vises for begge varianter */}
         <dl className={styles.echo}>
           <div>
-            <dt>{t("Navn", "Name")}</dt>
+            <dt>{t("Navn", "Name", "Name")}</dt>
             <dd>{state.name || t("—", "—")}</dd>
           </div>
           <div>
@@ -541,19 +560,19 @@ export default function ContactForm({
           </div>
           {fullPhone && (
             <div>
-              <dt>{t("Telefon", "Phone")}</dt>
+              <dt>{t("Telefon", "Phone", "Telefon")}</dt>
               <dd>{fullPhone}</dd>
             </div>
           )}
           <div>
-            <dt>{t("Land", "Country")}</dt>
+            <dt>{t("Land", "Country", "Land")}</dt>
             <dd>{countryLabel(state.countryIso, uiLang)}</dd>
           </div>
 
           {/* Kontakt-variant: vis besked */}
           {!isBooking && state.message.trim() && (
             <div>
-              <dt>{t("Besked", "Message")}</dt>
+              <dt>{t("Besked", "Message", "Nachricht")}</dt>
               <dd>{state.message}</dd>
             </div>
           )}
@@ -562,7 +581,7 @@ export default function ContactForm({
         <Buttons
           to="/"
           variant="secondary"
-          label={t("Til forsiden", "Back to home")}
+          label={t("Til forsiden", "Back to home", "Zur Startseite")}
           buttonType="button"
         />
       </div>
@@ -611,7 +630,7 @@ export default function ContactForm({
                 htmlFor="cf-checkin"
                 data-required="true"
               >
-                {t("Ankomst", "Check-in")}
+                {t("Ankomst", "Check-in", "Anreise")}
               </label>
               <input
                 id="cf-checkin"
@@ -620,7 +639,7 @@ export default function ContactForm({
                 readOnly
                 required
                 value={selPrice.start ? fmtDate.format(selPrice.start) : ""}
-                placeholder={t("Vælg i kalenderen", "Pick in the calendar")}
+                placeholder={t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
               />
             </div>
 
@@ -630,7 +649,7 @@ export default function ContactForm({
                 htmlFor="cf-checkout"
                 data-required="true"
               >
-                {t("Afrejse", "Check-out")}
+                {t("Afrejse", "Check-out", "Abreise")}
               </label>
               <input
                 id="cf-checkout"
@@ -643,14 +662,14 @@ export default function ContactForm({
                     ? fmtDate.format(selPrice.endExclusive)
                     : ""
                 }
-                placeholder={t("Vælg i kalenderen", "Pick in the calendar")}
+                placeholder={t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
               />
             </div>
 
             {/* Nætter + min.-nætter inline fejl */}
             <div className={styles.inlineMeta} aria-live="polite">
               <span className={styles.metaLabel}>
-                {t("Nætter:", "Nights:")}
+                {t("Nætter:", "Nights:", "Nächte:")}
               </span>
               <output className={styles.metaValue}>
                 {selPrice.nights ?? t("—", "N/A")}
@@ -665,7 +684,7 @@ export default function ContactForm({
               htmlFor="cf-purpose"
               data-required="true"
             >
-              {t("Formål", "Purpose")}
+              {t("Formål", "Purpose", "Zweck")}
             </label>
             <div className={styles.selectWrap}>
               <select
@@ -676,9 +695,9 @@ export default function ContactForm({
                 required
               >
                 <option value="booking">
-                  {t("Booking forespørgsel", "Booking request")}
+                  {t("Booking forespørgsel", "Booking request", "Buchungsanfrage")}
                 </option>
-                <option value="other">{t("Andet", "Other")}</option>
+                <option value="other">{t("Andet", "Other", "Sonstiges")}</option>
               </select>
               <span className={styles.chev} aria-hidden>
                 ▾
@@ -694,9 +713,9 @@ export default function ContactForm({
           >
             <div className={styles.totalItem}>
               <span className={styles.tLabel}>
-                <span className={styles.tTop}>{t("Pris", "Price")}</span>
+                <span className={styles.tTop}>{t("Pris", "Price", "Preis")}</span>
                 <span className={styles.tSub}>
-                  {t("(overnatninger)", "(nights)")}
+                  {t("(overnatninger)", "(nights)", "(Übernachtungen)")}
                 </span>
               </span>
               <output className={styles.tValue} aria-live="polite">
@@ -707,10 +726,10 @@ export default function ContactForm({
             <div className={styles.totalItem}>
               <span className={styles.tLabel}>
                 <span className={styles.tTop}>
-                  {t("Rengøring", "Cleaning")}
+                  {t("Rengøring", "Cleaning", "Reinigung")}
                 </span>
                 <span className={styles.tSub}>
-                  {t("(obligatorisk)", "(mandatory)")}
+                  {t("(obligatorisk)", "(mandatory)", "(obligatorisch)")}
                 </span>
               </span>
               <output className={styles.tValue} aria-live="polite">
@@ -721,9 +740,9 @@ export default function ContactForm({
             <div className={`${styles.totalItem} ${styles.em}`}>
               <span className={styles.tLabel}>
                 <span className={styles.tTop}>
-                  {t("Estimeret", "Estimated")}
+                  {t("Estimeret", "Estimated", "Geschätzt")}
                 </span>
-                <span className={styles.tSub}>{t("total", "total")}</span>
+                <span className={styles.tSub}>{t("total", "total", "gesamt")}</span>
               </span>
               <output className={styles.tValue} aria-live="polite">
                 {includeCleaning || selPrice.total != null
@@ -737,13 +756,15 @@ export default function ContactForm({
                 <span className={styles.tWarning}>
                   {t(
                     "Overstående priser er eksklusive forbrug (EL, vand og evt. ekstra services)",
-                    "The above prices exclude consumption (electricity, water, and any additional services)"
+                    "The above prices exclude consumption (electricity, water, and any additional services)",
+                    "Die oben genannten Preise verstehen sich ohne Verbrauch (Strom, Wasser und ggf. Zusatzleistungen)"
                   )}
                 </span>
                 <span className={styles.tWarning}>
                   {t(
                     "EL, vand og evt. ekstra services afregnes særskilt efter opholdet",
-                    "Electricity, water, and any additional services will be settled separately after the stay"
+                    "Electricity, water, and any additional services will be settled separately after the stay",
+                    "Strom, Wasser und ggf. Zusatzleistungen werden nach dem Aufenthalt separat abgerechnet"
                   )}
                 </span>
               </span>
@@ -759,7 +780,8 @@ export default function ContactForm({
             >
               {t(
                 "Hvad er grunden til opholdet?",
-                "What is the purpose of your stay?"
+                "What is the purpose of your stay?",
+                "Was ist der Zweck Ihres Aufenthalts?"
               )}
             </label>
             <textarea
@@ -769,7 +791,7 @@ export default function ContactForm({
               rows={3}
               value={state.stayPurpose}
               onChange={(e) => onChange("stayPurpose", e.target.value)}
-              placeholder={t("Kort beskrivelse…", "Brief description…")}
+              placeholder={t("Kort beskrivelse…", "Brief description…", "Kurze Beschreibung…")}
             />
           </div>
         </>
@@ -784,7 +806,7 @@ export default function ContactForm({
               htmlFor="cf-adults"
               data-required="true"
             >
-              {t("Voksne", "Adults")}
+              {t("Voksne", "Adults", "Erwachsene")}
             </label>
             <input
               id="cf-adults"
@@ -799,7 +821,7 @@ export default function ContactForm({
           </div>
           <div className={styles.row}>
             <label className={styles.label} htmlFor="cf-children">
-              {t("Børn", "Children")}
+              {t("Børn", "Children", "Kinder")}
             </label>
             <input
               id="cf-children"
@@ -814,7 +836,7 @@ export default function ContactForm({
           </div>
           <div className={styles.row}>
             <label className={styles.label} htmlFor="cf-babies">
-              {t("Babyer", "Babies")}
+              {t("Babyer", "Babies", "Babys")}
             </label>
             <input
               id="cf-babies"
@@ -833,7 +855,7 @@ export default function ContactForm({
       {/* ——— Kontaktfelter (begge varianter) ——— */}
       <div className={styles.row}>
         <label className={styles.label} htmlFor="cf-name" data-required="true">
-          {t("Navn", "Name")}
+          {t("Navn", "Name", "Name")}
         </label>
         <input
           id="cf-name"
@@ -844,7 +866,7 @@ export default function ContactForm({
           autoComplete="name"
           value={state.name}
           onChange={(e) => onChange("name", e.target.value)}
-          placeholder={t("Dit navn", "Your name")}
+          placeholder={t("Dit navn", "Your name", "Ihr Name")}
         />
       </div>
 
@@ -861,7 +883,7 @@ export default function ContactForm({
           autoComplete="email"
           value={state.email}
           onChange={(e) => onChange("email", e.target.value)}
-          placeholder={t("din@adresse.dk", "your@email.com")}
+          placeholder={t("din@adresse.dk", "your@email.com", "ihre@email.de")}
         />
       </div>
 
@@ -872,7 +894,7 @@ export default function ContactForm({
             htmlFor="cf-country"
             data-required="true"
           >
-            {t("Land", "Country")}
+            {t("Land", "Country", "Land")}
           </label>
           <div className={styles.selectWrap}>
             <select
@@ -896,7 +918,7 @@ export default function ContactForm({
 
         <div className={styles.row}>
           <label className={styles.label} htmlFor="cf-phone">
-            {t("Telefon", "Phone")}
+            {t("Telefon", "Phone", "Telefon")}
           </label>
           <div className={styles.phone}>
             <span className={styles.dial} aria-hidden="true">
@@ -913,7 +935,7 @@ export default function ContactForm({
               value={state.phone}
               onKeyDown={onPhoneKeyDown}
               onChange={onPhoneChange}
-              placeholder={t("Telefonnummer", "Phone number")}
+              placeholder={t("Telefonnummer", "Phone number", "Telefonnummer")}
             />
           </div>
         </div>
@@ -923,7 +945,7 @@ export default function ContactForm({
       {!isBooking && (
         <div className={styles.row}>
           <label className={styles.label} htmlFor="cf-msg" data-required="true">
-            {t("Besked", "Message")}
+            {t("Besked", "Message", "Nachricht")}
           </label>
           <textarea
             id="cf-msg"
@@ -935,7 +957,8 @@ export default function ContactForm({
             onChange={(e) => onChange("message", e.target.value)}
             placeholder={t(
               "Skriv kort, hvad du ønsker hjælp til…",
-              "Tell us briefly what you need help with…"
+              "Tell us briefly what you need help with…",
+              "Beschreiben Sie kurz, wobei wir helfen können…"
             )}
           />
         </div>
@@ -963,6 +986,18 @@ export default function ContactForm({
                     gebyroversigten
                   </a>
                   .
+                </>
+              ) : lang === "de" ? (
+                <>
+                  Ich habe die{" "}
+                  <a
+                    href={pathOf(lang, "fees")}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Gebührenübersicht
+                  </a>{" "}
+                  gelesen und akzeptiere sie.
                 </>
               ) : (
                 <>
@@ -994,11 +1029,12 @@ export default function ContactForm({
           <span>
             {t(
               "Jeg giver samtykke til, at mine oplysninger må gemmes og bruges til at behandle min henvendelse i overensstemmelse med privatlivspolitikken ",
-              "I consent to my information being stored and used to process my inquiry in accordance with the privacy policy "
+              "I consent to my information being stored and used to process my inquiry in accordance with the privacy policy ",
+              "Ich willige ein, dass meine Daten gespeichert und zur Bearbeitung meiner Anfrage gemäß der Datenschutzerklärung verwendet werden "
             )}
           </span>
           <a href={pathOf(lang, "privacy")} target="_blank" rel="noreferrer">
-            {t("privatlivspolitikken.", "privacy policy.")}
+            {t("privatlivspolitikken.", "privacy policy.", "Datenschutzerklärung.")}
           </a>
         </label>
       </div>
@@ -1015,10 +1051,10 @@ export default function ContactForm({
           variant="primary"
           label={
             isBooking
-              ? t("Send forspørgsel", "Send request")
-              : t("Send besked", "Send message")
+              ? t("Send forspørgsel", "Send request", "Anfrage senden")
+              : t("Send besked", "Send message", "Nachricht senden")
           }
-          ariaLabel={t("Send formularen", "Submit the form")}
+          ariaLabel={t("Send formularen", "Submit the form", "Formular senden")}
           fullWidth
         />
       </div>

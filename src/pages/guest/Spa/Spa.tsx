@@ -10,17 +10,18 @@ type Props = {
 };
 
 export default function Spa({ lang }: Props) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    lang === "da" ? da : lang === "de" ? de : en;
 
   const items = [
     {
       id: "rules",
-      title: t("Regler og brug", "Rules and usage"),
+      title: t("Regler og brug", "Rules and usage", "Regeln und Nutzung"),
       content: (
         <div className={styles.content}>
           <div className={styles.text}>
             <p>
-              <strong>{t("Bemærk!", "Note!")}</strong>{" "}
+              <strong>{t("Bemærk!", "Note!", "Hinweis!")}</strong>{" "}
               {t(
                 "I skal ikke selv have brænde med til vildmarksbad med da det varmes elektrisk. Karret er rent og klar ved ankomst.",
                 "You must not bring your own firewood for the hot tub as it is heated electrically. The tub is clean and ready at arrival."
@@ -85,7 +86,7 @@ export default function Spa({ lang }: Props) {
           <div className={styles.image}>
             <img
               src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3696.webp"
-              alt={t("Vildmarksbad", "Hot tub")}
+              alt={t("Vildmarksbad", "Hot tub", "Whirlpool")}
               width={600}
               height={400}
             />
@@ -101,7 +102,7 @@ export default function Spa({ lang }: Props) {
     },
     {
       id: "fire",
-      title: t("Optænding af vildmarksbad", "How to heat the hot tub"),
+      title: t("Optænding af vildmarksbad", "How to heat the hot tub", "Whirlpool aufheizen"),
       content: (
         <ol className={styles.list}>
           <li>
@@ -160,10 +161,11 @@ export default function Spa({ lang }: Props) {
   return (
     <>
       <Head
-        title={t("Vildmarksbad", "Hot Tub")}
+        title={t("Vildmarksbad", "Hot Tub", "Whirlpool")}
         description={t(
           "Information om brug og optænding af vildmarksbadet.",
-          "Instructions for using and heating the hot tub."
+          "Instructions for using and heating the hot tub.",
+          "Informationen zur Nutzung und zum Aufheizen des Whirlpools."
         )}
         lang={lang}
         path=""
@@ -171,7 +173,7 @@ export default function Spa({ lang }: Props) {
       />
 
       <div className={styles.wrapper}>
-        <h1>{t("Vildmarksbad", "Hot Tub")}</h1>
+        <h1>{t("Vildmarksbad", "Hot Tub", "Whirlpool")}</h1>
         <Accordion items={items} defaultOpenId="rules" />
       </div>
     </>

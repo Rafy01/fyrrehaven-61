@@ -65,7 +65,8 @@ export default function Footer({
                   <Text size="2" color="gray">
                     {t(
                       "Sommerhus ved skov og strand",
-                      "Holiday home by forest & beach"
+                      "Holiday home by forest & beach",
+                      "Ferienhaus bei Wald & Strand"
                     )}
                   </Text>
                 </div>
@@ -81,7 +82,8 @@ export default function Footer({
                   className={styles.superhost}
                   aria-label={t(
                     "Se vores Airbnb-profil (Superhost)",
-                    "See our Airbnb profile (Superhost)"
+                    "See our Airbnb profile (Superhost)",
+                    "Unser Airbnb-Profil ansehen (Superhost)"
                   )}
                 >
                   <img
@@ -96,15 +98,15 @@ export default function Footer({
 
           {/* Link-sektioner */}
           <div className={styles.linksRow}>
-            <nav className={styles.col} aria-label={t("Udforsk", "Explore")}>
-              <h3 className={styles.colTitle}>{t("Udforsk", "Explore")}</h3>
+            <nav className={styles.col} aria-label={t("Udforsk", "Explore", "Entdecken")}>
+              <h3 className={styles.colTitle}>{t("Udforsk", "Explore", "Entdecken")}</h3>
               <ul className={styles.list}>
                 <li>
                   <Link
                     className={styles.link}
                     to={pathOf(currentLang, "house")}
                   >
-                    {t("Sommerhuset", "The House")}
+                    {t("Sommerhuset", "The House", "Das Haus")}
                   </Link>
                 </li>
                 <li>
@@ -112,7 +114,7 @@ export default function Footer({
                     className={styles.link}
                     to={pathOf(currentLang, "area")}
                   >
-                    {t("Området", "Area")}
+                    {t("Området", "Area", "Umgebung")}
                   </Link>
                 </li>
                 <li>
@@ -120,7 +122,7 @@ export default function Footer({
                     className={styles.link}
                     to={pathOf(currentLang, "gallery")}
                   >
-                    {t("Galleri", "Gallery")}
+                    {t("Galleri", "Gallery", "Galerie")}
                   </Link>
                 </li>
                 <li>
@@ -133,10 +135,10 @@ export default function Footer({
 
             <nav
               className={styles.col}
-              aria-label={t("Kontakt & booking", "Contact & booking")}
+              aria-label={t("Kontakt & booking", "Contact & booking", "Kontakt & Buchung")}
             >
               <h3 className={styles.colTitle}>
-                {t("Kontakt & booking", "Contact & booking")}
+                {t("Kontakt & booking", "Contact & booking", "Kontakt & Buchung")}
               </h3>
               <ul className={styles.list}>
                 <li>
@@ -146,7 +148,7 @@ export default function Footer({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {t("Book via Airbnb", "Book on Airbnb")}
+                    {t("Book via Airbnb", "Book on Airbnb", "Auf Airbnb buchen")}
                   </a>
                 </li>
                 <li>
@@ -154,32 +156,32 @@ export default function Footer({
                     className={styles.link}
                     to={pathOf(currentLang, "contact")}
                   >
-                    {t("Kontakt os", "Contact us")}
+                    {t("Kontakt os", "Contact us", "Kontakt aufnehmen")}
                   </Link>
                 </li>
               </ul>
             </nav>
 
-            <nav className={styles.col} aria-label={t("Praktisk", "Practical")}>
-              <h3 className={styles.colTitle}>{t("Praktisk", "Practical")}</h3>
+            <nav className={styles.col} aria-label={t("Praktisk", "Practical", "Praktisch")}>
+              <h3 className={styles.colTitle}>{t("Praktisk", "Practical", "Praktisch")}</h3>
               <ul className={styles.list}>
                 <li>
                   <Link
                     className={styles.link}
                     to={pathOf(currentLang, "house")}
                   >
-                    {t("Husregler", "House rules")}
+                    {t("Husregler", "House rules", "Hausregeln")}
                   </Link>
                 </li>
                 <li>
                   <Link className={styles.link} to={pathOf(currentLang, "faq")}>
-                    {t("Ofte stillede spørgsmål", "Frequently asked questions")}
+                    {t("Ofte stillede spørgsmål", "Frequently asked questions", "Häufig gestellte Fragen")}
                   </Link>
                 </li>
               </ul>
               <div
                 className={styles.socials}
-                aria-label={t("Sociale medier", "Social media")}
+                aria-label={t("Sociale medier", "Social media", "Soziale Medien")}
               >
                 {s.instagram && (
                   <a
@@ -240,7 +242,7 @@ export default function Footer({
                 © {year}{" "}
                 <Link
                   to={`/guest/${currentLang}/${
-                    currentLang === "da" ? "velkomst" : "welcome"
+                    currentLang === "da" ? "velkomst" : currentLang === "de" ? "willkommen" : "welcome"
                   }`}
                   style={{
                     color: "inherit",
@@ -255,7 +257,7 @@ export default function Footer({
                 .
               </Text>
               <Text size="2" color="gray">
-                {t("Alle rettigheder forbeholdes.", "All rights reserved.")}
+                {t("Alle rettigheder forbeholdes.", "All rights reserved.", "Alle Rechte vorbehalten.")}
               </Text>
             </Flex>
 
@@ -266,7 +268,7 @@ export default function Footer({
                   className={styles.bottomLink}
                   to={pathOf(currentLang, "privacy")}
                 >
-                  {t("Privatliv", "Privacy")}
+                  {t("Privatliv", "Privacy", "Datenschutz")}
                 </Link>
               </li>
               <li>
@@ -290,7 +292,7 @@ export default function Footer({
                   className={styles.bottomLink}
                   to={pathOf(currentLang, "fees")}
                 >
-                  {t("Gebyr", "Fees")}
+                  {t("Gebyr", "Fees", "Gebühren")}
                 </Link>
               </li>
             </ul>
