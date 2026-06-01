@@ -34,18 +34,22 @@ test('api/contact handles submission and sends both user and admin mail', async 
   const sentMessages: any[] = [];
   const originalCreateTransport = nodemailer.createTransport;
 
-  nodemailer.createTransport = () => ({
-    verify: async () => true,
-    sendMail: async (options: any) => {
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async (options: any): Promise<any> => {
       sentMessages.push(options);
       return {
         messageId: `mock-${sentMessages.length}`,
         accepted: [options.to],
         rejected: [],
         response: '250 OK',
+        envelope: { from: options.from, to: [options.to] },
+        envelopeTime: Date.now(),
+        messageTime: Date.now(),
+        messageSize: 0,
       };
     },
-  });
+  })) as any;
 
   process.env.SMTP_HOST = 'smtp.mock.local';
   process.env.SMTP_PORT = '587';
