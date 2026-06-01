@@ -93,6 +93,52 @@ const resources = {
       readySub: "Check availability and pricing on Airbnb.",
     },
   },
+  de: {
+    common: {
+      brand: "Fyrrehaven 61",
+      bookNow: "Auf Airbnb buchen",
+      sleepsX: "Platz für {{count}} Gäste",
+    },
+    home: {
+      heroTitle: "Familienfreundliches Ferienhaus im Wald – in der Nähe des Strandes",
+      heroSubtitle: "Hallenbad, Whirlpool und Platz für die ganze Familie.",
+      ctaSeeHouse_da: "Se huset",
+      ctaSeeHouse_en: "See the house",
+
+      badgePool: "Hallenbad",
+      badgeHotTub: "Whirlpool",
+      badgeBeach: "In Strandnähe",
+
+      altKitchen: "Helle Wohnküche",
+      altPool: "Hallenbad",
+      altHotTub: "Whirlpool im Garten",
+      altBeach: "Strand bei Fjellerup",
+
+      whyFamiliesTitle: "Warum Familien Fyrrehaven 61 lieben",
+      whyFamiliesSub:
+        "Alles was Sie für einen gemütlichen Urlaub brauchen – mit der Natur direkt vor der Tür.",
+      featSleeps:
+        "Platz für {{count}} Gäste (Bettaufteilung und Familienausstattung)",
+      featPool: "Wasserspaß das ganze Jahr: beheiztes Hallenbad",
+      featHotTub: "Entspannung im Whirlpool unter den Kiefern",
+      featBeach: "Kurzer Spaziergang zum Strand und zur Eisdiele",
+      featForest: "Waldgebiet mit Spielplätzen und Wanderwegen",
+      featKids: "Hochstuhl, Reisebett und Familienbrettspiele",
+      featWifi: "Schnelles Wi-Fi zum Streaming und Arbeiten",
+      featParking: "Kostenlose Parkplätze am Haus",
+
+      reviewsTitle: "Bewertungen von Gästen",
+      reviewsSub: "Wir verlinken auf Airbnb für alle Bewertungen.",
+      quote1: "Perfekt für Kinder – sie liebten das Pool!",
+      quote2: "Ruhige Gegend nah an Strand und Wald.",
+      quote3: "Sauber, hell und leicht zu buchen.",
+      seeMoreOnAirbnb: "Mehr auf Airbnb sehen",
+
+      mapTitle: "Fyrrehaven 61 auf der Karte",
+      readyTitle: "Bereit zu buchen?",
+      readySub: "Verfügbarkeit und Preise auf Airbnb ansehen.",
+    },
+  },
 };
 
 i18n.use(initReactI18next).init({
