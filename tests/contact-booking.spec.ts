@@ -111,4 +111,42 @@ test.describe('contact and booking forms', () => {
       nights: 3,
     });
   });
+
+  test('contact form blocks submission without consent', async ({ page }) => {
+    const requests: any[] = [];
+
+    await page.route('**/api/contact', async (route) => {
+      const request = route.request();
+      const postData = request.postData() ?? '{}';
+      requests.push(JSON.parse(postData));
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
+    });
+
+    await page.goto('/en/contact');
+    await page.fill('#cf-name', 'Consent Tester');
+    await page.fill('#cf-email', 'test+consent@example.com');
+    await page.selectOption('#cf-country', 'DK');
+    await page.fill('#cf-phone', '12345678');
+    await page.fill('#cf-msg', 'Consent validation test');
+    await page.click('button[type="submit"]');
+
+    await expect(page.locator('input:invalid')).toHaveCount(1);
+    expect(requests).toHaveLength(0);
+  });
+
+  test('booking calendar disables today as a past selection edge case', async ({ page }) => {
+    await page.goto('/en/book');
+
+    const today = new Date();
+    const en = formatDate(today, 'en-GB');
+    const da = formatDate(today, 'da-DK');
+    const todayButton = page.locator(`button[aria-label="${en}"], button[aria-label="${da}"]`);
+
+    await expect(todayButton).toHaveCount(1);
+    await expect(todayButton).toBeDisabled();
+  });
 });
