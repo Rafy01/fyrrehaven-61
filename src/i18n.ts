@@ -129,6 +129,72 @@ const resources = {
         },
       },
     },
+    area: {
+      attractions: {
+        "djurs-sommerland": {
+          title: "Djurs Sommerland",
+          description:
+            "Nordens største sommerland med 60+ forlystelser og vandland.",
+        },
+        "legerevet-grenaa": {
+          title: "Lege-revet (Grenaa) – legeland",
+          description:
+            "Indendørs legeland: klatrebaner, rutsjebaner og boldbassin.",
+        },
+        "hermans-hule-grenaa": {
+          title: "Hermans Hule (Grenaa) – legeland",
+          description:
+            "Stort indendørs legeland med rutsjebaner og trampoliner.",
+        },
+        fjollehaven: {
+          title: "Fjollehaven",
+          description: "Udendørs legeplads",
+        },
+        "fjellerup-strand": {
+          title: "Fjellerup Strand",
+          description: "Bred, børnevenlig sandstrand i cykelafstand.",
+        },
+        "mols-bjerge": {
+          title: "Mols Bjerge Nationalpark",
+          description:
+            "Kuperet landskab, flotte udsigter og gode vandreruter.",
+        },
+        "kalo-slotsruin": {
+          title: "Kalø Slotsruin",
+          description:
+            "Ikonisk borgruin i Kalø Vig – tur ad den gamle stenvej.",
+        },
+        kattegatcentret: {
+          title: "Kattegatcentret (Grenaa)",
+          description:
+            "Akvarium med hajer og sæler – perfekt til blæsende/kolde dage.",
+        },
+        "randers-regnskov": {
+          title: "Randers Regnskov",
+          description: "Tropiske kupler med dyr og planter – året rundt.",
+        },
+        vaffelbageri: {
+          title: "Fjellerup Vaffelbageri",
+          description: "Berømte vafler ved stranden – sæsonåbent.",
+        },
+        "vaffelbageri-food": {
+          title: "Vaffelbageri - fastfood",
+          description: "Is og Fastfood – sæsonåbent.",
+        },
+        vaffelhuset: {
+          title: "Vaffelhuset",
+          description: "Hjemmelavet is – sæsonåbent.",
+        },
+        "brugsen-fjellerup": {
+          title: "Brugsen Fjellerup Strand",
+          description: "Lokal dagligvarebutik til alt det praktiske.",
+        },
+        "alt-til-dagen": {
+          title: "Alt Til Dagen",
+          description: "Lokal dagligvarebutik til alt det praktiske.",
+        },
+      },
+    },
   },
   en: {
     common: {
@@ -252,6 +318,70 @@ const resources = {
           readMore: "Read more here:",
           fees: "fee list",
           privacy: "privacy policy",
+        },
+      },
+    },
+    area: {
+      attractions: {
+        "djurs-sommerland": {
+          title: "Djurs Sommerland",
+          description:
+            "Scandinavia’s largest amusement park with 60+ rides and water park.",
+        },
+        "legerevet-grenaa": {
+          title: "Lege-revet (Grenaa) – indoor playland",
+          description: "Indoor playland: climbing frames, slides and ball pit.",
+        },
+        "hermans-hule-grenaa": {
+          title: "Hermans Hule (Grenaa) – indoor playland",
+          description: "Large indoor playland with slides and trampolines.",
+        },
+        fjollehaven: {
+          title: "Fjollehaven",
+          description: "Large outdoor playland",
+        },
+        "fjellerup-strand": {
+          title: "Fjellerup Beach",
+          description:
+            "Wide, family-friendly sandy beach within biking distance.",
+        },
+        "mols-bjerge": {
+          title: "Mols Bjerge National Park",
+          description: "Hilly landscapes, great viewpoints and hiking trails.",
+        },
+        "kalo-slotsruin": {
+          title: "Kalø Castle Ruin",
+          description:
+            "Iconic castle ruin in Kalø Bay – scenic walk on the old stone road.",
+        },
+        kattegatcentret: {
+          title: "Kattegat Centre (Grenaa)",
+          description:
+            "Aquarium with sharks and seals – perfect for windy/chilly days.",
+        },
+        "randers-regnskov": {
+          title: "Randers Rainforest",
+          description: "Tropical domes with animals and plants – year-round.",
+        },
+        vaffelbageri: {
+          title: "Fjellerup Waffle Bakery",
+          description: "Famous waffles by the beach – seasonal opening.",
+        },
+        "vaffelbageri-food": {
+          title: "Fjellerup Waffle Bakery - fast food",
+          description: "Ice cream and fast food – seasonal opening.",
+        },
+        vaffelhuset: {
+          title: "Vaffelhuset",
+          description: "Homemade ice cream – seasonal opening.",
+        },
+        "brugsen-fjellerup": {
+          title: "Brugsen Fjellerup Strand",
+          description: "Local grocery store for everyday shopping.",
+        },
+        "alt-til-dagen": {
+          title: "Alt Til Dagen",
+          description: "Local grocery store for everyday shopping.",
         },
       },
     },
@@ -383,6 +513,74 @@ const resources = {
         },
       },
     },
+    area: {
+      attractions: {
+        "djurs-sommerland": {
+          title: "Djurs Sommerland",
+          description:
+            "Skandinaviens größter Freizeitpark mit über 60 Attraktionen und Wasserpark.",
+        },
+        "legerevet-grenaa": {
+          title: "Lege-revet (Grenaa) – Indoor-Spielparadies",
+          description:
+            "Indoor-Spielparadies mit Klettergerüsten, Rutschen und Bällebad.",
+        },
+        "hermans-hule-grenaa": {
+          title: "Hermans Hule (Grenaa) – Indoor-Spielparadies",
+          description:
+            "Großes Indoor-Spielparadies mit Rutschen und Trampolinen.",
+        },
+        fjollehaven: {
+          title: "Fjollehaven",
+          description: "Großer Outdoor-Spielplatz",
+        },
+        "fjellerup-strand": {
+          title: "Fjellerup Strand",
+          description:
+            "Breiter, familienfreundlicher Sandstrand in Fahrradentfernung.",
+        },
+        "mols-bjerge": {
+          title: "Nationalpark Mols Bjerge",
+          description:
+            "Hügelige Landschaften, schöne Aussichtspunkte und gute Wanderwege.",
+        },
+        "kalo-slotsruin": {
+          title: "Kalø Schlossruine",
+          description:
+            "Ikonische Burgruine an der Kalø Vig – schöner Spaziergang auf dem alten Steinweg.",
+        },
+        kattegatcentret: {
+          title: "Kattegatcentret (Grenaa)",
+          description:
+            "Aquarium mit Haien und Robben – perfekt für windige oder kühle Tage.",
+        },
+        "randers-regnskov": {
+          title: "Randers Regnskov",
+          description:
+            "Tropische Kuppeln mit Tieren und Pflanzen – das ganze Jahr über.",
+        },
+        vaffelbageri: {
+          title: "Fjellerup Vaffelbageri",
+          description: "Berühmte Waffeln am Strand – saisonal geöffnet.",
+        },
+        "vaffelbageri-food": {
+          title: "Fjellerup Vaffelbageri - Fastfood",
+          description: "Eis und Fastfood – saisonal geöffnet.",
+        },
+        vaffelhuset: {
+          title: "Vaffelhuset",
+          description: "Hausgemachtes Eis – saisonal geöffnet.",
+        },
+        "brugsen-fjellerup": {
+          title: "Brugsen Fjellerup Strand",
+          description: "Lokaler Lebensmittelmarkt für alles Praktische.",
+        },
+        "alt-til-dagen": {
+          title: "Alt Til Dagen",
+          description: "Lokaler Lebensmittelmarkt für alles Praktische.",
+        },
+      },
+    },
   },
 };
 
@@ -390,7 +588,7 @@ i18n.use(initReactI18next).init({
   resources,
   lng: "da",
   fallbackLng: "da",
-  ns: ["common", "home", "book"],
+  ns: ["common", "home", "book", "area"],
   defaultNS: "common",
   interpolation: { escapeValue: false },
 });
