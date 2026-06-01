@@ -134,26 +134,7 @@ export default function Spa({ lang }: Props) {
         </ol>
       ),
     },
-    {
-      id: "drain",
-      title: t("Tømning efter ophold", "Draining the hot tub after your stay"),
-      content: (
-        <div className={styles.text}>
-          <p>
-            {t(
-              "Tømning må kun ske når sikkerhedsbryderen og spa-kredsløbet er slukket.",
-              "Draining may only be done when the safety switch and the circuit breaker are turned off."
-            )}
-          </p>
-          <p>
-            {t(
-              "Hvis noget går i stykker eller holder op med at fungere, giv os besked hurtigst muligt.",
-              "If anything breaks or stops working, please inform us as soon as possible."
-            )}
-          </p>
-        </div>
-      ),
-    },
+    // Guests are not required to drain the hot tub after their stay.
   ];
 
   return (

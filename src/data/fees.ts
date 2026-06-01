@@ -36,12 +36,12 @@ export const fees: FeeItem[] = [
     noteEn: "applies to the hot tub only",
   },
   {
-    id: "hottub-not-emptied",
-    amountDKK: 500,
-    titleDa: "Manglende tømning af vildmarksbad",
-    titleEn: "Hot tub not emptied",
-    noteDa: "gælder vand og aske",
-    noteEn: "applies to water and ash",
+    id: "hottub-damage",
+    amountDKK: 3000,
+    titleDa: "Skader på vildmarksbad",
+    titleEn: "Damage to hot tub",
+    noteDa: "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges.",
+    noteEn: "Minimum fee – actual repair/replacement costs may be added.",
   },
   {
     id: "grill-not-cleaned",
