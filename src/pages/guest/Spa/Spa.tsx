@@ -1,5 +1,3 @@
-// src/pages/guest/[lang]/Spa.tsx
-
 import Head from "../../../lib/Head";
 import Accordion from "../../../components/Accordion/Accordion";
 import styles from "./Spa.module.css";
@@ -14,145 +12,146 @@ export default function Spa({ lang }: Props) {
 
   const items = [
     {
-      id: "rules",
-      title: t("Regler og brug", "Rules and usage"),
+      id: "important",
+      title: t("VIGTIGT – læs før opstart", "IMPORTANT – read before start-up"),
       content: (
         <div className={styles.content}>
           <div className={styles.text}>
             <p>
-              <strong>{t("Bemærk!", "Note!")}</strong>{" "}
+              <strong>{t("Bemærk:", "Note:")}</strong>{" "}
               {t(
-                "I skal ikke selv have brænde med til vildmarksbad med da det varmes elektrisk. Karret er rent og klar ved ankomst.",
-                "You must not bring your own firewood for the hot tub as it is heated electrically. The tub is clean and ready at arrival."
+                "Vildmarksbadet må aldrig tændes uden vand. Hvis varmeelementet aktiveres uden vand i karret kan det blive permanent beskadet.",
+                "The hot tub must NEVER be turned on without water. Activating the heating element without water may cause permanent damage."
+              )}
+            </p>
+
+            <p>
+              {t(
+                "Fyld vand i karret som det allerførste trin.",
+                "Fill the tub with water as the very first step."
               )}
             </p>
 
             <ul>
               <li>
                 {t(
-                  "Maks temperatur 40°, bliver det for varmt tages brænde ud af ovnen.",
-                  "Max temperature is 40°C. If the water gets too hot, remove firewood from the heater."
+                  "Vandniveauet skal være ca. 5–10 cm under kanten eller ca. 5–10 cm over de øverste dyser.",
+                  "The water level should be approx. 5–10 cm below the rim or 5–10 cm above the upper jets."
                 )}
               </li>
               <li>
                 {t(
-                  "På siden af vildmarksbadet er der to knapper",
-                  "There are two buttons on the side of the hot tub"
-                )}
-                <ul>
-                  <li>{t("Knap 1 — Lys", "Button 1 — Light")}</li>
-                  <li>
-                    {t("Knap 2 — Massage/bobler", "Button 2 — Massage/bubbles")}
-                  </li>
-                  <li>
-                    {t(
-                      "Skru op og ned for styrken",
-                      "Adjust intensity with the dial"
-                    )}
-                  </li>
-                </ul>
-              </li>
-              <li>
-                {t(
-                  "Vand niveau må ikke overstige de øverste massage dyser",
-                  "Water level must not exceed the top nozzles"
+                  "Der er separate funktioner for massage, cirkulation og lys på kontrolpanelet.",
+                  "Controls include massage (adjustable intensity), circulation and light on the control panel."
                 )}
               </li>
-              <li>
-                {t(
-                  "Massage funktionen må ikke tændes før vandet er +20°",
-                  "Do not activate massage before water is above 20°C"
-                )}
-              </li>
-              <li>
-                {t("Brug kun rent og tørt træ", "Only use clean, dry firewood")}
-              </li>
-              <li>
-                {t(
-                  "Der gøres brug af klor tabs for at holde vandet rent",
-                  "Chlorine tablets are used to keep the water clean"
-                )}
-              </li>
-              <li>
-                {t(
-                  "Tøm vandet efter endt ophold eller brug",
-                  "Drain the water after your stay or when done using"
-                )}
-              </li>
+              <li>{t("Al brug er på eget ansvar.", "All use is at your own risk.")}</li>
             </ul>
           </div>
 
           <div className={styles.image}>
             <img
-              src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3696.webp"
+              src="https://booking.fyrrehaven-61.dk/wp-content/uploads/2025/12/IMG_4594-980x735.jpeg"
               alt={t("Vildmarksbad", "Hot tub")}
               width={600}
               height={400}
             />
-            <p className={styles.caption}>
-              {t(
-                "Alt brug af vildmarksbad er på eget ansvar.",
-                "Use of the hot tub is at your own risk."
-              )}
-            </p>
           </div>
         </div>
       ),
     },
     {
-      id: "fire",
-      title: t("Optænding af vildmarksbad", "How to heat the hot tub"),
+      id: "startup",
+      title: t("Trin-for-trin opstart", "Step-by-step start up"),
       content: (
         <ol className={styles.list}>
+          <li>{t("Fyld vand i karret som første trin.", "Fill with water as the very first step.")}</li>
           <li>
             {t(
-              "Hæld vand i karret med vandslangen, det vil tage ca. 2 timer.",
-              "Fill the tub with the garden hose – this takes about 2 hours."
+              "Tænd spa-kredsløbet (sikring) i teknikrummet.",
+              "Turn on the ‘Spa’ circuit breaker located in the technical room."
             )}
           </li>
           <li>
             {t(
-              "Når vandet er 10 cm over det øverste hul i ovnen, kan man tænde op og smide 2 klor tabs i.",
-              "When water is 10 cm above the heater hole, you can light the fire and add 2 chlorine tabs."
+              "Start vandcirkulation: tryk på knap 2 (midterste) på panelet og vent ca. 1 minut.",
+              "Turn on water circulation by pressing button 2 (middle button) and wait approx. 1 minute."
             )}
           </li>
           <li>
             {t(
-              "Lav optændingen med tørt brænde og sørg for at få en god flamme i ovnen for at undgå “doven” røg op ad skorstenen.",
-              "Use dry firewood and get a proper flame to avoid heavy smoke from chimney."
+              "Åbn lågen på siden af karret og tænd sikkerhedsbryderen (gul drejekontakt).",
+              "Open the hatch on the side of the tub and turn on the safety switch (yellow rotary switch)."
+            )}
+          </li>
+          <li>{t("Vent ca. 1 minut for initialisering.", "Wait approx. 1 minute for the system to initialise.")}</li>
+          <li>
+            {t(
+              "Indstil termostaten til 35°C. Systemets tolerance er ca. +2°C (opvarmning stopper ved ca. 37°C).",
+              "Set the thermostat to 35°C. The system has a tolerance of approx. +2°C (heating will stop at approx. 37°C)."
             )}
           </li>
           <li>
             {t(
-              "Fyld gerne ca. 2/3 af ovnen med brænde",
-              "Fill approx. 2/3 of the heater with wood"
-            )}
-          </li>
-          <li>
-            {t(
-              "Placér termocover på toppen og hav tålmodighed",
-              "Place the thermal cover and be patient"
-            )}
-          </li>
-          <li>
-            {t(
-              "Når temperaturen på badevandet er ca. 36°, fyldes der ikke mere brænde på.",
-              "Once water reaches ~36°C, stop adding firewood."
-            )}
-          </li>
-          <li>
-            {t(
-              "Tjek badevandstermometer inden badet benyttes. Ideelt imellem 36°–40°",
-              "Check water temperature before use – ideal range is 36–40°C"
-            )}
-          </li>
-          <li>
-            {t(
-              "Efter brug lukkes termocover og når man er færdig bedes man tømme vandet",
-              "After use, close the cover and drain the tub."
+              "Læg termocover på for at reducere varmetab og forkorte opvarmningstiden.",
+              "Place the thermal cover on to reduce heat loss and shorten heating time."
             )}
           </li>
         </ol>
+      ),
+    },
+    {
+      id: "heating",
+      title: t("Opvarmning og brug", "Heating and use"),
+      content: (
+        <div className={styles.text}>
+          <ul>
+            <li>{t("Opvarmning tager ca. 6 timer.", "Heating takes approx. 6 hours.")}</li>
+            <li>
+              {t(
+                "Hvis vandet køler under brug startes opvarmning automatisk igen. Sørg for altid at slukke korrekt efter brug.",
+                "If the water cools during use, heating will start automatically again. Always shut down correctly after use."
+              )}
+            </li>
+            <li>
+              {t(
+                "Tjek vandtemperatur før bad – ideelt 35–37°C.",
+                "Check water temperature before use – ideally 35–37°C."
+              )}
+            </li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: "shutdown",
+      title: t("Sluk korrekt efter brug", "How to shut down correctly after use"),
+      content: (
+        <ol className={styles.list}>
+          <li>{t("Sluk for vandcirkulation først (knap 2).", "Turn off water circulation first (button 2).")}</li>
+          <li>{t("Sluk for sikkerhedsbryderen (gul drejekontakt).", "Then turn off the safety switch (yellow rotary switch).")}</li>
+          <li>{t("Sluk for spa-kredsløbet i teknikrummet til sidst.", "Finally, turn off the ‘Spa’ circuit breaker in the technical room.")}</li>
+        </ol>
+      ),
+    },
+    {
+      id: "drain",
+      title: t("Tømning efter ophold", "Draining the hot tub after your stay"),
+      content: (
+        <div className={styles.text}>
+          <p>
+            {t(
+              "Tømning må kun ske når sikkerhedsbryderen og spa-kredsløbet er slukket.",
+              "Draining may only be done when the safety switch and the circuit breaker are turned off."
+            )}
+          </p>
+          <p>
+            {t(
+              "Hvis noget går i stykker eller holder op med at fungere, giv os besked hurtigst muligt.",
+              "If anything breaks or stops working, please inform us as soon as possible."
+            )}
+          </p>
+        </div>
       ),
     },
   ];
@@ -162,8 +161,8 @@ export default function Spa({ lang }: Props) {
       <Head
         title={t("Vildmarksbad", "Hot Tub")}
         description={t(
-          "Information om brug og optænding af vildmarksbadet.",
-          "Instructions for using and heating the hot tub."
+          "Information om brug af det elektriske vildmarksbad.",
+          "Information for using the electric hot tub."
         )}
         lang={lang}
         path=""
@@ -172,7 +171,7 @@ export default function Spa({ lang }: Props) {
 
       <div className={styles.wrapper}>
         <h1>{t("Vildmarksbad", "Hot Tub")}</h1>
-        <Accordion items={items} defaultOpenId="rules" />
+        <Accordion items={items} defaultOpenId="important" />
       </div>
     </>
   );
