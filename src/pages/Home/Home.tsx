@@ -15,7 +15,7 @@ import Reviews from "../../components/Reviews";
 
 import LocationAndDistances from "../../components/LocationAndDistances";
 import PracticalInfo from "../../components/PracticalInfo";
-import { getPageMeta } from "../../lib/meta";
+import { getSeoMeta } from "../../i18n/seo";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 
@@ -23,36 +23,7 @@ export default function Home({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
     chooseLang(lang, da, en, de);
 
-  /** ---------- SEO TEKSTER (kun til meta) ---------- */
-  const meta = getPageMeta(lang, "home");
-
-  // Keywords (lav vægt i SEO, men kan bruges i metatag)
-  const seoKeywords =
-    lang === "da"
-      ? [
-          "feriehus danmark",
-          "sommerhus fjellerup",
-          "familieferie danmark",
-          "feriehus for norske familier",
-          "feriehus for tyske gæster",
-          "opvarmet pool sommerhus",
-          "vildmarksbad sommerhus",
-          "sauna sommerhus",
-          "djursland feriehus",
-          "Fyrrehaven 61",
-        ]
-      : [
-          "Denmark holiday home",
-          "holiday home Fjellerup",
-          "Norway to Denmark holiday",
-          "Germany to Denmark vacation",
-          "family holiday Denmark",
-          "heated pool holiday home",
-          "hot tub rental",
-          "sauna holiday home",
-          "Djursland vacation rental",
-          "Fyrrehaven 61",
-        ];
+  const meta = getSeoMeta(lang, "home");
 
   /** ---------- HERO TEKSTER (visuelt indhold) ---------- */
   const heroTitle = t(
@@ -66,7 +37,7 @@ export default function Home({ lang }: { lang: Lang }) {
     "Hallenbad, Whirlpool und viel Platz für die ganze Familie."
   );
 
-  // Structured data for SEO (kan bruge seoDescription uden at påvirke Hero)
+  // Structured data for SEO (uses centralized meta without affecting the hero)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "VacationRental",
@@ -102,10 +73,11 @@ export default function Home({ lang }: { lang: Lang }) {
         path={pathOf(lang, "home")}
         title={meta.title}
         description={meta.description}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
+        ogImage={meta.image}
+        ogImageAlt={meta.imageAlt}
         jsonLd={jsonLd}
-        robots={{ index: true, follow: true, noarchive: true }}
-        keywords={seoKeywords}
+        robots={meta.robots}
+        keywords={meta.keywords}
       />
       <UspStrip
         ariaLabel={t("Hurtige fakta", "Quick facts", "Schnelle Fakten")}

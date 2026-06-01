@@ -6,12 +6,14 @@ import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import Head from "../../lib/Head";
 import { pathOf } from "../../lib/routes";
+import { getSeoMeta } from "../../i18n/seo";
 import * as CookieConsent from "vanilla-cookieconsent";
 import "vanilla-cookieconsent/dist/cookieconsent.css";
 
 export default function Cookies({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
     chooseLang(lang, da, en, de);
+  const seo = getSeoMeta(lang, "cookies");
 
   useEffect(() => {
     CookieConsent.run({
@@ -118,11 +120,12 @@ export default function Cookies({ lang }: { lang: Lang }) {
       <Head
         lang={lang}
         path={pathOf(lang, "cookies")}
-        title={t("Cookies hos Fyrrehaven 61", "Cookies at Fyrrehaven 61")}
-        description={t(
-          "Læs om vores brug af cookies og administrer dine valg.",
-          "Read about our use of cookies and manage your choices."
-        )}
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
+        robots={seo.robots}
+        keywords={seo.keywords}
       />
 
       <Container size="3" px="4" py="6">

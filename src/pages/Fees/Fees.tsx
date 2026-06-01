@@ -3,6 +3,7 @@ import Head from "../../lib/Head";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
+import { getSeoMeta } from "../../i18n/seo";
 import styles from "./Fees.module.css";
 import { fees } from "../../data/fees";
 
@@ -10,54 +11,26 @@ export default function Fees({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
     chooseLang(lang, da, en, de);
   const path = pathOf(lang, "fees");
-  const seoTitle = t(
-    "Gebyrer & praktiske vilkår – Fyrrehaven 61",
-    "Fees & house rules – Fyrrehaven 61"
-  );
-  const seoDescription = t(
-    "Se vores opdaterede gebyroversigt for Fyrrehaven 61: regler for booking, rengøring, sen check-out og særlige situationer. El (4 kr./kWh) og vand (80 kr./m³) afregnes efter forbrug. Ingen fester/kæledyr. Pool åben 1/5–1/10.",
-    "View the updated fee list for Fyrrehaven 61: booking rules, cleaning, late check-out and special cases. Electricity (4 DKK/kWh) and water (80 DKK/m³) are billed by usage. No parties or pets. Outdoor pool open May 1–Oct 1."
-  );
-  const seoKeywords =
-    lang === "da"
-      ? [
-          "gebyrer sommerhus",
-          "gebyroversigt",
-          "rengøringsgebyr",
-          "elforbrug pris",
-          "vandforbrug pris",
-          "sen check-out gebyr",
-          "skader og erstatning",
-          "Fyrrehaven 61 priser",
-        ]
-      : [
-          "holiday home fees",
-          "fee list",
-          "cleaning fee",
-          "electricity usage price",
-          "water usage price",
-          "late check-out fee",
-          "damage and charges",
-          "Fyrrehaven 61 prices",
-        ];
+  const seo = getSeoMeta(lang, "fees");
 
   return (
     <>
       <Head
         lang={lang}
         path={path}
-        title={seoTitle}
-        description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: seoTitle,
-          description: seoDescription,
+          name: seo.title,
+          description: seo.description,
           url: `https://fyrrehaven-61.dk${path}`,
         }}
-        robots={{ index: true, follow: true, noarchive: true }}
-        keywords={seoKeywords}
+        robots={seo.robots}
+        keywords={seo.keywords}
       />
 
       <Container size="3">

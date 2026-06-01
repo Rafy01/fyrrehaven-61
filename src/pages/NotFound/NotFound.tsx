@@ -4,22 +4,23 @@ import Head from "../../lib/Head";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
+import { getSeoMeta } from "../../i18n/seo";
 
 export default function NotFound({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
     chooseLang(lang, da, en, de);
+  const seo = getSeoMeta(lang, "notFound");
 
   return (
     <>
       <Head
         lang={lang}
         path={pathOf(lang, "home")}
-        title={t("Side ikke fundet | Fyrrehaven 61", "Page not found | Fyrrehaven 61")}
-        description={t(
-          "Den ønskede side findes ikke.",
-          "The page you requested could not be found."
-        )}
-        noindex
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
+        robots={seo.robots}
       />
       <Container size="3">
         <Flex direction="column" gap="4" py="9" align="center">

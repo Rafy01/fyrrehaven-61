@@ -48,23 +48,6 @@ const resources = {
       readySub: "Tjek ledige datoer og priser på Airbnb.",
     },
     book: {
-      seo: {
-        title: "Booking hos Fyrrehaven 61 – direkte forespørgsel",
-        description:
-          "Book direkte hos værterne eller via Airbnb. Udendørs opvarmet pool (1. maj–1. okt.), plads til 10 og familievenligt nær skov og strand. Vi svarer typisk inden for 1 time. El 4 kr./kWh og vand 80 kr./m³ afregnes efter opholdet.",
-        keywords: [
-          "booking sommerhus",
-          "Fyrrehaven 61 booking",
-          "sommerhus Fjellerup",
-          "udendørs opvarmet pool",
-          "vildmarksbad",
-          "sauna",
-          "familievenligt sommerhus",
-          "book direkte",
-          "Airbnb Fjellerup",
-          "Djursland feriehus",
-        ],
-      },
       hero: {
         title: "Booking",
         subtitle:
@@ -254,23 +237,6 @@ const resources = {
       readySub: "Check availability and pricing on Airbnb.",
     },
     book: {
-      seo: {
-        title: "Book Fyrrehaven 61 – direct request",
-        description:
-          "Book directly with the hosts or via Airbnb. Heated outdoor pool (May 1–Oct 1), sleeps 10 and family-friendly near forest and beach. We usually reply within 1 hour. Electricity 4 DKK/kWh and water 80 DKK/m³ are settled after your stay.",
-        keywords: [
-          "holiday home booking",
-          "Fyrrehaven 61 booking",
-          "Fjellerup cottage",
-          "heated outdoor pool",
-          "hot tub",
-          "sauna",
-          "family friendly rental",
-          "book direct",
-          "Airbnb Fjellerup",
-          "Djursland holiday home",
-        ],
-      },
       hero: {
         title: "Booking",
         subtitle: "Send a direct request – or book via Airbnb if you prefer.",
@@ -458,23 +424,6 @@ const resources = {
       readySub: "Verfügbarkeit und Preise auf Airbnb ansehen.",
     },
     book: {
-      seo: {
-        title: "Buchung bei Fyrrehaven 61 – direkte Anfrage",
-        description:
-          "Buchen Sie direkt bei den Gastgebern oder über Airbnb. Beheizter Außenpool (1. Mai–1. Okt.), Platz für 10 Gäste und familienfreundlich nahe Wald und Strand. Wir antworten normalerweise innerhalb von 1 Stunde. Strom 4 DKK/kWh und Wasser 80 DKK/m³ werden nach dem Aufenthalt abgerechnet.",
-        keywords: [
-          "Ferienhaus Buchung",
-          "Fyrrehaven 61 Buchung",
-          "Ferienhaus Fjellerup",
-          "beheizter Außenpool",
-          "Whirlpool",
-          "Sauna",
-          "familienfreundliche Unterkunft",
-          "direkt buchen",
-          "Airbnb Fjellerup",
-          "Djursland Ferienhaus",
-        ],
-      },
       hero: {
         title: "Buchung",
         subtitle:

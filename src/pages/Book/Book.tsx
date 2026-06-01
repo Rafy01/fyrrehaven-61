@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
+import { getSeoMeta } from "../../i18n/seo";
 import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
 
@@ -18,10 +19,7 @@ export default function Book({ lang }: { lang: Lang }) {
   const { t } = useTranslation("book");
   const path = pathOf(lang, "book");
 
-  /** ——— SEO ——— */
-  const seoTitle = t("seo.title");
-  const seoDescription = t("seo.description");
-  const seoKeywords = t("seo.keywords", { returnObjects: true }) as string[];
+  const seo = getSeoMeta(lang, "book");
 
   // Struktureret data
   const jsonLd = {
@@ -29,7 +27,7 @@ export default function Book({ lang }: { lang: Lang }) {
     "@type": "LodgingBusiness",
     name: "Fyrrehaven 61",
     url: `https://fyrrehaven-61.dk${path}`,
-    description: seoDescription,
+    description: seo.description,
     address: {
       "@type": "PostalAddress",
       streetAddress: "Fyrrehaven 61",
@@ -54,12 +52,13 @@ export default function Book({ lang }: { lang: Lang }) {
       <Head
         lang={lang}
         path={path}
-        title={seoTitle}
-        description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
         jsonLd={jsonLd}
-        robots={{ index: true, follow: true, noarchive: true }}
-        keywords={seoKeywords}
+        robots={seo.robots}
+        keywords={seo.keywords}
       />
       <Hero
         title={heroTitle}

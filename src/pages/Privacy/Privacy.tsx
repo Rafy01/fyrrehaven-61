@@ -3,6 +3,7 @@ import Head from "../../lib/Head";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
+import { getSeoMeta } from "../../i18n/seo";
 import styles from "./Privacy.module.css";
 
 export default function Privacy({ lang }: { lang: Lang }) {
@@ -24,62 +25,26 @@ export default function Privacy({ lang }: { lang: Lang }) {
   const LAST_UPDATED_EN = "16 September 2025";
 
   const path = pathOf(lang, "privacy");
-  const seoTitle = t(
-    "Privatlivspolitik – Fyrrehaven 61 | GDPR & persondata",
-    "Privacy Policy – Fyrrehaven 61 | GDPR & personal data"
-  );
-  const seoDescription = t(
-    "Læs hvordan vi behandler personoplysninger ved kontakt og booking af Fyrrehaven 61. Vi lagrer henvendelser som e-mail hos Simply, sætter kun nødvendige cookies som udgangspunkt og respekterer dine GDPR-rettigheder.",
-    "Learn how we process personal data when you contact us or book Fyrrehaven 61. We store enquiries as email with Simply, set only necessary cookies by default, and respect your GDPR rights."
-  );
-  const seoKeywords =
-    lang === "da"
-      ? [
-          "privatlivspolitik",
-          "GDPR",
-          "persondata",
-          "databehandling",
-          "dataansvarlig",
-          "databehandler",
-          "GDPR rettigheder",
-          "cookiepolitik",
-          "booking personoplysninger",
-          "Fyrrehaven 61 privatliv",
-          "e-mail opbevaring",
-          "Simply e-mailudbyder",
-        ]
-      : [
-          "privacy policy",
-          "GDPR",
-          "personal data",
-          "data processing",
-          "data controller",
-          "data processor",
-          "GDPR rights",
-          "cookie policy",
-          "booking personal data",
-          "Fyrrehaven 61 privacy",
-          "email storage",
-          "Simply email provider",
-        ];
+  const seo = getSeoMeta(lang, "privacy");
 
   return (
     <>
       <Head
         lang={lang}
         path={path}
-        title={seoTitle}
-        description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebPage",
-          name: seoTitle,
-          description: seoDescription,
+          name: seo.title,
+          description: seo.description,
           url: `https://fyrrehaven-61.dk${path}`,
         }}
-        robots={{ index: false, follow: true, noarchive: true }}
-        keywords={seoKeywords}
+        robots={seo.robots}
+        keywords={seo.keywords}
       />
 
       <Container size="3">

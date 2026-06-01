@@ -4,6 +4,7 @@ import { Container, Box, Heading, Text } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
+import { getSeoMeta } from "../../i18n/seo";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import QuickFilters from "../../components/QuickFilters";
@@ -20,47 +21,7 @@ export default function Area({ lang }: { lang: Lang }) {
   const path = pathOf(lang, "area");
   const [selected, setSelected] = React.useState<TagId[]>([]);
 
-  /** ---------- SEO ---------- */
-  const seoTitle = t(
-    "Området – skov, strand og oplevelser tæt på",
-    "Area – forest, beach and nearby experiences",
-    "Region – Wald, Strand und Erlebnisse in der Nähe"
-  );
-  const seoDescription = t(
-    "Oplev Fjellerup og Djursland fra Fyrrehaven 61: skovstier fra døren, strand i gå- og cykelafstand, og familievenlige attraktioner som Djurs Sommerland, Mols Bjerge og Kattegatcentret. Se kortet og vores bedste lokale tips.",
-    "Explore Fjellerup and Djursland from Fyrrehaven 61: forest trails at the doorstep, a beach within walking and biking distance, and family attractions like Djurs Sommerland, Mols Bjerge and the Kattegat Centre. See the map and our top local tips.",
-    "Entdecken Sie Fjellerup und Djursland von Fyrrehaven 61 aus: Wanderwege am Haus, Strand in Geh- und Fahrraddistanz und familienfreundliche Attraktionen wie Djurs Sommerland, Mols Bjerge und das Kattegat Center. Sehen Sie die Karte und unsere besten lokalen Tipps."
-  );
-  const seoKeywords =
-    lang === "da"
-      ? [
-          "Fjellerup",
-          "Djursland",
-          "skov og strand",
-          "familievenlige oplevelser",
-          "Djurs Sommerland",
-          "Mols Bjerge",
-          "Kattegatcentret",
-          "Grenaa",
-          "Ebeltoft",
-          "vandreruter",
-          "cykelruter",
-          "Fyrrehaven 61",
-        ]
-      : [
-          "Fjellerup",
-          "Djursland",
-          "forest and beach",
-          "family attractions",
-          "Djurs Sommerland",
-          "Mols Bjerge",
-          "Kattegat Centre",
-          "Grenaa",
-          "Ebeltoft",
-          "hiking trails",
-          "cycling routes",
-          "Fyrrehaven 61",
-        ];
+  const seo = getSeoMeta(lang, "area");
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "TouristDestination",
@@ -69,7 +30,7 @@ export default function Area({ lang }: { lang: Lang }) {
       "Fjellerup – forest & beach",
       "Fjellerup – Wald & Strand"
     ),
-    description: seoDescription,
+    description: seo.description,
     url: `https://fyrrehaven-61.dk${path}`,
     touristType: t("Familier", "Families", "Familien"),
     containsPlace: [
@@ -112,12 +73,13 @@ export default function Area({ lang }: { lang: Lang }) {
       <Head
         lang={lang}
         path={path}
-        title={seoTitle}
-        description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
         jsonLd={jsonLd}
-        robots={{ index: true, follow: true, noarchive: true }}
-        keywords={seoKeywords}
+        robots={seo.robots}
+        keywords={seo.keywords}
       />
       <Hero
         title={heroTitle}

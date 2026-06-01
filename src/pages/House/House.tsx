@@ -13,7 +13,7 @@ import { pathOf } from "../../lib/routes";
 import styles from "./House.module.css";
 import PracticalInfo from "../../components/PracticalInfo";
 import Facilities from "../../components/Facilities";
-import { getPageMeta } from "../../lib/meta";
+import { getSeoMeta } from "../../i18n/seo";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 
@@ -21,33 +21,7 @@ export default function House({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
     chooseLang(lang, da, en, de);
 
-  /* -------- SEO (kun meta) -------- */
-  const Meta = getPageMeta(lang, "house");
-  const seoKeywords =
-    lang === "da"
-      ? [
-          "sommerhus fjellerup",
-          "sommerhus med pool",
-          "opvarmet udendørs pool",
-          "vildmarksbad",
-          "sauna",
-          "familievenligt sommerhus",
-          "10 personer",
-          "djursland feriehus",
-          "Fyrrehaven 61",
-          "tæt på strand og skov",
-        ]
-      : [
-          "holiday home Fjellerup",
-          "heated outdoor pool",
-          "hot tub",
-          "sauna",
-          "family friendly",
-          "sleeps 10",
-          "Djursland vacation rental",
-          "Fyrrehaven 61",
-          "near beach and forest",
-        ];
+  const Meta = getSeoMeta(lang, "house");
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -89,10 +63,11 @@ export default function House({ lang }: { lang: Lang }) {
         path={pathOf(lang, "house")}
         title={Meta.title}
         description={Meta.description}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.jpg"
+        ogImage={Meta.image}
+        ogImageAlt={Meta.imageAlt}
         jsonLd={jsonLd}
-        robots={{ index: true, follow: true, noarchive: true }}
-        keywords={seoKeywords}
+        robots={Meta.robots}
+        keywords={Meta.keywords}
       />
 
       {/* HERO */}

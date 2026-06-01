@@ -2,6 +2,7 @@ import { Container, Box } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
+import { getSeoMeta } from "../../i18n/seo";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import Gallery from "../../components/Gallery/Gallery";
@@ -12,62 +13,13 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
     chooseLang(lang, da, en, de);
   const path = pathOf(lang, "gallery");
-
-  const seoTitle = t(
-    "Galleri – billeder af hus, pool og omgivelser",
-    "Gallery – photos of the house, pool and surroundings",
-    "Galerie – Fotos vom Haus, Pool und der Umgebung"
-  );
-  const seoDescription = t(
-    "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
-    "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool (May 1–Oct 1), electric hot tub, electric sauna and nearby forest and beach in Fjellerup. Get a true feel for the place.",
-    "Sehen Sie Fotos vom Wohnzimmer, Essbereich, Schlafzimmern und Dachboden – plus dem beheizten Außenpool (1. Mai–1. Okt), elektrischen Whirlwanne, Elektro-Sauna und dem nahegelegenen Wald und Strand bei Fjellerup. Gewinnen Sie einen echten Eindruck."
-  );
-  const seoKeywords =
-    lang === "da"
-      ? [
-          "Fyrrehaven 61",
-          "galleri",
-          "billeder sommerhus",
-          "udendørs opvarmet pool",
-          "vildmarksbad",
-          "sauna",
-          "Fjellerup",
-          "Djursland",
-          "skov og strand",
-          "familieferie",
-        ]
-      : lang === "de"
-      ? [
-          "Fyrrehaven 61",
-          "Galerie",
-          "Ferienhaus Fotos",
-          "beheizter Außenpool",
-          "Whirlpool",
-          "Sauna",
-          "Fjellerup",
-          "Djursland",
-          "Wald und Strand",
-          "Familienurlaub",
-        ]
-      : [
-          "Fyrrehaven 61",
-          "gallery",
-          "holiday home photos",
-          "heated outdoor pool",
-          "hot tub",
-          "sauna",
-          "Fjellerup",
-          "Djursland",
-          "forest and beach",
-          "family holiday",
-        ];
+  const seo = getSeoMeta(lang, "gallery");
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ImageGallery",
     name: "Fyrrehaven 61",
-    description: seoDescription,
+    description: seo.description,
     url: `https://fyrrehaven-61.dk${path}`,
   };
 
@@ -86,12 +38,13 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
       <Head
         lang={lang}
         path={path}
-        title={seoTitle}
-        description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
         jsonLd={jsonLd}
-        robots={{ index: true, follow: true, noarchive: true }}
-        keywords={seoKeywords}
+        robots={seo.robots}
+        keywords={seo.keywords}
       />
 
       <Hero

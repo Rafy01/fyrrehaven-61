@@ -6,67 +6,32 @@ import ContactForm from "../../components/ContactForm";
 import HostsSection from "../../components/HostsSection";
 import { chooseLang } from "../../lib/lang";
 import { pathOf, type Lang } from "../../lib/routes";
+import { getSeoMeta } from "../../i18n/seo";
 
 export default function ContactPage({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
     chooseLang(lang, da, en, de);
   const path = pathOf(lang, "contact");
-
-  const seoTitle = t(
-    "Kontakt Fyrrehaven 61 – spørgsmål om booking og ophold",
-    "Contact Fyrrehaven 61 – questions about booking and stays"
-  );
-  const seoDescription = t(
-    "Har du spørgsmål til datoer, priser, faciliteter eller særlige ønsker? Send os en besked via formularen — vi svarer typisk samme dag. Al kommunikation foregår via e-mail, og dine oplysninger behandles efter vores privatlivspolitik.",
-    "Got questions about dates, pricing, amenities or special requests? Send us a message — we usually reply the same day. All communication is handled by email and your data is processed under our privacy policy."
-  );
-  const seoKeywords =
-    lang === "da"
-      ? [
-          "kontakt",
-          "Fyrrehaven 61",
-          "sommerhus Fjellerup",
-          "spørgsmål booking",
-          "udlejning sommerhus",
-          "familievenligt sommerhus",
-          "pool vildmarksbad sauna",
-          "Djursland ferie",
-          "book direkte",
-          "Airbnb kontakt",
-        ]
-      : [
-          "contact",
-          "Fyrrehaven 61",
-          "holiday home Fjellerup",
-          "booking questions",
-          "holiday rental",
-          "family friendly cottage",
-          "pool hot tub sauna",
-          "Djursland Denmark",
-          "book direct",
-          "Airbnb contact",
-        ];
+  const seo = getSeoMeta(lang, "contact");
 
   return (
     <>
       <Head
         lang={lang}
         path={path}
-        title={seoTitle}
-        description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "ContactPage",
-          name: t("Kontakt os", "Contact us"),
-          description: t(
-            "Spørgsmål eller forespørgsler? Skriv til os her.",
-            "Questions or requests? Send us a message here."
-          ),
+          name: seo.title,
+          description: seo.description,
           url: `https://fyrrehaven-61.dk${path}`,
         }}
-        robots={{ index: true, follow: true, noarchive: true }}
-        keywords={seoKeywords}
+        robots={seo.robots}
+        keywords={seo.keywords}
       />
 
       <Hero
