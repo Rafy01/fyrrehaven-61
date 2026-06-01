@@ -1,12 +1,12 @@
 // src/lib/lang.ts
-export type Lang = "da" | "en";
+export type Lang = "da" | "en" | "de";
 
 const KEY = "lang";
 
 export function getStoredLang(): Lang | null {
   try {
     const v = localStorage.getItem(KEY);
-    return v === "da" || v === "en" ? v : null;
+    return v === "da" || v === "en" || v === "de" ? v : null;
   } catch {
     return null;
   }
@@ -17,7 +17,10 @@ export function getNavigatorLang(): Lang {
     typeof navigator !== "undefined"
       ? navigator.languages?.[0] ?? navigator.language ?? ""
       : "";
-  return nav.toLowerCase().startsWith("da") ? "da" : "en";
+  const lower = nav.toLowerCase();
+  if (lower.startsWith("da")) return "da";
+  if (lower.startsWith("de")) return "de";
+  return "en";
 }
 
 /** Vælg startsprog: først localStorage, ellers device/browser. */

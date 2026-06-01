@@ -18,33 +18,34 @@ export type PageKey =
 
 // Public slugs pr. side pr. sprog
 export const SLUGS: Record<PageKey, Record<Lang, string>> = {
-  home: { da: "", en: "" },
-  house: { da: "sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61" },
-  area: { da: "omraadet-skov-og-strand", en: "area-forest-and-beach" },
+  home: { da: "", en: "", de: "" },
+  house: { da: "sommerhuset-fyrrehaven-61", en: "the-house-fyrrehaven-61", de: "das-haus-fyrrehaven-61" },
+  area: { da: "omraadet-skov-og-strand", en: "area-forest-and-beach", de: "region-wald-und-strand" },
   gallery: {
     da: "galleri-fyrrehaven-61-billeder",
     en: "gallery-photos-fyrrehaven-61",
+    de: "galerie-fotos-fyrrehaven-61",
   },
-  faq: { da: "ofte-stillede-sporgsmal", en: "frequently-asked-questions" },
-  contact: { da: "kontakt", en: "contact" },
-  book: { da: "booking", en: "book" },
-  cookies: { da: "cookies", en: "cookies" },
-  fees: { da: "gebyrer", en: "fees" },
-  chat: { da: "chat-ukendte-sporgsmal", en: "chat-unknown-questions" },
-  privacy: { da: "privatlivspolitik", en: "privacy-policy" },
-  sitemap: { da: "sitemap", en: "sitemap" },
+  faq: { da: "ofte-stillede-sporgsmal", en: "frequently-asked-questions", de: "haufig-gestellte-fragen" },
+  contact: { da: "kontakt", en: "contact", de: "kontakt" },
+  book: { da: "booking", en: "book", de: "buchung" },
+  cookies: { da: "cookies", en: "cookies", de: "cookies" },
+  fees: { da: "gebyrer", en: "fees", de: "gebuehren" },
+  chat: { da: "chat-ukendte-sporgsmal", en: "chat-unknown-questions", de: "chat-unbekannte-fragen" },
+  privacy: { da: "privatlivspolitik", en: "privacy-policy", de: "datenschutzrichtlinie" },
+  sitemap: { da: "sitemap", en: "sitemap", de: "sitemap" },
 };
 
 // Gæste-sider (separat fordi de har præfikset `/guest`)
 export const GUEST_PAGES: Record<"welcome" | "manual" | "pool" | "sauna" | "spa" | "contact" | "practicalInfo" | "checkInOut", Record<Lang, string>> = {
-  welcome: { da: "velkomst", en: "welcome" },
-  manual: { da: "manual", en: "manual" },
-  pool: { da: "pool", en: "pool" },
-  sauna: { da: "sauna", en: "sauna" },
-  spa: { da: "vildmarksbad", en: "hot-tub" },
-  contact: { da: "kontakt", en: "contact" },
-  practicalInfo: { da: "praktisk-info", en: "practical-info" },
-  checkInOut: { da: "tjek-ind-ud", en: "check-inout" },
+  welcome: { da: "velkomst", en: "welcome", de: "willkommen" },
+  manual: { da: "manual", en: "manual", de: "benutzerhandbuch" },
+  pool: { da: "pool", en: "pool", de: "pool" },
+  sauna: { da: "sauna", en: "sauna", de: "sauna" },
+  spa: { da: "vildmarksbad", en: "hot-tub", de: "whirlpool" },
+  contact: { da: "kontakt", en: "contact", de: "kontakt" },
+  practicalInfo: { da: "praktisk-info", en: "practical-info", de: "praktische-infos" },
+  checkInOut: { da: "tjek-ind-ud", en: "check-inout", de: "check-in-check-out" },
 };
 
 // Bruges til at lave URL-stier for public sider
@@ -61,6 +62,9 @@ const REVERSE: Record<Lang, Record<string, PageKey>> = {
   en: Object.fromEntries(
     Object.entries(SLUGS).map(([k, v]) => [v.en || "", k as PageKey])
   ),
+  de: Object.fromEntries(
+    Object.entries(SLUGS).map(([k, v]) => [v.de || "", k as PageKey])
+  ),
 };
 
 // Find {lang, key} ud fra public path
@@ -69,7 +73,7 @@ export function parsePath(
 ): { lang: Lang; key: PageKey } | null {
   const parts = pathname.replace(/^\/+/, "").split("/");
   const langSeg = (parts[0] || "") as Lang;
-  if (langSeg !== "da" && langSeg !== "en") return null;
+  if (langSeg !== "da" && langSeg !== "en" && langSeg !== "de") return null;
 
   const slug = decodeURIComponent(parts[1] || "");
   const key = REVERSE[langSeg][slug];

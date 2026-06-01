@@ -119,7 +119,7 @@ useEffect(() => {
     ];
   }, [lang, guest, t]);
 
-  const flag = lang === "da" ? "🇩🇰" : "🇬🇧";
+  const flag = lang === "da" ? "🇩🇰" : lang === "de" ? "🇩🇪" : "🇬🇧";
 
   return (
     <div
@@ -191,6 +191,12 @@ useEffect(() => {
                 className={styles.ddItem}
               >
                 <span style={{ marginRight: 8 }}>🇩🇰</span> Dansk
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                onSelect={() => switchLang("de")}
+                className={styles.ddItem}
+              >
+                <span style={{ marginRight: 8 }}>🇩🇪</span> Deutsch
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 onSelect={() => switchLang("en")}
