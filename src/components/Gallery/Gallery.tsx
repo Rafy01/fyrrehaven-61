@@ -9,7 +9,8 @@ import * as Dialog from "@radix-ui/react-dialog";
 import styles from "./Gallery.module.css";
 import Buttons from "../Buttons";
 
-export type Lang = "da" | "en";
+import type { Lang } from "../../lib/lang";
+export type { Lang };
 
 export type GalleryItem = {
   src: string; // thumbnail

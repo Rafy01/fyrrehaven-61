@@ -16,8 +16,7 @@ import Reviews from "../../components/Reviews";
 import LocationAndDistances from "../../components/LocationAndDistances";
 import PracticalInfo from "../../components/PracticalInfo";
 import { getPageMeta } from "../../lib/meta";
-
-type Lang = "da" | "en";
+import type { Lang } from "../../lib/lang";
 
 export default function Home({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);

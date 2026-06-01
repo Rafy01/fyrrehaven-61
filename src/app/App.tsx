@@ -156,6 +156,51 @@ export default function App({
               ],
             },
           },
+          de: {
+            consentModal: {
+              title: "Wir verwenden Cookies 🍪",
+              description:
+                "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern. Sie entscheiden, welche Sie akzeptieren.",
+              acceptAllBtn: "Alle akzeptieren",
+              acceptNecessaryBtn: "Ablehnen",
+              showPreferencesBtn: "Cookies einstellen",
+            },
+            preferencesModal: {
+              title: "Cookie-Einstellungen",
+              acceptAllBtn: "Alle akzeptieren",
+              acceptNecessaryBtn: "Nur notwendige",
+              savePreferencesBtn: "Einstellungen speichern",
+              closeIconLabel: "Schließen",
+              sections: [
+                {
+                  title: "Verwendung von Cookies",
+                  description:
+                    "Wir verwenden Cookies, damit die Website funktioniert und um Statistiken zu sammeln.",
+                },
+                {
+                  title: "Notwendige Cookies",
+                  description:
+                    "Diese Cookies sind für das Funktionieren der Website erforderlich und können nicht deaktiviert werden.",
+                  linkedCategory: "necessary",
+                  cookieTable: cookieData[lang].necessary,
+                },
+                {
+                  title: "Statistik",
+                  description:
+                    "Diese Cookies helfen uns zu verstehen, wie die Website genutzt wird.",
+                  linkedCategory: "analytics",
+                  cookieTable: cookieData[lang].analytics,
+                },
+                {
+                  title: "Marketing",
+                  description:
+                    "Diese Cookies werden verwendet, um relevante Anzeigen anzuzeigen.",
+                  linkedCategory: "marketing",
+                  cookieTable: cookieData[lang].marketing,
+                },
+              ],
+            },
+          },
         },
       },
     } as never);

@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { site } from "./siteMeta";
 
-type Lang = "da" | "en";
+import type { Lang } from "./lang";
 
 /** Mere fleksibel robots-konfiguration (alternativ til noindex) */
 export type RobotsOptions = {

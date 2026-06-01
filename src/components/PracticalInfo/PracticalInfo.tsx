@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import styles from "./PracticalInfo.module.css";
-
-type Lang = "da" | "en";
+import type { Lang } from "../../lib/lang";
 
 /* ---------- Ikoner (små inline SVG’er) ---------- */
 const Icon = {

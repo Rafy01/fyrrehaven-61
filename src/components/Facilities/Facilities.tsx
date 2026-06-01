@@ -1,6 +1,5 @@
 import styles from "./Facilities.module.css";
-
-type Lang = "da" | "en";
+import type { Lang } from "../../lib/lang";
 
 type Bullet = { da: string; en: string };
 type Category = {

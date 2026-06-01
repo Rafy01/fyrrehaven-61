@@ -364,5 +364,7 @@ const META: Record<PageKey, Record<Lang, MetaPack>> = {
 };
 
 export function getPageMeta(lang: Lang, key: PageKey): MetaPack {
-  return (META[key] ?? META.home)[lang];
+  const pack = (META[key] ?? META.home) as Record<string, MetaPack>;
+  // Prefer exact language, otherwise fallback to English, then Danish
+  return pack[lang] ?? pack["en"] ?? pack["da"];
 }

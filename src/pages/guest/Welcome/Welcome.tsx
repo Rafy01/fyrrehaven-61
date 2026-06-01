@@ -4,8 +4,7 @@ import Hero from "../../../components/Hero";
 import Head from "../../../lib/Head";
 import Typography from "../../../components/Typography";
 import styles from "./Welcome.module.css";
-
-type Lang = "da" | "en";
+import type { Lang } from "../../../lib/lang";
 
 type Props = {
   lang: Lang;

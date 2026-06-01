@@ -35,10 +35,10 @@ import PracticalInfo from "./pages/guest/Practical-Info";
 import CheckInOut from "./pages/guest/CheckInOut";
 
 // Routing helpers
-import { pickInitialLang } from "./lib/lang";
+import { pickInitialLang, type Lang } from "./lib/lang";
 import { SLUGS, GUEST_PAGES } from "./lib/routes";
 
-const langRoutes = (lang: "da" | "en") => [
+const langRoutes = (lang: Lang) => [
   { index: true, element: <Home lang={lang} /> },
   { path: SLUGS.house[lang], element: <House lang={lang} /> },
   { path: SLUGS.area[lang], element: <Area lang={lang} /> },
@@ -51,7 +51,7 @@ const langRoutes = (lang: "da" | "en") => [
   { path: SLUGS.fees[lang], element: <Fees lang={lang} /> },
 ];
 
-const guestRoutes = (lang: "da" | "en") => [
+const guestRoutes = (lang: Lang) => [
   { path: GUEST_PAGES.welcome[lang], element: <GuestWelcome lang={lang} /> },
   { path: GUEST_PAGES.manual[lang], element: <GuestManual lang={lang} /> },
   { path: GUEST_PAGES.pool[lang], element: <Pool lang={lang} /> },
@@ -69,6 +69,7 @@ const router = createBrowserRouter([
 
   { path: "/da", element: <App lang="da" />, children: langRoutes("da") },
   { path: "/en", element: <App lang="en" />, children: langRoutes("en") },
+  { path: "/de", element: <App lang="de" />, children: langRoutes("de") },
 
   {
     path: "/guest/da",
@@ -79,6 +80,11 @@ const router = createBrowserRouter([
     path: "/guest/en",
     element: <App lang="en" guest />,
     children: guestRoutes("en"),
+  },
+  {
+    path: "/guest/de",
+    element: <App lang="de" guest />,
+    children: guestRoutes("de"),
   },
 
   { path: "/debug/chat", element: <ChatDebug /> },

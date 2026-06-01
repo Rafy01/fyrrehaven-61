@@ -3,7 +3,7 @@ import styles from "./LocationAndDistances.module.css";
 import Buttons from "../Buttons";
 import { pathOf } from "../../lib/routes";
 
-type Lang = "da" | "en";
+import type { Lang } from "../../lib/lang";
 
 /** Små inline-ikoner (ingen ekstra lib) */
 const Icon = {

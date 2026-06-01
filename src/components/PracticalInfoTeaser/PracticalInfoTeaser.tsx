@@ -1,6 +1,5 @@
 import styles from "./PracticalInfoTeaser.module.css";
-
-type Lang = "da" | "en";
+import type { Lang } from "../../lib/lang";
 
 /* ---------- Ikoner (små inline SVG’er) ---------- */
 const Icon = {

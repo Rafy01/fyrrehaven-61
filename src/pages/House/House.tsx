@@ -14,8 +14,7 @@ import styles from "./House.module.css";
 import PracticalInfo from "../../components/PracticalInfo";
 import Facilities from "../../components/Facilities";
 import { getPageMeta } from "../../lib/meta";
-
-type Lang = "da" | "en";
+import type { Lang } from "../../lib/lang";
 
 export default function House({ lang }: { lang: Lang }) {
   const t = (da: string, en: string) => (lang === "da" ? da : en);
