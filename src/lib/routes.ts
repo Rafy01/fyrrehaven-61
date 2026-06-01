@@ -54,6 +54,13 @@ export function pathOf(lang: Lang, key: PageKey): string {
   return `/${lang}${slug ? `/${slug}` : ""}`;
 }
 
+export type GuestPageKey = keyof typeof GUEST_PAGES;
+
+export function guestPathOf(lang: Lang, key: GuestPageKey, hash?: string): string {
+  const slug = GUEST_PAGES[key][lang] ?? GUEST_PAGES[key].en;
+  return `/guest/${lang}/${slug}${hash ? `#${hash}` : ""}`;
+}
+
 // Reverse lookup: slug -> page key
 const REVERSE: Record<Lang, Record<string, PageKey>> = {
   da: Object.fromEntries(

@@ -5,6 +5,7 @@ import Head from "../../../lib/Head";
 import Typography from "../../../components/Typography";
 import styles from "./Welcome.module.css";
 import type { Lang } from "../../../lib/lang";
+import { guestPathOf } from "../../../lib/routes";
 
 type Props = {
   lang: Lang;
@@ -29,30 +30,18 @@ const description = t(
   "Welcome to your stay at Fyrrehaven 61. Here you’ll find practical information about the house, pool, sauna, and much more."
 );
 
-const domain =
-  (typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_BASE_URL) || "";
-
-const manualUrl =
-  `${domain}/guest/${lang}/${lang === "da" ? "manual" : "manual"}`;
-const poolUrl =
-  `${domain}/guest/${lang}/${lang === "da" ? "pool" : "pool"}`;
-const saunaUrl =
-  `${domain}/guest/${lang}/${lang === "da" ? "sauna" : "sauna"}`;
-const hotTubUrl =
-  `${domain}/guest/${lang}/${lang === "da" ? "vildmarksbad" : "hot-tub"}`;
-const endUrl = `${domain}/guest/${lang}/${
-  lang === "da" ? "manual#theend" : "manual#theend"
-  }`;
-const practicalInfoUrl =
-  `${domain}/guest/${lang}/${
-    lang === "da" ? "praktisk-info" : "practical-info"
-  }`;
+const manualUrl = guestPathOf(lang, "manual");
+const poolUrl = guestPathOf(lang, "pool");
+const saunaUrl = guestPathOf(lang, "sauna");
+const hotTubUrl = guestPathOf(lang, "spa");
+const endUrl = guestPathOf(lang, "manual", "theend");
+const practicalInfoUrl = guestPathOf(lang, "practicalInfo");
 
   return (
     <>
       <Head
         lang={lang}
-        path={`/guest/${lang}/velkomst`}
+        path={guestPathOf(lang, "welcome")}
         title={title}
         description={description}
         ogImage="/images/guest-welcome.jpg"

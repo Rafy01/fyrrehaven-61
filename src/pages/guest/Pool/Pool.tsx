@@ -5,6 +5,7 @@ import type { Lang } from "../../../lib/lang";
 import { useCallback } from "react";
 import styles from "./Pool.module.css";
 import Accordion from "../../../components/Accordion/Accordion";
+import { guestPathOf } from "../../../lib/routes";
 
 export default function PoolPage({ lang }: { lang: Lang }) {
   const t = useCallback(
@@ -41,7 +42,7 @@ export default function PoolPage({ lang }: { lang: Lang }) {
     <>
       <Head
         lang={lang}
-        path={`/guest/${lang}/pool`}
+        path={guestPathOf(lang, "pool")}
         title={t("Pool – Maj 2026", "Pool – May 2026")}
         description={t(
           "Sådan bruger og åbner I poolen ved sommerhuset.",

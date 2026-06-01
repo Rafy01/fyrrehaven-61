@@ -6,6 +6,7 @@ import type { Lang } from "../../../lib/lang";
 import styles from "./Manual.module.css";
 import Buttons from "../../../components/Buttons";
 import Hero from "../../../components/Hero";
+import { guestPathOf } from "../../../lib/routes";
 
 type Props = { lang: Lang };
 
@@ -27,17 +28,10 @@ export default function Manual({ lang }: Props) {
       "Her er lidt info omkring hvordan I behandler huset – I må meget gerne følge os på sociale medier og dele jeres oplevelse med #fyrrehaven61",
       "We look forward to welcoming you in beautiful and relaxing surroundings – here’s a bit of practical info!"
     );
-  const domain =
-    (typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_BASE_URL) || "";
 
-  const SaunaUrl =
-    `${domain}/guest/${lang}/${lang === "da" ? "sauna" : "sauna"}`;
-  const hottubUrl =
-    `${domain}/guest/${lang}/${lang === "da" ? "vildmarksbad" : "hot-tub"}`;
-  const poolUrl =
-    `${domain}/guest/${lang}/${lang === "da" ? "pool" : "pool"}`;
+  const saunaUrl = guestPathOf(lang, "sauna");
+  const hottubUrl = guestPathOf(lang, "spa");
+  const poolUrl = guestPathOf(lang, "pool");
 
   const duringStayItems = [
     {
@@ -339,7 +333,7 @@ export default function Manual({ lang }: Props) {
     <>
       <Head
         lang={lang}
-        path={`/guest/${lang}/manual`}
+        path={guestPathOf(lang, "manual")}
         title={title}
         description={description}
         ogImage="/images/guest-welcome.jpg"
@@ -364,7 +358,7 @@ export default function Manual({ lang }: Props) {
               variant="secondary"
             />
             <Buttons
-              to={SaunaUrl}
+              to={saunaUrl}
               labelDa="Sauna"
               labelEn="Sauna"
               variant="secondary"

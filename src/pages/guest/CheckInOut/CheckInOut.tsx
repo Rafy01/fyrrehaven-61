@@ -6,6 +6,8 @@ import Head from "../../../lib/Head";
 import { useTranslation } from "react-i18next";
 import Accordion from "../../../components/Accordion/Accordion";
 import Form, { type Field } from "../../../components/Form/Form";
+import { guestPathOf } from "../../../lib/routes";
+import type { Lang } from "../../../lib/lang";
 import styles from "./CheckInOut.module.css";
 
 const POOL_SEASON = {
@@ -19,8 +21,13 @@ function isPoolOpen(today = new Date()) {
 
 export default function CheckInOut() {
   const { i18n } = useTranslation();
-  const lang = i18n.language.startsWith("da") ? "da" : "en";
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const lang: Lang = i18n.language.startsWith("da")
+    ? "da"
+    : i18n.language.startsWith("de")
+    ? "de"
+    : "en";
+  const t = (da: string, en: string, de = en) =>
+    lang === "da" ? da : lang === "de" ? de : en;
 
   const [poolOpen, setPoolOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
@@ -229,7 +236,7 @@ export default function CheckInOut() {
           "Mobile page for reading electricity and water meters"
         )}
         lang={lang}
-        path={`/guest/${lang}/check-in-out`}
+        path={guestPathOf(lang, "checkInOut")}
       />
       <div style={{ margin: "0 auto", padding: "1rem" }}>
         <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>
