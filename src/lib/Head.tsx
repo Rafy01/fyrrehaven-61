@@ -37,8 +37,8 @@ export type HeadProps = {
   keywords?: string[];
   /** (Ny) Tving canonical – ellers bygges fra site.baseUrl + path */
   canonical?: string;
-  /** JSON-LD objekt */
-  jsonLd?: object;
+  /** JSON-LD objekt eller liste af objekter */
+  jsonLd?: object | object[];
 };
 
 const ogLocale = (l: Lang) => (l === "da" ? "da_DK" : "en_GB");
@@ -161,14 +161,15 @@ export default function Head({
     // Canonical + hreflang (da/en/x-default)
     const rest = path.replace(/^\/(da|en)/, "");
     const base = site.baseUrl.replace(/\/+$/, "");
-    const canonicalHref = canonical || `${base}/${lang}${rest || ""}`;
+      const canonicalHref = canonical || `${base}/${lang}${rest || ""}`;
     const hrefDa = `${base}/da${rest || ""}`;
     const hrefEn = `${base}/en${rest || ""}`;
+    const hrefDefault = `${base}/en${rest || ""}`;
 
     upsertLink("canonical", canonicalHref);
-    upsertLink("alternate", hrefDa, { hreflang: "da" });
-    upsertLink("alternate", hrefEn, { hreflang: "en" });
-    upsertLink("alternate", canonicalHref, { hreflang: "x-default" });
+    upsertLink("alternate", hrefDa, { hreflang: "da-DK" });
+    upsertLink("alternate", hrefEn, { hreflang: "en-GB" });
+    upsertLink("alternate", hrefDefault, { hreflang: "x-default" });
 
     // Meta: description
     upsertMeta({ name: "description" }, description);
@@ -217,16 +218,61 @@ export default function Head({
     upsertMeta({ name: "twitter:image:alt" }, ogImageAlt || title);
 
     // JSON-LD
-    const id = "app-jsonld";
-    const old = document.getElementById(id);
-    if (old) old.remove();
-    if (jsonLd) {
+    const defaultJsonLd = [
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: site.name,
+        url: site.baseUrl,
+        description: site.description,
+        publisher: {
+          "@type": "Organization",
+          name: site.publisher.name,
+          logo: site.publisher.logo,
+        },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: title,
+        description,
+        url: canonicalHref,
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: site.name,
+            item: `${base}/${lang}`,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: title,
+            item: canonicalHref,
+          },
+        ],
+      },
+    ];
+
+    const jsonLdItems = [
+      ...defaultJsonLd,
+      ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []),
+    ];
+
+    jsonLdItems.forEach((item, index) => {
+      const id = `app-jsonld-${index}`;
+      const old = document.getElementById(id);
+      if (old) old.remove();
       const script = document.createElement("script");
       script.type = "application/ld+json";
       script.id = id;
-      script.text = JSON.stringify(jsonLd);
+      script.text = JSON.stringify(item);
       document.head.appendChild(script);
-    }
+    });
   }, [
     lang,
     path,

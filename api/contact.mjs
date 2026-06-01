@@ -1,4 +1,10 @@
 import nodemailer from "nodemailer";
+import {
+  checkRateLimit,
+  getRequesterIp,
+  validateContactHeaders,
+  validateContactPayload,
+} from "./_lib/contactSecurity.mjs";
 
 /** --- Utils ---------------------------------------------------- */
 const reqEnv = (k) => {
@@ -133,6 +139,36 @@ export default async function handler(req, res) {
   try {
     if (req.method !== "POST") {
       res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
+      return;
+    }
+
+    const headerValidation = validateContactHeaders(req);
+    if (!headerValidation.ok) {
+      res
+        .status(headerValidation.status)
+        .json({ ok: false, error: headerValidation.error, detail: headerValidation.detail });
+      return;
+    }
+
+    const requestIp = getRequesterIp(req);
+    const rateLimit = checkRateLimit(requestIp);
+    if (!rateLimit.ok) {
+      res
+        .status(429)
+        .setHeader("Retry-After", String(rateLimit.retryAfter || 60))
+        .json({
+          ok: false,
+          error: "RATE_LIMIT_EXCEEDED",
+          detail: `Too many submissions from this IP. Try again in ${rateLimit.retryAfter || 60} seconds.`,
+        });
+      return;
+    }
+
+    const payloadValidation = validateContactPayload(req.body);
+    if (!payloadValidation.ok) {
+      res
+        .status(payloadValidation.status)
+        .json({ ok: false, error: payloadValidation.error, detail: payloadValidation.detail });
       return;
     }
 

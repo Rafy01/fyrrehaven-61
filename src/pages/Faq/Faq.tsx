@@ -33,6 +33,50 @@ export default function Faq({ lang }: { lang: Lang }) {
           name: seoTitle,
           url: `https://fyrrehaven-61.dk${path}`,
           description: seoDescription,
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: t(
+                "Hvordan foregår tjek-ind?",
+                "How does check-in work?"
+              ),
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: t(
+                  "Tjek-ind sker via nøgleboks med kode, så du kan ankomme når det passer.",
+                  "Check-in is via a keybox with a code so you can arrive when it suits you."
+                ),
+              },
+            },
+            {
+              "@type": "Question",
+              name: t(
+                "Hvornår er poolen åben?",
+                "When is the pool open?"
+              ),
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: t(
+                  "Poolen er opvarmet fra 1. maj til 1. oktober.",
+                  "The pool is heated from May 1 to October 1."
+                ),
+              },
+            },
+            {
+              "@type": "Question",
+              name: t(
+                "Er der plads til 10 personer?",
+                "Is there room for 10 people?"
+              ),
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: t(
+                  "Ja, huset har plads til 10 gæster med 4 soveværelser og hems.",
+                  "Yes, the house sleeps 10 guests with 4 bedrooms and a loft."
+                ),
+              },
+            },
+          ],
         }}
       />
 

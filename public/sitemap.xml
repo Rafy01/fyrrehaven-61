@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://fyrrehaven-61.dk/da</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/sommerhuset-fyrrehaven-61</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/sommerhuset-fyrrehaven-61" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/the-house-fyrrehaven-61" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/the-house-fyrrehaven-61" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/the-house-fyrrehaven-61</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/sommerhuset-fyrrehaven-61" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/the-house-fyrrehaven-61" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/the-house-fyrrehaven-61" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/omraadet-skov-og-strand</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/omraadet-skov-og-strand" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/area-forest-and-beach" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/area-forest-and-beach" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/area-forest-and-beach</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/omraadet-skov-og-strand" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/area-forest-and-beach" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/area-forest-and-beach" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/galleri-fyrrehaven-61-billeder</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/galleri-fyrrehaven-61-billeder" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/gallery-photos-fyrrehaven-61" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/gallery-photos-fyrrehaven-61" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/gallery-photos-fyrrehaven-61</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/galleri-fyrrehaven-61-billeder" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/gallery-photos-fyrrehaven-61" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/gallery-photos-fyrrehaven-61" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/ofte-stillede-sporgsmal</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/ofte-stillede-sporgsmal" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/frequently-asked-questions" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/frequently-asked-questions" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/frequently-asked-questions</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/ofte-stillede-sporgsmal" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/frequently-asked-questions" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/frequently-asked-questions" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/kontakt</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/kontakt" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/contact" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/contact" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/contact</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/kontakt" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/contact" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/contact" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/booking</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/booking" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/book" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/book" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/book</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/booking" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/book" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/book" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/cookies</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/cookies" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/cookies" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/cookies" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/cookies</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/cookies" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/cookies" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/cookies" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/gebyrer</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/gebyrer" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/fees" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/fees" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/fees</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/gebyrer" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/fees" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/fees" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/privatlivspolitik</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/privatlivspolitik" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/privacy-policy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/privacy-policy" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/privacy-policy</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/privatlivspolitik" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/privacy-policy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/privacy-policy" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/da/sitemap</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/sitemap" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/sitemap" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/sitemap" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.1</priority>
+  </url>
+  <url>
+    <loc>https://fyrrehaven-61.dk/en/sitemap</loc>
+    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/sitemap" />
+    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/sitemap" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/sitemap" />
+    <lastmod>2026-05-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.1</priority>
+  </url>
+</urlset>
