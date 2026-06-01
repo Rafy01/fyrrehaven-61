@@ -4,7 +4,7 @@ import Buttons from "../Buttons";
 import { reviews as allReviews, type ReviewItem } from "../../data/reviews";
 
 export type ReviewsProps = {
-  lang: "da" | "en";
+  lang: "da" | "en" | "de";
   title?: string;
   subtitle?: string;
   maxCards?: number; // fx vis 8 på forsiden
@@ -40,9 +40,10 @@ function Stars({ value }: { value: number }) {
     </span>
   );
 }
-function formatDate(iso: string, lang: "da" | "en") {
+function formatDate(iso: string, lang: "da" | "en" | "de") {
   try {
-    return new Date(iso).toLocaleDateString(lang === "da" ? "da-DK" : "en-GB", {
+    const locale = lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB";
+    return new Date(iso).toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
     });

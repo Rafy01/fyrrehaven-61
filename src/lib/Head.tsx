@@ -41,9 +41,17 @@ export type HeadProps = {
   jsonLd?: object | object[];
 };
 
-const ogLocale = (l: Lang) => (l === "da" ? "da_DK" : "en_GB");
+const ogLocale = (l: Lang) => {
+  if (l === "da") return "da_DK";
+  if (l === "de") return "de_DE";
+  return "en_GB";
+};
 // FIX: alternate skal være det MODSATTE sprog
-const altLocale = (l: Lang) => (l === "da" ? "en_GB" : "da_DK");
+const altLocale = (l: Lang) => {
+  if (l === "da") return "en_GB";
+  if (l === "de") return "en_GB";
+  return "da_DK";
+};
 
 function absUrl(u: string | undefined) {
   if (!u) return undefined;
@@ -158,16 +166,18 @@ export default function Head({
     // <title>
     document.title = title;
 
-    // Canonical + hreflang (da/en/x-default)
-    const rest = path.replace(/^\/(da|en)/, "");
+    // Canonical + hreflang (da/en/de/x-default)
+    const rest = path.replace(/^\/(da|en|de)/, "");
     const base = site.baseUrl.replace(/\/+$/, "");
-      const canonicalHref = canonical || `${base}/${lang}${rest || ""}`;
+    const canonicalHref = canonical || `${base}/${lang}${rest || ""}`;
     const hrefDa = `${base}/da${rest || ""}`;
+    const hrefDe = `${base}/de${rest || ""}`;
     const hrefEn = `${base}/en${rest || ""}`;
     const hrefDefault = `${base}/en${rest || ""}`;
 
     upsertLink("canonical", canonicalHref);
     upsertLink("alternate", hrefDa, { hreflang: "da-DK" });
+    upsertLink("alternate", hrefDe, { hreflang: "de-DE" });
     upsertLink("alternate", hrefEn, { hreflang: "en-GB" });
     upsertLink("alternate", hrefDefault, { hreflang: "x-default" });
 

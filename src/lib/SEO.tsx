@@ -2,7 +2,7 @@
 import { Helmet } from "react-helmet-async";
 import { site } from "./siteMeta";
 
-type Lang = "da" | "en";
+type Lang = "da" | "en" | "de";
 
 export type SEOProps = {
   lang: Lang;
@@ -15,7 +15,11 @@ export type SEOProps = {
   jsonLd?: object; // optional structured data
 };
 
-const localeOf = (l: Lang) => (l === "da" ? "da_DK" : "en_GB");
+const localeOf = (l: Lang) => {
+  if (l === "da") return "da_DK";
+  if (l === "de") return "de_DE";
+  return "en_GB";
+};
 const hrefFor = (l: Lang, path: string) => {
   const rest = path.replace(/^\/(da|en)/, "");
   return `${site.baseUrl}/${l}${rest || ""}`;
