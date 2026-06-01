@@ -7,7 +7,8 @@ import { type Lang } from "../../lib/lang";
 
 
 export type HeroCTA = {
-  label: string;
+  label?: string;
+  labelKey?: string;
   href?: string;
   to?: string;
   external?: boolean;
@@ -19,13 +20,16 @@ type ImageMedia = {
   type?: "image";
   src: string;
   alt?: string; // brug "" hvis rent dekorativt
+  altKey?: string;
   title?: string; // valgfrit title-attribut
+  titleKey?: string;
 };
 
 type VideoMedia = {
   type: "video";
   src: string;
   alt?: string; // kort beskrivelse af videoindholdet
+  altKey?: string;
   poster?: string;
   loop?: boolean;
   autoPlay?: boolean;
@@ -35,9 +39,12 @@ type VideoMedia = {
 export type HeroMedia = ImageMedia | VideoMedia;
 
 export type HeroProps = {
-  title: string;
+  title?: string;
+  titleKey?: string;
   subtitle?: string;
+  subtitleKey?: string;
   badges?: string[];
+  badgeKeys?: string[];
   primaryCta?: HeroCTA; // optional (custom CTA)
   secondaryCta?: HeroCTA; // optional (custom CTA)
   layout?: "media-right" | "media-left";
@@ -45,6 +52,8 @@ export type HeroProps = {
   media?: HeroMedia;
   dense?: boolean;
   align?: "left" | "center";
+  /** i18n namespace for titleKey/subtitleKey/badgeKeys/CTA/media keys */
+  i18nNs?: string;
   /** Valgfrit: giv sproget eksplicit. Ellers læses det fra i18n.language. */
   lang?: Lang;
 };
@@ -53,8 +62,11 @@ type CSSVars = { ["--aspect"]?: string };
 
 export default function Hero({
   title,
+  titleKey,
   subtitle,
+  subtitleKey,
   badges = [],
+  badgeKeys = [],
   primaryCta,
   secondaryCta,
   layout = "media-right",
@@ -62,8 +74,23 @@ export default function Hero({
   media,
   dense = false,
   align = "left",
+  i18nNs = "common",
 }: HeroProps) {
-  useTranslation();
+  const { t } = useTranslation(i18nNs);
+  const heroTitle = titleKey ? t(titleKey) : title;
+  const heroSubtitle = subtitleKey ? t(subtitleKey) : subtitle;
+  const heroBadges = badgeKeys.length ? badgeKeys.map((key) => t(key)) : badges;
+  const mediaAlt = media
+    ? media.altKey
+      ? t(media.altKey)
+      : media.alt ?? ""
+    : "";
+  const imageTitle =
+    media && media.type !== "video"
+      ? media.titleKey
+        ? t(media.titleKey)
+        : media.title ?? ""
+      : "";
 
   const rowClass = [
     styles.row,
@@ -82,11 +109,12 @@ export default function Hero({
     variant: "primary" | "secondary";
   }) => {
     if (!cta) return null;
+    const label = cta.labelKey ? t(cta.labelKey) : cta.label ?? "";
     if (cta.to) {
       return (
         <Buttons
           variant={variant}
-          label={cta.label}
+          label={label}
           to={cta.to}
           onClick={cta.onClick}
           disabled={cta.disabled}
@@ -97,7 +125,7 @@ export default function Hero({
       return (
         <Buttons
           variant={variant}
-          label={cta.label}
+          label={label}
           href={cta.href}
           external={cta.external}
           onClick={cta.onClick}
@@ -109,7 +137,7 @@ export default function Hero({
     return (
       <Buttons
         variant={variant}
-        label={cta.label}
+        label={label}
         onClick={cta.onClick}
         disabled={cta.disabled}
       />
@@ -123,9 +151,9 @@ export default function Hero({
           <div className={rowClass}>
             {/* Tekstkolonne */}
             <div className={styles.copy}>
-              {badges.length > 0 && (
+              {heroBadges.length > 0 && (
                 <Flex wrap="wrap" gap="2" className={styles.badges}>
-                  {badges.map((b, i) => (
+                  {heroBadges.map((b, i) => (
                     <Badge key={i} variant="soft" color="gray">
                       {b}
                     </Badge>
@@ -133,13 +161,15 @@ export default function Hero({
                 </Flex>
               )}
 
-              <Heading as="h1" size="8" trim="both">
-                {title}
-              </Heading>
+              {heroTitle && (
+                <Heading as="h1" size="8" trim="both">
+                  {heroTitle}
+                </Heading>
+              )}
 
-              {subtitle && (
+              {heroSubtitle && (
                 <Text size="5" color="gray" className={styles.subtitle}>
-                  {subtitle}
+                  {heroSubtitle}
                 </Text>
               )}
 
@@ -172,14 +202,14 @@ export default function Hero({
                       loop={media.loop ?? false}
                       playsInline
                       controls={!media.autoPlay}
-                      aria-label={media.alt}
+                      aria-label={mediaAlt}
                     />
                   ) : (
                     <img
                       className={styles.mediaEl}
                       src={media.src}
-                      alt={media.alt ?? ""}
-                      title={media.title ?? ""}
+                      alt={mediaAlt}
+                      title={imageTitle}
                       loading="eager"
                     />
                   )}

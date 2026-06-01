@@ -195,6 +195,19 @@ const resources = {
         },
       },
     },
+    contact: {
+      hero: {
+        title: "Kontakt os",
+        subtitle: "Vi svarer normalt hurtigt – ofte inden for få timer.",
+        badges: {
+          family: "Familievenligt",
+          beach: "Tæt på strand",
+        },
+        imageAlt: "Familien bag huset",
+        primaryCta: "Book direkte",
+        secondaryCta: "Booking Airbnb",
+      },
+    },
   },
   en: {
     common: {
@@ -383,6 +396,19 @@ const resources = {
           title: "Alt Til Dagen",
           description: "Local grocery store for everyday shopping.",
         },
+      },
+    },
+    contact: {
+      hero: {
+        title: "Contact us",
+        subtitle: "We usually reply quickly — often within a few hours.",
+        badges: {
+          family: "Family-friendly",
+          beach: "Near the beach",
+        },
+        imageAlt: "The family behind the house",
+        primaryCta: "Book directly",
+        secondaryCta: "Booking Airbnb",
       },
     },
   },
@@ -581,6 +607,20 @@ const resources = {
         },
       },
     },
+    contact: {
+      hero: {
+        title: "Kontakt aufnehmen",
+        subtitle:
+          "Wir antworten normalerweise schnell – oft innerhalb weniger Stunden.",
+        badges: {
+          family: "Familienfreundlich",
+          beach: "In Strandnähe",
+        },
+        imageAlt: "Die Familie hinter dem Haus",
+        primaryCta: "Direkt buchen",
+        secondaryCta: "Booking Airbnb",
+      },
+    },
   },
 };
 
@@ -588,7 +628,7 @@ i18n.use(initReactI18next).init({
   resources,
   lng: "da",
   fallbackLng: "da",
-  ns: ["common", "home", "book", "area"],
+  ns: ["common", "home", "book", "area", "contact"],
   defaultNS: "common",
   interpolation: { escapeValue: false },
 });

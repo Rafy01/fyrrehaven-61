@@ -70,27 +70,22 @@ export default function ContactPage({ lang }: { lang: Lang }) {
       />
 
       <Hero
-        title={t("Kontakt os", "Contact us")}
-        subtitle={t(
-          "Vi svarer normalt hurtigt – ofte inden for få timer.",
-          "We usually reply quickly — often within a few hours."
-        )}
-        badges={[
-          t("Familievenligt", "Family-friendly"),
-          t("Tæt på strand", "Near the beach"),
-        ]}
+        i18nNs="contact"
+        titleKey="hero.title"
+        subtitleKey="hero.subtitle"
+        badgeKeys={["hero.badges.family", "hero.badges.beach"]}
         media={{
           type: "image",
           src: "/hosts/familien.webp",
-          alt: t("Familien bag huset", "The family behind the house"),
+          altKey: "hero.imageAlt",
         }}
         align="left"
         primaryCta={{
-          label: t("Book direkte", "Book directly"),
+          labelKey: "hero.primaryCta",
           to: pathOf(lang, "book"),
         }}
         secondaryCta={{
-          label: t("Booking Airbnb", "Booking Airbnb"),
+          labelKey: "hero.secondaryCta",
           href: "https://www.airbnb.dk/h/fyrrehaven-61",
           external: true,
         }}
