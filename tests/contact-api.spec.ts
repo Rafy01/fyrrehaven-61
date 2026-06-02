@@ -1,6 +1,44 @@
 import { test, expect } from '@playwright/test';
 import nodemailer from 'nodemailer';
 
+type ContactRequest = {
+  method: string;
+  headers: Record<string, string>;
+  body: unknown;
+  socket: { remoteAddress: string };
+};
+
+type ContactResponse = {
+  status(code: number): ContactResponse;
+  setHeader(): ContactResponse;
+  json(payload: unknown): ContactResponse;
+};
+
+type ResponseResult = {
+  status?: number;
+  body?: unknown;
+};
+
+type MockMailOptions = {
+  from?: string;
+  to?: string | string[];
+  subject?: string;
+};
+
+type MockMailResult = {
+  messageId: string;
+  accepted: Array<string | string[] | undefined>;
+  rejected: string[];
+  response: string;
+  envelope: {
+    from?: string;
+    to: Array<string | string[] | undefined>;
+  };
+  envelopeTime: number;
+  messageTime: number;
+  messageSize: number;
+};
+
 const validBookingPayload = {
   lang: 'en',
   name: 'Playwright Booker',
@@ -30,12 +68,11 @@ const validBookingPayload = {
 };
 
 const makeRequest = (
-  body: any,
+  body: unknown,
   origin = 'http://127.0.0.1:5173',
   userAgent = 'Playwright Test Agent',
   remoteAddress = `127.0.0.${Math.floor(Math.random() * 200) + 1}`
-) =>
-  ({
+): ContactRequest => ({
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -44,10 +81,10 @@ const makeRequest = (
     },
     body,
     socket: { remoteAddress },
-  } as any);
+  });
 
 const makeResponse = () => {
-  const result: { status?: number; body?: any } = {};
+  const result: ResponseResult = {};
   const res = {
     status(code: number) {
       result.status = code;
@@ -56,11 +93,11 @@ const makeResponse = () => {
     setHeader() {
       return this;
     },
-    json(payload: any) {
+    json(payload: unknown) {
       result.body = payload;
       return this;
     },
-  } as any;
+  } satisfies ContactResponse;
   return { result, res };
 };
 
@@ -69,12 +106,12 @@ const loadContactModule = async () =>
 
 test('api/contact handles submission and sends both user and admin mail', async () => {
   const contactModule = await loadContactModule();
-  const sentMessages: any[] = [];
+  const sentMessages: MockMailOptions[] = [];
   const originalCreateTransport = nodemailer.createTransport;
 
   nodemailer.createTransport = (() => ({
     verify: async (): Promise<true> => true,
-    sendMail: async (options: any): Promise<any> => {
+    sendMail: async (options: MockMailOptions): Promise<MockMailResult> => {
       sentMessages.push(options);
       return {
         messageId: `mock-${sentMessages.length}`,
@@ -87,7 +124,7 @@ test('api/contact handles submission and sends both user and admin mail', async 
         messageSize: 0,
       };
     },
-  })) as any;
+  })) as unknown as typeof nodemailer.createTransport;
 
   process.env.SMTP_HOST = 'smtp.mock.local';
   process.env.SMTP_PORT = '587';
@@ -97,8 +134,8 @@ test('api/contact handles submission and sends both user and admin mail', async 
   process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
   process.env.CONTACT_ALLOWED_ORIGINS = 'http://127.0.0.1:5173';
 
-  const result: { status?: number; body?: any } = {};
-  const req = {
+  const result: ResponseResult = {};
+  const req: ContactRequest = {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -107,7 +144,7 @@ test('api/contact handles submission and sends both user and admin mail', async 
     },
     body: validBookingPayload,
     socket: { remoteAddress: '127.0.0.1' },
-  } as any;
+  };
 
   const res = {
     status(code: number) {
@@ -117,11 +154,11 @@ test('api/contact handles submission and sends both user and admin mail', async 
     setHeader() {
       return this;
     },
-    json(payload: any) {
+    json(payload: unknown) {
       result.body = payload;
       return this;
     },
-  } as any;
+  } satisfies ContactResponse;
 
   await contactModule.default(req, res);
 
@@ -193,7 +230,7 @@ test('api/contact rejects requests from bot user agents', async () => {
   const originalTransport = nodemailer.createTransport;
   nodemailer.createTransport = (() => ({
     verify: async (): Promise<true> => true,
-    sendMail: async (): Promise<any> => ({
+    sendMail: async (): Promise<MockMailResult> => ({
       messageId: 'mock',
       accepted: ['mock'],
       rejected: [],
@@ -203,7 +240,7 @@ test('api/contact rejects requests from bot user agents', async () => {
       messageTime: Date.now(),
       messageSize: 0,
     }),
-  })) as any;
+  })) as unknown as typeof nodemailer.createTransport;
 
   process.env.SMTP_HOST = 'smtp.mock.local';
   process.env.SMTP_PORT = '587';
@@ -237,7 +274,7 @@ test('api/contact enforces rate limits for repeated submissions', async () => {
 
   nodemailer.createTransport = (() => ({
     verify: async (): Promise<true> => true,
-    sendMail: async (): Promise<any> => ({
+    sendMail: async (): Promise<MockMailResult> => ({
       messageId: 'mock',
       accepted: ['mock'],
       rejected: [],
@@ -247,7 +284,7 @@ test('api/contact enforces rate limits for repeated submissions', async () => {
       messageTime: Date.now(),
       messageSize: 0,
     }),
-  })) as any;
+  })) as unknown as typeof nodemailer.createTransport;
 
   process.env.SMTP_HOST = 'smtp.mock.local';
   process.env.SMTP_PORT = '587';
@@ -288,7 +325,7 @@ test('api/contact reports mail failure when transport rejects', async () => {
     sendMail: async () => {
       throw new Error('ECONNREFUSED: Connection refused');
     },
-  })) as any;
+  })) as unknown as typeof nodemailer.createTransport;
 
   process.env.SMTP_HOST = 'smtp.mock.local';
   process.env.SMTP_PORT = '587';

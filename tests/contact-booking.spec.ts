@@ -1,5 +1,14 @@
 import { test, expect, type Page } from '@playwright/test';
 
+type SubmittedPayload = {
+  phone?: string;
+  selection?: {
+    start?: string;
+    endExclusive?: string;
+    nights?: number;
+  };
+} & Record<string, unknown>;
+
 const formatDate = (date: Date, locale: string) =>
   date.toLocaleDateString(locale);
 
@@ -13,12 +22,12 @@ async function clickCalendarDate(page: Page, date: Date) {
 
 test.describe('contact and booking forms', () => {
   test('contact form sends a valid contact payload and shows confirmation', async ({ page }) => {
-    const requests: any[] = [];
+    const requests: SubmittedPayload[] = [];
 
     await page.route('**/api/contact', async (route) => {
       const request = route.request();
       const postData = request.postData() ?? '{}';
-      requests.push(JSON.parse(postData));
+      requests.push(JSON.parse(postData) as SubmittedPayload);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -52,12 +61,12 @@ test.describe('contact and booking forms', () => {
   });
 
   test('booking form sends a booking payload and shows booking confirmation', async ({ page }) => {
-    const requests: any[] = [];
+    const requests: SubmittedPayload[] = [];
 
     await page.route('**/api/contact', async (route) => {
       const request = route.request();
       const postData = request.postData() ?? '{}';
-      requests.push(JSON.parse(postData));
+      requests.push(JSON.parse(postData) as SubmittedPayload);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -113,12 +122,12 @@ test.describe('contact and booking forms', () => {
   });
 
   test('contact form blocks submission without consent', async ({ page }) => {
-    const requests: any[] = [];
+    const requests: SubmittedPayload[] = [];
 
     await page.route('**/api/contact', async (route) => {
       const request = route.request();
       const postData = request.postData() ?? '{}';
-      requests.push(JSON.parse(postData));
+      requests.push(JSON.parse(postData) as SubmittedPayload);
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
