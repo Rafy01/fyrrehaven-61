@@ -611,7 +611,8 @@ export const en = {
       "bookNow": "Book now",
       "changeLanguage": "Change language",
       "closeMenu": "Close menu",
-      "openMenu": "Open menu"
+      "openMenu": "Open menu",
+      "currentLanguage": "Current language"
     },
     "menu": {
       "main": "Main navigation",

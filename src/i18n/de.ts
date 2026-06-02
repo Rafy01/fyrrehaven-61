@@ -611,7 +611,8 @@ export const de = {
       "bookNow": "Jetzt buchen",
       "changeLanguage": "Sprache wechseln",
       "closeMenu": "Menü schließen",
-      "openMenu": "Menü öffnen"
+      "openMenu": "Menü öffnen",
+      "currentLanguage": "Aktuelle Sprache"
     },
     "menu": {
       "main": "Hauptnavigation",

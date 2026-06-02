@@ -15,6 +15,12 @@ type Props = {
   guest?: boolean;
 };
 
+const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
+  { code: "da", flag: "🇩🇰", label: "Dansk" },
+  { code: "de", flag: "🇩🇪", label: "Deutsch" },
+  { code: "en", flag: "🇬🇧", label: "English" },
+];
+
 export default function Header({ lang, guest = false }: Props) {
   const { i18n } = useTranslation();
   const { t } = useTranslation("navigation");
@@ -184,24 +190,30 @@ useEffect(() => {
               align="end"
               className={styles.ddContent}
             >
-              <DropdownMenu.Item
-                onSelect={() => switchLang("da")}
-                className={styles.ddItem}
-              >
-                <span style={{ marginRight: 8 }}>🇩🇰</span> Dansk
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onSelect={() => switchLang("de")}
-                className={styles.ddItem}
-              >
-                <span style={{ marginRight: 8 }}>🇩🇪</span> Deutsch
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onSelect={() => switchLang("en")}
-                className={styles.ddItem}
-              >
-                <span style={{ marginRight: 8 }}>🇬🇧</span> English
-              </DropdownMenu.Item>
+              {LANGUAGE_OPTIONS.map((option) => {
+                const isCurrent = option.code === lang;
+                return (
+                  <DropdownMenu.Item
+                    key={option.code}
+                    onSelect={() => switchLang(option.code)}
+                    className={styles.ddItem}
+                    aria-current={isCurrent ? "true" : undefined}
+                    data-active={isCurrent ? "true" : undefined}
+                    aria-label={
+                      isCurrent
+                        ? `${option.label}, ${t("actions.currentLanguage")}`
+                        : option.label
+                    }
+                  >
+                    <span className={styles.langOptionText}>
+                      <span className={styles.langOptionFlag}>
+                        {option.flag}
+                      </span>
+                      {option.label}
+                    </span>
+                  </DropdownMenu.Item>
+                );
+              })}
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </nav>
@@ -262,30 +274,27 @@ useEffect(() => {
                 />
               )}
               <div className={styles.langGroup}>
-                <button
-                  type="button"
-                  className={styles.langChip}
-                  onClick={() => switchLang("da")}
-                  aria-current={lang === "da"}
-                >
-                  🇩🇰 Dansk
-                </button>
-                <button
-                  type="button"
-                  className={styles.langChip}
-                  onClick={() => switchLang("en")}
-                  aria-current={lang === "en"}
-                >
-                  🇬🇧 English
-                </button>
-                <button
-                  type="button"
-                  className={styles.langChip}
-                  onClick={() => switchLang("de")}
-                  aria-current={lang === "de"}
-                >
-                  🇩🇪 Deutsch
-                </button>
+                {LANGUAGE_OPTIONS.map((option) => {
+                  const isCurrent = option.code === lang;
+                  return (
+                    <button
+                      type="button"
+                      key={option.code}
+                      className={styles.langChip}
+                      onClick={() => switchLang(option.code)}
+                      aria-current={isCurrent}
+                      data-active={isCurrent ? "true" : undefined}
+                      aria-label={
+                        isCurrent
+                          ? `${option.label}, ${t("actions.currentLanguage")}`
+                          : option.label
+                      }
+                    >
+                      <span aria-hidden="true">{option.flag}</span>
+                      <span>{option.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </Dialog.Content>

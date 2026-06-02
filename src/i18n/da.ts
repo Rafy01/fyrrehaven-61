@@ -611,7 +611,8 @@ export const da = {
       "bookNow": "Book nu",
       "changeLanguage": "Skift sprog",
       "closeMenu": "Luk menu",
-      "openMenu": "Åbn menu"
+      "openMenu": "Åbn menu",
+      "currentLanguage": "Aktuelt sprog"
     },
     "menu": {
       "main": "Hovednavigation",
