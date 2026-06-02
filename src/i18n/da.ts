@@ -1020,5 +1020,39 @@ export const da = {
         ]
       }
     }
+  },
+  "cookiesPage": {
+    "consent": {
+      "title": "Vi bruger cookies",
+      "description": "Vi bruger nødvendige cookies for at få siden til at fungere, samt valgfrie cookies til statistik og marketing.",
+      "acceptAll": "Accepter alle",
+      "rejectAll": "Afvis",
+      "preferences": "Indstil cookies",
+      "settingsTitle": "Cookieindstillinger",
+      "close": "Luk",
+      "save": "Gem præferencer"
+    },
+    "categories": {
+      "necessary": {
+        "title": "Nødvendige cookies",
+        "label": "Nødvendige",
+        "description": "Påkrævet for at siden fungerer."
+      },
+      "analytics": {
+        "title": "Statistik",
+        "label": "Statistik",
+        "description": "Hjælper os med at forstå brugen af siden."
+      },
+      "marketing": {
+        "title": "Marketing",
+        "label": "Marketing",
+        "description": "Bruges til personaliserede annoncer og indhold."
+      }
+    },
+    "page": {
+      "title": "Cookies hos Fyrrehaven 61",
+      "intro": "Her kan du læse om vores brug af cookies og hvordan du ændrer dine præferencer.",
+      "typesTitle": "Typer af cookies"
+    }
   }
 } as const;

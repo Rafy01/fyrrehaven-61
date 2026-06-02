@@ -1019,5 +1019,39 @@ export const en = {
         ]
       }
     }
+  },
+  "cookiesPage": {
+    "consent": {
+      "title": "We use cookies",
+      "description": "We use necessary cookies to make the site work, and optional cookies for analytics and marketing.",
+      "acceptAll": "Accept all",
+      "rejectAll": "Reject all",
+      "preferences": "Manage preferences",
+      "settingsTitle": "Cookie settings",
+      "close": "Close",
+      "save": "Save preferences"
+    },
+    "categories": {
+      "necessary": {
+        "title": "Necessary cookies",
+        "label": "Necessary",
+        "description": "Required for the site to function."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "label": "Analytics",
+        "description": "Helps us understand how the site is used."
+      },
+      "marketing": {
+        "title": "Marketing",
+        "label": "Marketing",
+        "description": "Used for personalised content and advertising."
+      }
+    },
+    "page": {
+      "title": "Cookies at Fyrrehaven 61",
+      "intro": "Here you can read about our use of cookies and how to manage your preferences.",
+      "typesTitle": "Types of cookies"
+    }
   }
 } as const;

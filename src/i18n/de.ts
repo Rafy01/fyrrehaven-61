@@ -1017,5 +1017,39 @@ export const de = {
         ]
       }
     }
+  },
+  "cookiesPage": {
+    "consent": {
+      "title": "Wir verwenden Cookies",
+      "description": "Wir verwenden notwendige Cookies, damit die Website funktioniert, sowie optionale Cookies für Statistik und Marketing.",
+      "acceptAll": "Alle akzeptieren",
+      "rejectAll": "Ablehnen",
+      "preferences": "Cookie-Einstellungen",
+      "settingsTitle": "Cookie-Einstellungen",
+      "close": "Schließen",
+      "save": "Einstellungen speichern"
+    },
+    "categories": {
+      "necessary": {
+        "title": "Notwendige Cookies",
+        "label": "Notwendige",
+        "description": "Erforderlich, damit die Website funktioniert."
+      },
+      "analytics": {
+        "title": "Statistik",
+        "label": "Statistik",
+        "description": "Hilft uns zu verstehen, wie die Website genutzt wird."
+      },
+      "marketing": {
+        "title": "Marketing",
+        "label": "Marketing",
+        "description": "Wird für personalisierte Inhalte und Werbung verwendet."
+      }
+    },
+    "page": {
+      "title": "Cookies bei Fyrrehaven 61",
+      "intro": "Hier können Sie lesen, wie wir Cookies verwenden und wie Sie Ihre Einstellungen ändern.",
+      "typesTitle": "Arten von Cookies"
+    }
   }
 } as const;
