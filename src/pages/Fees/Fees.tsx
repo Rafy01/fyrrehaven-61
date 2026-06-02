@@ -1,6 +1,6 @@
 import { Container, Box, Heading, Text, Separator } from "@radix-ui/themes";
+import { useTranslation } from "react-i18next";
 import Head from "../../lib/Head";
-import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import { pathOf } from "../../lib/routes";
 import { getSeoMeta } from "../../i18n/seo";
@@ -8,10 +8,11 @@ import styles from "./Fees.module.css";
 import { fees } from "../../data/fees";
 
 export default function Fees({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string, de = en) =>
-    chooseLang(lang, da, en, de);
+  const { t } = useTranslation("fees");
   const path = pathOf(lang, "fees");
   const seo = getSeoMeta(lang, "fees");
+  const locale =
+    lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB";
 
   return (
     <>
@@ -36,13 +37,10 @@ export default function Fees({ lang }: { lang: Lang }) {
       <Container size="3">
         <Box py="6" className={styles.page}>
           <Heading as="h1" size="8" mb="3">
-            {t("Gebyrer", "Fees")}
+            {t("page.title")}
           </Heading>
           <Text className={styles.lead} as="p">
-            {t(
-              "For at sikre den bedste oplevelse for alle gæster har vi samlet en oversigt over gebyrer, der kan blive relevante i særlige situationer.",
-              "To ensure the best experience for all guests, we’ve listed fees that may apply in specific situations."
-            )}
+            {t("page.lead")}
           </Text>
 
           <Separator my="5" size="4" />
@@ -50,30 +48,18 @@ export default function Fees({ lang }: { lang: Lang }) {
           {/* Vigtig information for booking */}
           <section className={styles.section} aria-labelledby="info-h">
             <Heading id="info-h" as="h2" size="5" mb="2">
-              {t(
-                "Vigtig information for booking af sommerhuset",
-                "Important information for booking the holiday home"
-              )}
+              {t("page.infoTitle")}
             </Heading>
 
             <div className={styles.badges} style={{ marginBottom: ".5rem" }}>
               <span className={styles.badge}>
-                {t(
-                  "Ingen udlejning til fester eller grupper under 25 år.",
-                  "No rentals for parties or groups under 25 years."
-                )}
+                {t("page.badges.noParties")}
               </span>
               <span className={styles.badge}>
-                {t(
-                  "Ingen kæledyr tilladt indendørs.",
-                  "No pets allowed indoors."
-                )}
+                {t("page.badges.noPets")}
               </span>
               <span className={styles.badge}>
-                {t(
-                  "Udendørspoolen åben 1. maj – 1. oktober.",
-                  "Outdoor pool open May 1 – October 1."
-                )}
+                {t("page.badges.pool")}
               </span>
             </div>
 
@@ -81,24 +67,15 @@ export default function Fees({ lang }: { lang: Lang }) {
 
             <Text as="p" mb="1">
               <strong>
-                {t(
-                  "Forbrug afregnes efter opholdet",
-                  "Consumption is settled after your stay"
-                )}
+                {t("page.consumptionTitle")}
               </strong>
             </Text>
             <ul>
               <li>
-                {t(
-                  "El- og vandforbrug ift. lejekontrakten.",
-                  "Electricity and water consumption according to the rental agreement."
-                )}
+                {t("page.consumptionElectricity")}
               </li>
               <li>
-                {t(
-                  "Er der bestilt ekstra service efter booking, vil dette bliver opkrævet.",
-                  "If extra services are ordered after booking, these will be charged."
-                )}
+                {t("page.consumptionExtras")}
               </li>
             </ul>
           </section>
@@ -108,16 +85,14 @@ export default function Fees({ lang }: { lang: Lang }) {
           {/* Gebyrliste */}
           <section className={styles.section} aria-labelledby="fees-h">
             <Heading id="fees-h" as="h2" size="5" mb="2">
-              {t("Gebyrliste", "Fee list")}
+              {t("page.listTitle")}
             </Heading>
 
             <div className={styles.grid} role="list">
               {fees.map((f) => {
-                const title = t(f.titleDa, f.titleEn);
-                const unit =
-                  f.unitDa || f.unitEn ? t(f.unitDa ?? "", f.unitEn ?? "") : "";
-                const note =
-                  f.noteDa || f.noteEn ? t(f.noteDa ?? "", f.noteEn ?? "") : "";
+                const title = t(`items.${f.id}.title`);
+                const unit = t(`items.${f.id}.unit`, { defaultValue: "" });
+                const note = t(`items.${f.id}.note`, { defaultValue: "" });
                 return (
                   <div className={styles.row} key={f.id} role="listitem">
                     <div className={styles.item}>
@@ -130,9 +105,7 @@ export default function Fees({ lang }: { lang: Lang }) {
                         </div>
                       )}
                       <div className={styles.price}>
-                        {f.amountDKK.toLocaleString(
-                          lang === "da" ? "da-DK" : "en-GB"
-                        )}{" "}
+                        {f.amountDKK.toLocaleString(locale)}{" "}
                         DKK
                       </div>
                     </div>
@@ -145,10 +118,7 @@ export default function Fees({ lang }: { lang: Lang }) {
           <Separator my="6" size="4" />
 
           <Text as="p" color="gray">
-            {t(
-              "Bemærk: Gebyrer kan opkræves, hvis vilkår ikke overholdes. Kontakt os ved spørgsmål.",
-              "Note: Fees may be charged if terms are not met. Contact us if you have questions."
-            )}
+            {t("page.footer")}
           </Text>
         </Box>
       </Container>

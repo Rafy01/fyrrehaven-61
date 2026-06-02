@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -6,7 +6,7 @@ import { ChevronDownIcon } from "@radix-ui/react-icons";
 import { useTranslation } from "react-i18next";
 import styles from "./Header.module.css";
 
-import { chooseLang, type Lang, saveLang } from "../../lib/lang";
+import { type Lang, saveLang } from "../../lib/lang";
 import { pathOf, switchLangPath, GUEST_PAGES } from "../../lib/routes";
 import Buttons from "../Buttons";
 
@@ -17,6 +17,7 @@ type Props = {
 
 export default function Header({ lang, guest = false }: Props) {
   const { i18n } = useTranslation();
+  const { t } = useTranslation("navigation");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -76,46 +77,41 @@ useEffect(() => {
     setOpen(false);
   };
 
-  const t = useCallback(
-    (da: string, en: string, de = en) => chooseLang(lang, da, en, de),
-    [lang]
-  );
-
   const navItems = useMemo(() => {
     if (guest) {
       return [
         {
           to: `/guest/${lang}/${GUEST_PAGES.welcome[lang]}`,
-          label: t("Velkomst", "Welcome", "Willkommen"),
+          label: t("guest.welcome"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.manual[lang]}`,
-          label: t("Manual", "Manual"),
+          label: t("guest.manual"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`,
-          label: t("Pool", "Pool"),
+          label: t("guest.pool"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.sauna[lang]}`,
-          label: t("Sauna", "Sauna"),
+          label: t("guest.sauna"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.spa[lang]}`,
-          label: t("Vildmarksbad", "Hot Tub", "Whirlpool"),
+          label: t("guest.spa"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.practicalInfo[lang]}`,
-          label: t("Praktisk info", "Practical Info", "Praktische Infos"),
+          label: t("guest.practicalInfo"),
         },
       ];
     }
     return [
-      { to: pathOf(lang, "house"), label: t("Huset", "The House", "Das Haus") },
-      { to: pathOf(lang, "area"), label: t("Området", "Area", "Umgebung") },
-      { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery", "Galerie") },
+      { to: pathOf(lang, "house"), label: t("public.house") },
+      { to: pathOf(lang, "area"), label: t("public.area") },
+      { to: pathOf(lang, "gallery"), label: t("public.gallery") },
       // { to: pathOf(lang, "faq"), label: "FAQ" },
-      { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact", "Kontakt") },
+      { to: pathOf(lang, "contact"), label: t("public.contact") },
     ];
   }, [lang, guest, t]);
 
@@ -144,7 +140,10 @@ useEffect(() => {
           />
         </Link>
 
-        <nav className={`${styles.nav} ${styles.navPrimary}`} aria-label="Main">
+        <nav
+          className={`${styles.nav} ${styles.navPrimary}`}
+          aria-label={t("menu.main")}
+        >
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -161,9 +160,7 @@ useEffect(() => {
 
           {!guest && (
             <Buttons
-              labelDa="Book nu"
-              labelEn="Book now"
-              labelDe="Jetzt buchen"
+              label={t("actions.bookNow")}
               to={pathOf(lang, "book")}
               buttonType="button"
             />
@@ -174,7 +171,7 @@ useEffect(() => {
               <button
                 type="button"
                 className={styles.langTrigger}
-                aria-label="Change language"
+                aria-label={t("actions.changeLanguage")}
                 data-state={langOpen ? "open" : "closed"}
               >
                 <span className={styles.flag}>{flag}</span>
@@ -213,7 +210,7 @@ useEffect(() => {
           <button
             type="button"
             className={styles.menuBtn}
-            aria-label={open ? t("Luk menu", "Close menu", "Menü schließen") : t("Åbn menu", "Open menu", "Menü öffnen")}
+            aria-label={open ? t("actions.closeMenu") : t("actions.openMenu")}
             aria-expanded={open}
             aria-controls="mobile-menu-panel"
             data-open={open}
@@ -226,15 +223,13 @@ useEffect(() => {
           <Dialog.Content
             id="mobile-menu-panel"
             className={styles.panel}
-            aria-label="Mobilmenu"
+            aria-label={t("menu.mobile")}
           >
-            <Dialog.Title className={styles.srOnly}>{t("Menu", "Menu", "Menü")}</Dialog.Title>
+            <Dialog.Title className={styles.srOnly}>
+              {t("menu.title")}
+            </Dialog.Title>
             <Dialog.Description className={styles.srOnly}>
-              {t(
-                "Hovednavigation for siden",
-                "Main navigation for the page",
-                "Hauptnavigation für die Seite"
-              )}
+              {t("menu.description")}
             </Dialog.Description>
 
             <nav className={styles.panelNav}>
@@ -261,9 +256,7 @@ useEffect(() => {
                   to={pathOf(lang, "book")}
                   onClick={() => setOpen(false)}
                   className={styles.ctaLink}
-                  labelDa="Book"
-                  labelEn="Book"
-                  labelDe="Buchen"
+                  label={t("actions.book")}
                   buttonType="button"
                   fullWidth
                 />
@@ -284,6 +277,14 @@ useEffect(() => {
                   aria-current={lang === "en"}
                 >
                   🇬🇧 English
+                </button>
+                <button
+                  type="button"
+                  className={styles.langChip}
+                  onClick={() => switchLang("de")}
+                  aria-current={lang === "de"}
+                >
+                  🇩🇪 Deutsch
                 </button>
               </div>
             </div>

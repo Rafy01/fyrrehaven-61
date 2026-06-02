@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import Busboy from "busboy";
+import { normalizeLang, t, yesNo } from "./_lib/i18n.mjs";
 
 const reqEnv = (k) => {
   const v = process.env[k];
@@ -13,9 +14,6 @@ const esc = (s = "") =>
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
-
-const yn = (b, lang = "da") =>
-  b ? (lang === "da" ? "Ja" : "Yes") : lang === "da" ? "Nej" : "No";
 
 // Vercel handler
 export default async function handler(req, res) {
@@ -60,6 +58,7 @@ export default async function handler(req, res) {
         consent,
         lang = "da",
       } = fields;
+      const uiLang = normalizeLang(lang);
 
       if (
         !name ||
@@ -92,35 +91,29 @@ export default async function handler(req, res) {
         auth: { user, pass },
       });
 
-      const subject =
-        lang === "da"
-          ? `Tjek-${
-              checkType === "checkin" ? "ind" : "ud"
-            } aflæsning fra ${name}`
-          : `Check-${
-              checkType === "checkin" ? "in" : "out"
-            } reading from ${name}`;
+      const typeKey = checkType === "checkin" ? "checkin" : "checkout";
+      const subject = t(uiLang, "checkin.subject", {
+        type: t(uiLang, `checkin.type.${typeKey}`),
+        name,
+      });
+      const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
 
       const html = `
         <div style="font-family:Arial,sans-serif;line-height:1.5">
           <h2>${esc(subject)}</h2>
-          <p><b>Navn / Name:</b> ${esc(name)}</p>
-          <p><b>Email:</b> ${esc(email)}</p>
-          <p><b>Nøglekode / Keybox code:</b> ${esc(keycode)}</p>
-          <p><b>Type:</b> ${
-            checkType === "checkin"
-              ? "Tjek-ind / Check-in"
-              : "Tjek-ud / Check-out"
-          }</p>
-          <p><b>EL:</b> ${esc(elReading)}</p>
-          <p><b>Vand (hus):</b> ${esc(waterHouse)}</p>
+          <p><b>${esc(t(uiLang, "checkin.fields.name"))}:</b> ${esc(name)}</p>
+          <p><b>${esc(t(uiLang, "checkin.fields.email"))}:</b> ${esc(email)}</p>
+          <p><b>${esc(t(uiLang, "checkin.fields.keycode"))}:</b> ${esc(keycode)}</p>
+          <p><b>${esc(t(uiLang, "checkin.fields.type"))}:</b> ${esc(typeLabel)}</p>
+          <p><b>${esc(t(uiLang, "checkin.fields.electricity"))}:</b> ${esc(elReading)}</p>
+          <p><b>${esc(t(uiLang, "checkin.fields.waterHouse"))}:</b> ${esc(waterHouse)}</p>
           ${
             typeof waterPool !== "undefined"
-              ? `<p><b>Vand (pool):</b> ${esc(waterPool)}</p>`
+              ? `<p><b>${esc(t(uiLang, "checkin.fields.waterPool"))}:</b> ${esc(waterPool)}</p>`
               : ""
           }
-          <p><b>Samtykke / Consent:</b> ${yn(Boolean(consent), lang)}</p>
-          <p><b>Kommentar:</b></p>
+          <p><b>${esc(t(uiLang, "checkin.fields.consent"))}:</b> ${esc(yesNo(Boolean(consent), uiLang))}</p>
+          <p><b>${esc(t(uiLang, "checkin.fields.comment"))}:</b></p>
           <pre style="background:#f6f6f6;padding:1em;border-radius:5px">${esc(
             comment || "—"
           )}</pre>
@@ -128,15 +121,15 @@ export default async function handler(req, res) {
       `;
 
       const text = `
-Navn / Name: ${name}
-Email: ${email}
-Nøglekode / Keycode: ${keycode}
-Type: ${checkType}
-EL: ${elReading}
-Vand (hus): ${waterHouse}
-${waterPool ? `Vand (pool): ${waterPool}\n` : ""}
-Consent: ${yn(Boolean(consent), lang)}
-Kommentar: ${comment || "—"}
+${t(uiLang, "checkin.fields.name")}: ${name}
+${t(uiLang, "checkin.fields.email")}: ${email}
+${t(uiLang, "checkin.fields.keycode")}: ${keycode}
+${t(uiLang, "checkin.fields.type")}: ${typeLabel}
+${t(uiLang, "checkin.fields.electricity")}: ${elReading}
+${t(uiLang, "checkin.fields.waterHouse")}: ${waterHouse}
+${waterPool ? `${t(uiLang, "checkin.fields.waterPool")}: ${waterPool}\n` : ""}
+${t(uiLang, "checkin.fields.consent")}: ${yesNo(Boolean(consent), uiLang)}
+${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
       `;
 
       await transporter.sendMail({

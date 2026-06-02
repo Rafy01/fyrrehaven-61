@@ -1,5 +1,5 @@
 // src/app/App.tsx
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Theme, Container, Box } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
@@ -31,8 +31,10 @@ export default function App({
   const location = useLocation();
 
   // 🌐 Skift sprog og sæt HTML-attributter
-  useEffect(() => {
-    i18n.changeLanguage(lang);
+  useLayoutEffect(() => {
+    if (i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+    }
     saveLang(lang);
     const html = document.documentElement;
     html.setAttribute("lang", lang);
