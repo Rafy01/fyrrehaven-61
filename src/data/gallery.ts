@@ -15,6 +15,7 @@ export type GalleryDataItem = {
   full?: string; // stor version (fallback = src)
   altDa?: string;
   altEn?: string;
+  altDe?: string;
 };
 
 export type GalleryAlbum = {
@@ -58,6 +59,7 @@ export type GalleryItemInput = {
   full: string;
   altDa?: string;
   altEn?: string;
+  altDe?: string;
 };
 export function galleryItemsFromAlbum(id: AlbumId): GalleryItemInput[] {
   const a = getAlbum(id);
@@ -67,6 +69,7 @@ export function galleryItemsFromAlbum(id: AlbumId): GalleryItemInput[] {
     full: it.full ?? it.src,
     altDa: it.altDa,
     altEn: it.altEn,
+    altDe: it.altDe,
   }));
 }
 
@@ -227,51 +230,61 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
         src: u("IMG_3692.webp"),
         altDa: "Poolhus og overdækning – Fyrrehaven 61",
         altEn: "Pool enclosure and terrace – Fyrrehaven 61",
+        altDe: "Poolüberdachung und Terrasse – Fyrrehaven 61",
       },
       {
         src: u("IMG_3693.webp"),
         altDa: "Skydetag over den opvarmede udendørs pool",
         altEn: "Sliding cover over the heated outdoor pool",
+        altDe: "Schiebeüberdachung über dem beheizten Außenpool",
       },
       {
         src: u("IMG_3697.webp"),
         altDa: "Poolområde på flisebelagt terrasse – familievenligt",
         altEn: "Pool area on tiled terrace – family friendly",
+        altDe: "Poolbereich auf gefliester Terrasse – familienfreundlich",
       },
       {
         src: u("IMG_3708.webp"),
         altDa: "Pool med transparent overdækning – udsigt til huset",
         altEn: "Pool with clear enclosure – view towards the house",
+        altDe: "Pool mit transparenter Überdachung – Blick zum Haus",
       },
       {
         src: u("IMG_3716.webp"),
         altDa: "Pool og stor terrasse – god plads til liggestole",
         altEn: "Pool and large terrace – room for sun loungers",
+        altDe: "Pool und große Terrasse – viel Platz für Sonnenliegen",
       },
       {
         src: u("IMG_3718.webp"),
         altDa: "Pool med skydetag delvist åben – læ for vinden",
         altEn: "Pool with sliding roof partly open – sheltered from wind",
+        altDe: "Pool mit teilweise geöffneter Schiebeüberdachung – windgeschützt",
       },
       {
         src: u("IMG_3719.webp"),
         altDa: "Pooloverdækning trukket frem – bad i alt slags vejr",
         altEn: "Pool cover pulled forward – swim in any weather",
+        altDe: "Poolüberdachung vorgezogen – Baden bei jedem Wetter",
       },
       {
         src: u("IMG_3720.webp"),
         altDa: "Pool og terrasse med plankeværk – privat uderum",
         altEn: "Pool and terrace with fence – private outdoor space",
+        altDe: "Pool und Terrasse mit Zaun – privater Außenbereich",
       },
       {
         src: u("IMG_3721.webp"),
         altDa: "Opvarmet pool ved Fyrrehaven 61 – sommerstemning",
         altEn: "Heated pool at Fyrrehaven 61 – summer vibes",
+        altDe: "Beheizter Pool bei Fyrrehaven 61 – Sommerstimmung",
       },
       {
         src: u("IMG_3722.webp"),
         altDa: "Poolhjørne med trin og sikker kant",
         altEn: "Pool corner with steps and safe edging",
+        altDe: "Poolecke mit Stufen und sicherem Rand",
       },
     ],
   },

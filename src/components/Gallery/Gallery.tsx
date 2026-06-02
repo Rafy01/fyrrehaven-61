@@ -19,8 +19,10 @@ export type GalleryItem = {
   alt?: string;
   altDa?: string;
   altEn?: string;
+  altDe?: string;
   captionDa?: string;
   captionEn?: string;
+  captionDe?: string;
 };
 
 type CTA =
@@ -52,9 +54,10 @@ function tPick(da: string, en: string, lang: Lang, de = en) {
   return chooseLang(lang, da, en, de);
 }
 function getCaption(it: GalleryItem, lang: Lang): string {
-  const cap = lang === "da" ? it.captionDa : it.captionEn;
+  const cap =
+    lang === "da" ? it.captionDa : lang === "de" ? it.captionDe : it.captionEn;
   if (cap && cap.trim()) return cap.trim();
-  const a = lang === "da" ? it.altDa : it.altEn;
+  const a = lang === "da" ? it.altDa : lang === "de" ? it.altDe : it.altEn;
   if (a && a.trim()) return a.trim();
   return it.alt ?? "";
 }
@@ -76,7 +79,7 @@ const FOLDER_LABELS: Record<string, { da: string; en: string; de: string }> = {
 };
 function labelFor(slug: string, lang: Lang): string {
   const fromMap = FOLDER_LABELS[slug];
-  if (fromMap) return lang === "da" ? fromMap.da : fromMap.en;
+  if (fromMap) return chooseLang(lang, fromMap.da, fromMap.en, fromMap.de);
   // Fallback: Capitalize slug
   return slug.slice(0, 1).toUpperCase() + slug.slice(1);
 }
