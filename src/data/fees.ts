@@ -1,147 +1,25 @@
-// Tosproget fee-datasæt ud fra den nuværende gebyrliste.
 export type FeeItem = {
   id: string;
   amountDKK: number;
-  titleDa: string;
-  titleEn: string;
-  noteDa?: string;
-  noteEn?: string;
-  unitDa?: string; // fx "pr. påbegyndt halve time", "pr. stk.", "pr. nøgle", "pr. madras"
-  unitEn?: string; // e.g. "per commenced half-hour"
 };
 
 export const fees: FeeItem[] = [
-  {
-    id: "early-checkin-unauthorized",
-    amountDKK: 200,
-    titleDa: "Tidlig indtjekning uden aftale",
-    titleEn: "Early check-in without prior approval",
-    unitDa: "pr. påbegyndt halve time",
-    unitEn: "per commenced half-hour",
-  },
-  {
-    id: "late-checkout-unauthorized",
-    amountDKK: 200,
-    titleDa: "Sen udtjekning uden aftale",
-    titleEn: "Late check-out without prior approval",
-    unitDa: "pr. påbegyndt halve time",
-    unitEn: "per commenced half-hour",
-  },
-  {
-    id: "hottub-over-42c",
-    amountDKK: 500,
-    titleDa: "Temperatur overstiger 42 grader",
-    titleEn: "Hot tub temperature exceeds 42°C",
-    noteDa: "gælder kun vildmarksbadet",
-    noteEn: "applies to the hot tub only",
-  },
-  {
-    id: "hottub-damage",
-    amountDKK: 3000,
-    titleDa: "Skader på vildmarksbad",
-    titleEn: "Damage to hot tub",
-    noteDa: "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges.",
-    noteEn: "Minimum fee – actual repair/replacement costs may be added.",
-  },
-  {
-    id: "grill-not-cleaned",
-    amountDKK: 300,
-    titleDa: "Manglende rengøring af grill",
-    titleEn: "Barbecue not cleaned",
-  },
-  {
-    id: "trash-not-disposed",
-    amountDKK: 200,
-    titleDa: "Manglende bortskaffelse af affald",
-    titleEn: "Waste not disposed of",
-    noteDa: "gælder ved udtjekning",
-    noteEn: "applies at check-out",
-  },
-  {
-    id: "dishwasher-not-emptied",
-    amountDKK: 200,
-    titleDa: "Opvaskemaskine ikke tømt",
-    titleEn: "Dishwasher not emptied",
-    noteDa: "gælder ved udtjekning",
-    noteEn: "applies at check-out",
-  },
-  {
-    id: "outdoor-furniture-not-returned",
-    amountDKK: 300,
-    titleDa: "Udendørs møbler ikke sat på plads",
-    titleEn: "Outdoor furniture not returned to place",
-  },
-  {
-    id: "loft-toys-not-tidied",
-    amountDKK: 200,
-    titleDa: "Hems og legetøj ikke ryddet op",
-    titleEn: "Loft and toys not tidied",
-  },
-  {
-    id: "doors-windows-not-locked",
-    amountDKK: 300,
-    titleDa: "Døre eller vinduer ikke låst/lukket",
-    titleEn: "Doors or windows not locked/closed",
-  },
-  {
-    id: "noise-complaints",
-    amountDKK: 1000,
-    titleDa: "Støjgener eller klager fra naboer",
-    titleEn: "Noise disturbance or neighbour complaints",
-  },
-  {
-    id: "remotes-missing",
-    amountDKK: 300,
-    titleDa: "Manglende fjernbetjeninger",
-    titleEn: "Missing remote controls",
-    unitDa: "pr. stk.",
-    unitEn: "per item",
-  },
-  {
-    id: "keys-missing",
-    amountDKK: 500,
-    titleDa: "Manglende nøgler til hus eller pooltag",
-    titleEn: "Missing keys for house or pool cover",
-    unitDa: "pr. nøgle",
-    unitEn: "per key",
-  },
-  {
-    id: "mattress-soiling",
-    amountDKK: 1000,
-    titleDa: "Urin/væsker på senge og madrasser",
-    titleEn: "Urine/liquids on beds and mattresses",
-    unitDa: "pr. madras",
-    unitEn: "per mattress",
-  },
-  {
-    id: "indoor-smoking",
-    amountDKK: 2500,
-    titleDa: "Rygning indendørs (ikke tilladt)",
-    titleEn: "Smoking indoors (not permitted)",
-  },
-  {
-    id: "sauna-damage",
-    amountDKK: 2500,
-    titleDa: "Skader på sauna (inventar/beklædning)",
-    titleEn: "Damage to sauna (interior/panelling)",
-    noteDa:
-      "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges.",
-    noteEn: "Minimum fee – actual repair/replacement costs may be added.",
-  },
-  {
-    id: "sauna-stove-damage",
-    amountDKK: 4500,
-    titleDa: "Skader på saunaovn",
-    titleEn: "Damage to sauna stove",
-    noteDa: "Minimumsgebyr – faktiske omkostninger kan tillægges.",
-    noteEn: "Minimum fee – actual costs may be added.",
-  },
-  {
-    id: "pool-tech-damage",
-    amountDKK: 6000,
-    titleDa: "Skader på poolteknik (pumpe, filter, varmepumpe m.m.)",
-    titleEn: "Damage to pool equipment (pump, filter, heat pump, etc.)",
-    noteDa: "Minimumsgebyr – faktiske omkostninger kan tillægges.",
-    noteEn: "Minimum fee – actual costs may be added.",
-  },
+  { id: "early-checkin-unauthorized", amountDKK: 200 },
+  { id: "late-checkout-unauthorized", amountDKK: 200 },
+  { id: "hottub-over-42c", amountDKK: 500 },
+  { id: "hottub-damage", amountDKK: 3000 },
+  { id: "grill-not-cleaned", amountDKK: 300 },
+  { id: "trash-not-disposed", amountDKK: 200 },
+  { id: "dishwasher-not-emptied", amountDKK: 200 },
+  { id: "outdoor-furniture-not-returned", amountDKK: 300 },
+  { id: "loft-toys-not-tidied", amountDKK: 200 },
+  { id: "doors-windows-not-locked", amountDKK: 300 },
+  { id: "noise-complaints", amountDKK: 1000 },
+  { id: "remotes-missing", amountDKK: 300 },
+  { id: "keys-missing", amountDKK: 500 },
+  { id: "mattress-soiling", amountDKK: 1000 },
+  { id: "indoor-smoking", amountDKK: 2500 },
+  { id: "sauna-damage", amountDKK: 2500 },
+  { id: "sauna-stove-damage", amountDKK: 4500 },
+  { id: "pool-tech-damage", amountDKK: 6000 },
 ];

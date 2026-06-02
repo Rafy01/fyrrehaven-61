@@ -1,5 +1,5 @@
 // src/app/App.tsx
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Theme, Container, Box } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
@@ -31,8 +31,10 @@ export default function App({
   const location = useLocation();
 
   // 🌐 Skift sprog og sæt HTML-attributter
-  useEffect(() => {
-    i18n.changeLanguage(lang);
+  useLayoutEffect(() => {
+    if (i18n.language !== lang) {
+      i18n.changeLanguage(lang);
+    }
     saveLang(lang);
     const html = document.documentElement;
     html.setAttribute("lang", lang);
@@ -150,6 +152,51 @@ export default function App({
                 {
                   title: "Marketing",
                   description: "These cookies are used to show relevant ads.",
+                  linkedCategory: "marketing",
+                  cookieTable: cookieData[lang].marketing,
+                },
+              ],
+            },
+          },
+          de: {
+            consentModal: {
+              title: "Wir verwenden Cookies 🍪",
+              description:
+                "Wir verwenden Cookies, um Ihre Erfahrung zu verbessern. Sie entscheiden, welche Sie akzeptieren.",
+              acceptAllBtn: "Alle akzeptieren",
+              acceptNecessaryBtn: "Ablehnen",
+              showPreferencesBtn: "Cookies einstellen",
+            },
+            preferencesModal: {
+              title: "Cookie-Einstellungen",
+              acceptAllBtn: "Alle akzeptieren",
+              acceptNecessaryBtn: "Nur notwendige",
+              savePreferencesBtn: "Einstellungen speichern",
+              closeIconLabel: "Schließen",
+              sections: [
+                {
+                  title: "Verwendung von Cookies",
+                  description:
+                    "Wir verwenden Cookies, damit die Website funktioniert und um Statistiken zu sammeln.",
+                },
+                {
+                  title: "Notwendige Cookies",
+                  description:
+                    "Diese Cookies sind für das Funktionieren der Website erforderlich und können nicht deaktiviert werden.",
+                  linkedCategory: "necessary",
+                  cookieTable: cookieData[lang].necessary,
+                },
+                {
+                  title: "Statistik",
+                  description:
+                    "Diese Cookies helfen uns zu verstehen, wie die Website genutzt wird.",
+                  linkedCategory: "analytics",
+                  cookieTable: cookieData[lang].analytics,
+                },
+                {
+                  title: "Marketing",
+                  description:
+                    "Diese Cookies werden verwendet, um relevante Anzeigen anzuzeigen.",
                   linkedCategory: "marketing",
                   cookieTable: cookieData[lang].marketing,
                 },

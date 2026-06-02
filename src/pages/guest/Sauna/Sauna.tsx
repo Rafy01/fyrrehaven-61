@@ -1,102 +1,74 @@
+import { useTranslation } from "react-i18next";
 import Head from "../../../lib/Head";
 import Accordion from "../../../components/Accordion/Accordion";
 import type { Lang } from "../../../lib/lang";
 import styles from "./Sauna.module.css";
 
 export default function GuestSaunaPage({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const { t: tg } = useTranslation("guest");
+  const t = (da: string, en: string, de = en) =>
+    lang === "da" ? da : lang === "de" ? de : en;
 
-  const title = t("Sauna regler og sikkerhed", "Sauna rules and safety");
+  const title = t(
+    "Sauna regler og sikkerhed",
+    "Sauna rules and safety",
+    "Sauna-Regeln und Sicherheit"
+  );
   const description = t(
     "Læs hvordan du bruger saunaen korrekt og sikkert under opholdet.",
-    "How to use the sauna safely during your stay."
+    "How to use the sauna safely during your stay.",
+    "Lesen Sie, wie Sie die Sauna während Ihres Aufenthalts sicher benutzen."
   );
 
   const rulesContent = (
     <div>
       <ul>
         <li>
-          <strong>{t("Tænd lyset", "Turn on the light")}</strong>
+          <strong>{tg("accordion.sauna.rules.lightTitle")}</strong>
           <br />
-          {t(
-            "Udenfor saunaen er der en kontakt til både indendørs og udendørs lys.",
-            "Outside the sauna, there’s a switch for both indoor and outdoor lights."
-          )}
+          {tg("accordion.sauna.rules.light")}
         </li>
         <li>
-          <strong>{t("Indstil varmeapparatet", "Set the heater")}</strong>
+          <strong>{tg("accordion.sauna.rules.heaterTitle")}</strong>
           <br />
-          {t(
-            "Inde i saunaen finder du to drejeknapper nederst:",
-            "Inside the sauna, at the bottom of the heater – you’ll find two control knobs:"
-          )}
+          {tg("accordion.sauna.rules.heater")}
           <ul>
             <li>
-              <strong>
-                {t("Venstre knap: Temperatur", "Left knob: Temperature")}
-              </strong>
+              <strong>{tg("accordion.sauna.rules.leftTitle")}</strong>
               <br />
-              {t(
-                "Indstil ønsket temperatur (70–80°C anbefales).",
-                "Set your preferred heat (recommended 70–80°C)."
-              )}
+              {tg("accordion.sauna.rules.left")}
             </li>
             <li>
-              <strong>{t("Højre knap: Tid", "Right knob: Time")}</strong>
+              <strong>{tg("accordion.sauna.rules.rightTitle")}</strong>
               <br />
-              {t(
-                "Drej for at starte saunaen. Ved '0' starter den straks. Drejer du forbi '0', aktiveres timer-funktion.",
-                "Turn to start the sauna. Past '0' activates delayed timer; within first section starts immediately."
-              )}
+              {tg("accordion.sauna.rules.right")}
             </li>
           </ul>
         </li>
         <li>
-          <strong>{t("Vent på opvarmning", "Wait for heating")}</strong>
+          <strong>{tg("accordion.sauna.rules.waitTitle")}</strong>
           <br />
-          {t(
-            "Saunaen er klar efter ca. 30–45 minutter.",
-            "The sauna will be ready after about 30–45 minutes."
-          )}
+          {tg("accordion.sauna.rules.wait")}
         </li>
         <li>
-          <strong>
-            {t("Tag et brusebad før brug", "Shower before entering")}
-          </strong>
+          <strong>{tg("accordion.sauna.rules.showerTitle")}</strong>
           <br />
-          {t(
-            "Vask kroppen og tør dig – det forbedrer hygiejne og varmeoptag.",
-            "Wash and dry off – improves hygiene and heat absorption."
-          )}
+          {tg("accordion.sauna.rules.shower")}
         </li>
         <li>
-          <strong>{t("Brug et håndklæde", "Use a towel")}</strong>
+          <strong>{tg("accordion.sauna.rules.towelTitle")}</strong>
           <br />
-          {t(
-            "Sæt dig altid på et håndklæde – også fødderne.",
-            "Always sit on a towel – including under your feet."
-          )}
+          {tg("accordion.sauna.rules.towel")}
         </li>
         <li>
-          <strong>
-            {t(
-              "Saunér i 10–15 minutter ad gangen",
-              "Enjoy the sauna for 10–15 minutes at a time"
-            )}
-          </strong>
+          <strong>{tg("accordion.sauna.rules.durationTitle")}</strong>
           <br />
-          {t(
-            "Lyt til kroppen og drik rigeligt med vand.",
-            "Listen to your body. Take breaks and drink plenty of water."
-          )}
+          {tg("accordion.sauna.rules.duration")}
         </li>
         <li>
-          <strong>{t("Køl ned bagefter", "Cool down afterwards")}</strong>
+          <strong>{tg("accordion.sauna.rules.coolTitle")}</strong>
           <br />
-          {t(
-            "Tag et bad eller gå udendørs – det styrker velvære.",
-            "Take a shower or go outside – boosts your well-being."
-          )}
+          {tg("accordion.sauna.rules.cool")}
         </li>
       </ul>
     </div>
@@ -106,58 +78,27 @@ export default function GuestSaunaPage({ lang }: { lang: Lang }) {
     <div>
       <ol>
         <li>
-          <strong>
-            {t(
-              "Hæld ikke store mængder vand på ovnen",
-              "Do not pour large amounts of water on the heater"
-            )}
-          </strong>
+          <strong>{tg("accordion.sauna.donts.waterTitle")}</strong>
           <br />
-          {t(
-            "En lille smule ad gangen er okay. For meget kan skade ovnen eller udløse sikkerhedssystemet.",
-            "A small amount is fine. Too much may damage the heater or trip the safety system."
-          )}
+          {tg("accordion.sauna.donts.water")}
         </li>
         <li>
-          <strong>
-            {t(
-              "Ingen alkohol før eller under brug",
-              "Do not drink alcohol before or during use"
-            )}
-          </strong>
+          <strong>{tg("accordion.sauna.donts.alcoholTitle")}</strong>
           <br />
-          {t(
-            "Alkohol er forbudt – det kan være livsfarligt i varme omgivelser.",
-            "Alcohol is strictly prohibited – it can be life-threatening in high heat."
-          )}
+          {tg("accordion.sauna.donts.alcohol")}
         </li>
         <li>
-          <strong>
-            {t("Ingen mad eller drikke", "Do not bring food or drinks")}
-          </strong>
+          <strong>{tg("accordion.sauna.donts.foodTitle")}</strong>
         </li>
         <li>
-          <strong>
-            {t("Ingen børn uden opsyn", "No unsupervised children")}
-          </strong>
+          <strong>{tg("accordion.sauna.donts.childrenTitle")}</strong>
           <br />
-          {t(
-            "Kun kort brug og altid under opsyn.",
-            "Only short use and always under adult supervision."
-          )}
+          {tg("accordion.sauna.donts.children")}
         </li>
         <li>
-          <strong>
-            {t(
-              "Ingen olier eller duftsten",
-              "Do not use essential oils or similar products"
-            )}
-          </strong>
+          <strong>{tg("accordion.sauna.donts.oilsTitle")}</strong>
           <br />
-          {t(
-            "Kan beskadige ovnen og give allergiske reaktioner.",
-            "They can damage the heater and cause allergic reactions."
-          )}
+          {tg("accordion.sauna.donts.oils")}
         </li>
       </ol>
     </div>
@@ -166,42 +107,12 @@ export default function GuestSaunaPage({ lang }: { lang: Lang }) {
   const safetyContent = (
     <div>
       <ol>
-        <li>
-          {t(
-            "Sluk altid for ovnen efter brug – drej højre knap til '0'.",
-            "Always turn off the sauna after use – set the right knob (time) to '0'."
-          )}
-        </li>
-        <li>
-          {t(
-            "Brug ikke saunaen hvis du er syg, gravid eller har pacemaker.",
-            "Do not use the sauna if you are ill, pregnant, or have a pacemaker."
-          )}
-        </li>
-        <li>
-          {t(
-            "Brug ikke saunaen til opbevaring.",
-            "Never use the sauna as storage."
-          )}
-        </li>
-        <li>
-          {t(
-            "Hold luftindtag ved ovnen fri.",
-            "Keep air inlets and outlets around the heater clear."
-          )}
-        </li>
-        <li>
-          {t(
-            "Forlad saunaen hvis du føler ubehag.",
-            "Leave immediately if you feel dizzy or unwell."
-          )}
-        </li>
-        <li>
-          {t(
-            "Drik vand før og efter brug for at undgå dehydrering.",
-            "Drink water before and after to prevent dehydration."
-          )}
-        </li>
+        <li>{tg("accordion.sauna.safety.off")}</li>
+        <li>{tg("accordion.sauna.safety.health")}</li>
+        <li>{tg("accordion.sauna.safety.storage")}</li>
+        <li>{tg("accordion.sauna.safety.air")}</li>
+        <li>{tg("accordion.sauna.safety.leave")}</li>
+        <li>{tg("accordion.sauna.safety.water")}</li>
       </ol>
     </div>
   );
@@ -209,17 +120,17 @@ export default function GuestSaunaPage({ lang }: { lang: Lang }) {
   const items = [
     {
       id: "rules",
-      title: t("Regler og brug", "Rules and usage"),
+      titleKey: "accordion.sauna.rules.title",
       content: rulesContent,
     },
     {
       id: "donts",
-      title: t("Hvad du ikke må gøre", "What You Must Not Do"),
+      titleKey: "accordion.sauna.donts.title",
       content: dontsContent,
     },
     {
       id: "safety",
-      title: t("Vigtige sikkerhedsregler", "Important Safety"),
+      titleKey: "accordion.sauna.safety.title",
       content: safetyContent,
     },
   ];
@@ -231,7 +142,13 @@ export default function GuestSaunaPage({ lang }: { lang: Lang }) {
 
   return (
     <>
-      <Head title={title} description={description} lang={"da"} path={""} noindex/>
+      <Head
+        title={title}
+        description={description}
+        lang={lang}
+        path={""}
+        noindex
+      />
 
       <div className={styles.wrapper}>
         <h1>{title}</h1>
@@ -239,11 +156,15 @@ export default function GuestSaunaPage({ lang }: { lang: Lang }) {
 
         <img
           src={imageUrl}
-          alt={t("Sådan bruger du saunaen", "How to use the sauna")}
+          alt={t(
+            "Sådan bruger du saunaen",
+            "How to use the sauna",
+            "So benutzen Sie die Sauna"
+          )}
           className={styles.image}
         />
 
-        <Accordion items={items} />
+        <Accordion items={items} i18nNs="guest" />
       </div>
     </>
   );

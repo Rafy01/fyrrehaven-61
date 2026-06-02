@@ -5,6 +5,7 @@ import {
   validateContactHeaders,
   validateContactPayload,
 } from "./_lib/contactSecurity.mjs";
+import { normalizeLang, t, yesNo } from "./_lib/i18n.mjs";
 
 /** --- Utils ---------------------------------------------------- */
 const reqEnv = (k) => {
@@ -15,12 +16,16 @@ const reqEnv = (k) => {
 
 const fmtMoney = (n, lang = "da") => {
   if (n == null || Number.isNaN(Number(n))) return "—";
+  const uiLang = normalizeLang(lang);
   try {
-    return new Intl.NumberFormat(lang === "da" ? "da-DK" : "en-GB", {
+    return new Intl.NumberFormat(
+      uiLang === "da" ? "da-DK" : uiLang === "de" ? "de-DE" : "en-GB",
+      {
       style: "currency",
       currency: "DKK",
       maximumFractionDigits: 0,
-    }).format(Number(n));
+      }
+    ).format(Number(n));
   } catch {
     return `${Number(n).toFixed(0)} DKK`;
   }
@@ -28,20 +33,21 @@ const fmtMoney = (n, lang = "da") => {
 
 const fmtDate = (iso, lang = "da") => {
   if (!iso) return "—";
+  const uiLang = normalizeLang(lang);
   try {
     const d = new Date(`${iso}T00:00:00`);
-    return new Intl.DateTimeFormat(lang === "da" ? "da-DK" : "en-GB", {
+    return new Intl.DateTimeFormat(
+      uiLang === "da" ? "da-DK" : uiLang === "de" ? "de-DE" : "en-GB",
+      {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    }).format(d);
+      }
+    ).format(d);
   } catch {
     return iso || "—";
   }
 };
-
-const yn = (b, lang = "da") =>
-  b ? (lang === "da" ? "Ja" : "Yes") : lang === "da" ? "Nej" : "No";
 
 const esc = (s = "") =>
   String(s)
@@ -200,6 +206,9 @@ export default async function handler(req, res) {
       // NEW: ekstra services
       extras, // { items: [{id, qty, unitPriceDKK, label:{da,en}}], totalDKK }
     } = req.body ?? {};
+    const uiLang = normalizeLang(lang);
+    const bookingType = t(uiLang, "contact.type.booking");
+    const messageType = t(uiLang, "contact.type.message");
 
     const intent = String(purpose || context || "contact");
     const isBookingReq =
@@ -260,93 +269,60 @@ export default async function handler(req, res) {
 
     // -------- 1) AUTO-REPLY TIL BRUGER (sendes med det samme) --------
     const siteName = process.env.SITE_NAME || "Fyrrehaven 61";
-    const subjectUser =
-      lang === "da"
-        ? `Tak for din henvendelse – ${siteName}`
-        : `Thanks for your message – ${siteName}`;
+    const subjectUser = t(uiLang, "contact.subjectUser", { siteName });
 
-    const userBodyDa = `
-      <p>Hej ${esc(name)},</p>
-      <p>Tak for din ${isBookingReq ? "bookingforespørgsel" : "henvendelse"}.
-      Vi vender snarest tilbage (typisk inden for 24 timer).</p>
+    const userBody = `
+      <p>${esc(t(uiLang, "contact.greeting", { name }))}</p>
+      <p>${esc(
+        t(uiLang, "contact.thanks", {
+          type: isBookingReq ? bookingType : messageType,
+        })
+      )}
+      ${esc(t(uiLang, "contact.replySoon"))}</p>
       ${
         isBookingReq
-          ? `<p><b>Hurtigt overblik</b><br/>
-             Periode: ${fmtDate(selection?.start, "da")} – ${fmtDate(
+          ? `<p><b>${esc(t(uiLang, "contact.quickSummary"))}</b><br/>
+             ${esc(t(uiLang, "contact.period"))}: ${fmtDate(
+              selection?.start,
+              uiLang
+            )} – ${fmtDate(
               selection?.endExclusive,
-              "da"
+              uiLang
             )} (${
               typeof selection?.nights === "number" ? selection.nights : "—"
-            } nætter)<br/>
-             Estimeret total: ${fmtMoney(
+            } ${esc(t(uiLang, "contact.nights"))})<br/>
+             ${esc(t(uiLang, "contact.estimatedTotal"))}: ${fmtMoney(
                selection?.totalWithCleaningDKK,
-               "da"
+               uiLang
              )}</p>`
           : ""
       }
-      <p>Har du spørgsmål imens, kan du svare direkte på denne mail.</p>
-    `;
-
-    const userBodyEn = `
-      <p>Hi ${esc(name)},</p>
-      <p>Thanks for your ${isBookingReq ? "booking request" : "message"}.
-      We’ll get back to you shortly (typically within 24 hours).</p>
-      ${
-        isBookingReq
-          ? `<p><b>Quick summary</b><br/>
-             Period: ${fmtDate(selection?.start, "en")} – ${fmtDate(
-              selection?.endExclusive,
-              "en"
-            )} (${
-              typeof selection?.nights === "number" ? selection.nights : "—"
-            } nights)<br/>
-             Estimated total: ${fmtMoney(
-               selection?.totalWithCleaningDKK,
-               "en"
-             )}</p>`
-          : ""
-      }
-      <p>If you have any questions meanwhile, just reply to this email.</p>
+      <p>${esc(t(uiLang, "contact.questions"))}</p>
     `;
 
     const bodyUserHtml = `
       <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5">
-        ${lang === "da" ? userBodyDa : userBodyEn}
+        ${userBody}
         ${SIGNATURE_HTML}
       </div>
     `;
     const bodyUserText =
-      lang === "da"
-        ? `Hej ${name},\n\nTak for din ${
-            isBookingReq ? "bookingforespørgsel" : "henvendelse"
-          }. Vi vender snarest tilbage (typisk inden for 24 timer).\n\n${
-            isBookingReq
-              ? `Periode: ${fmtDate(selection?.start, "da")} – ${fmtDate(
-                  selection?.endExclusive,
-                  "da"
-                )} (${
-                  typeof selection?.nights === "number" ? selection.nights : "—"
-                } nætter)\nEstimeret total: ${fmtMoney(
-                  selection?.totalWithCleaningDKK,
-                  "da"
-                )}\n\n`
-              : ""
-          }Svar blot på denne mail, hvis du har spørgsmål.\n\n${siteName}\nhttps://fyrrehaven-61.dk`
-        : `Hi ${name},\n\nThanks for your ${
-            isBookingReq ? "booking request" : "message"
-          }. We’ll get back to you shortly (typically within 24 hours).\n\n${
-            isBookingReq
-              ? `Period: ${fmtDate(selection?.start, "en")} – ${fmtDate(
-                  selection?.endExclusive,
-                  "en"
-                )} (${
-                  typeof selection?.nights === "number" ? selection.nights : "—"
-                } nights)\nEstimated total: ${fmtMoney(
-                  selection?.totalWithCleaningDKK,
-                  "en"
-                )}\n\n`
-              : ""
-          }Just reply to this email if you have any questions.\n\n${siteName}\nhttps://fyrrehaven-61.dk`;
+      `${t(uiLang, "contact.greeting", { name })}\n\n` +
+      `${t(uiLang, "contact.thanks", {
+        type: isBookingReq ? bookingType : messageType,
+      })} ${t(uiLang, "contact.replySoon")}\n\n` +
+      (isBookingReq
+        ? `${t(uiLang, "contact.period")}: ${fmtDate(
+            selection?.start,
+            uiLang
+          )} – ${fmtDate(selection?.endExclusive, uiLang)} (${
+            typeof selection?.nights === "number" ? selection.nights : "—"
+          } ${t(uiLang, "contact.nights")})\n${t(
+            uiLang,
+            "contact.estimatedTotal"
+          )}: ${fmtMoney(selection?.totalWithCleaningDKK, uiLang)}\n\n`
+        : "") +
+      `${t(uiLang, "contact.replyText")}\n\n${siteName}\nhttps://fyrrehaven-61.dk`;
 
     const autoInfo = await transporter.sendMail({
       from, // DKIM/SPF på eget domæne
@@ -366,30 +342,24 @@ export default async function handler(req, res) {
     });
 
     // -------- 2) ADMIN-NOTIFIKATION (til jer) --------
-    const introAdmin =
-      lang === "da"
-        ? "Ny indsendelse fra websitet:"
-        : "New submission from the website:";
-    const subjectAdmin =
-      lang === "da"
-        ? `Fyrrehaven 61 | ${name} (${intent})`
-        : `Fyrrehaven 61 | ${name} (${intent})`;
+    const introAdmin = t(uiLang, "contact.introAdmin");
+    const subjectAdmin = `Fyrrehaven 61 | ${name} (${intent})`;
     const countryShown = country || countryIso || "—";
 
     // Normaliser bookingfelter
-    const startStr = fmtDate(selection?.start, lang);
-    const endStr = fmtDate(selection?.endExclusive, lang);
+    const startStr = fmtDate(selection?.start, uiLang);
+    const endStr = fmtDate(selection?.endExclusive, uiLang);
     const nightsStr =
       typeof selection?.nights === "number" ? String(selection.nights) : "—";
-    const nightsPriceStr = fmtMoney(selection?.baseNightsTotalDKK, lang);
-    const cleaningStr = fmtMoney(selection?.cleaningFeeDKK, lang);
-    const totalStr = fmtMoney(selection?.totalWithCleaningDKK, lang);
+    const nightsPriceStr = fmtMoney(selection?.baseNightsTotalDKK, uiLang);
+    const cleaningStr = fmtMoney(selection?.cleaningFeeDKK, uiLang);
+    const totalStr = fmtMoney(selection?.totalWithCleaningDKK, uiLang);
 
     // Extras
     const extrasItems = Array.isArray(extras?.items) ? extras.items : [];
     const extrasTotalStr =
       extras && typeof extras.totalDKK === "number"
-        ? fmtMoney(extras.totalDKK, lang)
+        ? fmtMoney(extras.totalDKK, uiLang)
         : "—";
 
     const grandInclExtras =
@@ -404,17 +374,17 @@ export default async function handler(req, res) {
       extrasItems.length > 0
         ? `
       <h3 style="margin:16px 0 8px;font-size:16px;">
-        ${lang === "da" ? "Ekstra services" : "Extra services"}
+        ${esc(t(uiLang, "contact.extraServices"))}
       </h3>
       <table style="border-collapse:collapse">
         ${extrasItems
           .map((it) => {
-            const label = lang === "da" ? it?.label?.da : it?.label?.en;
-            const unit = fmtMoney(it?.unitPriceDKK, lang);
+            const label = it?.label?.[uiLang] ?? it?.label?.en ?? it?.label?.da;
+            const unit = fmtMoney(it?.unitPriceDKK, uiLang);
             const qty = Number(it?.qty || 0);
             const line =
               typeof it?.unitPriceDKK === "number"
-                ? fmtMoney(qty * it.unitPriceDKK, lang)
+                ? fmtMoney(qty * it.unitPriceDKK, uiLang)
                 : "—";
             return `<tr>
               <td style="padding:4px 8px">${esc(label || it?.id || "—")}</td>
@@ -425,7 +395,7 @@ export default async function handler(req, res) {
           .join("")}
         <tr>
           <td style="padding:6px 8px" colspan="2"><b>${
-            lang === "da" ? "Ekstra i alt" : "Extras total"
+            esc(t(uiLang, "contact.extrasTotal"))
           }</b></td>
           <td style="padding:6px 8px; text-align:right"><b>${extrasTotalStr}</b></td>
         </tr>
@@ -437,10 +407,8 @@ export default async function handler(req, res) {
       grandInclExtras != null
         ? `
       <p style="margin:8px 0 0"><b>${
-        lang === "da"
-          ? "Estimeret total inkl. ekstra"
-          : "Estimated total incl. extras"
-      }:</b> ${fmtMoney(grandInclExtras, lang)}</p>
+        esc(t(uiLang, "contact.totalInclExtras"))
+      }:</b> ${fmtMoney(grandInclExtras, uiLang)}</p>
     `
         : "";
 
@@ -451,48 +419,48 @@ export default async function handler(req, res) {
 
     const bookingHtml = `
       <h3 style="margin:16px 0 8px;font-size:16px;">
-        ${lang === "da" ? "Bookingoplysninger" : "Booking details"}
+        ${esc(t(uiLang, "contact.bookingDetails"))}
       </h3>
       <table style="border-collapse:collapse">
         <tr>
           <td style="padding:4px 8px"><b>${
-            lang === "da" ? "Periode" : "Period"
+            esc(t(uiLang, "contact.period"))
           }</b></td>
           <td style="padding:4px 8px">${startStr} – ${endStr} · ${nightsStr} ${
-      lang === "da" ? "nætter" : "nights"
+      esc(t(uiLang, "contact.nights"))
     }</td>
         </tr>
         <tr>
           <td style="padding:4px 8px"><b>${
-            lang === "da" ? "Pris (overnatninger)" : "Price (nights)"
+            esc(t(uiLang, "contact.priceNights"))
           }</b></td>
           <td style="padding:4px 8px">${nightsPriceStr}</td>
         </tr>
         <tr>
           <td style="padding:4px 8px"><b>${
-            lang === "da" ? "Rengøring" : "Cleaning"
+            esc(t(uiLang, "contact.cleaning"))
           }</b></td>
           <td style="padding:4px 8px">${cleaningStr}</td>
         </tr>
         <tr>
           <td style="padding:4px 8px"><b>${
-            lang === "da" ? "Estimeret total" : "Estimated total"
+            esc(t(uiLang, "contact.estimatedTotal"))
           }</b></td>
           <td style="padding:4px 8px">${totalStr}</td>
         </tr>
         <tr>
           <td style="padding:4px 8px"><b>${
-            lang === "da" ? "Gæster" : "Guests"
+            esc(t(uiLang, "contact.guests"))
           }</b></td>
           <td style="padding:4px 8px">
-            ${lang === "da" ? "Voksne" : "Adults"}: ${adultsStr},
-            ${lang === "da" ? "Børn" : "Children"}: ${childrenStr},
-            ${lang === "da" ? "Babyer" : "Babies"}: ${babiesStr}
+            ${esc(t(uiLang, "contact.adults"))}: ${adultsStr},
+            ${esc(t(uiLang, "contact.children"))}: ${childrenStr},
+            ${esc(t(uiLang, "contact.babies"))}: ${babiesStr}
           </td>
         </tr>
         <tr>
           <td style="padding:4px 8px"><b>${
-            lang === "da" ? "Formål med opholdet" : "Purpose of stay"
+            esc(t(uiLang, "contact.purposeOfStay"))
           }</b></td>
           <td style="padding:4px 8px">${esc(stayPurposeStr)}</td>
         </tr>
@@ -504,20 +472,20 @@ export default async function handler(req, res) {
     // Godkendelser
     const approvalsHtml = `
       <h3 style="margin:16px 0 8px;font-size:16px;">
-        ${lang === "da" ? "Godkendelser" : "Approvals"}
+        ${esc(t(uiLang, "contact.approvals"))}
       </h3>
       <table style="border-collapse:collapse">
         <tr>
           <td style="padding:4px 8px"><b>${
-            lang === "da" ? "Samtykke (GDPR)" : "Consent (GDPR)"
+            esc(t(uiLang, "contact.consentGdpr"))
           }</b></td>
-          <td style="padding:4px 8px">${yn(Boolean(consent), lang)}</td>
+          <td style="padding:4px 8px">${esc(yesNo(Boolean(consent), uiLang))}</td>
         </tr>
         <tr>
           <td style="padding:4px 8px"><b>${
-            lang === "da" ? "Gebyroversigt accepteret" : "Fee list accepted"
+            esc(t(uiLang, "contact.feeListAccepted"))
           }</b></td>
-          <td style="padding:4px 8px">${yn(Boolean(feesAccepted), lang)}</td>
+          <td style="padding:4px 8px">${esc(yesNo(Boolean(feesAccepted), uiLang))}</td>
         </tr>
       </table>
     `;
@@ -528,22 +496,22 @@ export default async function handler(req, res) {
       <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.45">
         <p>${introAdmin}</p>
         <table style="border-collapse:collapse">
-          <tr><td style="padding:4px 8px"><b>Navn / Name</b></td><td style="padding:4px 8px">${esc(
+          <tr><td style="padding:4px 8px"><b>${esc(t(uiLang, "contact.fields.name"))}</b></td><td style="padding:4px 8px">${esc(
             name || "—"
           )}</td></tr>
-          <tr><td style="padding:4px 8px"><b>E-mail</b></td><td style="padding:4px 8px">${esc(
+          <tr><td style="padding:4px 8px"><b>${esc(t(uiLang, "contact.fields.email"))}</b></td><td style="padding:4px 8px">${esc(
             email || "—"
           )}</td></tr>
-          <tr><td style="padding:4px 8px"><b>Telefon / Phone</b></td><td style="padding:4px 8px">${esc(
+          <tr><td style="padding:4px 8px"><b>${esc(t(uiLang, "contact.fields.phone"))}</b></td><td style="padding:4px 8px">${esc(
             phone || "—"
           )}</td></tr>
-          <tr><td style="padding:4px 8px"><b>Land / Country</b></td><td style="padding:4px 8px">${esc(
+          <tr><td style="padding:4px 8px"><b>${esc(t(uiLang, "contact.fields.country"))}</b></td><td style="padding:4px 8px">${esc(
             countryShown
           )}</td></tr>
-          <tr><td style="padding:4px 8px"><b>Sprog / Lang</b></td><td style="padding:4px 8px">${esc(
-            lang
+          <tr><td style="padding:4px 8px"><b>${esc(t(uiLang, "contact.fields.language"))}</b></td><td style="padding:4px 8px">${esc(
+            uiLang
           )}</td></tr>
-          <tr><td style="padding:4px 8px"><b>Kontekst / Context</b></td><td style="padding:4px 8px">${esc(
+          <tr><td style="padding:4px 8px"><b>${esc(t(uiLang, "contact.fields.context"))}</b></td><td style="padding:4px 8px">${esc(
             intent
           )}</td></tr>
         </table>
@@ -553,7 +521,7 @@ export default async function handler(req, res) {
         ${approvalsHtml}
 
         <h3 style="margin:16px 0 8px;font-size:16px;">${
-          lang === "da" ? "Besked" : "Message"
+          esc(t(uiLang, "contact.message"))
         }</h3>
         <pre style="white-space:pre-wrap;background:#f6f6f6;border:1px solid #eee;border-radius:6px;padding:12px">${esc(
           messageForMail || "—"
@@ -565,56 +533,60 @@ export default async function handler(req, res) {
 
     const textAdmin =
       `${introAdmin}\n\n` +
-      `Navn/Name: ${name || "—"}\n` +
-      `E-mail: ${email || "—"}\n` +
-      `Telefon/Phone: ${phone || "—"}\n` +
-      `Land/Country: ${countryShown}\n` +
-      `Sprog/Lang: ${lang}\n` +
-      `Kontekst/Context: ${intent}\n` +
+      `${t(uiLang, "contact.fields.name")}: ${name || "—"}\n` +
+      `${t(uiLang, "contact.fields.email")}: ${email || "—"}\n` +
+      `${t(uiLang, "contact.fields.phone")}: ${phone || "—"}\n` +
+      `${t(uiLang, "contact.fields.country")}: ${countryShown}\n` +
+      `${t(uiLang, "contact.fields.language")}: ${uiLang}\n` +
+      `${t(uiLang, "contact.fields.context")}: ${intent}\n` +
       (isBookingReq
-        ? `\n— Booking —\n` +
-          `Periode/Period: ${startStr} – ${endStr} · ${nightsStr} ${
-            lang === "da" ? "nætter" : "nights"
-          }\n` +
-          `Pris (overnatninger)/Price (nights): ${nightsPriceStr}\n` +
-          `Rengøring/Cleaning: ${cleaningStr}\n` +
-          `Estimeret total/Estimated total: ${totalStr}\n` +
+        ? `\n— ${t(uiLang, "contact.bookingDetails")} —\n` +
+          `${t(uiLang, "contact.period")}: ${startStr} – ${endStr} · ${nightsStr} ${t(
+            uiLang,
+            "contact.nights"
+          )}\n` +
+          `${t(uiLang, "contact.priceNights")}: ${nightsPriceStr}\n` +
+          `${t(uiLang, "contact.cleaning")}: ${cleaningStr}\n` +
+          `${t(uiLang, "contact.estimatedTotal")}: ${totalStr}\n` +
           (extrasItems.length > 0
-            ? `\n— Ekstra services / Extras —\n` +
+            ? `\n— ${t(uiLang, "contact.extraServices")} —\n` +
               extrasItems
                 .map((it) => {
-                  const label = lang === "da" ? it?.label?.da : it?.label?.en;
-                  const unit = fmtMoney(it?.unitPriceDKK, lang);
+                  const label =
+                    it?.label?.[uiLang] ?? it?.label?.en ?? it?.label?.da;
+                  const unit = fmtMoney(it?.unitPriceDKK, uiLang);
                   const qty = Number(it?.qty || 0);
                   const line =
                     typeof it?.unitPriceDKK === "number"
-                      ? fmtMoney(qty * it.unitPriceDKK, lang)
+                      ? fmtMoney(qty * it.unitPriceDKK, uiLang)
                       : "—";
                   return `• ${
                     label || it?.id || "—"
                   }: ${qty} × ${unit} = ${line}`;
                 })
                 .join("\n") +
-              `\n${
-                lang === "da" ? "Ekstra i alt" : "Extras total"
-              }: ${extrasTotalStr}\n` +
+              `\n${t(uiLang, "contact.extrasTotal")}: ${extrasTotalStr}\n` +
               (grandInclExtras != null
-                ? `${
-                    lang === "da"
-                      ? "Estimeret total inkl. ekstra"
-                      : "Estimated total incl. extras"
-                  }: ${fmtMoney(grandInclExtras, lang)}\n`
+                ? `${t(uiLang, "contact.totalInclExtras")}: ${fmtMoney(
+                    grandInclExtras,
+                    uiLang
+                  )}\n`
                 : "")
             : ``) +
-          `Gæster/Guests: Adults ${OR_DASH(guests?.adults)}, Children ${OR_DASH(
+          `${t(uiLang, "contact.guests")}: ${t(uiLang, "contact.adults")} ${OR_DASH(
+            guests?.adults
+          )}, ${t(uiLang, "contact.children")} ${OR_DASH(
             guests?.children
-          )}, Babies ${OR_DASH(guests?.babies)}\n` +
-          `Formål/Purpose: ${OR_DASH(stayPurpose)}\n`
+          )}, ${t(uiLang, "contact.babies")} ${OR_DASH(guests?.babies)}\n` +
+          `${t(uiLang, "contact.purposeOfStay")}: ${OR_DASH(stayPurpose)}\n`
         : "") +
-      `\n— Godkendelser / Approvals —\n` +
-      `Samtykke (GDPR)/Consent: ${yn(Boolean(consent), lang)}\n` +
-      `Fee list accepted: ${yn(Boolean(feesAccepted), lang)}\n\n` +
-      `— Besked / Message —\n${messageForMail || "—"}\n`;
+      `\n— ${t(uiLang, "contact.approvals")} —\n` +
+      `${t(uiLang, "contact.consentGdpr")}: ${yesNo(Boolean(consent), uiLang)}\n` +
+      `${t(uiLang, "contact.feeListAccepted")}: ${yesNo(
+        Boolean(feesAccepted),
+        uiLang
+      )}\n\n` +
+      `— ${t(uiLang, "contact.message")} —\n${messageForMail || "—"}\n`;
 
     const infoAdmin = await transporter.sendMail({
       from,

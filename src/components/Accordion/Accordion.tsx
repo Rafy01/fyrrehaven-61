@@ -2,19 +2,28 @@ import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 import styles from "./Accordion.module.css";
 import React, { useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 type Item = {
   id: string;
-  title: string;
-  content: React.ReactNode;
+  title?: React.ReactNode;
+  titleKey?: string;
+  content?: React.ReactNode;
+  contentKey?: string;
 };
 
 type AccordionProps = {
   items: Item[];
   defaultOpenId?: string;
+  i18nNs?: string;
 };
 
-export default function Accordion({ items, defaultOpenId }: AccordionProps) {
+export default function Accordion({
+  items,
+  defaultOpenId,
+  i18nNs = "common",
+}: AccordionProps) {
+  const { t } = useTranslation(i18nNs);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleValueChange = (value: string) => {
@@ -48,12 +57,14 @@ export default function Accordion({ items, defaultOpenId }: AccordionProps) {
         >
           <AccordionPrimitive.Header className={styles.accordionHeader}>
             <AccordionPrimitive.Trigger className={styles.accordionTrigger}>
-              <span>{item.title}</span>
+              <span>{item.titleKey ? t(item.titleKey) : item.title}</span>
               <ChevronDownIcon className={styles.chevron} aria-hidden />
             </AccordionPrimitive.Trigger>
           </AccordionPrimitive.Header>
           <AccordionPrimitive.Content className={styles.accordionContent}>
-            <div className={styles.accordionInner}>{item.content}</div>
+            <div className={styles.accordionInner}>
+              {item.contentKey ? t(item.contentKey) : item.content}
+            </div>
           </AccordionPrimitive.Content>
         </AccordionPrimitive.Item>
       ))}

@@ -1,7 +1,7 @@
 // src/lib/countryCodes.ts
 
 /** UI-sprog til labels */
-export type UiLang = "da" | "en";
+export type UiLang = "da" | "en" | "de";
 
 /** ISO 3166-1 alpha-2 koder vi understøtter i UI’et */
 export type ISO2 =
@@ -24,31 +24,32 @@ export type ISO2 =
   | "CZ";
 
 /** Basisdata til dropdown og labels */
-type C = { iso: ISO2; dial: `+${number}`; nameDa: string; nameEn: string };
+type C = { iso: ISO2; dial: `+${number}`; nameDa: string; nameEn: string; nameDe: string };
 
 const COUNTRIES: C[] = [
-  { iso: "DK", dial: "+45", nameDa: "Danmark", nameEn: "Denmark" },
-  { iso: "SE", dial: "+46", nameDa: "Sverige", nameEn: "Sweden" },
-  { iso: "NO", dial: "+47", nameDa: "Norge", nameEn: "Norway" },
-  { iso: "FI", dial: "+358", nameDa: "Finland", nameEn: "Finland" },
-  { iso: "DE", dial: "+49", nameDa: "Tyskland", nameEn: "Germany" },
+  { iso: "DK", dial: "+45", nameDa: "Danmark", nameEn: "Denmark", nameDe: "Dänemark" },
+  { iso: "SE", dial: "+46", nameDa: "Sverige", nameEn: "Sweden", nameDe: "Schweden" },
+  { iso: "NO", dial: "+47", nameDa: "Norge", nameEn: "Norway", nameDe: "Norwegen" },
+  { iso: "FI", dial: "+358", nameDa: "Finland", nameEn: "Finland", nameDe: "Finnland" },
+  { iso: "DE", dial: "+49", nameDa: "Tyskland", nameEn: "Germany", nameDe: "Deutschland" },
   {
     iso: "GB",
     dial: "+44",
     nameDa: "Storbritannien",
     nameEn: "United Kingdom",
+    nameDe: "Vereinigtes Königreich",
   },
-  { iso: "IE", dial: "+353", nameDa: "Irland", nameEn: "Ireland" },
-  { iso: "NL", dial: "+31", nameDa: "Holland", nameEn: "Netherlands" },
-  { iso: "BE", dial: "+32", nameDa: "Belgien", nameEn: "Belgium" },
-  { iso: "FR", dial: "+33", nameDa: "Frankrig", nameEn: "France" },
-  { iso: "ES", dial: "+34", nameDa: "Spanien", nameEn: "Spain" },
-  { iso: "IT", dial: "+39", nameDa: "Italien", nameEn: "Italy" },
-  { iso: "PT", dial: "+351", nameDa: "Portugal", nameEn: "Portugal" },
-  { iso: "AT", dial: "+43", nameDa: "Østrig", nameEn: "Austria" },
-  { iso: "CH", dial: "+41", nameDa: "Schweiz", nameEn: "Switzerland" },
-  { iso: "PL", dial: "+48", nameDa: "Polen", nameEn: "Poland" },
-  { iso: "CZ", dial: "+420", nameDa: "Tjekkiet", nameEn: "Czechia" },
+  { iso: "IE", dial: "+353", nameDa: "Irland", nameEn: "Ireland", nameDe: "Irland" },
+  { iso: "NL", dial: "+31", nameDa: "Holland", nameEn: "Netherlands", nameDe: "Niederlande" },
+  { iso: "BE", dial: "+32", nameDa: "Belgien", nameEn: "Belgium", nameDe: "Belgien" },
+  { iso: "FR", dial: "+33", nameDa: "Frankrig", nameEn: "France", nameDe: "Frankreich" },
+  { iso: "ES", dial: "+34", nameDa: "Spanien", nameEn: "Spain", nameDe: "Spanien" },
+  { iso: "IT", dial: "+39", nameDa: "Italien", nameEn: "Italy", nameDe: "Italien" },
+  { iso: "PT", dial: "+351", nameDa: "Portugal", nameEn: "Portugal", nameDe: "Portugal" },
+  { iso: "AT", dial: "+43", nameDa: "Østrig", nameEn: "Austria", nameDe: "Österreich" },
+  { iso: "CH", dial: "+41", nameDa: "Schweiz", nameEn: "Switzerland", nameDe: "Schweiz" },
+  { iso: "PL", dial: "+48", nameDa: "Polen", nameEn: "Poland", nameDe: "Polen" },
+  { iso: "CZ", dial: "+420", nameDa: "Tjekkiet", nameEn: "Czechia", nameDe: "Tschechien" },
 ];
 
 export function allCountries(): ReadonlyArray<C> {
@@ -62,7 +63,9 @@ export function findCountry(iso: ISO2): C | undefined {
 export function countryLabel(iso: ISO2, lang: UiLang): string {
   const c = findCountry(iso);
   if (!c) return iso;
-  return lang === "da" ? c.nameDa : c.nameEn;
+  if (lang === "da") return c.nameDa;
+  if (lang === "de") return c.nameDe;
+  return c.nameEn;
 }
 
 /** Gæt ud fra navigator.language – fallback DK */

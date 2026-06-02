@@ -6,6 +6,8 @@ import Head from "../../../lib/Head";
 import { useTranslation } from "react-i18next";
 import Accordion from "../../../components/Accordion/Accordion";
 import Form, { type Field } from "../../../components/Form/Form";
+import { guestPathOf } from "../../../lib/routes";
+import type { Lang } from "../../../lib/lang";
 import styles from "./CheckInOut.module.css";
 
 const POOL_SEASON = {
@@ -18,9 +20,12 @@ function isPoolOpen(today = new Date()) {
 }
 
 export default function CheckInOut() {
-  const { i18n } = useTranslation();
-  const lang = i18n.language.startsWith("da") ? "da" : "en";
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const { i18n, t: tg } = useTranslation("guest");
+  const lang: Lang = i18n.language.startsWith("da")
+    ? "da"
+    : i18n.language.startsWith("de")
+    ? "de"
+    : "en";
 
   const [poolOpen, setPoolOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
@@ -42,13 +47,8 @@ export default function CheckInOut() {
   if (!isMobile) {
     return (
       <div style={{ padding: "4rem 1rem", textAlign: "center" }}>
-        <h2>{t("Tjek-ind og Tjek-ud", "Check-in and Check-out")}</h2>
-        <p>
-          {t(
-            "– Denne side er kun tilgænglig via en mobil telefon",
-            "– This page is only accessible via a mobile device"
-          )}
-        </p>
+        <h2>{tg("checkInOutPage.desktopTitle")}</h2>
+        <p>{tg("checkInOutPage.mobileOnly")}</p>
       </div>
     );
   }
@@ -78,7 +78,7 @@ export default function CheckInOut() {
       });
 
       if (!res.ok) {
-        let errorMessage = lang === "da" ? "Ukendt fejl" : "Unknown error";
+        let errorMessage = tg("checkInOutPage.unknownError");
         try {
           const data = await res.json();
           errorMessage = data?.detail || errorMessage;
@@ -93,7 +93,7 @@ export default function CheckInOut() {
       setFormKey((k) => k + 1); // 🧼 Nulstil formularen
     } catch (err: any) {
       console.error("Submit error:", err);
-      setError(err?.message || "Noget gik galt.");
+      setError(err?.message || tg("checkInOutPage.fallbackError"));
     } finally {
       setIsSending(false);
     }
@@ -103,16 +103,16 @@ export default function CheckInOut() {
     {
       type: "text",
       name: "name",
-      label: t("Navn", "Name"),
+      label: tg("checkInOutPage.fields.name.label"),
       required: true,
-      placeholder: t("Lejer navn", "Renter name"),
+      placeholder: tg("checkInOutPage.fields.name.placeholder"),
     },
     {
       type: "text",
       name: "keycode",
-      label: t("Nøgleboks kode", "Keybox code"),
+      label: tg("checkInOutPage.fields.keycode.label"),
       required: true,
-      placeholder: t("Indtast kode", "Enter code"),
+      placeholder: tg("checkInOutPage.fields.keycode.placeholder"),
     },
     {
       type: "email",
@@ -124,24 +124,24 @@ export default function CheckInOut() {
     {
       type: "select",
       name: "checkType",
-      label: t("Tjek-ind eller Tjek-ud", "Check-in or Check-out"),
+      label: tg("checkInOutPage.fields.checkType.label"),
       required: true,
       options: [
-        { label: t("Tjek-ind", "Check-in"), value: "checkin" },
-        { label: t("Tjek-ud", "Check-out"), value: "checkout" },
+        { label: tg("checkInOutPage.fields.checkType.checkin"), value: "checkin" },
+        { label: tg("checkInOutPage.fields.checkType.checkout"), value: "checkout" },
       ],
     },
     {
       type: "number",
       name: "elReading",
-      label: t("EL måler aflæsning", "Electricity meter reading"),
+      label: tg("checkInOutPage.fields.elReading"),
       required: true,
       placeholder: "12345",
     },
     {
       type: "number",
       name: "waterHouse",
-      label: t("Vand (huset)", "Water (house)"),
+      label: tg("checkInOutPage.fields.waterHouse"),
       required: true,
       placeholder: "6789",
     },
@@ -150,7 +150,7 @@ export default function CheckInOut() {
           {
             type: "number" as const,
             name: "waterPool",
-            label: t("Vand (pool)", "Water (pool)"),
+            label: tg("checkInOutPage.fields.waterPool"),
             required: true,
             placeholder: "1122",
           },
@@ -159,27 +159,21 @@ export default function CheckInOut() {
     {
       type: "file",
       name: "meterImages",
-      label: t("Billede af aflæsning", "Reading photo"),
+      label: tg("checkInOutPage.fields.meterImages.label"),
       required: true,
       multiple: true,
-      description: t(
-        "Verificer med billeder af jeres aflæsning og brug blitz på el-måleren.",
-        "Verify with photos of your reading. Use flash on the electricity meter."
-      ),
+      description: tg("checkInOutPage.fields.meterImages.description"),
     },
     {
       type: "textarea",
       name: "comment",
-      label: t("Kommentar", "Comment"),
-      placeholder: t("Skriv din kommentar her", "Write your comment here"),
+      label: tg("checkInOutPage.fields.comment.label"),
+      placeholder: tg("checkInOutPage.fields.comment.placeholder"),
     },
     {
       type: "checkbox",
       name: "consent",
-      label: t(
-        "Jeg giver samtykke til, at mine oplysninger må bruges til at behandle min henvendelse.",
-        "I consent to my information being used to process my request."
-      ),
+      label: tg("checkInOutPage.fields.consent"),
       required: true,
     },
   ];
@@ -187,33 +181,33 @@ export default function CheckInOut() {
   const accordionItems = [
     {
       id: "el",
-      title: t("Placering af EL-måler", "Location of electricity meter"),
+      titleKey: "accordion.checkInOut.el",
       content: (
         <img
           src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3418.webp"
-          alt={t("EL-måler placering", "Electricity meter location")}
+          alt={tg("accordion.checkInOut.elAlt")}
           className={styles.image}
         />
       ),
     },
     {
       id: "water",
-      title: t("Placering af vandmåler (hus)", "Water meter location (house)"),
+      titleKey: "accordion.checkInOut.water",
       content: (
         <img
           src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3411.webp"
-          alt={t("Vandmåler i huset", "Water meter in house")}
+          alt={tg("accordion.checkInOut.waterAlt")}
           className={styles.image}
         />
       ),
     },
     poolOpen && {
       id: "poolwater",
-      title: t("Placering af vandmåler (pool)", "Water meter location (pool)"),
+      titleKey: "accordion.checkInOut.poolWater",
       content: (
         <img
           src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/vand-pool.webp"
-          alt={t("Vandmåler ved pool", "Water meter at pool")}
+          alt={tg("accordion.checkInOut.poolWaterAlt")}
           className={styles.image}
         />
       ),
@@ -223,48 +217,41 @@ export default function CheckInOut() {
   return (
     <>
       <Head
-        title={t("Tjek-ind og ud", "Check-in and out")}
-        description={t(
-          "Mobilside til aflæsning af el og vandmåler",
-          "Mobile page for reading electricity and water meters"
-        )}
+        title={tg("checkInOutPage.title")}
+        description={tg("checkInOutPage.description")}
         lang={lang}
-        path={`/guest/${lang}/check-in-out`}
+        path={guestPathOf(lang, "checkInOut")}
       />
       <div style={{ margin: "0 auto", padding: "1rem" }}>
         <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>
-          {t("Tjek-ind og ud", "Check-in and out")}
+          {tg("checkInOutPage.title")}
         </h1>
         <Form
           key={formKey} // 🧼 Force reset
           fields={fields}
           onSubmit={handleSubmit}
-          submitLabel={t("Send aflæsning", "Submit reading")}
+          submitLabel={tg("checkInOutPage.submit")}
         />
 
         {isSending && (
           <p style={{ textAlign: "center", color: "#888", marginTop: "1rem" }}>
-            {t("Sender aflæsning...", "Submitting reading...")}
+            {tg("checkInOutPage.sending")}
           </p>
         )}
 
         {success && (
           <p style={{ textAlign: "center", color: "green", marginTop: "1rem" }}>
-            ✅{" "}
-            {t(
-              "Tak! Din aflæsning er sendt.",
-              "Thanks! Your reading has been sent."
-            )}
+            ✅ {tg("checkInOutPage.success")}
           </p>
         )}
 
         {error && (
           <p style={{ textAlign: "center", color: "red", marginTop: "1rem" }}>
-            ❌ {t("Fejl:", "Error:")} {error}
+            ❌ {tg("checkInOutPage.errorLabel")} {error}
           </p>
         )}
 
-        <Accordion items={accordionItems as any} />
+        <Accordion items={accordionItems as any} i18nNs="guest" />
       </div>
     </>
   );

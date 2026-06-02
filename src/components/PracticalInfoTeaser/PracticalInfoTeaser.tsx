@@ -1,6 +1,5 @@
 import styles from "./PracticalInfoTeaser.module.css";
-
-type Lang = "da" | "en";
+import { chooseLang, type Lang } from "../../lib/lang";
 
 /* ---------- Ikoner (små inline SVG’er) ---------- */
 const Icon = {
@@ -41,8 +40,10 @@ export type PracticalInfoItem = {
   icon: keyof typeof Icon;
   titleDa: string;
   titleEn: string;
+  titleDe?: string;
   textDa: string;
   textEn: string;
+  textDe?: string;
   to?: string; // intern route (valgfri)
   href?: string; // ekstern url (valgfri)
 };
@@ -62,48 +63,60 @@ function defaultItems(): PracticalInfoItem[] {
       icon: "Key",
       titleDa: "Selv-indtjekning",
       titleEn: "Self check-in",
+      titleDe: "Selbst-Check-in",
       textDa: "Nøgleboks – kode sendes 1 time før ankomst",
       textEn: "Key box – code sent 1 hour before arrival",
+      textDe: "Schlüsselkasten – Code wird 1 Stunde vor Ankunft gesendet",
     },
     {
       key: "times",
       icon: "Clock",
       titleDa: "Tjek ind/ud",
       titleEn: "Check-in/out",
+      titleDe: "Check-in/out",
       textDa: "Ind 16:00 · Ud 10:00",
       textEn: "In 4:00 PM · Out 10:00 AM",
+      textDe: "Anreise 16:00 · Abreise 10:00",
     },
     {
       key: "wifi",
       icon: "Wifi",
       titleDa: "Hurtigt Wi-Fi",
       titleEn: "Fast Wi-Fi",
+      titleDe: "Schnelles WLAN",
       textDa: "Stabilt net i hele huset også udenfor",
       textEn: "Reliable coverage across the house and outside",
+      textDe: "Stabile Verbindung im ganzen Haus und auch draußen",
     },
     {
       key: "parking",
       icon: "Car",
       titleDa: "Parkering",
       titleEn: "Parking",
+      titleDe: "Parken",
       textDa: "Plads til 6 biler ved huset",
       textEn: "Space for 6 cars by the house",
+      textDe: "Platz für 6 Autos am Haus",
     },
     {
       key: "linens",
       icon: "Bed",
       titleDa: "Sengetøj & håndklæder",
       titleEn: "Linens & towels",
+      titleDe: "Bettwäsche & Handtücher",
       textDa: "Medbring selv (eller tilkøb efter booking)",
       textEn: "Bring your own (or rent after booking)",
+      textDe: "Bitte selbst mitbringen oder nach der Buchung dazubuchen",
     },
     {
       key: "rules",
       icon: "NoParty",
       titleDa: "Husregler",
       titleEn: "House rules",
+      titleDe: "Hausregeln",
       textDa: "Ingen fester · Røgfrit hus",
       textEn: "No parties · No smoking",
+      textDe: "Keine Partys · Nichtraucherhaus",
     },
   ];
 }
@@ -113,17 +126,18 @@ export default function PracticalInfoTeaser({
   title,
   items,
 }: PracticalInfoTeaserProps) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const data = items ?? defaultItems();
 
   return (
     <section
       className={styles.wrap}
-      aria-label={t("Praktisk info", "Practical info")}
+      aria-label={t("Praktisk info", "Practical info", "Praktische Infos")}
     >
       <header className={styles.header}>
         <h2 className={styles.title}>
-          {title ?? t("Praktisk info", "Practical info")}
+          {title ?? t("Praktisk info", "Practical info", "Praktische Infos")}
         </h2>
       </header>
 
@@ -137,10 +151,10 @@ export default function PracticalInfoTeaser({
               </div>
               <div className={styles.texts}>
                 <div className={styles.itemTitle}>
-                  {t(item.titleDa, item.titleEn)}
+                  {t(item.titleDa, item.titleEn, item.titleDe ?? item.titleEn)}
                 </div>
                 <div className={styles.itemSub}>
-                  {t(item.textDa, item.textEn)}
+                  {t(item.textDa, item.textEn, item.textDe ?? item.textEn)}
                 </div>
               </div>
             </>
@@ -172,7 +186,7 @@ export default function PracticalInfoTeaser({
               key={item.key}
               className={styles.card}
               role="group"
-              aria-label={t(item.titleDa, item.titleEn)}
+              aria-label={t(item.titleDa, item.titleEn, item.titleDe ?? item.titleEn)}
             >
               {content}
             </div>

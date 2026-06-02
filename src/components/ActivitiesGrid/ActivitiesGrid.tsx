@@ -1,15 +1,12 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./ActivitiesGrid.module.css";
-import type { Lang } from "../../lib/lang";
+import { chooseLang, type Lang } from "../../lib/lang";
 import type { TagId } from "../../lib/tags";
 
 export type Activity = {
   id: string;
   tags: TagId[];
-  titleDa: string;
-  titleEn: string;
-  descDa?: string;
-  descEn?: string;
   image: string; // /images/area/xxx.webp
   href?: string; // ekstern side (attraktion / google maps)
   distanceKm?: number; // ca. afstand
@@ -33,7 +30,9 @@ export default function ActivitiesGrid({
   emptyTextEn = "No results – try fewer filters.",
   className,
 }: ActivitiesGridProps) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const { t: tx } = useTranslation("area");
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
 
   const filtered = useMemo(() => {
     if (!selected.length) return items;
@@ -52,8 +51,10 @@ export default function ActivitiesGrid({
   return (
     <div className={[styles.grid, className ?? ""].join(" ")}>
       {filtered.map((it, i) => {
-        const title = t(it.titleDa, it.titleEn);
-        const desc = t(it.descDa ?? "", it.descEn ?? "");
+        const title = tx(`attractions.${it.id}.title`);
+        const desc = tx(`attractions.${it.id}.description`, {
+          defaultValue: "",
+        });
         const badge =
           it.driveMin != null
             ? t(`${it.driveMin} min i bil`, `${it.driveMin} min by car`)

@@ -8,8 +8,10 @@ import React, {
 import * as Dialog from "@radix-ui/react-dialog";
 import styles from "./Gallery.module.css";
 import Buttons from "../Buttons";
+import { chooseLang } from "../../lib/lang";
 
-export type Lang = "da" | "en";
+import type { Lang } from "../../lib/lang";
+export type { Lang };
 
 export type GalleryItem = {
   src: string; // thumbnail
@@ -17,8 +19,10 @@ export type GalleryItem = {
   alt?: string;
   altDa?: string;
   altEn?: string;
+  altDe?: string;
   captionDa?: string;
   captionEn?: string;
+  captionDe?: string;
 };
 
 type CTA =
@@ -46,13 +50,14 @@ export type GalleryProps = {
 
 /* ───────────────── helpers ───────────────── */
 
-function tPick(da: string, en: string, lang: Lang) {
-  return lang === "da" ? da : en;
+function tPick(da: string, en: string, lang: Lang, de = en) {
+  return chooseLang(lang, da, en, de);
 }
 function getCaption(it: GalleryItem, lang: Lang): string {
-  const cap = lang === "da" ? it.captionDa : it.captionEn;
+  const cap =
+    lang === "da" ? it.captionDa : lang === "de" ? it.captionDe : it.captionEn;
   if (cap && cap.trim()) return cap.trim();
-  const a = lang === "da" ? it.altDa : it.altEn;
+  const a = lang === "da" ? it.altDa : lang === "de" ? it.altDe : it.altEn;
   if (a && a.trim()) return a.trim();
   return it.alt ?? "";
 }
@@ -62,19 +67,19 @@ function folderOf(src: string): string {
   const m = src.match(/\/gallery\/([^/]+)\//i);
   return (m?.[1] ?? "misc").toLowerCase();
 }
-const FOLDER_LABELS: Record<string, { da: string; en: string }> = {
-  outdoor: { da: "Udendørs", en: "Outdoor" },
-  evening: { da: "Aften", en: "Evening" },
-  indoor: { da: "Indendørs", en: "Indoor" },
-  pool: { da: "Pool", en: "Pool" },
-  sauna: { da: "Sauna", en: "Sauna" },
-  area: { da: "Området", en: "Area" },
-  floorplan: { da: "Plantegning", en: "Floor plan" },
-  misc: { da: "Blandet", en: "Misc" },
+const FOLDER_LABELS: Record<string, { da: string; en: string; de: string }> = {
+  outdoor: { da: "Udendørs", en: "Outdoor", de: "Outdoor" },
+  evening: { da: "Aften", en: "Evening", de: "Abend" },
+  indoor: { da: "Indendørs", en: "Indoor", de: "Innen" },
+  pool: { da: "Pool", en: "Pool", de: "Pool" },
+  sauna: { da: "Sauna", en: "Sauna", de: "Sauna" },
+  area: { da: "Området", en: "Area", de: "Umgebung" },
+  floorplan: { da: "Plantegning", en: "Floor plan", de: "Grundriss" },
+  misc: { da: "Blandet", en: "Misc", de: "Verschiedenes" },
 };
 function labelFor(slug: string, lang: Lang): string {
   const fromMap = FOLDER_LABELS[slug];
-  if (fromMap) return lang === "da" ? fromMap.da : fromMap.en;
+  if (fromMap) return chooseLang(lang, fromMap.da, fromMap.en, fromMap.de);
   // Fallback: Capitalize slug
   return slug.slice(0, 1).toUpperCase() + slug.slice(1);
 }
@@ -83,6 +88,7 @@ type Folder = {
   id: string; // slug
   labelDa: string;
   labelEn: string;
+  labelDe: string;
   items: GalleryItem[]; // alle billeder i mappen
   cover: GalleryItem; // første billede bruges som cover
 };
@@ -98,6 +104,7 @@ function buildFolders(items: GalleryItem[]): Folder[] {
         id: slug,
         labelDa: labelFor(slug, "da"),
         labelEn: labelFor(slug, "en"),
+        labelDe: labelFor(slug, "de"),
         items: [],
         cover: it,
       };
@@ -201,7 +208,7 @@ export default function Gallery({
       {/* Grid: én tile pr. mappe */}
       <div className={styles.grid} style={gridStyle}>
         {visibleFolders.map((f) => {
-          const label = lang === "da" ? f.labelDa : f.labelEn;
+          const label = chooseLang(lang, f.labelDa, f.labelEn, f.labelDe);
           const cover = f.cover;
           const count = f.items.length;
           const extra = Math.max(0, count - 1); // ← antal ud over cover
@@ -211,6 +218,10 @@ export default function Gallery({
               ? count === 1
                 ? "billede"
                 : "billeder"
+              : lang === "de"
+              ? count === 1
+                ? "Foto"
+                : "Fotos"
               : count === 1
               ? "photo"
               : "photos";
@@ -276,16 +287,20 @@ export default function Gallery({
           >
             <Dialog.Title className={styles.srOnly}>
               {activeFolder
-                ? lang === "da"
-                  ? activeFolder.labelDa
-                  : activeFolder.labelEn
+                ? chooseLang(
+                    lang,
+                    activeFolder.labelDa,
+                    activeFolder.labelEn,
+                    activeFolder.labelDe
+                  )
                 : ""}
             </Dialog.Title>
             <Dialog.Description className={styles.srOnly}>
               {tPick(
                 "Billedviser. Brug venstre/højre piletaster for at bladre.",
                 "Image viewer. Use left/right arrows to navigate.",
-                lang
+                lang,
+                "Bilderanzeige. Verwenden Sie die Pfeiltasten links/rechts, um zu navigieren."
               )}
             </Dialog.Description>
 

@@ -3,6 +3,7 @@ import React from "react";
 import styles from "./Form.module.css";
 import Buttons from "../Buttons";
 
+import { chooseLang } from "../../lib/lang";
 import { useTranslation } from "react-i18next";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 
@@ -62,8 +63,13 @@ export type FormProps = {
 
 export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
     const { i18n } = useTranslation();
-    const lang = i18n.language.startsWith("da") ? "da" : "en";
-    const t = (da: string, en: string) => (lang === "da" ? da : en);
+    const lang = i18n.language.startsWith("da")
+      ? "da"
+      : i18n.language.startsWith("de")
+      ? "de"
+      : "en";
+    const t = (da: string, en: string, de = en) =>
+      chooseLang(lang, da, en, de);
   const [values, setValues] = React.useState<
     Record<string, string | FileList | boolean>
   >({});
