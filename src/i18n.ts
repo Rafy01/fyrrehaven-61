@@ -39,6 +39,7 @@ i18n.use(initReactI18next).init({
     "house",
     "facilities",
     "cookiesPage",
+    "privacyPage",
     "fees",
     "guest",
     "navigation",

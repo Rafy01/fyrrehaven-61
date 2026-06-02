@@ -1053,5 +1053,139 @@ export const en = {
       "intro": "Here you can read about our use of cookies and how to manage your preferences.",
       "typesTitle": "Types of cookies"
     }
+  },
+  "privacyPage": {
+    "title": "Privacy Policy",
+    "lead": "This notice explains how, as the data controller, we process personal data under the GDPR and applicable Danish law.",
+    "controller": {
+      "title": "Data Controller",
+      "address": "Fyrrehaven 61, 8585 Glesborg, Denmark",
+      "emailLabel": "Email",
+      "phoneLabel": "Phone",
+      "dpo": "We have not appointed a Data Protection Officer (DPO). Please contact us via the email above with any questions."
+    },
+    "sections": {
+      "scope": {
+        "title": "Scope and sources of data",
+        "body": "This notice covers our website, contacting/booking via forms and ordering extras. Data originate primarily from you (forms/communications), from your device (technical logs) and in some cases from third-party platforms (e.g. Airbnb)."
+      },
+      "categories": {
+        "title": "Categories of personal data",
+        "items": [
+          {
+            "label": "Contact details",
+            "text": "Name, email, phone, country."
+          },
+          {
+            "label": "Booking data",
+            "text": "Check-in/check-out, nights, number of guests (adults/children/babies), purpose of stay, accepted fees/prices."
+          },
+          {
+            "label": "Extra services",
+            "text": "Selected services and quantities (bedding, bed linen, towels, bundles, etc.)."
+          },
+          {
+            "label": "Communications",
+            "text": "Correspondence with you (e.g. emails)."
+          },
+          {
+            "label": "Technical data",
+            "text": "IP address, timestamps, URLs, device/browser information and similar basic logs for security purposes."
+          },
+          {
+            "label": "Special categories",
+            "text": "We do not process special-category data (art. 9)."
+          }
+        ]
+      },
+      "purposes": {
+        "title": "Purposes and legal bases",
+        "items": [
+          {
+            "label": "Enquiries and booking",
+            "text": "Respond to enquiries, take steps to enter into/perform a rental agreement and deliver services (art. 6(1)(b))."
+          },
+          {
+            "label": "Accounting and legal duties",
+            "text": "Compliance with legal obligations (art. 6(1)(c))."
+          },
+          {
+            "label": "Security and operations",
+            "text": "IT security, abuse prevention, troubleshooting (legitimate interests; art. 6(1)(f))."
+          },
+          {
+            "label": "Marketing",
+            "text": "Only with consent (art. 6(1)(a))."
+          }
+        ]
+      },
+      "necessity": {
+        "title": "Is provision of data required?",
+        "body": "Where we request information, it is to respond to your enquiry or to enter into/administer a booking. Without the information we may be unable to deliver the requested service."
+      },
+      "recipients": {
+        "title": "Recipients and international transfers",
+        "body": "We use trusted processors for operations and communications (e.g. hosting, email and security). They process data only on our instructions under appropriate data-processing agreements. Where data are transferred outside the EU/EEA we rely on valid transfer mechanisms (typically the EU Standard Contractual Clauses, SCCs).",
+        "items": [
+          {
+            "label": "Email",
+            "text": "Form submissions are delivered as emails to our mailbox with Simply (email provider)."
+          },
+          {
+            "label": "Third-party platforms",
+            "text": "When you use links to e.g. Airbnb or social media, they act as independent controllers for their processing."
+          }
+        ]
+      },
+      "storage": {
+        "title": "Storage and access to data",
+        "paragraphs": [
+          "We do not store your data in a separate database. All information you submit through our forms is sent and stored as email in our mailbox with Simply. We only access personal data via Simply’s email client/webmail.",
+          "Email transmission generally uses TLS where supported by the receiving server."
+        ]
+      },
+      "retention": {
+        "title": "Retention periods",
+        "items": [
+          "Enquiries (in the inbox): normally up to 12 months, unless the correspondence forms part of a booking or legal claim.",
+          "Booking and accounting data in email/attachments: generally 5 years for accounting rules.",
+          "Security/access logs: typically 6 months."
+        ]
+      },
+      "cookies": {
+        "title": "Cookies and similar technologies",
+        "body": "We primarily use technically necessary cookies/storage to deliver the site securely. We do not use marketing or tracking technologies without your consent. If non-essential cookies are enabled, a consent banner will be shown."
+      },
+      "rights": {
+        "title": "Your rights",
+        "items": [
+          "Access (art. 15)",
+          "Rectification (art. 16)",
+          "Erasure (art. 17)",
+          "Restriction (art. 18)",
+          "Data portability (art. 20)",
+          "Object to processing (art. 21)",
+          "Withdraw consent (art. 7(3)) — without affecting lawfulness prior to withdrawal."
+        ],
+        "paragraphs": [
+          "Email us at the address above to exercise your rights. We normally respond within 1 month and may request identification.",
+          "You may lodge a complaint with the Danish Data Protection Agency: www.datatilsynet.dk."
+        ]
+      },
+      "automated": {
+        "title": "Automated decision-making",
+        "body": "We do not carry out automated decision-making or profiling producing legal effects or similarly significant impacts (art. 22)."
+      },
+      "changes": {
+        "title": "Changes to this notice",
+        "body": "We update this notice when our processing changes or when required by law. Material changes will be announced here.",
+        "updatedLabel": "Last updated",
+        "updated": "16 September 2025"
+      },
+      "contact": {
+        "title": "Contact",
+        "body": "If you have any questions about this privacy policy, please contact us."
+      }
+    }
   }
 } as const;

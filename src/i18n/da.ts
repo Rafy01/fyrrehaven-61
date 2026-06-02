@@ -1054,5 +1054,139 @@ export const da = {
       "intro": "Her kan du læse om vores brug af cookies og hvordan du ændrer dine præferencer.",
       "typesTitle": "Typer af cookies"
     }
+  },
+  "privacyPage": {
+    "title": "Privatlivspolitik",
+    "lead": "Denne politik beskriver, hvordan vi som dataansvarlig behandler personoplysninger efter GDPR og dansk ret.",
+    "controller": {
+      "title": "Dataansvarlig",
+      "address": "Fyrrehaven 61, 8585 Glesborg, Danmark",
+      "emailLabel": "E-mail",
+      "phoneLabel": "Telefon",
+      "dpo": "Vi har ikke udpeget en databeskyttelsesrådgiver (DPO). Kontakt os på e-mailadressen ovenfor ved spørgsmål."
+    },
+    "sections": {
+      "scope": {
+        "title": "Anvendelsesområde og datakilder",
+        "body": "Politikken dækker vores hjemmeside, kontakt/booking via formularer og bestilling af ekstra services. Oplysninger stammer primært fra dig (formularer/kommunikation), fra din enhed (tekniske logs) og i nogle tilfælde fra tredjepartsplatforme (fx Airbnb)."
+      },
+      "categories": {
+        "title": "Kategorier af personoplysninger",
+        "items": [
+          {
+            "label": "Kontaktoplysninger",
+            "text": "Navn, e-mail, telefon, land."
+          },
+          {
+            "label": "Bookingdata",
+            "text": "Ankomst/afrejse, nætter, antal gæster (voksne/børn/babyer), formål med opholdet, accepterede gebyrer/priser."
+          },
+          {
+            "label": "Ekstra services",
+            "text": "Valgte ydelser og mængder (sengetøj, sengelinned, håndklæder, pakker m.v.)."
+          },
+          {
+            "label": "Kommunikation",
+            "text": "Korrespondance med dig (fx e-mails)."
+          },
+          {
+            "label": "Tekniske data",
+            "text": "IP-adresse, tidsstempler, URL’er, enheds-/browseroplysninger og lignende basale logdata af sikkerhedsmæssige grunde."
+          },
+          {
+            "label": "Særlige kategorier",
+            "text": "Vi behandler ikke følsomme oplysninger (art. 9)."
+          }
+        ]
+      },
+      "purposes": {
+        "title": "Formål og retsgrundlag",
+        "items": [
+          {
+            "label": "Forespørgsler og booking",
+            "text": "Besvare henvendelser, forberede/indgå lejeaftale og levere ydelser (art. 6(1)(b))."
+          },
+          {
+            "label": "Regnskab og pligter",
+            "text": "Overholdelse af lovkrav (art. 6(1)(c))."
+          },
+          {
+            "label": "Sikkerhed og drift",
+            "text": "IT-sikkerhed, misbrugsforebyggelse, fejlsøgning (legitim interesse; art. 6(1)(f))."
+          },
+          {
+            "label": "Markedsføring",
+            "text": "Kun med samtykke (art. 6(1)(a))."
+          }
+        ]
+      },
+      "necessity": {
+        "title": "Er oplysningerne nødvendige?",
+        "body": "Når vi beder om oplysninger, er det for at kunne besvare din henvendelse eller indgå/administrere en booking. Uden oplysningerne kan vi muligvis ikke levere den ønskede service."
+      },
+      "recipients": {
+        "title": "Modtagere og internationale overførsler",
+        "body": "Vi anvender betroede databehandlere til drift og kommunikation (fx hosting, e-mail og sikkerhed). De behandler kun data efter instruks og under passende databehandleraftaler. Ved eventuelle overførsler uden for EU/EØS anvendes gyldige overførselsgrundlag (typisk EU’s standardkontraktbestemmelser, SCC).",
+        "items": [
+          {
+            "label": "E-mail",
+            "text": "Formularindsendelser leveres som e-mails til vores postkasse hos Simply (e-mailudbyder)."
+          },
+          {
+            "label": "Tredjepartsplatforme",
+            "text": "Når du bruger links til fx Airbnb eller sociale medier, er disse selvstændigt dataansvarlige for deres behandling."
+          }
+        ]
+      },
+      "storage": {
+        "title": "Opbevaring og adgang til oplysninger",
+        "paragraphs": [
+          "Vi opbevarer ikke dine oplysninger i en separat database. Alle oplysninger, du indsender via vores formularer, sendes og lagres som e-mail i vores postkasse hos Simply. Vi tilgår kun personoplysninger via vores e-mailklient/webmail hos Simply.",
+          "Transporten af e-mails sker som udgangspunkt via TLS, når modtagende server understøtter det."
+        ]
+      },
+      "retention": {
+        "title": "Opbevaringsperioder",
+        "items": [
+          "Henvendelser (i indbakken): normalt op til 12 måneder, medmindre korrespondancen indgår i en booking eller et retskrav.",
+          "Booking- og regnskabsdata i e-mail/vedhæftninger: som udgangspunkt 5 år af hensyn til bogføringsregler.",
+          "Sikkerheds-/adgangslogs: typisk 6 måneder."
+        ]
+      },
+      "cookies": {
+        "title": "Cookies og lignende teknologier",
+        "body": "Vi bruger primært teknisk nødvendige cookies/lagring for at levere siden sikkert. Vi anvender ikke marketing- eller trackingteknologier uden dit samtykke. Hvis ikke-nødvendige cookies aktiveres, vises et samtykkebanner."
+      },
+      "rights": {
+        "title": "Dine rettigheder",
+        "items": [
+          "Indsigt (art. 15)",
+          "Berigtigelse (art. 16)",
+          "Sletning (art. 17)",
+          "Begrænsning (art. 18)",
+          "Dataportabilitet (art. 20)",
+          "Indsigelse (art. 21)",
+          "Tilbagekald samtykke (art. 7(3)) — påvirker ikke lovligheden før tilbagekaldelsen."
+        ],
+        "paragraphs": [
+          "Skriv til os på ovenstående e-mail for at udøve dine rettigheder. Vi svarer som udgangspunkt inden 1 måned og kan bede om identifikation.",
+          "Du kan klage til Datatilsynet: www.datatilsynet.dk."
+        ]
+      },
+      "automated": {
+        "title": "Automatiske afgørelser",
+        "body": "Vi foretager ikke automatiske afgørelser eller profilering med retsvirkning eller tilsvarende betydelig påvirkning (art. 22)."
+      },
+      "changes": {
+        "title": "Ændringer af denne politik",
+        "body": "Vi opdaterer denne politik ved ændringer i behandlingen eller når lovgivningen kræver det. Væsentlige ændringer offentliggøres her.",
+        "updatedLabel": "Senest opdateret",
+        "updated": "16. september 2025"
+      },
+      "contact": {
+        "title": "Kontakt",
+        "body": "Har du spørgsmål til denne privatlivspolitik, er du velkommen til at kontakte os."
+      }
+    }
   }
 } as const;

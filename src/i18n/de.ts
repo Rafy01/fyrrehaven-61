@@ -1051,5 +1051,139 @@ export const de = {
       "intro": "Hier können Sie lesen, wie wir Cookies verwenden und wie Sie Ihre Einstellungen ändern.",
       "typesTitle": "Arten von Cookies"
     }
+  },
+  "privacyPage": {
+    "title": "Datenschutzerklärung",
+    "lead": "Diese Erklärung beschreibt, wie wir als Verantwortlicher personenbezogene Daten nach der DSGVO und geltendem dänischem Recht verarbeiten.",
+    "controller": {
+      "title": "Verantwortlicher",
+      "address": "Fyrrehaven 61, 8585 Glesborg, Dänemark",
+      "emailLabel": "E-Mail",
+      "phoneLabel": "Telefon",
+      "dpo": "Wir haben keinen Datenschutzbeauftragten (DSB) benannt. Bei Fragen kontaktieren Sie uns bitte über die oben genannte E-Mail-Adresse."
+    },
+    "sections": {
+      "scope": {
+        "title": "Geltungsbereich und Datenquellen",
+        "body": "Diese Erklärung gilt für unsere Website, Kontakt- und Buchungsanfragen über Formulare sowie die Bestellung zusätzlicher Services. Die Daten stammen hauptsächlich von Ihnen (Formulare/Kommunikation), von Ihrem Gerät (technische Protokolle) und in einigen Fällen von Drittplattformen (z. B. Airbnb)."
+      },
+      "categories": {
+        "title": "Kategorien personenbezogener Daten",
+        "items": [
+          {
+            "label": "Kontaktdaten",
+            "text": "Name, E-Mail, Telefon, Land."
+          },
+          {
+            "label": "Buchungsdaten",
+            "text": "Anreise/Abreise, Nächte, Anzahl der Gäste (Erwachsene/Kinder/Babys), Zweck des Aufenthalts, akzeptierte Gebühren/Preise."
+          },
+          {
+            "label": "Zusatzleistungen",
+            "text": "Ausgewählte Leistungen und Mengen (Bettwäsche, Handtücher, Pakete usw.)."
+          },
+          {
+            "label": "Kommunikation",
+            "text": "Korrespondenz mit Ihnen (z. B. E-Mails)."
+          },
+          {
+            "label": "Technische Daten",
+            "text": "IP-Adresse, Zeitstempel, URLs, Geräte-/Browserinformationen und ähnliche grundlegende Protokolldaten aus Sicherheitsgründen."
+          },
+          {
+            "label": "Besondere Kategorien",
+            "text": "Wir verarbeiten keine besonderen Kategorien personenbezogener Daten (Art. 9)."
+          }
+        ]
+      },
+      "purposes": {
+        "title": "Zwecke und Rechtsgrundlagen",
+        "items": [
+          {
+            "label": "Anfragen und Buchung",
+            "text": "Beantwortung von Anfragen, Vorbereitung/Abschluss eines Mietvertrags und Erbringung von Leistungen (Art. 6 Abs. 1 lit. b DSGVO)."
+          },
+          {
+            "label": "Buchhaltung und rechtliche Pflichten",
+            "text": "Erfüllung gesetzlicher Verpflichtungen (Art. 6 Abs. 1 lit. c DSGVO)."
+          },
+          {
+            "label": "Sicherheit und Betrieb",
+            "text": "IT-Sicherheit, Missbrauchsprävention und Fehlerbehebung (berechtigtes Interesse; Art. 6 Abs. 1 lit. f DSGVO)."
+          },
+          {
+            "label": "Marketing",
+            "text": "Nur mit Einwilligung (Art. 6 Abs. 1 lit. a DSGVO)."
+          }
+        ]
+      },
+      "necessity": {
+        "title": "Sind die Angaben erforderlich?",
+        "body": "Wenn wir Informationen anfordern, geschieht dies, um Ihre Anfrage zu beantworten oder eine Buchung abzuschließen bzw. zu verwalten. Ohne diese Informationen können wir den gewünschten Service möglicherweise nicht erbringen."
+      },
+      "recipients": {
+        "title": "Empfänger und internationale Übermittlungen",
+        "body": "Wir nutzen vertrauenswürdige Auftragsverarbeiter für Betrieb und Kommunikation (z. B. Hosting, E-Mail und Sicherheit). Diese verarbeiten Daten nur nach unseren Weisungen und auf Grundlage geeigneter Auftragsverarbeitungsverträge. Bei Übermittlungen außerhalb der EU/des EWR nutzen wir gültige Übermittlungsgrundlagen (typischerweise EU-Standardvertragsklauseln, SCC).",
+        "items": [
+          {
+            "label": "E-Mail",
+            "text": "Formularübermittlungen werden als E-Mails an unser Postfach bei Simply (E-Mail-Anbieter) zugestellt."
+          },
+          {
+            "label": "Drittplattformen",
+            "text": "Wenn Sie Links zu z. B. Airbnb oder sozialen Medien nutzen, sind diese für ihre Verarbeitung eigenständige Verantwortliche."
+          }
+        ]
+      },
+      "storage": {
+        "title": "Speicherung und Zugriff auf Daten",
+        "paragraphs": [
+          "Wir speichern Ihre Daten nicht in einer separaten Datenbank. Alle Informationen, die Sie über unsere Formulare übermitteln, werden als E-Mail an unser Postfach bei Simply gesendet und dort gespeichert. Wir greifen nur über den E-Mail-Client/Webmail von Simply auf personenbezogene Daten zu.",
+          "Die Übertragung von E-Mails erfolgt grundsätzlich per TLS, sofern der empfangende Server dies unterstützt."
+        ]
+      },
+      "retention": {
+        "title": "Aufbewahrungsfristen",
+        "items": [
+          "Anfragen (im Posteingang): normalerweise bis zu 12 Monate, sofern die Korrespondenz nicht Teil einer Buchung oder eines Rechtsanspruchs ist.",
+          "Buchungs- und Buchhaltungsdaten in E-Mails/Anhängen: grundsätzlich 5 Jahre aufgrund buchhalterischer Vorschriften.",
+          "Sicherheits-/Zugriffsprotokolle: typischerweise 6 Monate."
+        ]
+      },
+      "cookies": {
+        "title": "Cookies und ähnliche Technologien",
+        "body": "Wir verwenden hauptsächlich technisch notwendige Cookies/Speicherungen, um die Website sicher bereitzustellen. Marketing- oder Trackingtechnologien verwenden wir nicht ohne Ihre Einwilligung. Wenn nicht notwendige Cookies aktiviert werden, wird ein Einwilligungsbanner angezeigt."
+      },
+      "rights": {
+        "title": "Ihre Rechte",
+        "items": [
+          "Auskunft (Art. 15)",
+          "Berichtigung (Art. 16)",
+          "Löschung (Art. 17)",
+          "Einschränkung der Verarbeitung (Art. 18)",
+          "Datenübertragbarkeit (Art. 20)",
+          "Widerspruch gegen die Verarbeitung (Art. 21)",
+          "Widerruf der Einwilligung (Art. 7 Abs. 3) — ohne Auswirkungen auf die Rechtmäßigkeit vor dem Widerruf."
+        ],
+        "paragraphs": [
+          "Schreiben Sie uns an die oben genannte E-Mail-Adresse, um Ihre Rechte auszuüben. Wir antworten grundsätzlich innerhalb eines Monats und können eine Identifizierung verlangen.",
+          "Sie können Beschwerde bei der dänischen Datenschutzbehörde einlegen: www.datatilsynet.dk."
+        ]
+      },
+      "automated": {
+        "title": "Automatisierte Entscheidungen",
+        "body": "Wir treffen keine automatisierten Entscheidungen und führen kein Profiling durch, das rechtliche Wirkung entfaltet oder Sie in ähnlicher Weise erheblich beeinträchtigt (Art. 22)."
+      },
+      "changes": {
+        "title": "Änderungen dieser Erklärung",
+        "body": "Wir aktualisieren diese Erklärung, wenn sich unsere Verarbeitung ändert oder gesetzliche Vorgaben dies erfordern. Wesentliche Änderungen werden hier veröffentlicht.",
+        "updatedLabel": "Zuletzt aktualisiert",
+        "updated": "16. September 2025"
+      },
+      "contact": {
+        "title": "Kontakt",
+        "body": "Wenn Sie Fragen zu dieser Datenschutzerklärung haben, können Sie uns gerne kontaktieren."
+      }
+    }
   }
 } as const;
