@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import Head from "../../../lib/Head";
 import Accordion from "../../../components/Accordion/Accordion";
 import type { Lang } from "../../../lib/lang";
@@ -8,32 +9,29 @@ type Props = {
 };
 
 export default function PracticalInfo({ lang }: Props) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const { t: tg } = useTranslation("guest");
+  const t = (da: string, en: string, de = en) =>
+    lang === "da" ? da : lang === "de" ? de : en;
 
   const items = [
     {
       id: "coffee",
-      title: t("Kaffemaskine", "Coffee machine"),
+      titleKey: "accordion.practical.coffee.title",
       content: (
         <div className={styles.section}>
-          <p>
-            {t(
-              "Kaffemaskinen skal tømmes for spildevand og kaffegrums jævnligt efter brug og fyldes på med rent vand i vandbeholderen. Kaffebønner er inkluderet – hvis I har brug for flere, er det for egen regning.",
-              "The coffee machine must be emptied of wastewater and coffee grounds regularly after use. Fill the tank with clean water. Coffee beans are included – refills are at your own expense."
-            )}
-          </p>
+          <p>{tg("accordion.practical.coffee.body")}</p>
           <p>
             <a
               href="https://www.documents.philips.com/assets/20231219/cfd7daded45743e98583b0dd0073c3a2.pdf"
               target="_blank"
               rel="noopener noreferrer"
             >
-              {t("Se manual her", "View manual here")}
+              {tg("accordion.practical.coffee.manual")}
             </a>
           </p>
           <img
             src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/bg1.png"
-            alt={t("Kaffemaskine", "Coffee machine")}
+            alt={tg("accordion.practical.coffee.title")}
             width={300}
           />
         </div>
@@ -41,109 +39,58 @@ export default function PracticalInfo({ lang }: Props) {
     },
     {
       id: "sofa",
-      title: t("Sovesofa", "Sofa bed"),
+      titleKey: "accordion.practical.sofa.title",
       content: (
         <div className={styles.section}>
-          <p>
-            {t(
-              "Sådan bruger du sovesofaen – se videoen nedenfor:",
-              "How to use the sofa bed – watch the video below:"
-            )}
-          </p>
+          <p>{tg("accordion.practical.sofa.body")}</p>
           <video width="100%" controls>
             <source
               src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/fyrrehaven61-sovesofa-sleepingbeauty-yderstkomfortabel-cozyhome-cozyvibes-fjellerupstrand.mp4"
               type="video/mp4"
             />
-            {t(
-              "Din browser understøtter ikke video.",
-              "Your browser does not support the video."
-            )}
+            {tg("accordion.practical.sofa.fallback")}
           </video>
         </div>
       ),
     },
     {
       id: "security",
-      title: t("Overvågning og alarmer", "Surveillance and alarms"),
+      titleKey: "accordion.practical.security.title",
       content: (
         <ul className={styles.section}>
-          <li>
-            {t(
-              "Overvågning ved pool teknik, anneks og skur",
-              "Cameras monitor pool tech room, annex and shed"
-            )}
-          </li>
-          <li>
-            {t(
-              "Skalsikring på alle vinduer og døre, inkl. udendørsdøre",
-              "Perimeter alarm covers all windows and doors, including external ones"
-            )}
-          </li>
-          <li>
-            {t(
-              "Røg- og kuliltealarm sender besked til værterne ved udløsning",
-              "Smoke and CO alarm notifies hosts if triggered"
-            )}
-          </li>
-          <li>
-            {t(
-              "Pool, vildmarksbad, sauna og udetemperatur overvåges – kan ses på skærmen ved tv’et",
-              "Pool, hot tub, sauna and outdoor temperatures are monitored – visible on the screen by the TV"
-            )}
-          </li>
+          <li>{tg("accordion.practical.security.cameras")}</li>
+          <li>{tg("accordion.practical.security.shell")}</li>
+          <li>{tg("accordion.practical.security.smoke")}</li>
+          <li>{tg("accordion.practical.security.temp")}</li>
         </ul>
       ),
     },
     {
       id: "sonos",
-      title: t("Sonos-højtaler", "Sonos speaker"),
+      titleKey: "accordion.practical.sonos.title",
       content: (
         <ul className={styles.section}>
-          <li>
-            {t(
-              "iPhone: Brug AirPlay og vælg Sonos i højttalerlisten.",
-              "iPhone: Use AirPlay and choose Sonos from speaker list."
-            )}
-          </li>
-          <li>
-            {t(
-              "Android: Brug Sonos-appen eller Bluetooth hvis muligt.",
-              "Android: Use the Sonos app or Bluetooth if supported."
-            )}
-          </li>
+          <li>{tg("accordion.practical.sonos.iphone")}</li>
+          <li>{tg("accordion.practical.sonos.android")}</li>
         </ul>
       ),
     },
     {
       id: "stove",
-      title: t("Kogeplade fejl", "Cooktop error"),
+      titleKey: "accordion.practical.stove.title",
       content: (
         <p className={styles.section}>
-          {t(
-            'Bemærk: Når komfuret viser “LO” betyder det "låst". Hold startknappen nede i 3 sekunder for at låse op.',
-            'Note: If the cooktop displays “LO”, it means "locked". Hold the start button for 3 seconds to unlock.'
-          )}
+          {tg("accordion.practical.stove.body")}
         </p>
       ),
     },
     {
       id: "games",
-      title: t("Brætspil & Playstation", "Board games & Playstation"),
+      titleKey: "accordion.practical.games.title",
       content: (
         <ul className={styles.section}>
-          <li>
-            {t(
-              "Brætspil findes i skabet over køleskabet.",
-              "Board games are in the cupboard above the fridge."
-            )}
-          </li>
-          <li>
-            {t(
-              "I må gerne bruge vores spil eller downloade jeres egne – men vi dækker ikke udgifter til køb.",
-              "You’re welcome to play our games or download your own – but we don’t cover costs for guest purchases."
-            )}
-          </li>
+          <li>{tg("accordion.practical.games.cupboard")}</li>
+          <li>{tg("accordion.practical.games.purchases")}</li>
         </ul>
       ),
     },
@@ -152,18 +99,19 @@ export default function PracticalInfo({ lang }: Props) {
   return (
     <>
       <Head
-        title={t("Praktisk info", "Practical Info")}
+        title={t("Praktisk info", "Practical Info", "Praktische Infos")}
         description={t(
           "Praktisk information om udstyr og funktioner i huset.",
-          "Practical information about equipment and usage in the house."
+          "Practical information about equipment and usage in the house.",
+          "Praktische Informationen zu Ausstattung und Nutzung im Haus."
         )}
         lang={lang}
         path=""
         noindex
       />
       <div className={styles.wrapper}>
-        <h1>{t("Praktisk info", "Practical Info")}</h1>
-        <Accordion items={items} />
+        <h1>{t("Praktisk info", "Practical Info", "Praktische Infos")}</h1>
+        <Accordion items={items} i18nNs="guest" />
       </div>
     </>
   );

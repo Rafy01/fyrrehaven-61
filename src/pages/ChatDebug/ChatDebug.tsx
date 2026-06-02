@@ -1,5 +1,6 @@
 import React from "react";
-import { Helmet } from "react-helmet-async";
+import Head from "../../lib/Head";
+import { getSeoMeta } from "../../i18n/seo";
 import styles from "./ChatDebug.module.css";
 import type { Lang } from "../../lib/lang";
 
@@ -51,6 +52,7 @@ export default function ChatDebug() {
   const [error, setError] = React.useState<string>("");
 
   const ADMIN_TOKEN = import.meta.env.VITE_ADMIN_TOKEN as string | undefined;
+  const seo = getSeoMeta("da", "chat");
 
   async function load() {
     setLoading(true);
@@ -157,10 +159,15 @@ export default function ChatDebug() {
 
   return (
     <div className={styles.page}>
-      <Helmet>
-        <title>Chat · Admin debug</title>
-        <meta name="robots" content="noindex" />
-      </Helmet>
+      <Head
+        lang="da"
+        path="/debug/chat"
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
+        robots={seo.robots}
+      />
 
       <header className={styles.header}>
         <h1 className={styles.title}>Chat · Ukendte spørgsmål</h1>

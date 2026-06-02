@@ -3,36 +3,34 @@ import { Container, Box } from "@radix-ui/themes";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
+import { getSeoMeta } from "../../i18n/seo";
+import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import PoolTemp from "../../components/PoolTemp";
 
 export default function Faq({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
+  const t = (da: string, en: string, de = en) =>
+    chooseLang(lang, da, en, de);
   const path = pathOf(lang, "faq");
-
-  const seoTitle = t(
-    "FAQ – ofte stillede spørgsmål om Fyrrehaven 61",
-    "FAQ – frequently asked questions about Fyrrehaven 61"
-  );
-  const seoDescription = t(
-    "Find svar på tjek-ind, pool & wellness, sengetøj, betaling, regler m.m.",
-    "Answers about check-in, pool & wellness, linens, payment, rules and more."
-  );
+  const seo = getSeoMeta(lang, "faq");
 
   return (
     <>
       <Head
         lang={lang}
         path={path}
-        title={seoTitle}
-        description={seoDescription}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg"
+        title={seo.title}
+        description={seo.description}
+        ogImage={seo.image}
+        ogImageAlt={seo.imageAlt}
+        robots={seo.robots}
+        keywords={seo.keywords}
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          name: seoTitle,
+          name: seo.title,
           url: `https://fyrrehaven-61.dk${path}`,
-          description: seoDescription,
+          description: seo.description,
           mainEntity: [
             {
               "@type": "Question",

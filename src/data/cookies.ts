@@ -12,7 +12,7 @@ export type CookieCategory = {
   marketing: CookieEntry[];
 };
 
-export const cookieData: Record<"da" | "en", CookieCategory> = {
+export const cookieData: Record<"da" | "en" | "de", CookieCategory> = {
   da: {
     necessary: [
       {
@@ -67,6 +67,63 @@ export const cookieData: Record<"da" | "en", CookieCategory> = {
         provider: "doubleclick.net",
         purpose: "Viser målrettede annoncer på Google-netværket",
         duration: "1 år",
+        type: "http",
+      },
+    ],
+  },
+  de: {
+    necessary: [
+      {
+        name: "_consent",
+        provider: "fyrrehaven-61.dk",
+        purpose: "Merkt Ihre Cookie-Auswahl",
+        duration: "6 Monate",
+        type: "http",
+      },
+      {
+        name: "__cfruid",
+        provider: "t.zopim.com",
+        purpose: "Verwaltet Traffic, um die Stabilität der Website zu gewährleisten",
+        duration: "Session",
+        type: "http",
+      },
+    ],
+    analytics: [
+      {
+        name: "_ga",
+        provider: "Google",
+        purpose: "Google Analytics – Statistik",
+        duration: "2 Jahre",
+        type: "http",
+      },
+      {
+        name: "_ga_XXXXXXXXXX",
+        provider: "Google",
+        purpose: "Google Analytics – Statistik",
+        duration: "2 Jahre",
+        type: "http",
+      },
+    ],
+    marketing: [
+      {
+        name: "_fbp",
+        provider: "Meta",
+        purpose: "Wird von Facebook für Werbung verwendet",
+        duration: "3 Monate",
+        type: "http",
+      },
+      {
+        name: "fr",
+        provider: "Meta",
+        purpose: "Wird verwendet, um Relevanz von Anzeigen zu liefern, zu messen und zu verbessern",
+        duration: "3 Monate",
+        type: "http",
+      },
+      {
+        name: "IDE",
+        provider: "doubleclick.net",
+        purpose: "Zeigt zielgerichtete Anzeigen im Google-Netzwerk",
+        duration: "1 Jahr",
         type: "http",
       },
     ],

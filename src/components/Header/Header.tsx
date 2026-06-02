@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -15,8 +15,15 @@ type Props = {
   guest?: boolean;
 };
 
+const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
+  { code: "da", flag: "🇩🇰", label: "Dansk" },
+  { code: "de", flag: "🇩🇪", label: "Deutsch" },
+  { code: "en", flag: "🇬🇧", label: "English" },
+];
+
 export default function Header({ lang, guest = false }: Props) {
   const { i18n } = useTranslation();
+  const { t } = useTranslation("navigation");
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -76,50 +83,45 @@ useEffect(() => {
     setOpen(false);
   };
 
-  const t = useCallback(
-    (da: string, en: string) => (lang === "da" ? da : en),
-    [lang]
-  );
-
   const navItems = useMemo(() => {
     if (guest) {
       return [
         {
           to: `/guest/${lang}/${GUEST_PAGES.welcome[lang]}`,
-          label: t("Velkomst", "Welcome"),
+          label: t("guest.welcome"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.manual[lang]}`,
-          label: t("Manual", "Manual"),
+          label: t("guest.manual"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`,
-          label: t("Pool", "Pool"),
+          label: t("guest.pool"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.sauna[lang]}`,
-          label: t("Sauna", "Sauna"),
+          label: t("guest.sauna"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.spa[lang]}`,
-          label: t("Vildmarksbad", "Hot Tub"),
+          label: t("guest.spa"),
         },
         {
           to: `/guest/${lang}/${GUEST_PAGES.practicalInfo[lang]}`,
-          label: t("Praktisk info", "Practical Info"),
+          label: t("guest.practicalInfo"),
         },
       ];
     }
     return [
-      { to: pathOf(lang, "house"), label: t("Huset", "The House") },
-      { to: pathOf(lang, "area"), label: t("Området", "Area") },
-      { to: pathOf(lang, "gallery"), label: t("Galleri", "Gallery") },
+      { to: pathOf(lang, "house"), label: t("public.house") },
+      { to: pathOf(lang, "area"), label: t("public.area") },
+      { to: pathOf(lang, "gallery"), label: t("public.gallery") },
       // { to: pathOf(lang, "faq"), label: "FAQ" },
-      { to: pathOf(lang, "contact"), label: t("Kontakt", "Contact") },
+      { to: pathOf(lang, "contact"), label: t("public.contact") },
     ];
   }, [lang, guest, t]);
 
-  const flag = lang === "da" ? "🇩🇰" : "🇬🇧";
+  const flag = lang === "da" ? "🇩🇰" : lang === "de" ? "🇩🇪" : "🇬🇧";
 
   return (
     <div
@@ -144,7 +146,10 @@ useEffect(() => {
           />
         </Link>
 
-        <nav className={`${styles.nav} ${styles.navPrimary}`} aria-label="Main">
+        <nav
+          className={`${styles.nav} ${styles.navPrimary}`}
+          aria-label={t("menu.main")}
+        >
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -161,8 +166,7 @@ useEffect(() => {
 
           {!guest && (
             <Buttons
-              labelDa="Book nu"
-              labelEn="Book now"
+              label={t("actions.bookNow")}
               to={pathOf(lang, "book")}
               buttonType="button"
             />
@@ -173,7 +177,7 @@ useEffect(() => {
               <button
                 type="button"
                 className={styles.langTrigger}
-                aria-label="Change language"
+                aria-label={t("actions.changeLanguage")}
                 data-state={langOpen ? "open" : "closed"}
               >
                 <span className={styles.flag}>{flag}</span>
@@ -186,18 +190,30 @@ useEffect(() => {
               align="end"
               className={styles.ddContent}
             >
-              <DropdownMenu.Item
-                onSelect={() => switchLang("da")}
-                className={styles.ddItem}
-              >
-                <span style={{ marginRight: 8 }}>🇩🇰</span> Dansk
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                onSelect={() => switchLang("en")}
-                className={styles.ddItem}
-              >
-                <span style={{ marginRight: 8 }}>🇬🇧</span> English
-              </DropdownMenu.Item>
+              {LANGUAGE_OPTIONS.map((option) => {
+                const isCurrent = option.code === lang;
+                return (
+                  <DropdownMenu.Item
+                    key={option.code}
+                    onSelect={() => switchLang(option.code)}
+                    className={styles.ddItem}
+                    aria-current={isCurrent ? "true" : undefined}
+                    data-active={isCurrent ? "true" : undefined}
+                    aria-label={
+                      isCurrent
+                        ? `${option.label}, ${t("actions.currentLanguage")}`
+                        : option.label
+                    }
+                  >
+                    <span className={styles.langOptionText}>
+                      <span className={styles.langOptionFlag}>
+                        {option.flag}
+                      </span>
+                      {option.label}
+                    </span>
+                  </DropdownMenu.Item>
+                );
+              })}
             </DropdownMenu.Content>
           </DropdownMenu.Root>
         </nav>
@@ -206,7 +222,7 @@ useEffect(() => {
           <button
             type="button"
             className={styles.menuBtn}
-            aria-label={open ? "Luk menu" : "Åbn menu"}
+            aria-label={open ? t("actions.closeMenu") : t("actions.openMenu")}
             aria-expanded={open}
             aria-controls="mobile-menu-panel"
             data-open={open}
@@ -219,11 +235,13 @@ useEffect(() => {
           <Dialog.Content
             id="mobile-menu-panel"
             className={styles.panel}
-            aria-label="Mobilmenu"
+            aria-label={t("menu.mobile")}
           >
-            <Dialog.Title className={styles.srOnly}>Menu</Dialog.Title>
+            <Dialog.Title className={styles.srOnly}>
+              {t("menu.title")}
+            </Dialog.Title>
             <Dialog.Description className={styles.srOnly}>
-              Hovednavigation for siden
+              {t("menu.description")}
             </Dialog.Description>
 
             <nav className={styles.panelNav}>
@@ -250,29 +268,33 @@ useEffect(() => {
                   to={pathOf(lang, "book")}
                   onClick={() => setOpen(false)}
                   className={styles.ctaLink}
-                  labelDa="Book"
-                  labelEn="Book"
+                  label={t("actions.book")}
                   buttonType="button"
                   fullWidth
                 />
               )}
               <div className={styles.langGroup}>
-                <button
-                  type="button"
-                  className={styles.langChip}
-                  onClick={() => switchLang("da")}
-                  aria-current={lang === "da"}
-                >
-                  🇩🇰 Dansk
-                </button>
-                <button
-                  type="button"
-                  className={styles.langChip}
-                  onClick={() => switchLang("en")}
-                  aria-current={lang === "en"}
-                >
-                  🇬🇧 English
-                </button>
+                {LANGUAGE_OPTIONS.map((option) => {
+                  const isCurrent = option.code === lang;
+                  return (
+                    <button
+                      type="button"
+                      key={option.code}
+                      className={styles.langChip}
+                      onClick={() => switchLang(option.code)}
+                      aria-current={isCurrent}
+                      data-active={isCurrent ? "true" : undefined}
+                      aria-label={
+                        isCurrent
+                          ? `${option.label}, ${t("actions.currentLanguage")}`
+                          : option.label
+                      }
+                    >
+                      <span aria-hidden="true">{option.flag}</span>
+                      <span>{option.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </Dialog.Content>

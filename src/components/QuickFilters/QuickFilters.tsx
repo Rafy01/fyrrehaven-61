@@ -1,7 +1,8 @@
 // src/components/QuickFilters/index.tsx
 import React from "react";
 import styles from "./QuickFilters.module.css";
-import { DEFAULT_TAGS, type TagId } from "../../lib/tags";
+import { DEFAULT_TAGS, labelFor, type TagId } from "../../lib/tags";
+import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 
 type Props = {
@@ -64,19 +65,19 @@ export default function QuickFilters({
     <div className={`${styles.wrap} ${dense ? styles.dense : ""}`}>
       <div
         role="tablist"
-        aria-label={lang === "da" ? "Filtre" : "Filters"}
+        aria-label={chooseLang(lang, "Filtre", "Filters", "Filter")}
         className={styles.row}
       >
-        {tags.map(({ id, Icon, labelDa, labelEn }) => (
+        {tags.map((tag) => (
           <button
-            key={id}
+            key={tag.id}
             role="tab"
-            aria-selected={isActive(id)}
-            className={`${styles.chip} ${isActive(id) ? styles.active : ""}`}
-            onClick={() => onChipClick(id as TagId | "all")}
+            aria-selected={isActive(tag.id)}
+            className={`${styles.chip} ${isActive(tag.id) ? styles.active : ""}`}
+            onClick={() => onChipClick(tag.id as TagId | "all")}
           >
-            <Icon />
-            <span>{lang === "da" ? labelDa : labelEn}</span>
+            <tag.Icon />
+            <span>{labelFor(tag, lang)}</span>
           </button>
         ))}
       </div>

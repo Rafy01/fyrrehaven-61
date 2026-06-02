@@ -22,6 +22,7 @@ type LabelByString = {
 type LabelByPair = {
   labelDa: string;
   labelEn: string;
+  labelDe?: string;
   label?: never;
   i18nKey?: never;
   lang?: Lang;
@@ -69,10 +70,17 @@ function useLabelText(props: LabelInput & { lang?: Lang }) {
   if ("label" in props) return props.label;
 
   if ("labelDa" in props && "labelEn" in props) {
+    const pair = props as LabelByPair;
     const current: Lang =
       props.lang ??
-      (i18n.language?.toLowerCase().startsWith("da") ? "da" : "en");
-    return current === "da" ? props.labelDa : props.labelEn;
+      (i18n.language?.toLowerCase().startsWith("da")
+        ? "da"
+        : props.lang === "de" || i18n.language?.toLowerCase().startsWith("de")
+        ? "de"
+        : "en");
+    if (current === "da") return pair.labelDa;
+    if (current === "de") return pair.labelDe ?? pair.labelEn;
+    return pair.labelEn;
   }
 
   if ("i18nKey" in props) return t(props.i18nKey);

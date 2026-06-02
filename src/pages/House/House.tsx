@@ -7,46 +7,21 @@ import {
   Grid,
   Card,
 } from "@radix-ui/themes";
+import { useTranslation } from "react-i18next";
 import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import { pathOf } from "../../lib/routes";
 import styles from "./House.module.css";
 import PracticalInfo from "../../components/PracticalInfo";
 import Facilities from "../../components/Facilities";
-import { getPageMeta } from "../../lib/meta";
-
-type Lang = "da" | "en";
+import { getSeoMeta } from "../../i18n/seo";
+import type { Lang } from "../../lib/lang";
 
 export default function House({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string) => (lang === "da" ? da : en);
-
-  /* -------- SEO (kun meta) -------- */
-  const Meta = getPageMeta(lang, "house");
-  const seoKeywords =
-    lang === "da"
-      ? [
-          "sommerhus fjellerup",
-          "sommerhus med pool",
-          "opvarmet udendørs pool",
-          "vildmarksbad",
-          "sauna",
-          "familievenligt sommerhus",
-          "10 personer",
-          "djursland feriehus",
-          "Fyrrehaven 61",
-          "tæt på strand og skov",
-        ]
-      : [
-          "holiday home Fjellerup",
-          "heated outdoor pool",
-          "hot tub",
-          "sauna",
-          "family friendly",
-          "sleeps 10",
-          "Djursland vacation rental",
-          "Fyrrehaven 61",
-          "near beach and forest",
-        ];
+  const { t } = useTranslation("house");
+  const list = (key: string) =>
+    t(key, { returnObjects: true }) as unknown as string[];
+  const Meta = getSeoMeta(lang, "house");
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -58,23 +33,23 @@ export default function House({ lang }: { lang: Lang }) {
     amenityFeature: [
       {
         "@type": "LocationFeatureSpecification",
-        name: t("Udendørs opvarmet pool", "Outdoor heated pool"),
+        name: t("jsonLd.outdoorPool"),
         value: true,
-        description: t("Åben 1. maj – 1. oktober", "Open May 1 – Oct 1"),
+        description: t("jsonLd.poolSeason"),
       },
       {
         "@type": "LocationFeatureSpecification",
-        name: t("Elektrisk vildmarksbad", "Electric hot tub"),
-        value: true,
-      },
-      {
-        "@type": "LocationFeatureSpecification",
-        name: t("El-sauna", "Electric sauna"),
+        name: t("jsonLd.hotTub"),
         value: true,
       },
       {
         "@type": "LocationFeatureSpecification",
-        name: t("Tæt på strand & skov", "Near beach & forest"),
+        name: t("jsonLd.sauna"),
+        value: true,
+      },
+      {
+        "@type": "LocationFeatureSpecification",
+        name: t("jsonLd.beachForest"),
         value: true,
       },
     ],
@@ -88,51 +63,33 @@ export default function House({ lang }: { lang: Lang }) {
         path={pathOf(lang, "house")}
         title={Meta.title}
         description={Meta.description}
-        ogImage="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.jpg"
+        ogImage={Meta.image}
+        ogImageAlt={Meta.imageAlt}
         jsonLd={jsonLd}
-        robots={{ index: true, follow: true, noarchive: true }}
-        keywords={seoKeywords}
+        robots={Meta.robots}
+        keywords={Meta.keywords}
       />
 
       {/* HERO */}
       <Hero
-        title={t(
-          "Sommerhuset – plads til 10, udendørs pool & wellness",
-          "The House – sleeps 10, outdoor pool & wellness"
-        )}
-        subtitle={t(
-          "4 soveværelser + hems. Udendørs opvarmet pool (1. maj–1. oktober), Elektrisk vildmarksbad og el-sauna.",
-          "4 bedrooms + loft. Outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna."
-        )}
-        badges={[
-          t("10 gæster", "10 guests"),
-          t("4 soveværelser", "4 bedrooms"),
-          t("2 badeværelser", "2 bathrooms"),
-          t("Udendørs opvarmet pool", "Outdoor heated pool"),
-          t("Vildmarksbad", "Hot tub"),
-          t("Sauna", "Sauna"),
-        ]}
+        title={t("hero.title")}
+        subtitle={t("hero.subtitle")}
+        badges={list("hero.badges")}
         primaryCta={{
-          label: t("Book privat", "Book privately"),
+          label: t("hero.primaryCta"),
           href: pathOf(lang, "book"),
           external: false,
         }}
         secondaryCta={{
-          label: t("Book | Airbnb", "Book | Airbnb"),
+          label: t("hero.secondaryCta"),
           href: "https://www.airbnb.dk/h/fyrrehaven-61",
           external: true,
         }}
         media={{
           type: "image",
           src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.webp",
-          alt: t(
-            "Udendørs poolområde ved sommerhuset",
-            "Outdoor pool area at the house"
-          ),
-          title: t(
-            "Fyrrehaven 61 – feriehus ved Fjellerup Strand",
-            "Fyrrehaven 61 – holiday home by Fjellerup Beach"
-          ),
+          alt: t("hero.imageAlt"),
+          title: t("hero.imageTitle"),
         }}
         align="left"
       />
@@ -146,47 +103,29 @@ export default function House({ lang }: { lang: Lang }) {
         <Box asChild id="soverum">
           <section className={styles.section}>
             <Heading as="h2" size="6">
-              {t("Sovepladser & planløsning", "Sleeping arrangements & layout")}
+              {t("sleeping.title")}
             </Heading>
 
             <Grid columns={{ initial: "1", md: "2" }} gap="4" mt="3">
               <Card variant="surface">
                 <Heading as="h3" size="3">
-                  {t("Senge (dobbeltsenge)", "Beds (double)")}
+                  {t("sleeping.bedsTitle")}
                 </Heading>
                 <ul className={styles.list}>
-                  <li>
-                    {t(
-                      "4 dobbeltsenge i alt: 2× 180×200 cm og 2× 200×200 cm",
-                      "4 double beds total: 2× 180×200 cm and 2× 200×200 cm"
-                    )}
-                  </li>
-                  <li>
-                    {t(
-                      "Hver dobbeltseng har 2 puder (fiber 60×63/70) og 2 fiberdyner 135×200",
-                      "Each double bed includes 2 pillows (fiber 60×63/70) and 2 fiber duvets 135×200"
-                    )}
-                  </li>
+                  {list("sleeping.beds").map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </Card>
 
               <Card variant="surface">
                 <Heading as="h3" size="3">
-                  {t("Sengetøj & opbevaring", "Linen & storage")}
+                  {t("sleeping.storageTitle")}
                 </Heading>
                 <ul className={styles.list}>
-                  <li>
-                    {t(
-                      "Sengetøj kan lejes efter ønske – ellers medbringes",
-                      "Bed linen can be rented on request – otherwise bring your own"
-                    )}
-                  </li>
-                  <li>
-                    {t("Kommode med skuffer til tøj", "Chest of drawers")}
-                  </li>
-                  <li>{t("Spejl", "Mirror")}</li>
-                  <li>{t("Hængekrog bag døren", "Hook behind the door")}</li>
-                  <li>{t("2 natlamper", "2 bedside lamps")}</li>
+                  {list("sleeping.storage").map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </Card>
             </Grid>
@@ -197,79 +136,40 @@ export default function House({ lang }: { lang: Lang }) {
         <Box asChild id="wellness">
           <section className={styles.section}>
             <Heading as="h2" size="6">
-              {t("Pool & wellness", "Pool & wellness")}
+              {t("wellness.title")}
             </Heading>
 
             <Grid columns={{ initial: "1", md: "3" }} gap="4" mt="3">
               <Card variant="surface">
                 <Heading as="h3" size="3">
-                  {t("Udendørs pool", "Outdoor pool")}
+                  {t("wellness.poolTitle")}
                 </Heading>
                 <ul className={styles.list}>
-                  <li>{t("1,5 m dyb", "1.5 m deep")}</li>
-                  <li>{t("3,5 m bred · 8 m lang", "3.5 m wide · 8 m long")}</li>
-                  <li>{t("Opvarmet ca. 29 °C", "Heated approx. 29 °C")}</li>
-                  <li>
-                    {t("Sæson: 1. maj – 1. oktober", "Season: May 1 – Oct 1")}
-                  </li>
-                  <li>
-                    {t(
-                      "Tag/overdækning kan lukkes på kolde eller vindfulde dage",
-                      "Cover/roof can be closed on cold or windy days"
-                    )}
-                  </li>
-                  <li>
-                    {t(
-                      "Lys i poolen (kan tændes)",
-                      "Pool lighting (switchable)"
-                    )}
-                  </li>
-                  <li>
-                    {t(
-                      "Automatisk tilførsel af poolkemi",
-                      "Automatic chemical dosing"
-                    )}
-                  </li>
+                  {list("wellness.pool").map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </Card>
 
               <Card variant="surface">
                 <Heading as="h3" size="3">
-                  {t("EL-Vildmarksbad", " Electric hot tub")}
+                  {t("wellness.hotTubTitle")}
                 </Heading>
                 <ul className={styles.list}>
-                  <li>{t("Op til 6 personer", "Up to 6 people")}</li>
-                  <li>{t("Opvarmes med EL", "Electric heating")}</li>
-                  <li>
-                    {t("Massagefunktion og lys", "Massage jets and lighting")}
-                  </li>
-                  <li>
-                    {t(
-                      "Vand fyldes med haveslange – kan mod tilkøb være fyldt før ankomst",
-                      "Water is added via garden hose – can be pre-filled before arrival for an extra fee"
-                    )}
-                  </li>
+                  {list("wellness.hotTub").map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </Card>
 
               <Card variant="surface">
                 <Heading as="h3" size="3">
-                  {t("Sauna", "Sauna")}
+                  {t("wellness.saunaTitle")}
                 </Heading>
                 <ul className={styles.list}>
-                  <li>{t("Op til 8 personer", "Up to 8 people")}</li>
-                  <li>
-                    {t(
-                      "Lys indvendig og udvendig",
-                      "Interior and exterior lights"
-                    )}
-                  </li>
-                  <li>
-                    {t(
-                      "Hæld stille og roligt vand på ovnen for damp",
-                      "Gently pour water on the heater for steam"
-                    )}
-                  </li>
+                  {list("wellness.sauna").map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </Card>
             </Grid>
@@ -280,57 +180,29 @@ export default function House({ lang }: { lang: Lang }) {
         <Box asChild id="koekken">
           <section className={styles.section}>
             <Heading as="h2" size="6">
-              {t("Køkken & ophold", "Kitchen & living")}
+              {t("kitchenLiving.title")}
             </Heading>
 
             <Grid columns={{ initial: "1", md: "2" }} gap="4" mt="3">
               <Card variant="surface">
                 <Heading as="h3" size="3">
-                  {t("Køkken", "Kitchen")}
+                  {t("kitchenLiving.kitchenTitle")}
                 </Heading>
                 <ul className={styles.list}>
-                  <li>
-                    {t(
-                      "Fuldudstyret køkken: køle-/fryseskab, ovn, mikroovn",
-                      "Fully equipped kitchen: fridge/freezer, oven, microwave"
-                    )}
-                  </li>
-                  <li>
-                    {t(
-                      "Automatisk kaffemaskine, filterkaffe og stempelkande",
-                      "Automatic coffee machine, filter coffee and French press"
-                    )}
-                  </li>
-                  <li>{t("Affaldssortering", "Waste sorting")}</li>
+                  {list("kitchenLiving.kitchen").map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </Card>
 
               <Card variant="surface">
                 <Heading as="h3" size="3">
-                  {t("Ophold & underholdning", "Living & entertainment")}
+                  {t("kitchenLiving.livingTitle")}
                 </Heading>
                 <ul className={styles.list}>
-                  <li>
-                    {t(
-                      "Stort spisebord med plads til 10 personer",
-                      "Large dining table seating 10"
-                    )}
-                  </li>
-                  <li>
-                    {t(
-                      "Lyst rum med vinduer fra begge sider",
-                      "Bright room with windows on both sides"
-                    )}
-                  </li>
-                  <li>
-                    {t(
-                      "TV-område med sofa, stole og 55″ TV",
-                      "TV area with sofa, chairs and 55″ TV"
-                    )}
-                  </li>
-                  <li>{t("Undendørs rutjebane", "Outdoor slide")}</li>
-                  <li>{t("Trampolin", "Trampoline")}</li>
-                  <li>{t("PlayStation 5", "PlayStation 5")}</li>
+                  {list("kitchenLiving.living").map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </Card>
             </Grid>
