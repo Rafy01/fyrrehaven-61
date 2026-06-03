@@ -96,6 +96,10 @@
   gap: 1.15rem;
 }
 
+.identityGroup {
+  align-items: start;
+}
+
 .formCard {
   min-width: 0;
   overflow: hidden;

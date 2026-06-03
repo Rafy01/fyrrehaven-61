@@ -357,7 +357,7 @@ export default function ExtraServices({ lang }: { lang: Lang }) {
               onSubmit={onSubmit}
               noValidate
             >
-              <div className={formStyles.rowGroup}>
+              <div className={`${formStyles.rowGroup} ${styles.identityGroup}`}>
                 <div className={formStyles.row}>
                   <label className={formStyles.label} htmlFor="extra-name" data-required="true">
                     {t("form.fields.name")}
