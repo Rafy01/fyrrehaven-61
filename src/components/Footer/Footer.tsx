@@ -3,7 +3,7 @@ import { Container, Box, Flex, Text } from "@radix-ui/themes";
 import styles from "./Footer.module.css";
 import { useTranslation } from "react-i18next";
 import { type Lang } from "../../lib/lang";
-import { GUEST_PAGES, pathOf } from "../../lib/routes";
+import { GUEST_PAGES, guestPathOf, pathOf } from "../../lib/routes";
 
 export type FooterProps = {
   /** Valgfrit: giv sproget eksplicit. Ellers læses det fra i18n.language. */
@@ -17,12 +17,15 @@ export type FooterProps = {
   }>;
   /** Vis Superhost-badge + link til Airbnb */
   showSuperhost?: boolean;
+  /** Om footeren vises i gæste-universet */
+  guest?: boolean;
 };
 
 export default function Footer({
   lang,
   socials,
   showSuperhost = true,
+  guest = false,
 }: FooterProps) {
   const { t, i18n } = useTranslation("footer");
   const currentLang: Lang = lang ??
@@ -158,6 +161,16 @@ export default function Footer({
                     {t("links.houseRules")}
                   </Link>
                 </li>
+                {guest && (
+                  <li>
+                    <Link
+                      className={styles.link}
+                      to={guestPathOf(currentLang, "extraServices")}
+                    >
+                      {t("links.extraServices")}
+                    </Link>
+                  </li>
+                )}
               </ul>
               <div
                 className={styles.socials}

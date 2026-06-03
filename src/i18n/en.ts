@@ -263,6 +263,66 @@ export const en = {
       }
     }
   },
+  "extraServices": {
+    "page": {
+      "eyebrow": "Add-ons for your stay",
+      "title": "Extra services",
+      "lead": "We want to make your upcoming stay unforgettable, and therefore we offer a range of additional services. Please fill out the form to request these services.",
+      "listAria": "List of extra services",
+      "includedTitle": "Included in the rent",
+      "includedText": "Tea towel - Dishcloth - Shampoo - Shower gel - Hand soap - Dish soap - Dishwasher powder - Coffee beans"
+    },
+    "form": {
+      "yes": "Yes",
+      "no": "No",
+      "select": "Select",
+      "free": "FREE",
+      "total": "Estimated extra total",
+      "submit": "Send request",
+      "sending": "Sending request...",
+      "success": "Thank you. Your extra service request has been sent.",
+      "summaryYes": "The guest would like extra services.",
+      "summaryNo": "The guest does not want extra services at this time.",
+      "noSpecificItems": "No specific quantities selected.",
+      "dateHint": "Extra services must be requested at least 3 days before arrival, so we have time to prepare and confirm the practical details.",
+      "bundleHint": "Complete package of bedding, sheets and towels",
+      "fields": {
+        "name": "Name",
+        "email": "Email Address",
+        "stayDate": "Date of stay",
+        "wantsExtras": "Would you like our extra service?",
+        "otherRequests": "Any other requests?"
+      },
+      "placeholders": {
+        "name": "Tenant name",
+        "email": "john@doe.com",
+        "amount": "Desired amount",
+        "otherRequests": "Write your requests here and we will find a solution"
+      },
+      "hints": {
+        "high-chair": "One chair available",
+        "baby-cot": "One baby cot available"
+      },
+      "calendar": {
+        "previous": "Previous month",
+        "next": "Next month"
+      },
+      "acceptBefore": "By checking this box, you confirm that you have made a decision regarding any extra services, consent to processing your request and have read and accepted our",
+      "houseRules": "house rules",
+      "and": "and",
+      "feeList": "fee list",
+      "acceptAfter": "for potential violations. The code for the key box will be sent 1 hour before arrival, once this is confirmed.",
+      "errors": {
+        "required": "Please fill in name, email and date of stay.",
+        "dateTooSoon": "Extra services must be requested at least 3 days before arrival. Please choose a later arrival date, or contact us directly if your stay is soon.",
+        "email": "Please enter a valid email address.",
+        "noSelection": "Please select at least one extra service when you answer yes.",
+        "tooManyPeople": "Bed linen, sheets, towels and bundles can only be ordered for up to 10 people in total.",
+        "accept": "Please accept the house rules and fee list before submitting.",
+        "submit": "Could not send your request. Please try again shortly."
+      }
+    }
+  },
   "guest": {
     "accordion": {
       "pool": {
@@ -653,6 +713,7 @@ export const en = {
       "contact": "Contact us",
       "houseRules": "House rules",
       "faq": "Frequently asked questions",
+      "extraServices": "Extra services",
       "privacy": "Privacy",
       "cookies": "Cookies",
       "sitemap": "Sitemap",
@@ -834,6 +895,27 @@ export const en = {
       ],
       "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
       "imageAlt": "Fees overview",
+      "robots": {
+        "index": true,
+        "follow": true,
+        "noarchive": true
+      }
+    },
+    "extraServices": {
+      "title": "Extra services – Fyrrehaven 61",
+      "description": "See add-ons for your stay at Fyrrehaven 61: bed linen, sheets, towels, bundles, hot tub fill-up, high chair and baby cot.",
+      "keywords": [
+        "extra services",
+        "holiday home add-ons",
+        "bed linen holiday home",
+        "towels holiday home",
+        "hot tub fill-up",
+        "baby cot",
+        "high chair",
+        "Fyrrehaven 61"
+      ],
+      "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
+      "imageAlt": "Extra services for the stay",
       "robots": {
         "index": true,
         "follow": true,

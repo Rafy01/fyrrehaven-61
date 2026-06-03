@@ -221,7 +221,7 @@ export default function App({
           </Box>
         </Container>
       </main>
-      <Footer lang={lang} />
+      <Footer lang={lang} guest={guest} />
       <ScrollMemory />
       <CookieButton />
     </Theme>

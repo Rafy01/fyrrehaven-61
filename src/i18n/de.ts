@@ -263,6 +263,66 @@ export const de = {
       }
     }
   },
+  "extraServices": {
+    "page": {
+      "eyebrow": "Zusatzleistungen für den Aufenthalt",
+      "title": "Zusatzleistungen",
+      "lead": "Wir möchten Ihren bevorstehenden Aufenthalt so angenehm wie möglich machen. Deshalb bieten wir zusätzliche Leistungen an, die Sie hier anfragen können.",
+      "listAria": "Liste der Zusatzleistungen",
+      "includedTitle": "In der Miete enthalten",
+      "includedText": "Geschirrtuch - Spültuch - Shampoo - Duschgel - Handseife - Spülmittel - Geschirrspülpulver - Kaffeebohnen"
+    },
+    "form": {
+      "yes": "Ja",
+      "no": "Nein",
+      "select": "Auswählen",
+      "free": "KOSTENLOS",
+      "total": "Geschätzte Extras gesamt",
+      "submit": "Anfrage senden",
+      "sending": "Anfrage wird gesendet...",
+      "success": "Danke. Ihre Anfrage zu Zusatzleistungen wurde gesendet.",
+      "summaryYes": "Der Gast möchte Zusatzleistungen.",
+      "summaryNo": "Der Gast möchte derzeit keine Zusatzleistungen.",
+      "noSpecificItems": "Keine konkreten Mengen ausgewählt.",
+      "dateHint": "Zusatzleistungen müssen spätestens 3 Tage vor Ankunft angefragt werden, damit wir Vorbereitung und praktische Details bestätigen können.",
+      "bundleHint": "Komplettpaket mit Bettwaren, Bettwäsche und Handtüchern",
+      "fields": {
+        "name": "Name",
+        "email": "E-Mail-Adresse",
+        "stayDate": "Aufenthaltsdatum",
+        "wantsExtras": "Möchten Sie Zusatzleistungen?",
+        "otherRequests": "Weitere Wünsche?"
+      },
+      "placeholders": {
+        "name": "Name des Mieters",
+        "email": "name@email.de",
+        "amount": "Gewünschte Anzahl",
+        "otherRequests": "Schreiben Sie Ihre Wünsche hier, dann finden wir eine Lösung"
+      },
+      "hints": {
+        "high-chair": "Ein Hochstuhl verfügbar",
+        "baby-cot": "Ein Babybett verfügbar"
+      },
+      "calendar": {
+        "previous": "Vorheriger Monat",
+        "next": "Nächster Monat"
+      },
+      "acceptBefore": "Mit dem Setzen dieses Hakens bestätigen Sie, dass Sie eine Entscheidung zu Zusatzleistungen getroffen haben, der Verarbeitung Ihrer Anfrage zustimmen und unsere",
+      "houseRules": "Hausregeln",
+      "and": "und",
+      "feeList": "Gebührenübersicht",
+      "acceptAfter": "für mögliche Verstöße gelesen und akzeptiert haben. Der Code für den Schlüsselkasten wird 1 Stunde vor Ankunft gesendet, sobald dies bestätigt ist.",
+      "errors": {
+        "required": "Bitte füllen Sie Name, E-Mail und Aufenthaltsdatum aus.",
+        "dateTooSoon": "Zusatzleistungen müssen spätestens 3 Tage vor Ankunft angefragt werden. Bitte wählen Sie ein späteres Anreisedatum oder kontaktieren Sie uns direkt, wenn Ihr Aufenthalt kurz bevorsteht.",
+        "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        "noSelection": "Bitte wählen Sie mindestens eine Zusatzleistung aus, wenn Sie mit Ja antworten.",
+        "tooManyPeople": "Bettwaren, Bettwäsche, Handtücher und Pakete können insgesamt nur für bis zu 10 Personen bestellt werden.",
+        "accept": "Bitte akzeptieren Sie Hausregeln und Gebührenübersicht vor dem Absenden.",
+        "submit": "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es gleich noch einmal."
+      }
+    }
+  },
   "guest": {
     "accordion": {
       "pool": {
@@ -653,6 +713,7 @@ export const de = {
       "contact": "Kontakt aufnehmen",
       "houseRules": "Hausregeln",
       "faq": "Häufig gestellte Fragen",
+      "extraServices": "Zusatzleistungen",
       "privacy": "Datenschutz",
       "cookies": "Cookies",
       "sitemap": "Sitemap",
@@ -832,6 +893,27 @@ export const de = {
       ],
       "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
       "imageAlt": "Übersicht der Gebühren",
+      "robots": {
+        "index": true,
+        "follow": true,
+        "noarchive": true
+      }
+    },
+    "extraServices": {
+      "title": "Zusatzleistungen – Fyrrehaven 61",
+      "description": "Sehen Sie Zusatzleistungen für den Aufenthalt in Fyrrehaven 61: Bettwaren, Bettwäsche, Handtücher, Pakete, Befüllung des Badezubers, Hochstuhl und Babybett.",
+      "keywords": [
+        "Zusatzleistungen",
+        "Ferienhaus Extras",
+        "Bettwäsche Ferienhaus",
+        "Handtücher Ferienhaus",
+        "Badezuber Befüllung",
+        "Babybett",
+        "Hochstuhl",
+        "Fyrrehaven 61"
+      ],
+      "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
+      "imageAlt": "Zusatzleistungen für den Aufenthalt",
       "robots": {
         "index": true,
         "follow": true,
