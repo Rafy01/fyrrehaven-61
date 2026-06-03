@@ -2,7 +2,12 @@ export const de = {
   "common": {
     "brand": "Fyrrehaven 61",
     "bookNow": "Auf Airbnb buchen",
-    "sleepsX": "Platz für {{count}} Gäste"
+    "sleepsX": "Platz für {{count}} Gäste",
+    "form": {
+      "selectPlaceholder": "Auswählen",
+      "chooseFile": "Datei auswählen",
+      "chooseFiles": "Dateien auswählen"
+    }
   },
   "home": {
     "heroTitle": "Familienfreundliches Ferienhaus im Wald – in der Nähe des Strandes",

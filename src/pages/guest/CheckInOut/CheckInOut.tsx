@@ -10,13 +10,13 @@ import { guestPathOf } from "../../../lib/routes";
 import type { Lang } from "../../../lib/lang";
 import styles from "./CheckInOut.module.css";
 
-const POOL_SEASON = {
-  start: new Date("2025-05-01"),
-  end: new Date("2025-10-01"),
-};
-
 function isPoolOpen(today = new Date()) {
-  return today >= POOL_SEASON.start && today <= POOL_SEASON.end;
+  const month = today.getMonth() + 1;
+  const date = today.getDate();
+
+  return month > 5 && month < 10
+    ? true
+    : (month === 5 && date >= 1) || (month === 10 && date <= 1);
 }
 
 export default function CheckInOut() {
@@ -28,7 +28,7 @@ export default function CheckInOut() {
     : "en";
 
   const [poolOpen, setPoolOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(true);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
   const [isSending, setIsSending] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -43,6 +43,10 @@ export default function CheckInOut() {
       setIsMobile(mobile);
     }
   }, []);
+
+  if (isMobile === null) {
+    return null;
+  }
 
   if (!isMobile) {
     return (
@@ -206,7 +210,7 @@ export default function CheckInOut() {
       titleKey: "accordion.checkInOut.poolWater",
       content: (
         <img
-          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/vand-pool.webp"
+          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2026/06/pool_aflaesning.webp"
           alt={tg("accordion.checkInOut.poolWaterAlt")}
           className={styles.image}
         />

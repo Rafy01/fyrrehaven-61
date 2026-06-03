@@ -3,7 +3,6 @@ import React from "react";
 import styles from "./Form.module.css";
 import Buttons from "../Buttons";
 
-import { chooseLang } from "../../lib/lang";
 import { useTranslation } from "react-i18next";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
 
@@ -62,14 +61,7 @@ export type FormProps = {
 };
 
 export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
-    const { i18n } = useTranslation();
-    const lang = i18n.language.startsWith("da")
-      ? "da"
-      : i18n.language.startsWith("de")
-      ? "de"
-      : "en";
-    const t = (da: string, en: string, de = en) =>
-      chooseLang(lang, da, en, de);
+  const { t } = useTranslation("common");
   const [values, setValues] = React.useState<
     Record<string, string | FileList | boolean>
   >({});
@@ -174,7 +166,7 @@ export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
             ) : field.type === "select" ? (
               <div className={styles.selectWrapper}>
                 <select {...common} className={styles.select}>
-                  <option value="">{t("Vælg", "Choose")}</option>
+                  <option value="">{t("form.selectPlaceholder")}</option>
                   {field.options.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
@@ -213,8 +205,8 @@ export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
                   variant="secondary"
                   label={
                     field.multiple
-                      ? t("Vælg filer", "Choose files")
-                      : t("Vælg fil", "Choose file")
+                      ? t("form.chooseFiles")
+                      : t("form.chooseFile")
                   }
                   buttonType="button"
                   fullWidth
