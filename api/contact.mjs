@@ -228,6 +228,9 @@ export default async function handler(req, res) {
     const messageType = t(uiLang, "contact.type.message");
 
     const intent = String(purpose || context || "contact");
+    const extrasItemsRaw = Array.isArray(extras?.items) ? extras.items : [];
+    const isExtraServicesReq =
+      intent === "extra-services" || extrasItemsRaw.length > 0;
     const isBookingReq =
       intent === "booking" || !!selection || !!guests || !!stayPurpose;
 
@@ -240,7 +243,7 @@ export default async function handler(req, res) {
       });
       return;
     }
-    if (!isBookingReq && !message) {
+    if (!isBookingReq && !isExtraServicesReq && !message) {
       res.status(400).json({
         ok: false,
         error: "VALIDATION_ERROR",
@@ -375,7 +378,7 @@ export default async function handler(req, res) {
     const totalStr = fmtMoney(selection?.totalWithCleaningDKK, adminLang);
 
     // Extras
-    const extrasItems = Array.isArray(extras?.items) ? extras.items : [];
+    const extrasItems = extrasItemsRaw;
     const extrasTotalStr =
       extras && typeof extras.totalDKK === "number"
         ? fmtMoney(extras.totalDKK, adminLang)
@@ -484,8 +487,6 @@ export default async function handler(req, res) {
           <td style="padding:4px 8px">${esc(stayPurposeStr)}</td>
         </tr>
       </table>
-      ${extrasHtml}
-      ${grandInclExtrasHtml}
     `;
 
     // Godkendelser
@@ -536,6 +537,8 @@ export default async function handler(req, res) {
         </table>
 
         ${isBookingReq ? bookingHtml : ""}
+        ${extrasHtml}
+        ${grandInclExtrasHtml}
 
         ${approvalsHtml}
 
@@ -564,31 +567,6 @@ export default async function handler(req, res) {
           `${adminT("contact.priceNights")}: ${nightsPriceStr}\n` +
           `${adminT("contact.cleaning")}: ${cleaningStr}\n` +
           `${adminT("contact.estimatedTotal")}: ${totalStr}\n` +
-          (extrasItems.length > 0
-            ? `\n— ${adminT("contact.extraServices")} —\n` +
-              extrasItems
-                .map((it) => {
-                  const label =
-                    it?.label?.en ?? it?.label?.da;
-                  const unit = fmtMoney(it?.unitPriceDKK, adminLang);
-                  const qty = Number(it?.qty || 0);
-                  const line =
-                    typeof it?.unitPriceDKK === "number"
-                      ? fmtMoney(qty * it.unitPriceDKK, adminLang)
-                      : "—";
-                  return `• ${
-                    label || it?.id || "—"
-                  }: ${qty} × ${unit} = ${line}`;
-                })
-                .join("\n") +
-              `\n${adminT("contact.extrasTotal")}: ${extrasTotalStr}\n` +
-              (grandInclExtras != null
-                ? `${adminT("contact.totalInclExtras")}: ${fmtMoney(
-                    grandInclExtras,
-                    adminLang
-                  )}\n`
-                : "")
-            : ``) +
           `${adminT("contact.guests")}: ${adminT("contact.adults")} ${OR_DASH(
             guests?.adults
           )}, ${adminT("contact.children")} ${OR_DASH(
@@ -596,6 +574,28 @@ export default async function handler(req, res) {
           )}, ${adminT("contact.babies")} ${OR_DASH(guests?.babies)}\n` +
           `${adminT("contact.purposeOfStay")}: ${OR_DASH(stayPurpose)}\n`
         : "") +
+      (extrasItems.length > 0
+        ? `\n— ${adminT("contact.extraServices")} —\n` +
+          extrasItems
+            .map((it) => {
+              const label = it?.label?.en ?? it?.label?.da;
+              const unit = fmtMoney(it?.unitPriceDKK, adminLang);
+              const qty = Number(it?.qty || 0);
+              const line =
+                typeof it?.unitPriceDKK === "number"
+                  ? fmtMoney(qty * it.unitPriceDKK, adminLang)
+                  : "—";
+              return `• ${label || it?.id || "—"}: ${qty} × ${unit} = ${line}`;
+            })
+            .join("\n") +
+          `\n${adminT("contact.extrasTotal")}: ${extrasTotalStr}\n` +
+          (grandInclExtras != null
+            ? `${adminT("contact.totalInclExtras")}: ${fmtMoney(
+                grandInclExtras,
+                adminLang
+              )}\n`
+            : "")
+        : ``) +
       `\n— ${adminT("contact.approvals")} —\n` +
       `${adminT("contact.consentGdpr")}: ${yesNo(Boolean(consent), adminLang)}\n` +
       `${adminT("contact.feeListAccepted")}: ${yesNo(
