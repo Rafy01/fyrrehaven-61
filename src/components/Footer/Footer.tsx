@@ -115,11 +115,6 @@ export default function Footer({
                     {t("links.gallery")}
                   </Link>
                 </li>
-                <li>
-                  <Link className={styles.link} to={pathOf(currentLang, "faq")}>
-                    FAQ
-                  </Link>
-                </li>
               </ul>
             </nav>
 
@@ -161,11 +156,6 @@ export default function Footer({
                     to={pathOf(currentLang, "house")}
                   >
                     {t("links.houseRules")}
-                  </Link>
-                </li>
-                <li>
-                  <Link className={styles.link} to={pathOf(currentLang, "faq")}>
-                    {t("links.faq")}
                   </Link>
                 </li>
               </ul>
