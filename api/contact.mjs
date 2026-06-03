@@ -14,6 +14,21 @@ const reqEnv = (k) => {
   return v;
 };
 
+const reqEnvAny = (...keys) => {
+  for (const k of keys) {
+    const v = process.env[k];
+    if (v) return v;
+  }
+  throw new Error(`ENV_MISSING:${keys.join("|")}`);
+};
+
+const normalizeSmtpUser = (user, from) => {
+  const normalized = String(user || "").trim();
+  if (!normalized || normalized.includes("@")) return normalized;
+  const domain = String(from || "").split("@")[1];
+  return domain ? `${normalized}@${domain}` : normalized;
+};
+
 const fmtMoney = (n, lang = "da") => {
   if (n == null || Number.isNaN(Number(n))) return "—";
   const uiLang = normalizeLang(lang);
@@ -235,9 +250,9 @@ export default async function handler(req, res) {
     // SMTP setup
     const host = reqEnv("SMTP_HOST");
     const port = Number(process.env.SMTP_PORT || 587);
-    const user = reqEnv("SMTP_USER");
-    const pass = reqEnv("SMTP_PASS");
     const from = reqEnv("MAIL_FROM"); // mailbox på eget domæne
+    const user = normalizeSmtpUser(process.env.SMTP_USER || from, from);
+    const pass = reqEnvAny("SMTP_PASS", "SMTP_PASSWORD");
     const to = reqEnv("MAIL_TO");
     const autoBcc = process.env.MAIL_AUTOREPLY_BCC || "";
 
