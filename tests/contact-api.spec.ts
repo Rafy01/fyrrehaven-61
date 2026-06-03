@@ -266,6 +266,104 @@ test('api/contact rejects requests from bot user agents', async () => {
   }
 });
 
+test('api/contact allows submissions from the staging domain', async () => {
+  const contactModule = await loadContactModule();
+  const sentMessages: MockMailOptions[] = [];
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async (options: MockMailOptions): Promise<MockMailResult> => {
+      sentMessages.push(options);
+      return {
+        messageId: `mock-${sentMessages.length}`,
+        accepted: [options.to],
+        rejected: [],
+        response: '250 OK',
+        envelope: { from: options.from, to: [options.to] },
+        envelopeTime: Date.now(),
+        messageTime: Date.now(),
+        messageSize: 0,
+      };
+    },
+  })) as unknown as typeof nodemailer.createTransport;
+
+  process.env.SMTP_HOST = 'smtp.mock.local';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'mock-user';
+  process.env.SMTP_PASS = 'mock-pass';
+  process.env.MAIL_FROM = 'no-reply@fyrrehaven-61.dk';
+  process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
+  delete process.env.CONTACT_ALLOWED_ORIGINS;
+
+  try {
+    const { result, res } = makeResponse();
+    const req = makeRequest(
+      validBookingPayload,
+      'https://test.fyrrehaven-61.dk',
+      'Playwright Test Agent',
+      '127.0.0.201'
+    );
+
+    await contactModule.default(req, res);
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ ok: true });
+    expect(sentMessages).toHaveLength(2);
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
+});
+
+test('api/contact allows submissions from Vercel project previews', async () => {
+  const contactModule = await loadContactModule();
+  const sentMessages: MockMailOptions[] = [];
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async (options: MockMailOptions): Promise<MockMailResult> => {
+      sentMessages.push(options);
+      return {
+        messageId: `mock-${sentMessages.length}`,
+        accepted: [options.to],
+        rejected: [],
+        response: '250 OK',
+        envelope: { from: options.from, to: [options.to] },
+        envelopeTime: Date.now(),
+        messageTime: Date.now(),
+        messageSize: 0,
+      };
+    },
+  })) as unknown as typeof nodemailer.createTransport;
+
+  process.env.SMTP_HOST = 'smtp.mock.local';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'mock-user';
+  process.env.SMTP_PASS = 'mock-pass';
+  process.env.MAIL_FROM = 'no-reply@fyrrehaven-61.dk';
+  process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
+  delete process.env.CONTACT_ALLOWED_ORIGINS;
+
+  try {
+    const { result, res } = makeResponse();
+    const req = makeRequest(
+      validBookingPayload,
+      'https://fyrrehaven-61-git-stage-rafy.vercel.app',
+      'Playwright Test Agent',
+      '127.0.0.202'
+    );
+
+    await contactModule.default(req, res);
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ ok: true });
+    expect(sentMessages).toHaveLength(2);
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
+});
+
 test('api/contact enforces rate limits for repeated submissions', async () => {
   process.env.CONTACT_RATE_LIMIT = '1';
   process.env.CONTACT_RATE_WINDOW_MS = '60000';
@@ -297,7 +395,7 @@ test('api/contact enforces rate limits for repeated submissions', async () => {
   process.env.CONTACT_RATE_WINDOW_MS = '60000';
 
   try {
-    const remoteAddress = `127.0.0.${Math.floor(Math.random() * 100) + 1}`;
+    const remoteAddress = '127.0.0.250';
     const first = makeResponse();
     const req1 = makeRequest(validBookingPayload, 'http://127.0.0.1:5173', 'Playwright Test Agent', remoteAddress);
     await contactModule.default(req1, first.res);

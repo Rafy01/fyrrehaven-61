@@ -1,6 +1,7 @@
 const DEFAULT_ALLOWED_ORIGINS = [
   "https://fyrrehaven-61.dk",
   "https://www.fyrrehaven-61.dk",
+  "https://test.fyrrehaven-61.dk",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 ];
@@ -41,14 +42,34 @@ export function getAllowedOrigins() {
 
 export function isOriginAllowed(req) {
   const allowed = new Set(getAllowedOrigins());
+  const isTrustedOrigin = (origin) => {
+    if (!origin) return false;
+    if (allowed.has(origin)) return true;
+
+    try {
+      const url = new URL(origin);
+      const hostname = url.hostname.toLowerCase();
+      const isHttps = url.protocol === "https:";
+
+      return (
+        isHttps &&
+        (hostname.endsWith(".fyrrehaven-61.dk") ||
+          hostname === "fyrrehaven-61.vercel.app" ||
+          (hostname.startsWith("fyrrehaven-61-") && hostname.endsWith(".vercel.app")))
+      );
+    } catch {
+      return false;
+    }
+  };
+
   const origin = getHeader(req, "origin");
-  if (origin && allowed.has(origin)) return true;
+  if (isTrustedOrigin(origin)) return true;
 
   const referer = getHeader(req, "referer");
   if (referer) {
     try {
       const url = new URL(referer);
-      return allowed.has(url.origin);
+      return isTrustedOrigin(url.origin);
     } catch {
       return false;
     }
