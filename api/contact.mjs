@@ -636,6 +636,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("MAIL_ERROR", err?.response || err);
     const msg = String(err && err.message ? err.message : err);
+    const msgLower = msg.toLowerCase();
 
     if (msg.startsWith("ENV_MISSING:")) {
       res.status(500).json({
@@ -646,24 +647,37 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Marker eksplicit hvis autoresponsen fejlede
     if (
-      msg.includes("ECONN") ||
-      msg.includes("ENOTFOUND") ||
+      msg.includes("535") ||
       msg.includes("EAUTH") ||
-      msg.includes("EENVELOPE") ||
-      msg.includes("EADDR") ||
-      msg.toLowerCase().includes("rejected") ||
-      msg.toLowerCase().includes("relay")
+      msgLower.includes("invalid login") ||
+      msgLower.includes("authentication failed")
     ) {
       res.status(502).json({
         ok: false,
-        error: "MAIL_AUTOREPLY_FAILED",
-        detail: msg,
+        error: "MAIL_AUTH_FAILED",
+        detail: "Mail server authentication failed.",
       });
       return;
     }
 
-    res.status(500).json({ ok: false, error: "MAIL_ERROR", detail: msg });
+    // Marker eksplicit hvis autoresponsen fejlede
+    if (
+      msg.includes("ECONN") ||
+      msg.includes("ENOTFOUND") ||
+      msg.includes("EENVELOPE") ||
+      msg.includes("EADDR") ||
+      msgLower.includes("rejected") ||
+      msgLower.includes("relay")
+    ) {
+      res.status(502).json({
+        ok: false,
+        error: "MAIL_AUTOREPLY_FAILED",
+        detail: "Mail delivery failed.",
+      });
+      return;
+    }
+
+    res.status(500).json({ ok: false, error: "MAIL_ERROR", detail: "Mail delivery failed." });
   }
 }

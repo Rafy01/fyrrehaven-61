@@ -468,6 +468,16 @@ export default function ContactForm({
           );
           return;
         }
+        if (serverError === "MAIL_AUTH_FAILED") {
+          setError(
+            t(
+              "Mailserveren kunne ikke logge ind. Kontakt os venligst direkte på e-mail, mens vi retter opsætningen.",
+              "The mail server could not sign in. Please contact us directly by email while we fix the setup.",
+              "Der Mailserver konnte sich nicht anmelden. Bitte kontaktieren Sie uns direkt per E-Mail, während wir die Einrichtung korrigieren."
+            )
+          );
+          return;
+        }
         throw new Error(
           `HTTP ${res.status}${
             serverError ? ` – ${serverError}` : ""

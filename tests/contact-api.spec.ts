@@ -494,3 +494,38 @@ test('api/contact reports mail failure when transport rejects', async () => {
 
   nodemailer.createTransport = originalCreateTransport;
 });
+
+test('api/contact reports SMTP authentication failures without leaking credentials detail', async () => {
+  const contactModule = await loadContactModule();
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async () => {
+      throw new Error('Invalid login: 535 5.7.8 Error: authentication failed');
+    },
+  })) as unknown as typeof nodemailer.createTransport;
+
+  process.env.SMTP_HOST = 'smtp.mock.local';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'mock-user';
+  process.env.SMTP_PASS = 'mock-pass';
+  process.env.MAIL_FROM = 'no-reply@fyrrehaven-61.dk';
+  process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
+  process.env.CONTACT_ALLOWED_ORIGINS = 'http://127.0.0.1:5173';
+
+  try {
+    const { result, res } = makeResponse();
+    const req = makeRequest(validBookingPayload);
+    await contactModule.default(req, res);
+
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({
+      ok: false,
+      error: 'MAIL_AUTH_FAILED',
+      detail: 'Mail server authentication failed.',
+    });
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
+});
