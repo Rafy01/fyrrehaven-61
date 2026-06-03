@@ -305,7 +305,6 @@ export default async function handler(req, res) {
         )
       )}</p>
       <p>${esc(t(uiLang, "contact.extraServicesApprovalNote"))}</p>
-      <p>${esc(t(uiLang, "contact.replySoon"))}</p>
       `
       : "";
 
@@ -353,12 +352,9 @@ export default async function handler(req, res) {
       (isExtraServicesReq
         ? `${
             hasRequestedExtras
-              ? t(uiLang, "contact.extraServicesThanksWithItems")
-              : t(uiLang, "contact.extraServicesThanksNoItems")
-          }\n\n${t(uiLang, "contact.extraServicesApprovalNote")}\n\n${t(
-            uiLang,
-            "contact.replySoon"
-          )}\n\n`
+            ? t(uiLang, "contact.extraServicesThanksWithItems")
+            : t(uiLang, "contact.extraServicesThanksNoItems")
+          }\n\n${t(uiLang, "contact.extraServicesApprovalNote")}\n\n`
         : `${t(uiLang, "contact.thanks", {
             type: isBookingReq ? bookingType : messageType,
           })} ${t(uiLang, "contact.replySoon")}\n\n`) +
