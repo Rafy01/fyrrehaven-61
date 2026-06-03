@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import {
   checkRateLimit,
   getRequesterIp,
+  normalizeEmail,
   validateContactHeaders,
   validateContactPayload,
 } from "./_lib/contactSecurity.mjs";
@@ -222,6 +223,7 @@ export default async function handler(req, res) {
       extras, // { items: [{id, qty, unitPriceDKK, label:{da,en}}], totalDKK }
     } = req.body ?? {};
     const uiLang = normalizeLang(lang);
+    const replyEmail = normalizeEmail(email);
     const bookingType = t(uiLang, "contact.type.booking");
     const messageType = t(uiLang, "contact.type.message");
 
@@ -342,8 +344,8 @@ export default async function handler(req, res) {
     const autoInfo = await transporter.sendMail({
       from, // DKIM/SPF på eget domæne
       sender: from,
-      envelope: { from, to: email },
-      to: email,
+      envelope: { from, to: replyEmail },
+      to: replyEmail,
       ...(autoBcc ? { bcc: autoBcc } : {}),
       subject: subjectUser,
       html: bodyUserHtml,
@@ -515,7 +517,7 @@ export default async function handler(req, res) {
             name || "—"
           )}</td></tr>
           <tr><td style="padding:4px 8px"><b>${esc(t(uiLang, "contact.fields.email"))}</b></td><td style="padding:4px 8px">${esc(
-            email || "—"
+          replyEmail || "—"
           )}</td></tr>
           <tr><td style="padding:4px 8px"><b>${esc(t(uiLang, "contact.fields.phone"))}</b></td><td style="padding:4px 8px">${esc(
             phone || "—"
@@ -549,7 +551,7 @@ export default async function handler(req, res) {
     const textAdmin =
       `${introAdmin}\n\n` +
       `${t(uiLang, "contact.fields.name")}: ${name || "—"}\n` +
-      `${t(uiLang, "contact.fields.email")}: ${email || "—"}\n` +
+      `${t(uiLang, "contact.fields.email")}: ${replyEmail || "—"}\n` +
       `${t(uiLang, "contact.fields.phone")}: ${phone || "—"}\n` +
       `${t(uiLang, "contact.fields.country")}: ${countryShown}\n` +
       `${t(uiLang, "contact.fields.language")}: ${uiLang}\n` +
@@ -611,7 +613,7 @@ export default async function handler(req, res) {
       subject: subjectAdmin,
       html: htmlAdmin,
       text: textAdmin,
-      replyTo: email,
+      replyTo: replyEmail,
       headers: { "X-Campaign": "website-contact" },
     });
 

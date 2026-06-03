@@ -22,6 +22,12 @@ function isBlockedBotUserAgent(req) {
   return /\b(bot|crawl|spider|archiver|fetch|monitor|checker|validator|preview|slurp|facebookexternalhit|twitterbot|linkedinbot|whatsapp|slackbot|discord|telegrambot|pinterest|embedly|quora\slink\spreview|vkshare|google-inspection-tool|googleweblight|bingbot)\b|bot(?=\/|$)/i.test(agent);
 }
 
+export function normalizeEmail(value) {
+  return String(value || "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+}
+
 export function getRequesterIp(req) {
   const maybeForwarded = getHeader(req, "x-forwarded-for");
   if (maybeForwarded) {
@@ -121,7 +127,7 @@ export function validateContactPayload(body) {
     };
   }
 
-  const email = String(body.email || "").trim();
+  const email = normalizeEmail(body.email);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return {
       ok: false,

@@ -55,6 +55,11 @@ type FormState = {
 
 const MAX_GUESTS = 10;
 const DIGITS_RE = /[^\d]/g;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function normalizeEmail(value: string) {
+  return value.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+}
 
 /** Resolve current UI language. */
 function useUiLang(explicit?: Lang): Lang {
@@ -253,6 +258,7 @@ export default function ContactForm({
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    const email = normalizeEmail(state.email);
 
     const missingMsg = isBooking
       ? t(
@@ -268,10 +274,21 @@ export default function ContactForm({
 
     if (
       !state.name.trim() ||
-      !state.email.trim() ||
+      !email ||
       (!isBooking && !state.message.trim())
     ) {
       setError(missingMsg);
+      return;
+    }
+
+    if (!EMAIL_RE.test(email)) {
+      setError(
+        t(
+          "Indtast venligst en gyldig e-mailadresse.",
+          "Please enter a valid email address.",
+          "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+        )
+      );
       return;
     }
 
@@ -414,7 +431,7 @@ export default function ContactForm({
           lang,
           purpose: purposeForApi,
           name: state.name.trim(),
-          email: state.email.trim(),
+          email,
           phone: fullPhone,
           countryIso: state.countryIso,
           message: isBooking ? undefined : state.message.trim(),
@@ -437,8 +454,27 @@ export default function ContactForm({
       });
 
       if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`HTTP ${res.status}${txt ? ` – ${txt}` : ""}`);
+        const detail = await res
+          .json()
+          .catch(() => ({ error: "", detail: "" }));
+        const serverError = String(detail?.error || "");
+        if (serverError === "INVALID_EMAIL") {
+          setError(
+            t(
+              "Indtast venligst en gyldig e-mailadresse.",
+              "Please enter a valid email address.",
+              "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+            )
+          );
+          return;
+        }
+        throw new Error(
+          `HTTP ${res.status}${
+            serverError ? ` – ${serverError}` : ""
+          }${
+            detail?.detail ? `: ${String(detail.detail)}` : ""
+          }`
+        );
       }
       setSent(true);
     } catch (err) {
@@ -883,6 +919,7 @@ export default function ContactForm({
           autoComplete="email"
           value={state.email}
           onChange={(e) => onChange("email", e.target.value)}
+          onBlur={(e) => onChange("email", normalizeEmail(e.target.value))}
           placeholder={t("din@adresse.dk", "your@email.com", "ihre@email.de")}
         />
       </div>
