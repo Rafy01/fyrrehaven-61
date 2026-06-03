@@ -164,9 +164,12 @@ export function validateContactPayload(body) {
     Boolean(body.selection) ||
     Boolean(body.guests) ||
     Boolean(body.stayPurpose);
+  const hasExtras =
+    purpose === "extra-services" ||
+    (Array.isArray(body.extras?.items) && body.extras.items.length > 0);
 
   const message = String(body.message || "").trim();
-  if (!isBooking && !message) {
+  if (!isBooking && !hasExtras && !message) {
     return {
       ok: false,
       status: 400,

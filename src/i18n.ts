@@ -41,6 +41,7 @@ i18n.use(initReactI18next).init({
     "cookiesPage",
     "privacyPage",
     "fees",
+    "extraServices",
     "guest",
     "navigation",
     "footer",

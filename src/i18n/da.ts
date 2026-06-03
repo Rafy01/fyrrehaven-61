@@ -263,6 +263,66 @@ export const da = {
       }
     }
   },
+  "extraServices": {
+    "page": {
+      "eyebrow": "Tilkøb til opholdet",
+      "title": "Ekstra services",
+      "lead": "Vi vil gerne gøre dit kommende ophold så nemt og behageligt som muligt. Derfor tilbyder vi ekstra services, som du kan anmode om her.",
+      "listAria": "Liste over ekstra services",
+      "includedTitle": "Inkluderet i lejen",
+      "includedText": "Viskestykke - Karklud - Shampoo - Shower gel - Håndsæbe - Opvaskemiddel - Opvaskepulver - Kaffebønner"
+    },
+    "form": {
+      "yes": "Ja",
+      "no": "Nej",
+      "select": "Vælg",
+      "free": "GRATIS",
+      "total": "Estimeret ekstra total",
+      "submit": "Send forespørgsel",
+      "sending": "Sender forespørgsel...",
+      "success": "Tak. Din forespørgsel om ekstra services er sendt.",
+      "summaryYes": "Gæsten ønsker ekstra services.",
+      "summaryNo": "Gæsten ønsker ikke ekstra services på nuværende tidspunkt.",
+      "noSpecificItems": "Der er ikke valgt specifikke antal.",
+      "dateHint": "Ekstra services skal bestilles senest 3 dage før ankomst, så vi kan nå at klargøre og bekræfte det praktiske.",
+      "bundleHint": "Komplet pakke med sengetøj, sengelinned og håndklæder",
+      "fields": {
+        "name": "Navn",
+        "email": "E-mailadresse",
+        "stayDate": "Dato for ophold",
+        "wantsExtras": "Ønsker du ekstra services?",
+        "otherRequests": "Andre ønsker?"
+      },
+      "placeholders": {
+        "name": "Lejers navn",
+        "email": "navn@email.dk",
+        "amount": "Ønsket antal",
+        "otherRequests": "Skriv dine ønsker her, så finder vi en løsning"
+      },
+      "hints": {
+        "high-chair": "Én højstol tilgængelig",
+        "baby-cot": "Én babyseng tilgængelig"
+      },
+      "calendar": {
+        "previous": "Forrige måned",
+        "next": "Næste måned"
+      },
+      "acceptBefore": "Ved at sætte flueben bekræfter du, at du har taget stilling til ekstra services, giver samtykke til behandling af din forespørgsel og har læst og accepteret vores",
+      "houseRules": "husregler",
+      "and": "og",
+      "feeList": "gebyroversigt",
+      "acceptAfter": "ved eventuelle overtrædelser. Koden til nøgleboksen sendes 1 time før ankomst, når dette er bekræftet.",
+      "errors": {
+        "required": "Udfyld venligst navn, e-mail og dato for ophold.",
+        "dateTooSoon": "Ekstra services skal bestilles senest 3 dage før ankomst. Vælg venligst en senere ankomstdato, eller kontakt os direkte, hvis opholdet er tæt på.",
+        "email": "Indtast venligst en gyldig e-mailadresse.",
+        "noSelection": "Vælg venligst mindst én ekstra service.",
+        "tooManyPeople": "Sengetøj, sengelinned, håndklæder og pakker kan samlet højst bestilles til 10 personer.",
+        "accept": "Accepter venligst husregler og gebyroversigt før indsendelse.",
+        "submit": "Kunne ikke sende forespørgslen. Prøv igen om lidt."
+      }
+    }
+  },
   "guest": {
     "accordion": {
       "pool": {
@@ -653,6 +713,7 @@ export const da = {
       "contact": "Kontakt os",
       "houseRules": "Husregler",
       "faq": "Ofte stillede spørgsmål",
+      "extraServices": "Ekstra services",
       "privacy": "Privatliv",
       "cookies": "Cookies",
       "sitemap": "Sitemap",
@@ -835,6 +896,27 @@ export const da = {
       ],
       "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
       "imageAlt": "Gebyroversigt",
+      "robots": {
+        "index": true,
+        "follow": true,
+        "noarchive": true
+      }
+    },
+    "extraServices": {
+      "title": "Ekstra services – Fyrrehaven 61",
+      "description": "Se tilkøb til opholdet i Fyrrehaven 61: sengetøj, sengelinned, håndklæder, pakker, påfyldning af vildmarksbad, højstol og babyseng.",
+      "keywords": [
+        "ekstra services",
+        "tilkøb sommerhus",
+        "sengetøj sommerhus",
+        "håndklæder sommerhus",
+        "vildmarksbad påfyldning",
+        "babyseng",
+        "højstol",
+        "Fyrrehaven 61"
+      ],
+      "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
+      "imageAlt": "Ekstra services til opholdet",
       "robots": {
         "index": true,
         "follow": true,

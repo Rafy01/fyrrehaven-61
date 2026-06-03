@@ -19,12 +19,7 @@ export default function Manual({ lang }: Props) {
   const saunaUrl = guestPathOf(lang, "sauna");
   const hottubUrl = guestPathOf(lang, "spa");
   const poolUrl = guestPathOf(lang, "pool");
-  const meterReadingUrl =
-    lang === "da"
-      ? "https://booking.fyrrehaven-61.dk/manual"
-      : lang === "de"
-      ? "https://booking.fyrrehaven-61.dk/de/benutzerhandbuch"
-      : "https://booking.fyrrehaven-61.dk/en/manual";
+  const meterReadingUrl = guestPathOf(lang, "checkInOut");
 
   const duringStayItems = [
     {

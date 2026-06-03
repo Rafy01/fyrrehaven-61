@@ -30,6 +30,36 @@ export default function App({
   const { i18n } = useTranslation();
   const location = useLocation();
 
+  useEffect(() => {
+    const html = document.documentElement;
+    html.dataset.inputModality = "pointer";
+
+    function onPointerDown() {
+      html.dataset.inputModality = "pointer";
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (
+        event.key === "Tab" ||
+        event.key === "ArrowDown" ||
+        event.key === "ArrowUp" ||
+        event.key === "ArrowLeft" ||
+        event.key === "ArrowRight" ||
+        event.key === "Enter" ||
+        event.key === " "
+      ) {
+        html.dataset.inputModality = "keyboard";
+      }
+    }
+
+    window.addEventListener("pointerdown", onPointerDown, true);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, []);
+
   // 🌐 Skift sprog og sæt HTML-attributter
   useLayoutEffect(() => {
     if (i18n.language !== lang) {
@@ -221,7 +251,7 @@ export default function App({
           </Box>
         </Container>
       </main>
-      <Footer lang={lang} />
+      <Footer lang={lang} guest={guest} />
       <ScrollMemory />
       <CookieButton />
     </Theme>

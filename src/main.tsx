@@ -24,6 +24,7 @@ import ChatDebug from "./pages/ChatDebug";
 import Book from "./pages/Book";
 import Privacy from "./pages/Privacy";
 import Fees from "./pages/Fees";
+import ExtraServices from "./pages/ExtraServices";
 
 // Gæstesider
 import GuestWelcome from "./pages/guest/Welcome";
@@ -62,6 +63,7 @@ const guestRoutes = (lang: Lang) => [
     element: <PracticalInfo lang={lang} />,
   },
   { path: GUEST_PAGES.checkInOut[lang], element: <CheckInOut /> },
+  { path: GUEST_PAGES.extraServices[lang], element: <ExtraServices lang={lang} /> },
 ];
 
 const router = createBrowserRouter([

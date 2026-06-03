@@ -65,14 +65,26 @@
   width: 100%;
   box-sizing: border-box;
 }
-input:focus-visible, .select:focus-visible, .textarea:focus-visible {
+input:focus-visible, .textarea:focus-visible {
     outline-offset: none; 
     outline: none
 }
+.select:focus-visible {
+  outline: none;
+}
+:global(html[data-input-modality="keyboard"]) .select:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px; 
+}
 
 .input:focus,
-.select:focus,
 .textarea:focus {
+  border-color: var(--focus);
+}
+.select:focus {
+  border-color: rgba(15, 23, 42, 0.12);
+}
+:global(html[data-input-modality="keyboard"]) .select:focus {
   border-color: var(--focus);
 }
 
@@ -187,4 +199,3 @@ input[type="file"] {
 .fileName {
   overflow-wrap: anywhere;
 }
-
