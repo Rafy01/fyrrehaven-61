@@ -284,7 +284,7 @@ export const de = {
       "summaryYes": "Der Gast möchte Zusatzleistungen.",
       "summaryNo": "Der Gast möchte derzeit keine Zusatzleistungen.",
       "noSpecificItems": "Keine konkreten Mengen ausgewählt.",
-      "dateHint": "Zusatzleistungen müssen spätestens 3 Tage vor Ankunft angefragt werden, damit wir Vorbereitung und praktische Details bestätigen können.",
+      "dateHint": "Zusatzleistungen müssen spätestens 3 Tage vor Ankunft angefragt werden, damit wir Vorbereitung.",
       "bundleHint": "Komplettpaket mit Bettwaren, Bettwäsche und Handtüchern",
       "fields": {
         "name": "Name",
