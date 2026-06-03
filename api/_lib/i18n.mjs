@@ -26,8 +26,15 @@ const resources = {
     },
     contact: {
       subjectUser: "Tak for din henvendelse – {{siteName}}",
+      extraServicesSubjectUser: "Ekstra services til dit ophold – {{siteName}}",
       greeting: "Hej {{name}},",
       thanks: "Tak for din {{type}}.",
+      extraServicesThanksWithItems:
+        "Tak for din besked. Vi har modtaget din forespørgsel om ekstra services til dit kommende ophold i sommerhuset.",
+      extraServicesThanksNoItems:
+        "Tak for din besked. Vi har noteret, at du ikke ønsker ekstra services til dit kommende ophold i sommerhuset.",
+      extraServicesApprovalNote:
+        "Vi har også registreret, at du har læst og accepteret vores husregler og gebyroversigt.",
       type: {
         booking: "bookingforespørgsel",
         message: "henvendelse",
@@ -40,6 +47,7 @@ const resources = {
       replyText: "Svar blot på denne mail, hvis du har spørgsmål.",
       introAdmin: "Ny indsendelse fra websitet:",
       bookingDetails: "Bookingoplysninger",
+      arrivalDate: "Ankomstdato",
       extraServices: "Ekstra services",
       extrasTotal: "Ekstra i alt",
       totalInclExtras: "Estimeret total inkl. ekstra",
@@ -92,8 +100,15 @@ const resources = {
     },
     contact: {
       subjectUser: "Thanks for your message – {{siteName}}",
+      extraServicesSubjectUser: "Extra services for your stay – {{siteName}}",
       greeting: "Hi {{name}},",
       thanks: "Thanks for your {{type}}.",
+      extraServicesThanksWithItems:
+        "Thanks for your message. We have received your request for extra services for your upcoming stay at the summer house.",
+      extraServicesThanksNoItems:
+        "Thanks for your message. We have noted that you do not need extra services for your upcoming stay at the summer house.",
+      extraServicesApprovalNote:
+        "We have also registered that you have read and accepted our house rules and fee list.",
       type: {
         booking: "booking request",
         message: "message",
@@ -106,6 +121,7 @@ const resources = {
       replyText: "Just reply to this email if you have any questions.",
       introAdmin: "New submission from the website:",
       bookingDetails: "Booking details",
+      arrivalDate: "Arrival date",
       extraServices: "Extra services",
       extrasTotal: "Extras total",
       totalInclExtras: "Estimated total incl. extras",
@@ -158,8 +174,15 @@ const resources = {
     },
     contact: {
       subjectUser: "Danke für Ihre Nachricht – {{siteName}}",
+      extraServicesSubjectUser: "Zusatzleistungen für Ihren Aufenthalt – {{siteName}}",
       greeting: "Hallo {{name}},",
       thanks: "Danke für Ihre {{type}}.",
+      extraServicesThanksWithItems:
+        "Danke für Ihre Nachricht. Wir haben Ihre Anfrage zu Zusatzleistungen für Ihren bevorstehenden Aufenthalt im Ferienhaus erhalten.",
+      extraServicesThanksNoItems:
+        "Danke für Ihre Nachricht. Wir haben notiert, dass Sie für Ihren bevorstehenden Aufenthalt im Ferienhaus keine Zusatzleistungen benötigen.",
+      extraServicesApprovalNote:
+        "Wir haben außerdem registriert, dass Sie unsere Hausregeln und Gebührenübersicht gelesen und akzeptiert haben.",
       type: {
         booking: "Buchungsanfrage",
         message: "Nachricht",
@@ -172,6 +195,7 @@ const resources = {
       replyText: "Antworten Sie einfach auf diese E-Mail, wenn Sie Fragen haben.",
       introAdmin: "Neue Einsendung von der Website:",
       bookingDetails: "Buchungsdetails",
+      arrivalDate: "Anreisedatum",
       extraServices: "Zusatzleistungen",
       extrasTotal: "Zusatzleistungen gesamt",
       totalInclExtras: "Geschätzter Gesamtpreis inkl. Zusatzleistungen",

@@ -220,7 +220,7 @@ export default async function handler(req, res) {
       selection, // { start, endExclusive, nights, baseNightsTotalDKK, cleaningFeeDKK, totalWithCleaningDKK, totalWithCleaningAndExtrasDKK, breakdown[] }
 
       // NEW: ekstra services
-      extras, // { items: [{id, qty, unitPriceDKK, label:{da,en}}], totalDKK }
+      extras, // { stayDate, items: [{id, qty, unitPriceDKK, label:{da,en}}], totalDKK }
     } = req.body ?? {};
     const uiLang = normalizeLang(lang);
     const replyEmail = normalizeEmail(email);
@@ -231,6 +231,7 @@ export default async function handler(req, res) {
     const extrasItemsRaw = Array.isArray(extras?.items) ? extras.items : [];
     const isExtraServicesReq =
       intent === "extra-services" || extrasItemsRaw.length > 0;
+    const hasRequestedExtras = extrasItemsRaw.length > 0;
     const isBookingReq =
       intent === "booking" || !!selection || !!guests || !!stayPurpose;
 
@@ -289,18 +290,39 @@ export default async function handler(req, res) {
 
     // -------- 1) AUTO-REPLY TIL BRUGER (sendes med det samme) --------
     const siteName = process.env.SITE_NAME || "Fyrrehaven 61";
-    const subjectUser = t(uiLang, "contact.subjectUser", { siteName });
+    const subjectUser = isExtraServicesReq
+      ? t(uiLang, "contact.extraServicesSubjectUser", { siteName })
+      : t(uiLang, "contact.subjectUser", { siteName });
+
+    const extraServicesUserBody = isExtraServicesReq
+      ? `
+      <p>${esc(
+        t(
+          uiLang,
+          hasRequestedExtras
+            ? "contact.extraServicesThanksWithItems"
+            : "contact.extraServicesThanksNoItems"
+        )
+      )}</p>
+      <p>${esc(t(uiLang, "contact.extraServicesApprovalNote"))}</p>
+      <p>${esc(t(uiLang, "contact.replySoon"))}</p>
+      `
+      : "";
 
     const userBody = `
       <p>${esc(t(uiLang, "contact.greeting", { name }))}</p>
-      <p>${esc(
-        t(uiLang, "contact.thanks", {
-          type: isBookingReq ? bookingType : messageType,
-        })
-      )}
-      ${esc(t(uiLang, "contact.replySoon"))}</p>
       ${
-        isBookingReq
+        isExtraServicesReq
+          ? extraServicesUserBody
+          : `<p>${esc(
+              t(uiLang, "contact.thanks", {
+                type: isBookingReq ? bookingType : messageType,
+              })
+            )}
+            ${esc(t(uiLang, "contact.replySoon"))}</p>`
+      }
+      ${
+        isBookingReq && !isExtraServicesReq
           ? `<p><b>${esc(t(uiLang, "contact.quickSummary"))}</b><br/>
              ${esc(t(uiLang, "contact.period"))}: ${fmtDate(
               selection?.start,
@@ -328,10 +350,19 @@ export default async function handler(req, res) {
     `;
     const bodyUserText =
       `${t(uiLang, "contact.greeting", { name })}\n\n` +
-      `${t(uiLang, "contact.thanks", {
-        type: isBookingReq ? bookingType : messageType,
-      })} ${t(uiLang, "contact.replySoon")}\n\n` +
-      (isBookingReq
+      (isExtraServicesReq
+        ? `${
+            hasRequestedExtras
+              ? t(uiLang, "contact.extraServicesThanksWithItems")
+              : t(uiLang, "contact.extraServicesThanksNoItems")
+          }\n\n${t(uiLang, "contact.extraServicesApprovalNote")}\n\n${t(
+            uiLang,
+            "contact.replySoon"
+          )}\n\n`
+        : `${t(uiLang, "contact.thanks", {
+            type: isBookingReq ? bookingType : messageType,
+          })} ${t(uiLang, "contact.replySoon")}\n\n`) +
+      (isBookingReq && !isExtraServicesReq
         ? `${t(uiLang, "contact.period")}: ${fmtDate(
             selection?.start,
             uiLang
@@ -379,6 +410,7 @@ export default async function handler(req, res) {
 
     // Extras
     const extrasItems = extrasItemsRaw;
+    const extraServicesArrivalStr = fmtDate(extras?.stayDate, adminLang);
     const extrasTotalStr =
       extras && typeof extras.totalDKK === "number"
         ? fmtMoney(extras.totalDKK, adminLang)
@@ -534,6 +566,15 @@ export default async function handler(req, res) {
           <tr><td style="padding:4px 8px"><b>${esc(adminT("contact.fields.context"))}</b></td><td style="padding:4px 8px">${esc(
             intent
           )}</td></tr>
+          ${
+            isExtraServicesReq
+              ? `<tr><td style="padding:4px 8px"><b>${esc(
+                  adminT("contact.arrivalDate")
+                )}</b></td><td style="padding:4px 8px">${esc(
+                  extraServicesArrivalStr
+                )}</td></tr>`
+              : ""
+          }
         </table>
 
         ${isBookingReq ? bookingHtml : ""}
@@ -561,6 +602,9 @@ export default async function handler(req, res) {
       `${adminT("contact.fields.country")}: ${countryShown}\n` +
       `${adminT("contact.fields.language")}: ${uiLang}\n` +
       `${adminT("contact.fields.context")}: ${intent}\n` +
+      (isExtraServicesReq
+        ? `${adminT("contact.arrivalDate")}: ${extraServicesArrivalStr}\n`
+        : "") +
       (isBookingReq
         ? `\n— ${adminT("contact.bookingDetails")} —\n` +
           `${adminT("contact.period")}: ${startStr} – ${endStr} · ${nightsStr} ${adminT("contact.nights")}\n` +

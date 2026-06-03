@@ -258,29 +258,6 @@ export default function ExtraServices({ lang }: { lang: Lang }) {
 
     setSending(true);
     try {
-      const requestSummary =
-        wantsExtras === "yes"
-          ? [
-              t("form.summaryYes"),
-              `${t("form.fields.stayDate")}: ${stayDate}`,
-              selectedItems.length
-                ? selectedItems
-                    .map((item) => {
-                      const service = extraServices.find(
-                        (candidate) => candidate.id === item.id
-                      );
-                      return `- ${service?.title[lang] ?? item.id}: ${item.qty}`;
-                    })
-                    .join("\n")
-                : t("form.noSpecificItems"),
-              trimmedMessage
-                ? `${t("form.fields.otherRequests")}:\n${trimmedMessage}`
-                : "",
-            ]
-              .filter(Boolean)
-              .join("\n")
-          : `${t("form.summaryNo")}\n${t("form.fields.stayDate")}: ${stayDate}`;
-
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -290,10 +267,11 @@ export default function ExtraServices({ lang }: { lang: Lang }) {
           context: "extra-services",
           name: trimmedName,
           email: replyEmail,
-          message: requestSummary,
+          message: trimmedMessage,
           consent: accepted,
           feesAccepted: accepted,
           extras: {
+            stayDate,
             items: selectedItems,
             totalDKK,
           },
