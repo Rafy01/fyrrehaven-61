@@ -2,7 +2,12 @@ export const da = {
   "common": {
     "brand": "Fyrrehaven 61",
     "bookNow": "Book via Airbnb",
-    "sleepsX": "Plads til {{count}} personer"
+    "sleepsX": "Plads til {{count}} personer",
+    "form": {
+      "selectPlaceholder": "Vælg",
+      "chooseFile": "Vælg fil",
+      "chooseFiles": "Vælg filer"
+    }
   },
   "home": {
     "heroTitle": "Familievenligt sommerhus i skoven – tæt på stranden",

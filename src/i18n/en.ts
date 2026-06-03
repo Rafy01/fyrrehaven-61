@@ -2,7 +2,12 @@ export const en = {
   "common": {
     "brand": "Fyrrehaven 61",
     "bookNow": "Book on Airbnb",
-    "sleepsX": "Sleeps {{count}} guests"
+    "sleepsX": "Sleeps {{count}} guests",
+    "form": {
+      "selectPlaceholder": "Choose",
+      "chooseFile": "Choose file",
+      "chooseFiles": "Choose files"
+    }
   },
   "home": {
     "heroTitle": "Family-friendly holiday home in the woods – near the beach",
