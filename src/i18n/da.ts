@@ -160,6 +160,22 @@ export const da = {
       "imageAlt": "Familien bag huset",
       "primaryCta": "Book direkte",
       "secondaryCta": "Booking Airbnb"
+    },
+    "form": {
+      "heading": "Skriv til os",
+      "submit": {
+        "message": "Send besked",
+        "booking": "Send forespørgsel",
+        "sendingMessage": "Sender besked...",
+        "sendingBooking": "Sender forespørgsel...",
+        "aria": "Send formularen"
+      },
+      "success": {
+        "messageTitle": "Tak for din henvendelse!",
+        "bookingTitle": "Tak for din bookingforespørgsel!",
+        "messageLead": "Vi vender tilbage hurtigst muligt. Her er en kopi af det, du sendte:",
+        "bookingLead": "Vi vender tilbage hurtigst muligt. Her er en oversigt over din forespørgsel:"
+      }
     }
   },
   "fees": {

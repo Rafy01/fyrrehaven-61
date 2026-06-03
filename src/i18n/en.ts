@@ -160,6 +160,22 @@ export const en = {
       "imageAlt": "The family behind the house",
       "primaryCta": "Book directly",
       "secondaryCta": "Booking Airbnb"
+    },
+    "form": {
+      "heading": "Send us a message",
+      "submit": {
+        "message": "Send message",
+        "booking": "Send request",
+        "sendingMessage": "Sending message...",
+        "sendingBooking": "Sending request...",
+        "aria": "Submit the form"
+      },
+      "success": {
+        "messageTitle": "Thanks for your message!",
+        "bookingTitle": "Thanks for your booking request!",
+        "messageLead": "We'll get back to you as soon as possible. Here's a copy of what you sent:",
+        "bookingLead": "We'll get back to you shortly. Here's a summary of your request:"
+      }
     }
   },
   "fees": {

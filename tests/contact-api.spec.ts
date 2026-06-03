@@ -23,6 +23,8 @@ type MockMailOptions = {
   from?: string;
   to?: string | string[];
   subject?: string;
+  html?: string;
+  text?: string;
 };
 
 type MockMailResult = {
@@ -175,6 +177,58 @@ test('api/contact handles submission and sends both user and admin mail', async 
   });
 
   nodemailer.createTransport = originalCreateTransport;
+});
+
+test('api/contact keeps admin notification in English for localized submissions', async () => {
+  const contactModule = await loadContactModule();
+  const sentMessages: MockMailOptions[] = [];
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async (options: MockMailOptions): Promise<MockMailResult> => {
+      sentMessages.push(options);
+      return {
+        messageId: `mock-${sentMessages.length}`,
+        accepted: [options.to],
+        rejected: [],
+        response: '250 OK',
+        envelope: { from: options.from, to: [options.to] },
+        envelopeTime: Date.now(),
+        messageTime: Date.now(),
+        messageSize: 0,
+      };
+    },
+  })) as unknown as typeof nodemailer.createTransport;
+
+  process.env.SMTP_HOST = 'smtp.mock.local';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'mock-user';
+  process.env.SMTP_PASS = 'mock-pass';
+  process.env.MAIL_FROM = 'no-reply@fyrrehaven-61.dk';
+  process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
+  process.env.CONTACT_ALLOWED_ORIGINS = 'http://127.0.0.1:5173';
+
+  try {
+    const { result, res } = makeResponse();
+    const req = makeRequest({
+      ...validBookingPayload,
+      lang: 'de',
+      stayPurpose: 'Familienurlaub Test',
+    });
+
+    await contactModule.default(req, res);
+
+    expect(result.status).toBe(200);
+    expect(sentMessages).toHaveLength(2);
+    expect(sentMessages[1].text).toContain('New submission from the website:');
+    expect(sentMessages[1].text).toContain('Booking details');
+    expect(sentMessages[1].text).toContain('Approvals');
+    expect(sentMessages[1].text).not.toContain('Buchungsdetails');
+    expect(sentMessages[1].text).not.toContain('Bestätigungen');
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
 });
 
 test('api/contact rejects invalid email addresses', async () => {
