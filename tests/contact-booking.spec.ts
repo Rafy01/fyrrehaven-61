@@ -60,6 +60,35 @@ test.describe('contact and booking forms', () => {
     expect(requests[0].phone).toContain('12345678');
   });
 
+  test('contact form blocks invalid email before submitting', async ({ page }) => {
+    const requests: SubmittedPayload[] = [];
+
+    await page.route('**/api/contact', async (route) => {
+      const request = route.request();
+      const postData = request.postData() ?? '{}';
+      requests.push(JSON.parse(postData) as SubmittedPayload);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
+    });
+
+    await page.goto('/de/kontakt');
+    await page.fill('#cf-name', 'Email Tester');
+    await page.fill('#cf-email', 'not-an-email');
+    await page.selectOption('#cf-country', 'DK');
+    await page.fill('#cf-phone', '12345678');
+    await page.fill('#cf-msg', 'Invalid email validation test');
+    await page.locator('input[type=checkbox]').nth(0).check();
+    await page.click('button[type="submit"]');
+
+    await expect(
+      page.getByText('Bitte geben Sie eine gültige E-Mail-Adresse ein.')
+    ).toHaveCount(1);
+    expect(requests).toHaveLength(0);
+  });
+
   test('booking form sends a booking payload and shows booking confirmation', async ({ page }) => {
     const requests: SubmittedPayload[] = [];
 

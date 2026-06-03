@@ -23,6 +23,8 @@ type MockMailOptions = {
   from?: string;
   to?: string | string[];
   subject?: string;
+  html?: string;
+  text?: string;
 };
 
 type MockMailResult = {
@@ -177,6 +179,107 @@ test('api/contact handles submission and sends both user and admin mail', async 
   nodemailer.createTransport = originalCreateTransport;
 });
 
+test('api/contact keeps admin notification in English for localized submissions', async () => {
+  const contactModule = await loadContactModule();
+  const sentMessages: MockMailOptions[] = [];
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async (options: MockMailOptions): Promise<MockMailResult> => {
+      sentMessages.push(options);
+      return {
+        messageId: `mock-${sentMessages.length}`,
+        accepted: [options.to],
+        rejected: [],
+        response: '250 OK',
+        envelope: { from: options.from, to: [options.to] },
+        envelopeTime: Date.now(),
+        messageTime: Date.now(),
+        messageSize: 0,
+      };
+    },
+  })) as unknown as typeof nodemailer.createTransport;
+
+  process.env.SMTP_HOST = 'smtp.mock.local';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'mock-user';
+  process.env.SMTP_PASS = 'mock-pass';
+  process.env.MAIL_FROM = 'no-reply@fyrrehaven-61.dk';
+  process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
+  process.env.CONTACT_ALLOWED_ORIGINS = 'http://127.0.0.1:5173';
+
+  try {
+    const { result, res } = makeResponse();
+    const req = makeRequest({
+      ...validBookingPayload,
+      lang: 'de',
+      stayPurpose: 'Familienurlaub Test',
+    });
+
+    await contactModule.default(req, res);
+
+    expect(result.status).toBe(200);
+    expect(sentMessages).toHaveLength(2);
+    expect(sentMessages[1].text).toContain('New submission from the website:');
+    expect(sentMessages[1].text).toContain('Booking details');
+    expect(sentMessages[1].text).toContain('Approvals');
+    expect(sentMessages[1].text).not.toContain('Buchungsdetails');
+    expect(sentMessages[1].text).not.toContain('Bestätigungen');
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
+});
+
+test('api/contact normalizes pasted email values before sending mail', async () => {
+  const contactModule = await loadContactModule();
+  const sentMessages: MockMailOptions[] = [];
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async (options: MockMailOptions): Promise<MockMailResult> => {
+      sentMessages.push(options);
+      return {
+        messageId: `mock-${sentMessages.length}`,
+        accepted: [options.to],
+        rejected: [],
+        response: '250 OK',
+        envelope: { from: options.from, to: [options.to] },
+        envelopeTime: Date.now(),
+        messageTime: Date.now(),
+        messageSize: 0,
+      };
+    },
+  })) as unknown as typeof nodemailer.createTransport;
+
+  process.env.SMTP_HOST = 'smtp.mock.local';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'mock-user';
+  process.env.SMTP_PASS = 'mock-pass';
+  process.env.MAIL_FROM = 'no-reply@fyrrehaven-61.dk';
+  process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
+  process.env.CONTACT_ALLOWED_ORIGINS = 'http://127.0.0.1:5173';
+
+  try {
+    const { result, res } = makeResponse();
+    const req = makeRequest({
+      ...validBookingPayload,
+      email: ' test+api@example.com\u200B ',
+    });
+
+    await contactModule.default(req, res);
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ ok: true });
+    expect(sentMessages[0]).toMatchObject({
+      to: 'test+api@example.com',
+    });
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
+});
+
 test('api/contact rejects invalid email addresses', async () => {
   const contactModule = await loadContactModule();
   process.env.CONTACT_ALLOWED_ORIGINS = 'http://127.0.0.1:5173';
@@ -266,6 +369,104 @@ test('api/contact rejects requests from bot user agents', async () => {
   }
 });
 
+test('api/contact allows submissions from the staging domain', async () => {
+  const contactModule = await loadContactModule();
+  const sentMessages: MockMailOptions[] = [];
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async (options: MockMailOptions): Promise<MockMailResult> => {
+      sentMessages.push(options);
+      return {
+        messageId: `mock-${sentMessages.length}`,
+        accepted: [options.to],
+        rejected: [],
+        response: '250 OK',
+        envelope: { from: options.from, to: [options.to] },
+        envelopeTime: Date.now(),
+        messageTime: Date.now(),
+        messageSize: 0,
+      };
+    },
+  })) as unknown as typeof nodemailer.createTransport;
+
+  process.env.SMTP_HOST = 'smtp.mock.local';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'mock-user';
+  process.env.SMTP_PASS = 'mock-pass';
+  process.env.MAIL_FROM = 'no-reply@fyrrehaven-61.dk';
+  process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
+  delete process.env.CONTACT_ALLOWED_ORIGINS;
+
+  try {
+    const { result, res } = makeResponse();
+    const req = makeRequest(
+      validBookingPayload,
+      'https://test.fyrrehaven-61.dk',
+      'Playwright Test Agent',
+      '127.0.0.201'
+    );
+
+    await contactModule.default(req, res);
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ ok: true });
+    expect(sentMessages).toHaveLength(2);
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
+});
+
+test('api/contact allows submissions from Vercel project previews', async () => {
+  const contactModule = await loadContactModule();
+  const sentMessages: MockMailOptions[] = [];
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async (options: MockMailOptions): Promise<MockMailResult> => {
+      sentMessages.push(options);
+      return {
+        messageId: `mock-${sentMessages.length}`,
+        accepted: [options.to],
+        rejected: [],
+        response: '250 OK',
+        envelope: { from: options.from, to: [options.to] },
+        envelopeTime: Date.now(),
+        messageTime: Date.now(),
+        messageSize: 0,
+      };
+    },
+  })) as unknown as typeof nodemailer.createTransport;
+
+  process.env.SMTP_HOST = 'smtp.mock.local';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'mock-user';
+  process.env.SMTP_PASS = 'mock-pass';
+  process.env.MAIL_FROM = 'no-reply@fyrrehaven-61.dk';
+  process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
+  delete process.env.CONTACT_ALLOWED_ORIGINS;
+
+  try {
+    const { result, res } = makeResponse();
+    const req = makeRequest(
+      validBookingPayload,
+      'https://fyrrehaven-61-git-stage-rafy.vercel.app',
+      'Playwright Test Agent',
+      '127.0.0.202'
+    );
+
+    await contactModule.default(req, res);
+
+    expect(result.status).toBe(200);
+    expect(result.body).toMatchObject({ ok: true });
+    expect(sentMessages).toHaveLength(2);
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
+});
+
 test('api/contact enforces rate limits for repeated submissions', async () => {
   process.env.CONTACT_RATE_LIMIT = '1';
   process.env.CONTACT_RATE_WINDOW_MS = '60000';
@@ -297,7 +498,7 @@ test('api/contact enforces rate limits for repeated submissions', async () => {
   process.env.CONTACT_RATE_WINDOW_MS = '60000';
 
   try {
-    const remoteAddress = `127.0.0.${Math.floor(Math.random() * 100) + 1}`;
+    const remoteAddress = '127.0.0.250';
     const first = makeResponse();
     const req1 = makeRequest(validBookingPayload, 'http://127.0.0.1:5173', 'Playwright Test Agent', remoteAddress);
     await contactModule.default(req1, first.res);
@@ -346,4 +547,39 @@ test('api/contact reports mail failure when transport rejects', async () => {
   });
 
   nodemailer.createTransport = originalCreateTransport;
+});
+
+test('api/contact reports SMTP authentication failures without leaking credentials detail', async () => {
+  const contactModule = await loadContactModule();
+  const originalCreateTransport = nodemailer.createTransport;
+
+  nodemailer.createTransport = (() => ({
+    verify: async (): Promise<true> => true,
+    sendMail: async () => {
+      throw new Error('Invalid login: 535 5.7.8 Error: authentication failed');
+    },
+  })) as unknown as typeof nodemailer.createTransport;
+
+  process.env.SMTP_HOST = 'smtp.mock.local';
+  process.env.SMTP_PORT = '587';
+  process.env.SMTP_USER = 'mock-user';
+  process.env.SMTP_PASS = 'mock-pass';
+  process.env.MAIL_FROM = 'no-reply@fyrrehaven-61.dk';
+  process.env.MAIL_TO = 'host@fyrrehaven-61.dk';
+  process.env.CONTACT_ALLOWED_ORIGINS = 'http://127.0.0.1:5173';
+
+  try {
+    const { result, res } = makeResponse();
+    const req = makeRequest(validBookingPayload);
+    await contactModule.default(req, res);
+
+    expect(result.status).toBe(502);
+    expect(result.body).toMatchObject({
+      ok: false,
+      error: 'MAIL_AUTH_FAILED',
+      detail: 'Mail server authentication failed.',
+    });
+  } finally {
+    nodemailer.createTransport = originalCreateTransport;
+  }
 });

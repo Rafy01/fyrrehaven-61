@@ -4,13 +4,12 @@ import Head from "../../lib/Head";
 import Hero from "../../components/Hero";
 import ContactForm from "../../components/ContactForm";
 import HostsSection from "../../components/HostsSection";
-import { chooseLang } from "../../lib/lang";
 import { pathOf, type Lang } from "../../lib/routes";
 import { getSeoMeta } from "../../i18n/seo";
+import { useTranslation } from "react-i18next";
 
 export default function ContactPage({ lang }: { lang: Lang }) {
-  const t = (da: string, en: string, de = en) =>
-    chooseLang(lang, da, en, de);
+  const { t } = useTranslation("contact");
   const path = pathOf(lang, "contact");
   const seo = getSeoMeta(lang, "contact");
 
@@ -68,7 +67,7 @@ export default function ContactPage({ lang }: { lang: Lang }) {
       <Container size="3" id="contact">
         <Box py="6">
           <Heading size="6" mb="2">
-            {t("Skriv til os", "Send us a message")}
+            {t("form.heading")}
           </Heading>
           <Box mt="4">
             {/* VIGTIGT: giv formen lang, så labels/placeholder skifter sprog */}

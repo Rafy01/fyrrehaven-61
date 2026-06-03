@@ -55,6 +55,11 @@ type FormState = {
 
 const MAX_GUESTS = 10;
 const DIGITS_RE = /[^\d]/g;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function normalizeEmail(value: string) {
+  return value.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+}
 
 /** Resolve current UI language. */
 function useUiLang(explicit?: Lang): Lang {
@@ -81,6 +86,7 @@ export default function ContactForm({
   submitUrl = "/api/contact",
   variant = "contact",
 }: Props) {
+  const { t: i18nT } = useTranslation("contact");
   const ui = useUiLang(langProp);
   const lang: Lang = ui;
   const t = (da: string, en: string, de = en) =>
@@ -253,6 +259,7 @@ export default function ContactForm({
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    const email = normalizeEmail(state.email);
 
     const missingMsg = isBooking
       ? t(
@@ -268,10 +275,21 @@ export default function ContactForm({
 
     if (
       !state.name.trim() ||
-      !state.email.trim() ||
+      !email ||
       (!isBooking && !state.message.trim())
     ) {
       setError(missingMsg);
+      return;
+    }
+
+    if (!EMAIL_RE.test(email)) {
+      setError(
+        t(
+          "Indtast venligst en gyldig e-mailadresse.",
+          "Please enter a valid email address.",
+          "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+        )
+      );
       return;
     }
 
@@ -414,7 +432,7 @@ export default function ContactForm({
           lang,
           purpose: purposeForApi,
           name: state.name.trim(),
-          email: state.email.trim(),
+          email,
           phone: fullPhone,
           countryIso: state.countryIso,
           message: isBooking ? undefined : state.message.trim(),
@@ -437,8 +455,37 @@ export default function ContactForm({
       });
 
       if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`HTTP ${res.status}${txt ? ` – ${txt}` : ""}`);
+        const detail = await res
+          .json()
+          .catch(() => ({ error: "", detail: "" }));
+        const serverError = String(detail?.error || "");
+        if (serverError === "INVALID_EMAIL") {
+          setError(
+            t(
+              "Indtast venligst en gyldig e-mailadresse.",
+              "Please enter a valid email address.",
+              "Bitte geben Sie eine gültige E-Mail-Adresse ein."
+            )
+          );
+          return;
+        }
+        if (serverError === "MAIL_AUTH_FAILED") {
+          setError(
+            t(
+              "Mailserveren kunne ikke logge ind. Kontakt os venligst direkte på e-mail, mens vi retter opsætningen.",
+              "The mail server could not sign in. Please contact us directly by email while we fix the setup.",
+              "Der Mailserver konnte sich nicht anmelden. Bitte kontaktieren Sie uns direkt per E-Mail, während wir die Einrichtung korrigieren."
+            )
+          );
+          return;
+        }
+        throw new Error(
+          `HTTP ${res.status}${
+            serverError ? ` – ${serverError}` : ""
+          }${
+            detail?.detail ? `: ${String(detail.detail)}` : ""
+          }`
+        );
       }
       setSent(true);
     } catch (err) {
@@ -485,25 +532,13 @@ export default function ContactForm({
       >
         <h3 className={styles.sTitle}>
           {isBooking
-            ? t(
-                "Tak for din bookingforespørgsel!",
-                "Thanks for your booking request!",
-                "Vielen Dank für Ihre Buchungsanfrage!"
-              )
-            : t("Tak for din henvendelse!", "Thanks for your message!", "Vielen Dank für Ihre Nachricht!")}
+            ? i18nT("form.success.bookingTitle")
+            : i18nT("form.success.messageTitle")}
         </h3>
         <p className={styles.sLead}>
           {isBooking
-            ? t(
-                "Vi vender tilbage hurtigst muligt. Her er en oversigt over din forespørgsel:",
-                "We’ll get back to you shortly. Here’s a summary of your request:",
-                "Wir melden uns so schnell wie möglich. Hier ist eine Übersicht Ihrer Anfrage:"
-              )
-            : t(
-                "Vi vender tilbage hurtigst muligt. Her er en kopi af det, du sendte:",
-                "We'll get back to you as soon as possible. Here's a copy of what you sent:",
-                "Wir melden uns so schnell wie möglich. Hier ist eine Kopie Ihrer Nachricht:"
-              )}
+            ? i18nT("form.success.bookingLead")
+            : i18nT("form.success.messageLead")}
         </p>
 
         {isBooking && (
@@ -883,6 +918,7 @@ export default function ContactForm({
           autoComplete="email"
           value={state.email}
           onChange={(e) => onChange("email", e.target.value)}
+          onBlur={(e) => onChange("email", normalizeEmail(e.target.value))}
           placeholder={t("din@adresse.dk", "your@email.com", "ihre@email.de")}
         />
       </div>
@@ -1051,10 +1087,14 @@ export default function ContactForm({
           variant="primary"
           label={
             isBooking
-              ? t("Send forspørgsel", "Send request", "Anfrage senden")
-              : t("Send besked", "Send message", "Nachricht senden")
+              ? sending
+                ? i18nT("form.submit.sendingBooking")
+                : i18nT("form.submit.booking")
+              : sending
+              ? i18nT("form.submit.sendingMessage")
+              : i18nT("form.submit.message")
           }
-          ariaLabel={t("Send formularen", "Submit the form", "Formular senden")}
+          ariaLabel={i18nT("form.submit.aria")}
           fullWidth
         />
       </div>
