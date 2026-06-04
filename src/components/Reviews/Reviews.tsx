@@ -1,7 +1,8 @@
 import { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./Reviews.module.css";
 import Buttons from "../Buttons";
-import { chooseLang, type Lang } from "../../lib/lang";
+import type { Lang } from "../../lib/lang";
 import { reviews as allReviews, type ReviewItem } from "../../data/reviews";
 
 export type ReviewsProps = {
@@ -31,10 +32,10 @@ function Star({ filled }: { filled: boolean }) {
     </svg>
   );
 }
-function Stars({ value }: { value: number }) {
+function Stars({ value, ariaLabel }: { value: number; ariaLabel: string }) {
   const v = Math.max(0, Math.min(5, value));
   return (
-    <span className={styles.stars} aria-label={`${v.toFixed(1)} af 5`}>
+    <span className={styles.stars} aria-label={ariaLabel}>
       {[1, 2, 3, 4, 5].map((i) => (
         <Star key={i} filled={i <= Math.round(v)} />
       ))}
@@ -61,8 +62,16 @@ export default function Reviews({
   average,
   showSchema = true,
 }: ReviewsProps) {
-  const t = (da: string, en: string, de = en) =>
-    chooseLang(lang, da, en, de);
+  const { t } = useTranslation("reviews");
+
+  const getReviewText = (review: ReviewItem) => {
+    if (lang === "da") return review.textDa;
+    if (lang === "de") return review.textDe;
+    return review.textEn;
+  };
+
+  const ratingLabel = (value: number) =>
+    t("ratingLabel", { value: value.toFixed(1) });
 
   // Alle reviews, men tekster vises på valgt sprog
   const reviews: ReviewItem[] = useMemo(
@@ -98,12 +107,7 @@ export default function Reviews({
         },
         review: reviews.map((r) => ({
           "@type": "Review",
-          reviewBody:
-          lang === "da"
-            ? r.textDa
-            : lang === "de"
-            ? r.textEn
-            : r.textEn,
+          reviewBody: getReviewText(r),
           datePublished: r.date,
           reviewRating: { "@type": "Rating", ratingValue: r.rating },
           author: { "@type": "Person", name: r.author },
@@ -112,7 +116,7 @@ export default function Reviews({
     : null;
 
   return (
-    <section className={styles.wrap} aria-label={t("Anmeldelser", "Reviews")}>
+    <section className={styles.wrap} aria-label={t("ariaLabel")}>
       {jsonLd && (
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       )}
@@ -120,14 +124,14 @@ export default function Reviews({
       <header className={styles.header}>
         <div className={styles.hLeft}>
           <h2 className={styles.hTitle}>
-            {title ?? t("Gæsterne siger", "What guests say")}
+            {title ?? t("title")}
           </h2>
           {subtitle ? (
             <p className={styles.hSubtitle}>{subtitle}</p>
           ) : (
             // Kun stjerner + gennemsnit (INGEN antal anmeldelser i UI)
             <p className={styles.hSubtitle}>
-              <Stars value={avgToShow} />{" "}
+              <Stars value={avgToShow} ariaLabel={ratingLabel(avgToShow)} />{" "}
               <strong>{avgToShow.toFixed(1)}</strong>
             </p>
           )}
@@ -137,7 +141,7 @@ export default function Reviews({
           <button
             type="button"
             className={styles.navBtn}
-            aria-label={t("Scroll venstre", "Scroll left")}
+            aria-label={t("scrollLeft")}
             onClick={() => scroll("left")}
           >
             ‹
@@ -145,7 +149,7 @@ export default function Reviews({
           <button
             type="button"
             className={styles.navBtn}
-            aria-label={t("Scroll højre", "Scroll right")}
+            aria-label={t("scrollRight")}
             onClick={() => scroll("right")}
           >
             ›
@@ -164,15 +168,15 @@ export default function Reviews({
                 <strong className={styles.name}>{r.author}</strong>
                 <span className={styles.date}>{formatDate(r.date, lang)}</span>
               </div>
-              <Stars value={r.rating} />
+              <Stars value={r.rating} ariaLabel={ratingLabel(r.rating)} />
             </div>
 
             <p className={styles.text}>
-            {lang === "da" ? r.textDa : lang === "de" ? r.textEn : r.textEn}
-          </p>
+              {getReviewText(r)}
+            </p>
 
             <div className={styles.source}>
-              {t("Kilde", "Source")}: {r.source ?? "Airbnb"}
+              {t("source")}: {r.source ?? "Airbnb"}
             </div>
           </article>
         ))}
@@ -181,9 +185,7 @@ export default function Reviews({
       <div className={styles.cta}>
         <Buttons
           variant="secondary"
-          labelDa="Se alle anmeldelser på Airbnb"
-          labelEn="See all reviews on Airbnb"
-          labelDe="Alle Bewertungen auf Airbnb ansehen"
+          label={t("airbnbCta")}
           href="https://www.airbnb.dk/h/fyrrehaven-61"
           external
         />

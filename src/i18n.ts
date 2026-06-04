@@ -33,6 +33,7 @@ i18n.use(initReactI18next).init({
   ns: [
     "common",
     "home",
+    "reviews",
     "book",
     "area",
     "contact",

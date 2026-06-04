@@ -298,13 +298,6 @@ export default function Home({ lang }: { lang: Lang }) {
       <Separator size="4" />
       <Reviews
         lang={lang}
-        title={
-          lang === "da"
-            ? "Gæsterne siger"
-            : lang === "de"
-            ? "Was unsere Gäste sagen"
-            : "What our guests say"
-        }
         average={4.8}
       />
       <PracticalInfo

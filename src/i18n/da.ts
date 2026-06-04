@@ -41,6 +41,15 @@ export const da = {
     "readyTitle": "Klar til at booke?",
     "readySub": "Tjek ledige datoer og priser på Airbnb."
   },
+  "reviews": {
+    "ariaLabel": "Anmeldelser",
+    "title": "Gæsterne siger",
+    "ratingLabel": "{{value}} ud af 5",
+    "scrollLeft": "Scroll venstre",
+    "scrollRight": "Scroll højre",
+    "source": "Kilde",
+    "airbnbCta": "Se alle anmeldelser på Airbnb"
+  },
   "book": {
     "hero": {
       "title": "Booking",
