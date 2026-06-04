@@ -741,6 +741,8 @@ export const en = {
       "fees": "Fees"
     },
     "socialAria": "Social media",
+    "messengerAria": "Message us on Messenger",
+    "messengerDismissAria": "Hide Messenger button",
     "guestPageAria": "Guest page",
     "rights": "All rights reserved."
   },

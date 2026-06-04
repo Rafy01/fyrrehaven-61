@@ -1,5 +1,5 @@
 // src/app/App.tsx
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Theme, Container, Box } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
@@ -19,6 +19,7 @@ import * as CookieConsent from "vanilla-cookieconsent";
 import CookieButton from "../components/CookieButton/CookieButton";
 import { cookieData } from "../data/cookies";
 import CookieCategoryList from "../components/CookieButton/CookieCategoryList";
+import MessengerButton from "../components/MessengerButton";
 
 export default function App({
   lang,
@@ -29,6 +30,7 @@ export default function App({
 }) {
   const { i18n } = useTranslation();
   const location = useLocation();
+  const [showMessengerButton, setShowMessengerButton] = useState(true);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -253,6 +255,9 @@ export default function App({
       </main>
       <Footer lang={lang} guest={guest} />
       <ScrollMemory />
+      {showMessengerButton && (
+        <MessengerButton onDismiss={() => setShowMessengerButton(false)} />
+      )}
       <CookieButton />
     </Theme>
   );

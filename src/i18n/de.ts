@@ -741,6 +741,8 @@ export const de = {
       "fees": "Gebühren"
     },
     "socialAria": "Soziale Medien",
+    "messengerAria": "Schreiben Sie uns auf Messenger",
+    "messengerDismissAria": "Messenger-Schaltfläche ausblenden",
     "guestPageAria": "Gästeseite",
     "rights": "Alle Rechte vorbehalten."
   },

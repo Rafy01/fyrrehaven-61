@@ -741,6 +741,8 @@ export const da = {
       "fees": "Gebyr"
     },
     "socialAria": "Sociale medier",
+    "messengerAria": "Skriv til os på Messenger",
+    "messengerDismissAria": "Skjul Messenger-knap",
     "guestPageAria": "Gæsteside",
     "rights": "Alle rettigheder forbeholdes."
   },
