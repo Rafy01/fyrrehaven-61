@@ -1,4 +1,3 @@
-// Bilinguale reviews (samme review har både dansk og engelsk tekst)
 export type ReviewItem = {
   id: string;
   rating: 1 | 2 | 3 | 4 | 5;
@@ -13,208 +12,166 @@ export type ReviewItem = {
 
 export const reviews: ReviewItem[] = [
   {
-    id: "jana-2025-08",
+    id: "timo-2026-05",
     rating: 5,
-    author: "Jana",
-    date: "2025-08-31",
+    author: "Timo",
+    date: "2026-05-28",
     textDa:
-      "Vi følte os meget hjemme i det dejlige hus og blev budt varmt velkommen. Poolen var et highlight for hele familien. Tak for gæstfriheden – vi havde en skøn tid!",
+      "Vi havde et virkelig dejligt ophold og kan varmt anbefale indkvarteringen. Huset var meget godt udstyret, rent og velholdt, så vi følte os godt tilpas fra starten. Især poolen, spabadet og saunaen var virkelige højdepunkter. Spørgsmål blev altid besvaret hurtigt og venligt. Samlet set et fantastisk sted, hvor vi med glæde ville holde ferie igen når som helst.",
     textEn:
-      "We felt very comfortable in the lovely house and were warmly welcomed. The pool was a highlight for the whole family. Thank you for the hospitality — we had a great time!",
+      "We had a really lovely stay and can warmly recommend the accommodation. The house was very well equipped, clean and well maintained, so we felt comfortable from the start. The pool, hot tub and sauna were particular highlights. Questions were always answered quickly and kindly. Overall, a fantastic place where we would happily spend a holiday again at any time.",
     textDe:
-      "Wir haben uns in dem schönen Haus sehr wohlgefühlt und wurden herzlich willkommen geheißen. Der Pool war ein Highlight für die ganze Familie. Vielen Dank für die Gastfreundschaft - wir hatten eine wunderbare Zeit!",
+      "Wir hatten einen wirklich schönen Aufenthalt und können die Unterkunft wärmstens empfehlen. Das Haus war sehr gut ausgestattet, sauber und gepflegt, sodass wir uns von Anfang an wohlgefühlt haben. Besonders der Pool, der Whirlpool und die Sauna waren echte Highlights. Fragen wurden immer schnell und freundlich beantwortet. Insgesamt ein fantastischer Ort, an dem wir jederzeit gerne wieder Urlaub machen würden.",
     source: "airbnb",
   },
   {
-    id: "diana-2025-08",
+    id: "emil-2026-05",
     rating: 5,
-    author: "Diana",
-    date: "2025-08-24",
-    textDa:
-      "Vi var 2 voksne og 4 børn i huset. Alt fungerede super. Vi kan kun anbefale huset.",
-    textEn:
-      "We stayed as 2 adults and 4 children. Everything was great. We can only recommend the house.",
-    textDe:
-      "Wir waren mit 2 Erwachsenen und 4 Kindern im Haus. Alles hat super funktioniert. Wir können das Haus nur empfehlen.",
+    author: "Emil",
+    date: "2026-05-01",
+    textDa: ".",
+    textEn: ".",
+    textDe: ".",
     source: "airbnb",
   },
   {
-    id: "nicole-2025-08",
+    id: "peter-mossin-2026-04",
     rating: 5,
-    author: "Nicole",
-    date: "2025-08-15",
+    author: "Peter Mossin",
+    date: "2026-04-01",
     textDa:
-      "Vi havde en vidunderlig ferie. Sauna, pool og spabad gjorde det uforglemmeligt for børnene. Værten var meget venlig, hjælpsom og svarede hurtigt. Klart tommel op.",
+      "Dejligt sommerhus med gode værelser og gode faciliteter. Alt fungerede perfekt.",
     textEn:
-      "We had a wonderful holiday. The sauna, pool and hot tub made it unforgettable for the kids. The host was very friendly, helpful and responded quickly. Big thumbs up.",
+      "Lovely summer house with good rooms and good facilities. Everything worked perfectly.",
     textDe:
-      "Wir hatten einen wunderbaren Urlaub. Sauna, Pool und Whirlpool haben ihn für die Kinder unvergesslich gemacht. Der Gastgeber war sehr freundlich, hilfsbereit und hat schnell geantwortet. Klare Empfehlung.",
+      "Schönes Ferienhaus mit guten Zimmern und guten Einrichtungen. Alles hat perfekt funktioniert.",
     source: "airbnb",
   },
   {
-    id: "franziska-2025-08",
+    id: "julian-armin-2026-04",
     rating: 5,
-    author: "Franziska",
-    date: "2025-08-05",
+    author: "Julian Armin",
+    date: "2026-04-01",
     textDa:
-      "Vi var to familier på sommerferie i 10 dage og nød tiden. Huset ligger godt og er veludstyret, ind- og udtjekning var fleksibel og spørgsmål blev besvaret hurtigt. Alt var meget rent. Vejret var skønt, og den opvarmede pool gav stor glæde. Vi kommer gerne igen.",
+      "Meget tilfreds med boligen. Det er et fantastisk sted at have det skønt :)",
     textEn:
-      "We were two families for a 10-day summer holiday and enjoyed our time. The house is well located and well equipped; check-in/out was flexible and questions were answered quickly. Everything was very clean. The heated pool was a joy. We’d love to return.",
+      "Very satisfied with the home. It is a fantastic place to have a great time :)",
     textDe:
-      "Wir waren zwei Familien für einen 10-tägigen Sommerurlaub und haben die Zeit genossen. Das Haus liegt gut und ist sehr gut ausgestattet; Check-in und Check-out waren flexibel und Fragen wurden schnell beantwortet. Alles war sehr sauber. Der beheizte Pool hat viel Freude gemacht. Wir kommen gerne wieder.",
+      "Sehr zufrieden mit der Unterkunft. Es ist ein fantastischer Ort, um eine schöne Zeit zu haben :)",
     source: "airbnb",
   },
   {
-    id: "therese-2025-07",
+    id: "jonas-2026-04",
     rating: 5,
-    author: "Therese",
-    date: "2025-07-10",
-    textDa:
-      "Vi var alle meget tilfredse med pladsen, huset og værtskabet. Kommer gerne tilbage.",
-    textEn:
-      "We were all very satisfied with the space, the house and the hosts. We’d love to come back.",
-    textDe:
-      "Wir waren alle sehr zufrieden mit dem Platz, dem Haus und den Gastgebern. Wir kommen gerne wieder.",
-    source: "airbnb",
-  },
-  {
-    id: "rune-bergh-2025-06",
-    rating: 5,
-    author: "Rune Bergh",
-    date: "2025-06-18",
-    textDa:
-      "Fint sommerhus. Praktisk med soveværelserne lidt adskilt fra stue/køkken. Vores 2-årige elskede poolen.",
-    textEn:
-      "Great summer house. Practical layout with the bedrooms slightly separated from the living room/kitchen. Our two-year-old loved the pool.",
-    textDe:
-      "Tolles Ferienhaus. Praktische Aufteilung, bei der die Schlafzimmer etwas vom Wohn- und Küchenbereich getrennt sind. Unser Zweijähriger liebte den Pool.",
-    source: "airbnb",
-  },
-  {
-    id: "tilman-2025-06",
-    rating: 5,
-    author: "Tilman",
-    date: "2025-06-12",
-    textDa:
-      "Rigtig godt ophold! Nemt check-in og check-out. Alt var som beskrevet, og vi havde ingen klager.",
-    textEn:
-      "Great stay! Easy check-in and check-out. Everything was as described and we had no complaints whatsoever.",
-    textDe:
-      "Sehr guter Aufenthalt! Einfacher Check-in und Check-out. Alles war wie beschrieben und wir hatten keinerlei Beschwerden.",
-    source: "airbnb",
-  },
-  {
-    id: "philipp-2025-05",
-    rating: 5,
-    author: "Philipp",
-    date: "2025-05-22",
-    textDa:
-      "Meget dejligt ophold med familien. Skønt hus med en stor pool — børnenes yndlingssted. Godt udstyr og alt var meget rent og pænt.",
-    textEn:
-      "Very nice stay with the family. Lovely house with a big pool — the kids’ favourite place. Well equipped and everything was very clean and tidy.",
-    textDe:
-      "Sehr schöner Aufenthalt mit der Familie. Ein tolles Haus mit großem Pool - der Lieblingsort der Kinder. Gut ausgestattet und alles war sehr sauber und ordentlich.",
-    source: "airbnb",
-  },
-  {
-    id: "alex-2025-05",
-    rating: 5,
-    author: "Alex",
-    date: "2025-05-15",
-    textDa:
-      "Vi var en gruppe på 8 personer. Boligen var meget ren og som på billederne. Værten var hjælpsom og svarede hurtigt. Den opvarmede pool var højdepunktet. Vi kan klart anbefale stedet og kommer gerne igen.",
-    textEn:
-      "We were a group of 8. The accommodation was very clean and just like the photos. The host was helpful and quick to respond. The heated pool was the highlight. We recommend the place and would gladly return.",
-    textDe:
-      "Wir waren eine Gruppe von 8 Personen. Die Unterkunft war sehr sauber und genau wie auf den Bildern. Der Gastgeber war hilfsbereit und antwortete schnell. Der beheizte Pool war das Highlight. Wir können den Ort klar empfehlen und kommen gerne wieder.",
-    source: "airbnb",
-  },
-  {
-    id: "louise-2025-04",
-    rating: 5,
-    author: "Louise",
-    date: "2025-04-20",
-    textDa: "Mega fint sted.",
+    author: "Jonas",
+    date: "2026-04-01",
+    textDa: "Dejligt sted.",
     textEn: "Lovely place.",
-    textDe: "Sehr schöner Ort.",
+    textDe: "Schöner Ort.",
     source: "airbnb",
   },
   {
-    id: "tanya-2025-04",
+    id: "lars-2026-03",
     rating: 5,
-    author: "Tanya",
-    date: "2025-04-18",
+    author: "Lars",
+    date: "2026-03-01",
     textDa:
-      "Vi havde en skøn påske hos Rimon. Smukke omgivelser og fredelig gåtur til stranden. Vildmarksbadet var sjovt og tog faktisk ikke så lang tid at fylde og varme. Køleskabet er lidt småt til 10 personer, men vi klarede os. Butik ligger tæt på, og blomsterbutikken i Auning kan anbefales. Et par småting opstod, men værten var let at få fat i og løste dem hurtigt.",
+      "Vi var en familie på 6 voksne og fire børn i alderen 8 til 1 år, og huset er perfekt med soveafdeling, store køkken alrum hvor vi alle kunne opholde os. Hems hvor børnene kunne lege indendørs. Udenfor er der hot top og sauna, gynger, trampolin, perfekt for hele familien. Kan helt klart anbefales.",
     textEn:
-      "We had a great Easter at Rimon’s. Gorgeous surroundings and a peaceful walk to the beach. The hot tub was fun and didn’t actually take that long to fill and heat. The fridge is a bit small for 10 people, but we managed. There’s a store nearby and I can recommend the flower shop in Auning. A couple of small issues came up, but the host was easy to reach and solved them quickly.",
+      "We were a family of 6 adults and four children aged 8 to 1, and the house is perfect with a sleeping area and a large kitchen-dining space where we could all spend time together. The loft gave the children a place to play indoors. Outside there is a hot tub and sauna, swings and a trampoline, perfect for the whole family. Highly recommended.",
     textDe:
-      "Wir hatten schöne Ostertage bei Rimon. Wunderschöne Umgebung und ein ruhiger Spaziergang zum Strand. Der Whirlpool hat Spaß gemacht und es dauerte tatsächlich nicht lange, ihn zu füllen und aufzuheizen. Der Kühlschrank ist für 10 Personen etwas klein, aber wir kamen zurecht. Ein Geschäft ist in der Nähe, und den Blumenladen in Auning können wir empfehlen. Es gab ein paar kleine Dinge, aber der Gastgeber war gut erreichbar und hat sie schnell gelöst.",
+      "Wir waren eine Familie mit 6 Erwachsenen und vier Kindern im Alter von 8 bis 1 Jahr, und das Haus ist perfekt mit Schlafbereich und einem großen Küchen- und Wohnraum, in dem wir alle zusammen sein konnten. Auf dem Dachboden konnten die Kinder drinnen spielen. Draußen gibt es Whirlpool und Sauna, Schaukeln und ein Trampolin - perfekt für die ganze Familie. Absolut empfehlenswert.",
     source: "airbnb",
   },
   {
-    id: "dorte-2025-04",
-    rating: 5,
-    author: "Dorte",
-    date: "2025-04-12",
-    textDa:
-      "Fantastisk søskende-weekend i sommerhuset, hvor vi var på tur i området, og 8 personer lavede mad sammen i det veludstyrede køkken. Weekenden gik desværre for hurtigt, så vi nåede ikke vildmarksbadet. Vi kommer gerne igen.",
-    textEn:
-      "Fantastic siblings’ weekend at the summer house. We explored the area and cooked together (8 people) in the well-equipped kitchen. The weekend passed too quickly, so we didn’t get to use the hot tub. We’d love to come again.",
-    textDe:
-      "Fantastisches Geschwister-Wochenende im Ferienhaus. Wir haben die Umgebung erkundet und mit 8 Personen gemeinsam in der gut ausgestatteten Küche gekocht. Das Wochenende ging leider zu schnell vorbei, sodass wir den Whirlpool nicht nutzen konnten. Wir kommen gerne wieder.",
-    source: "airbnb",
-  },
-  {
-    id: "jan-2025-03",
-    rating: 5,
-    author: "Jan",
-    date: "2025-03-08",
-    textDa:
-      "Alt var i top. Fantastisk ophold for 8 personer. Kommer gerne igen.",
-    textEn:
-      "Everything was great. Excellent stay for 8 people. Would love to return.",
-    textDe:
-      "Alles war bestens. Fantastischer Aufenthalt für 8 Personen. Wir kommen gerne wieder.",
-    source: "airbnb",
-  },
-  {
-    id: "tina-2025-02",
+    id: "morten-2026-02",
     rating: 4,
-    author: "Tina",
-    date: "2025-02-20",
+    author: "Morten",
+    date: "2026-02-01",
     textDa:
-      "Fint hus med masser af plads og gode faciliteter. Dejligt område og flot strand. Værterne svarede hurtigt og positivt på henvendelser.",
+      "Stedet var som på billederne, indgangen var fint ryddet for sne, alt var rent og i orden. Så alt i alt en god oplevelse.",
     textEn:
-      "Nice house with plenty of space and good facilities. Lovely area and beautiful beach. The hosts replied quickly and positively to our questions.",
+      "The place was just like the photos, the entrance had been nicely cleared of snow, and everything was clean and in order. All in all, a good experience.",
     textDe:
-      "Schönes Haus mit viel Platz und guten Einrichtungen. Schöne Gegend und toller Strand. Die Gastgeber haben schnell und positiv auf unsere Fragen geantwortet.",
+      "Der Ort war wie auf den Bildern, der Eingang war ordentlich vom Schnee befreit, alles war sauber und in Ordnung. Alles in allem eine gute Erfahrung.",
     source: "airbnb",
   },
   {
-    id: "gokhan-2025-02",
+    id: "artur-2026-01",
     rating: 5,
-    author: "Gökhan",
-    date: "2025-02-15",
+    author: "Artur",
+    date: "2026-01-01",
     textDa:
-      "Huset var vidunderligt, smukt indrettet og perfekt udstyret. Check-in og kommunikationen var super, værten var let at få fat i og imødekommende. Der var ikke sengetøj og håndklæder inkluderet, hvilket kunne være lettere fremover.",
+      "Kommunikationsstrømmen bør fremhæves. Eventuelle spørgsmål vil blive besvaret straks eller uden forsinkelse. Fremragende faciliteter. God beliggenhed. Danmark!",
     textEn:
-      "The house was wonderful, beautifully furnished and perfectly equipped. Check-in and communication were great; the host was easy to reach and accommodating. Bed linen and towels were not included, which could be made easier in the future.",
+      "The communication flow deserves to be highlighted. Any questions are answered immediately or without delay. Excellent facilities. Good location. Denmark!",
     textDe:
-      "Das Haus war wunderbar, schön eingerichtet und perfekt ausgestattet. Check-in und Kommunikation waren super; der Gastgeber war gut erreichbar und entgegenkommend. Bettwäsche und Handtücher waren nicht inklusive, was in Zukunft einfacher gelöst werden könnte.",
+      "Die Kommunikation verdient besondere Erwähnung. Alle Fragen werden sofort oder ohne Verzögerung beantwortet. Hervorragende Ausstattung. Gute Lage. Dänemark!",
     source: "airbnb",
   },
   {
-    id: "andri-2025-02",
-    rating: 4,
-    author: "Andri",
-    date: "2025-02-05",
+    id: "mona-2025-12",
+    rating: 5,
+    author: "Mona",
+    date: "2025-12-01",
     textDa:
-      "Virkelig dejligt hus i et roligt område. Alt er godt dokumenteret med QR-koder, og huset er nemt at bruge. Værten er fantastisk og meget hurtig til at svare. En ulempe: betalinger uden for Airbnb (rengøring, el, opvarmning og andre faciliteter) fordoblede næsten prisen. Det fremgår af beskrivelsen, men hvis man ikke er vant til det, kan det komme som en overraskelse.",
+      "Vi har været i dette sommerhus før og det er virkelig hyggeligt og rent. Kommunikationen med værten var rigtig fin og han svarede hurtigt. Huset er godt indrettet og der er alle nødvendige faciliteter. Vi kommer helt sikkert igen.",
     textEn:
-      "Really nice house in a quiet area. Everything is well documented with QR codes and the house is easy to navigate. The host is great and very responsive. One downside: off-site payments (cleaning, electricity, heating and amenities) almost doubled the price. It’s stated in the description, but if you’re not used to it, it can be a surprise.",
+      "We have stayed in this summer house before, and it is really cosy and clean. Communication with the host was very good and he replied quickly. The house is well arranged and has all the necessary facilities. We will definitely come again.",
     textDe:
-      "Wirklich schönes Haus in einer ruhigen Gegend. Alles ist mit QR-Codes gut dokumentiert und das Haus ist leicht zu nutzen. Der Gastgeber ist großartig und antwortet sehr schnell. Ein Nachteil: Zahlungen außerhalb von Airbnb (Reinigung, Strom, Heizung und weitere Ausstattung) haben den Preis fast verdoppelt. Es steht in der Beschreibung, aber wenn man es nicht gewohnt ist, kann es überraschend sein.",
+      "Wir waren schon früher in diesem Ferienhaus, und es ist wirklich gemütlich und sauber. Die Kommunikation mit dem Gastgeber war sehr gut und er antwortete schnell. Das Haus ist gut eingerichtet und verfügt über alle notwendigen Einrichtungen. Wir kommen ganz sicher wieder.",
+    source: "airbnb",
+  },
+  {
+    id: "jannik-2025-11",
+    rating: 5,
+    author: "Jannik",
+    date: "2025-11-01",
+    textDa:
+      "Vi havde en rigtig dejlig weekend i Rimons sommerhus. Vi kom til at ødelægge nogle ting, men her var Rimon både fair og super professionel igennem forløbet efter opholdet. Vi kunne bestemt finde på at komme igen!",
+    textEn:
+      "We had a really lovely weekend in Rimon's summer house. We accidentally damaged a few things, but Rimon was both fair and very professional throughout the process after the stay. We could definitely see ourselves coming back!",
+    textDe:
+      "Wir hatten ein wirklich schönes Wochenende in Rimons Ferienhaus. Wir haben versehentlich ein paar Dinge beschädigt, aber Rimon war während des gesamten Ablaufs nach dem Aufenthalt sowohl fair als auch sehr professionell. Wir könnten uns definitiv vorstellen, wiederzukommen!",
+    source: "airbnb",
+  },
+  {
+    id: "piravinth-2025-10",
+    rating: 5,
+    author: "Piravinth",
+    date: "2025-10-01",
+    textDa:
+      "Vi var der med forældre, bedsteforældre og børn - bare perfekt! Værterne var supervenlige, hjælpsomme og altid tilgængelige, hvis du havde brug for noget. Stedet er stort, meget veludstyret, og der er alt, hvad du har brug for - især kaffemaskinen og de moderne apparater imponerede os. Beliggenheden er ideel til et par afslappende dage, rart og roligt, men alligevel tæt nok på til at tage på udflugter. Poolen var det absolutte højdepunkt - opvarmet og vidunderligt ren! Den nye sauna er også et rigtigt plus. Vi følte os helt trygge og ville helt sikkert elske at komme tilbage.",
+    textEn:
+      "We stayed there with parents, grandparents and children - simply perfect! The hosts were super friendly, helpful and always available if you needed anything. The place is spacious, very well equipped, and has everything you need - the coffee machine and modern appliances impressed us especially. The location is ideal for a few relaxing days, nice and quiet, yet still close enough for outings. The pool was the absolute highlight - heated and wonderfully clean! The new sauna is also a real plus. We felt completely safe and would definitely love to come back.",
+    textDe:
+      "Wir waren dort mit Eltern, Großeltern und Kindern - einfach perfekt! Die Gastgeber waren superfreundlich, hilfsbereit und immer erreichbar, wenn man etwas brauchte. Der Ort ist groß, sehr gut ausgestattet und es gibt alles, was man braucht - besonders die Kaffeemaschine und die modernen Geräte haben uns beeindruckt. Die Lage ist ideal für ein paar entspannte Tage, schön ruhig und dennoch nah genug für Ausflüge. Der Pool war das absolute Highlight - beheizt und wunderbar sauber! Die neue Sauna ist ebenfalls ein echtes Plus. Wir haben uns vollkommen sicher gefühlt und würden sehr gerne wiederkommen.",
+    source: "airbnb",
+  },
+  {
+    id: "virginia-2025-10",
+    rating: 5,
+    author: "Virginia",
+    date: "2025-10-01",
+    textDa:
+      "Hytten var som beskrevet. Hvis du har spørgsmål eller problemer (f.eks. koldt vand) fik vi hurtig og venlig feedback, selv med teknikere på stedet. Vi havde det rigtig godt sammen der.",
+    textEn:
+      "The cabin was as described. If you have questions or problems, such as cold water, we received quick and friendly feedback, even with technicians on site. We had a really good time together there.",
+    textDe:
+      "Das Ferienhaus war wie beschrieben. Wenn man Fragen oder Probleme hatte, zum Beispiel kaltes Wasser, bekamen wir schnelle und freundliche Rückmeldung, sogar mit Technikern vor Ort. Wir hatten dort eine wirklich schöne gemeinsame Zeit.",
+    source: "airbnb",
+  },
+  {
+    id: "stephen-2025-09",
+    rating: 5,
+    author: "Stephen",
+    date: "2025-09-01",
+    textDa:
+      "Meget god vært! Hurtig kommunikation, hjælpsom og lejligheden er også meget fin!",
+    textEn:
+      "Very good host! Quick communication, helpful, and the place is also very nice!",
+    textDe:
+      "Sehr guter Gastgeber! Schnelle Kommunikation, hilfsbereit, und die Unterkunft ist auch sehr schön!",
     source: "airbnb",
   },
 ];

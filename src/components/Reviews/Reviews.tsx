@@ -54,6 +54,13 @@ function formatDate(iso: string, lang: "da" | "en" | "de") {
   }
 }
 
+function oneYearAgo(from = new Date()) {
+  const date = new Date(from);
+  date.setFullYear(date.getFullYear() - 1);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 export default function Reviews({
   lang,
   title,
@@ -73,9 +80,19 @@ export default function Reviews({
   const ratingLabel = (value: number) =>
     t("ratingLabel", { value: value.toFixed(1) });
 
-  // Alle reviews, men tekster vises på valgt sprog
+  // Only show reviews from the latest rolling year.
   const reviews: ReviewItem[] = useMemo(
-    () => allReviews.slice(0, maxCards ?? allReviews.length),
+    () => {
+      const cutoff = oneYearAgo();
+      return allReviews
+        .filter((review) => new Date(`${review.date}T00:00:00`) >= cutoff)
+        .sort(
+          (a, b) =>
+            new Date(`${b.date}T00:00:00`).getTime() -
+            new Date(`${a.date}T00:00:00`).getTime()
+        )
+        .slice(0, maxCards ?? allReviews.length);
+    },
     [maxCards]
   );
 
