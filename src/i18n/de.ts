@@ -41,6 +41,18 @@ export const de = {
     "readyTitle": "Bereit zu buchen?",
     "readySub": "Verfügbarkeit und Preise auf Airbnb ansehen."
   },
+  "reviews": {
+    "ariaLabel": "Bewertungen",
+    "title": "Was unsere Gäste sagen",
+    "ratingLabel": "{{value}} von 5",
+    "scrollLeft": "Nach links scrollen",
+    "scrollRight": "Nach rechts scrollen",
+    "readMore": "Ganze Bewertung lesen",
+    "showLess": "Weniger anzeigen",
+    "emptyReview": "Dieser Gast hat eine Sternebewertung ohne schriftlichen Kommentar hinterlassen.",
+    "source": "Quelle",
+    "airbnbCta": "Alle Bewertungen auf Airbnb ansehen"
+  },
   "book": {
     "hero": {
       "title": "Buchung",
