@@ -10,13 +10,11 @@ import { guestPathOf } from "../../../lib/routes";
 import type { Lang } from "../../../lib/lang";
 import styles from "./CheckInOut.module.css";
 
-const POOL_SEASON = {
-  start: new Date("2025-05-01"),
-  end: new Date("2025-10-01"),
-};
-
 function isPoolOpen(today = new Date()) {
-  return today >= POOL_SEASON.start && today <= POOL_SEASON.end;
+  const year = today.getFullYear();
+  const start = new Date(year, 4, 1);
+  const end = new Date(year, 9, 1, 23, 59, 59, 999);
+  return today >= start && today <= end;
 }
 
 export default function CheckInOut() {
@@ -183,33 +181,42 @@ export default function CheckInOut() {
       id: "el",
       titleKey: "accordion.checkInOut.el",
       content: (
-        <img
-          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3418.webp"
-          alt={tg("accordion.checkInOut.elAlt")}
-          className={styles.image}
-        />
+        <div className={styles.meterGuide}>
+          <img
+            src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3418.webp"
+            alt={tg("accordion.checkInOut.elAlt")}
+            className={styles.image}
+          />
+          <p>{tg("accordion.checkInOut.elLocation")}</p>
+        </div>
       ),
     },
     {
       id: "water",
       titleKey: "accordion.checkInOut.water",
       content: (
-        <img
-          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3411.webp"
-          alt={tg("accordion.checkInOut.waterAlt")}
-          className={styles.image}
-        />
+        <div className={styles.meterGuide}>
+          <img
+            src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3411.webp"
+            alt={tg("accordion.checkInOut.waterAlt")}
+            className={styles.image}
+          />
+          <p>{tg("accordion.checkInOut.waterLocation")}</p>
+        </div>
       ),
     },
     poolOpen && {
       id: "poolwater",
       titleKey: "accordion.checkInOut.poolWater",
       content: (
-        <img
-          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/vand-pool.webp"
-          alt={tg("accordion.checkInOut.poolWaterAlt")}
-          className={styles.image}
-        />
+        <div className={styles.meterGuide}>
+          <img
+            src="https://media.fyrrehaven-61.dk/wp-content/uploads/2026/06/pool_aflaesning.webp"
+            alt={tg("accordion.checkInOut.poolWaterReadingAlt")}
+            className={styles.image}
+          />
+          <p>{tg("accordion.checkInOut.poolWaterLocation")}</p>
+        </div>
       ),
     },
   ].filter(Boolean);

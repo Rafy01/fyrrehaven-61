@@ -505,10 +505,14 @@ export const en = {
       "checkInOut": {
         "el": "Location of electricity meter",
         "elAlt": "Electricity meter location",
+        "elLocation": "Location: To the right of the front door. Use flash for the picture.",
         "water": "Water meter location (house)",
         "waterAlt": "Water meter in house",
+        "waterLocation": "Location: To the right in the utility closet. Open the sliding door in the entrance.",
         "poolWater": "Water meter location (pool)",
-        "poolWaterAlt": "Water meter at pool"
+        "poolWaterAlt": "Water meter at pool",
+        "poolWaterReadingAlt": "Pool water meter reading",
+        "poolWaterLocation": "Location: In the shed, you'll find the water meter in the left corner. Be mindful of the pool equipment."
       },
       "practical": {
         "coffee": {
