@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./MessengerButton.module.css";
 
@@ -10,6 +11,18 @@ export type MessengerButtonProps = {
 export default function MessengerButton({ onDismiss }: MessengerButtonProps) {
   const { t } = useTranslation("footer");
 
+  const openMessenger = (event: MouseEvent<HTMLAnchorElement>) => {
+    const isMobile =
+      typeof window !== "undefined" &&
+      (window.matchMedia("(max-width: 760px)").matches ||
+        /Android|iPhone|iPad|iPod/i.test(window.navigator.userAgent));
+
+    if (!isMobile) return;
+
+    event.preventDefault();
+    window.location.assign(MESSENGER_URL);
+  };
+
   return (
     <div className={styles.wrap}>
       <a
@@ -19,6 +32,7 @@ export default function MessengerButton({ onDismiss }: MessengerButtonProps) {
         rel="noopener noreferrer"
         aria-label={t("messengerAria")}
         title={t("messengerAria")}
+        onClick={openMessenger}
       >
         <MessengerIcon />
       </a>
