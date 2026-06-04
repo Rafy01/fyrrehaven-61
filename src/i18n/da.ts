@@ -510,10 +510,14 @@ export const da = {
       "checkInOut": {
         "el": "Placering af EL-måler",
         "elAlt": "EL-måler placering",
+        "elLocation": "Placering: Til højre for hoveddøren. Brug blitz til billedet.",
         "water": "Placering af vandmåler (hus)",
         "waterAlt": "Vandmåler i huset",
+        "waterLocation": "Placering: Til højre i teknikskabet. Åbn skydedøren i entréen.",
         "poolWater": "Placering af vandmåler (pool)",
-        "poolWaterAlt": "Vandmåler ved pool"
+        "poolWaterAlt": "Vandmåler ved pool",
+        "poolWaterReadingAlt": "Aflæsning af poolens vandmåler",
+        "poolWaterLocation": "Placering: I skuret finder I vandmåleren i venstre hjørne. Vær opmærksom på pooludstyret."
       },
       "practical": {
         "coffee": {

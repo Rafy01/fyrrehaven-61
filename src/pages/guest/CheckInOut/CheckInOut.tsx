@@ -187,33 +187,42 @@ export default function CheckInOut() {
       id: "el",
       titleKey: "accordion.checkInOut.el",
       content: (
-        <img
-          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3418.webp"
-          alt={tg("accordion.checkInOut.elAlt")}
-          className={styles.image}
-        />
+        <div className={styles.meterGuide}>
+          <img
+            src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3418.webp"
+            alt={tg("accordion.checkInOut.elAlt")}
+            className={styles.image}
+          />
+          <p>{tg("accordion.checkInOut.elLocation")}</p>
+        </div>
       ),
     },
     {
       id: "water",
       titleKey: "accordion.checkInOut.water",
       content: (
-        <img
-          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3411.webp"
-          alt={tg("accordion.checkInOut.waterAlt")}
-          className={styles.image}
-        />
+        <div className={styles.meterGuide}>
+          <img
+            src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/IMG_3411.webp"
+            alt={tg("accordion.checkInOut.waterAlt")}
+            className={styles.image}
+          />
+          <p>{tg("accordion.checkInOut.waterLocation")}</p>
+        </div>
       ),
     },
     poolOpen && {
       id: "poolwater",
       titleKey: "accordion.checkInOut.poolWater",
       content: (
-        <img
-          src="https://media.fyrrehaven-61.dk/wp-content/uploads/2026/06/pool_aflaesning.webp"
-          alt={tg("accordion.checkInOut.poolWaterAlt")}
-          className={styles.image}
-        />
+        <div className={styles.meterGuide}>
+          <img
+            src="https://media.fyrrehaven-61.dk/wp-content/uploads/2026/06/pool_aflaesning.webp"
+            alt={tg("accordion.checkInOut.poolWaterReadingAlt")}
+            className={styles.image}
+          />
+          <p>{tg("accordion.checkInOut.poolWaterLocation")}</p>
+        </div>
       ),
     },
   ].filter(Boolean);

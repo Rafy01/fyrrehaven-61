@@ -510,10 +510,14 @@ export const de = {
       "checkInOut": {
         "el": "Position des Stromzählers",
         "elAlt": "Position des Stromzählers",
+        "elLocation": "Position: Rechts von der Haustür. Bitte für das Foto den Blitz verwenden.",
         "water": "Position des Wasserzählers (Haus)",
         "waterAlt": "Wasserzähler im Haus",
+        "waterLocation": "Position: Rechts im Technikschrank. Öffnen Sie die Schiebetür im Eingangsbereich.",
         "poolWater": "Position des Wasserzählers (Pool)",
-        "poolWaterAlt": "Wasserzähler am Pool"
+        "poolWaterAlt": "Wasserzähler am Pool",
+        "poolWaterReadingAlt": "Ablesung des Pool-Wasserzählers",
+        "poolWaterLocation": "Position: Im Schuppen befindet sich der Wasserzähler in der linken Ecke. Bitte achten Sie auf die Pooltechnik."
       },
       "practical": {
         "coffee": {
