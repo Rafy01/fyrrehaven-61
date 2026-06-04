@@ -2,7 +2,12 @@ export const en = {
   "common": {
     "brand": "Fyrrehaven 61",
     "bookNow": "Book on Airbnb",
-    "sleepsX": "Sleeps {{count}} guests"
+    "sleepsX": "Sleeps {{count}} guests",
+    "form": {
+      "selectPlaceholder": "Choose",
+      "chooseFile": "Choose file",
+      "chooseFiles": "Choose files"
+    }
   },
   "home": {
     "heroTitle": "Family-friendly holiday home in the woods – near the beach",
@@ -284,7 +289,7 @@ export const en = {
       "summaryYes": "The guest would like extra services.",
       "summaryNo": "The guest does not want extra services at this time.",
       "noSpecificItems": "No specific quantities selected.",
-      "dateHint": "Extra services must be requested at least 3 days before arrival, so we have time to prepare and confirm the practical details.",
+      "dateHint": "Extra services must be requested at least 3 days before arrival, so we have time to prepare.",
       "bundleHint": "Complete package of bedding, sheets and towels",
       "fields": {
         "name": "Name",

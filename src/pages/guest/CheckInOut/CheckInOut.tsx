@@ -11,10 +11,12 @@ import type { Lang } from "../../../lib/lang";
 import styles from "./CheckInOut.module.css";
 
 function isPoolOpen(today = new Date()) {
-  const year = today.getFullYear();
-  const start = new Date(year, 4, 1);
-  const end = new Date(year, 9, 1, 23, 59, 59, 999);
-  return today >= start && today <= end;
+  const month = today.getMonth() + 1;
+  const date = today.getDate();
+
+  return month > 5 && month < 10
+    ? true
+    : (month === 5 && date >= 1) || (month === 10 && date <= 1);
 }
 
 export default function CheckInOut() {
@@ -26,7 +28,7 @@ export default function CheckInOut() {
     : "en";
 
   const [poolOpen, setPoolOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(true);
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
   const [isSending, setIsSending] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -41,6 +43,10 @@ export default function CheckInOut() {
       setIsMobile(mobile);
     }
   }, []);
+
+  if (isMobile === null) {
+    return null;
+  }
 
   if (!isMobile) {
     return (

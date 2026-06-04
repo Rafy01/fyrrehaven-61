@@ -142,7 +142,11 @@ ${t(uiLang, "checkin.fields.keycode")}: ${keycode}
 ${t(uiLang, "checkin.fields.type")}: ${typeLabel}
 ${t(uiLang, "checkin.fields.electricity")}: ${elReading}
 ${t(uiLang, "checkin.fields.waterHouse")}: ${waterHouse}
-${waterPool ? `${t(uiLang, "checkin.fields.waterPool")}: ${waterPool}\n` : ""}
+${
+  typeof waterPool !== "undefined"
+    ? `${t(uiLang, "checkin.fields.waterPool")}: ${waterPool}\n`
+    : ""
+}
 ${t(uiLang, "checkin.fields.consent")}: ${yesNo(Boolean(consent), uiLang)}
 ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
       `;

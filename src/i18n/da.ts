@@ -2,7 +2,12 @@ export const da = {
   "common": {
     "brand": "Fyrrehaven 61",
     "bookNow": "Book via Airbnb",
-    "sleepsX": "Plads til {{count}} personer"
+    "sleepsX": "Plads til {{count}} personer",
+    "form": {
+      "selectPlaceholder": "Vælg",
+      "chooseFile": "Vælg fil",
+      "chooseFiles": "Vælg filer"
+    }
   },
   "home": {
     "heroTitle": "Familievenligt sommerhus i skoven – tæt på stranden",
@@ -284,7 +289,7 @@ export const da = {
       "summaryYes": "Gæsten ønsker ekstra services.",
       "summaryNo": "Gæsten ønsker ikke ekstra services på nuværende tidspunkt.",
       "noSpecificItems": "Der er ikke valgt specifikke antal.",
-      "dateHint": "Ekstra services skal bestilles senest 3 dage før ankomst, så vi kan nå at klargøre og bekræfte det praktiske.",
+      "dateHint": "Ekstra services skal bestilles senest 3 dage før ankomst, så vi kan nå at klargøre.",
       "bundleHint": "Komplet pakke med sengetøj, sengelinned og håndklæder",
       "fields": {
         "name": "Navn",
