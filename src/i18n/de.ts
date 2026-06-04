@@ -1076,7 +1076,7 @@ export const de = {
         "TV-Bereich mit Sofa, Stühlen und 55-Zoll-TV",
         "Außenrutsche",
         "Trampolin",
-        "PlayStation 5"
+        "PlayStation 4"
       ]
     }
   },
@@ -1102,7 +1102,7 @@ export const de = {
         "title": "Wohnen & Praktisches",
         "bullets": [
           "Großer Esstisch für 10 Personen",
-          "55-Zoll-TV und PlayStation 5 im Wohnzimmer",
+          "55-Zoll-TV und PlayStation 4 im Wohnzimmer",
           "Fußbodenheizung im ganzen Haus · Klimaanlage",
           "Waschmaschine und Trockner",
           "Reisebett für Kinder (kostenlos vorab bestellen)",

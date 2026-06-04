@@ -1079,7 +1079,7 @@ export const da = {
         "TV-område med sofa, stole og 55″ TV",
         "Udendørs rutsjebane",
         "Trampolin",
-        "PlayStation 5"
+        "PlayStation 4"
       ]
     }
   },
@@ -1105,7 +1105,7 @@ export const da = {
         "title": "Ophold & praktisk",
         "bullets": [
           "Stort spisebord til 10",
-          "TV 55\" og PlayStation 5 i stuen",
+          "TV 55\" og PlayStation 4 i stuen",
           "Gulvvarme i hele huset · Aircondition",
           "Vaskemaskine og tørretumbler",
           "Rejseseng til børn (bestilles gratis forud)",

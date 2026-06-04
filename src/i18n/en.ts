@@ -1078,7 +1078,7 @@ export const en = {
         "TV area with sofa, chairs and 55″ TV",
         "Outdoor slide",
         "Trampoline",
-        "PlayStation 5"
+        "PlayStation 4"
       ]
     }
   },
@@ -1104,7 +1104,7 @@ export const en = {
         "title": "Living & practical",
         "bullets": [
           "Large dining table for 10",
-          "55\" TV and PlayStation 5 in the lounge",
+          "55\" TV and PlayStation 4 in the lounge",
           "Underfloor heating throughout · Air conditioning",
           "Washing machine and tumble dryer",
           "Travel cot (pre-book for free)",
