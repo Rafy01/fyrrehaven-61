@@ -47,6 +47,9 @@ export const en = {
     "ratingLabel": "{{value}} out of 5",
     "scrollLeft": "Scroll left",
     "scrollRight": "Scroll right",
+    "readMore": "Read full review",
+    "showLess": "Show less",
+    "emptyReview": "This guest left a star rating without written feedback.",
     "source": "Source",
     "airbnbCta": "See all reviews on Airbnb"
   },

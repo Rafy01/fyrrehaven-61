@@ -70,7 +70,12 @@
   display: flex; /* ← skift fra grid til flex */
   flex-direction: column;
   gap: 0.55rem;
-  min-height: 240px; /* lidt højde for stabil bund */
+  height: 300px;
+}
+
+.card.expanded {
+  height: auto;
+  min-height: 300px;
 }
 
 .cardTop {
@@ -115,6 +120,46 @@
   margin: 0;
   color: #111;
   flex: 1 1 auto; /* ← fylder midterpladsen */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 9;
+  line-clamp: 9;
+}
+
+.expanded .text {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+}
+
+.emptyText {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.readMore {
+  align-self: flex-start;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--gold-500);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 750;
+  padding: 0;
+  cursor: pointer;
+}
+
+.readMore:hover {
+  text-decoration: underline;
+}
+
+.readMore:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
 }
 
 .source {

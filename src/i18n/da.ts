@@ -47,6 +47,9 @@ export const da = {
     "ratingLabel": "{{value}} ud af 5",
     "scrollLeft": "Scroll venstre",
     "scrollRight": "Scroll højre",
+    "readMore": "Læs hele anmeldelsen",
+    "showLess": "Vis mindre",
+    "emptyReview": "Denne gæst gav en stjernebedømmelse uden skriftlig kommentar.",
     "source": "Kilde",
     "airbnbCta": "Se alle anmeldelser på Airbnb"
   },

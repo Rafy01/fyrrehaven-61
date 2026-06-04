@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./Reviews.module.css";
 import Buttons from "../Buttons";
@@ -70,6 +70,9 @@ export default function Reviews({
   showSchema = true,
 }: ReviewsProps) {
   const { t } = useTranslation("reviews");
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(
+    () => new Set()
+  );
 
   const getReviewText = (review: ReviewItem) => {
     if (lang === "da") return review.textDa;
@@ -79,6 +82,18 @@ export default function Reviews({
 
   const ratingLabel = (value: number) =>
     t("ratingLabel", { value: value.toFixed(1) });
+
+  const toggleReview = (id: string) => {
+    setExpandedReviews((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   // Only show reviews from the latest rolling year.
   const reviews: ReviewItem[] = useMemo(
@@ -175,28 +190,50 @@ export default function Reviews({
       </header>
 
       <div className={styles.row} ref={scrollerRef}>
-        {reviews.map((r) => (
-          <article key={r.id} className={styles.card}>
-            <div className={styles.cardTop}>
-              <div className={styles.avatar} aria-hidden="true">
-                {r.author.slice(0, 1).toUpperCase()}
-              </div>
-              <div className={styles.meta}>
-                <strong className={styles.name}>{r.author}</strong>
-                <span className={styles.date}>{formatDate(r.date, lang)}</span>
-              </div>
-              <Stars value={r.rating} ariaLabel={ratingLabel(r.rating)} />
-            </div>
+        {reviews.map((r) => {
+          const rawText = getReviewText(r).trim();
+          const hasText = rawText.replace(/[.\s]/g, "").length > 0;
+          const text = hasText ? rawText : t("emptyReview");
+          const isLong = hasText && text.length > 260;
+          const isExpanded = expandedReviews.has(r.id);
 
-            <p className={styles.text}>
-              {getReviewText(r)}
-            </p>
+          return (
+            <article
+              key={r.id}
+              className={`${styles.card} ${isExpanded ? styles.expanded : ""}`}
+            >
+              <div className={styles.cardTop}>
+                <div className={styles.avatar} aria-hidden="true">
+                  {r.author.slice(0, 1).toUpperCase()}
+                </div>
+                <div className={styles.meta}>
+                  <strong className={styles.name}>{r.author}</strong>
+                  <span className={styles.date}>{formatDate(r.date, lang)}</span>
+                </div>
+                <Stars value={r.rating} ariaLabel={ratingLabel(r.rating)} />
+              </div>
 
-            <div className={styles.source}>
-              {t("source")}: {r.source ?? "Airbnb"}
-            </div>
-          </article>
-        ))}
+              <p className={`${styles.text} ${hasText ? "" : styles.emptyText}`}>
+                {text}
+              </p>
+
+              {isLong && (
+                <button
+                  type="button"
+                  className={styles.readMore}
+                  aria-expanded={isExpanded}
+                  onClick={() => toggleReview(r.id)}
+                >
+                  {isExpanded ? t("showLess") : t("readMore")}
+                </button>
+              )}
+
+              <div className={styles.source}>
+                {t("source")}: {r.source ?? "Airbnb"}
+              </div>
+            </article>
+          );
+        })}
       </div>
 
       <div className={styles.cta}>
