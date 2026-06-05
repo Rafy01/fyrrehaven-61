@@ -2,17 +2,29 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon } from "@radix-ui/react-icons";
+import {
+  ChevronDownIcon,
+  DesktopIcon,
+  MoonIcon,
+  SunIcon,
+} from "@radix-ui/react-icons";
 import { useTranslation } from "react-i18next";
 import styles from "./Header.module.css";
 
 import { type Lang, saveLang } from "../../lib/lang";
 import { pathOf, switchLangPath, GUEST_PAGES } from "../../lib/routes";
 import Buttons from "../Buttons";
+import type {
+  AppearancePreference,
+  ResolvedAppearance,
+} from "../../app/App";
 
 type Props = {
   lang: Lang;
   guest?: boolean;
+  appearancePreference: AppearancePreference;
+  resolvedAppearance: ResolvedAppearance;
+  onAppearanceChange: (preference: AppearancePreference) => void;
 };
 
 const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
@@ -21,7 +33,22 @@ const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
   { code: "en", flag: "🇬🇧", label: "English" },
 ];
 
-export default function Header({ lang, guest = false }: Props) {
+const APPEARANCE_OPTIONS: Array<{
+  value: AppearancePreference;
+  icon: typeof SunIcon;
+}> = [
+  { value: "system", icon: DesktopIcon },
+  { value: "light", icon: SunIcon },
+  { value: "dark", icon: MoonIcon },
+];
+
+export default function Header({
+  lang,
+  guest = false,
+  appearancePreference,
+  resolvedAppearance,
+  onAppearanceChange,
+}: Props) {
   const { i18n } = useTranslation();
   const { t } = useTranslation("navigation");
   const location = useLocation();
@@ -33,6 +60,7 @@ export default function Header({ lang, guest = false }: Props) {
   const idleTimer = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
 
 useEffect(() => {
   const onScroll = () => {
@@ -122,6 +150,12 @@ useEffect(() => {
   }, [lang, guest, t]);
 
   const flag = lang === "da" ? "🇩🇰" : lang === "de" ? "🇩🇪" : "🇬🇧";
+  const AppearanceIcon = resolvedAppearance === "dark" ? MoonIcon : SunIcon;
+
+  const changeAppearance = (next: AppearancePreference) => {
+    onAppearanceChange(next);
+    setOpen(false);
+  };
 
   return (
     <div
@@ -172,6 +206,55 @@ useEffect(() => {
             />
           )}
 
+          <DropdownMenu.Root
+            open={appearanceOpen}
+            onOpenChange={setAppearanceOpen}
+          >
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className={styles.iconTrigger}
+                aria-label={t("actions.changeAppearance")}
+                data-state={appearanceOpen ? "open" : "closed"}
+              >
+                <AppearanceIcon />
+              </button>
+            </DropdownMenu.Trigger>
+
+            <DropdownMenu.Content
+              sideOffset={6}
+              align="end"
+              className={styles.ddContent}
+              data-theme={resolvedAppearance}
+            >
+              {APPEARANCE_OPTIONS.map((option) => {
+                const isCurrent = option.value === appearancePreference;
+                const Icon = option.icon;
+                return (
+                  <DropdownMenu.Item
+                    key={option.value}
+                    onSelect={() => changeAppearance(option.value)}
+                    className={styles.ddItem}
+                    aria-current={isCurrent ? "true" : undefined}
+                    data-active={isCurrent ? "true" : undefined}
+                    aria-label={
+                      isCurrent
+                        ? `${t(`appearance.${option.value}`)}, ${t(
+                            "actions.currentAppearance"
+                          )}`
+                        : t(`appearance.${option.value}`)
+                    }
+                  >
+                    <span className={styles.langOptionText}>
+                      <Icon />
+                      {t(`appearance.${option.value}`)}
+                    </span>
+                  </DropdownMenu.Item>
+                );
+              })}
+            </DropdownMenu.Content>
+          </DropdownMenu.Root>
+
           <DropdownMenu.Root open={langOpen} onOpenChange={setLangOpen}>
             <DropdownMenu.Trigger asChild>
               <button
@@ -189,6 +272,7 @@ useEffect(() => {
               sideOffset={6}
               align="end"
               className={styles.ddContent}
+              data-theme={resolvedAppearance}
             >
               {LANGUAGE_OPTIONS.map((option) => {
                 const isCurrent = option.code === lang;
@@ -274,6 +358,30 @@ useEffect(() => {
                 />
               )}
               <div className={styles.langGroup}>
+                {APPEARANCE_OPTIONS.map((option) => {
+                  const isCurrent = option.value === appearancePreference;
+                  const Icon = option.icon;
+                  return (
+                    <button
+                      type="button"
+                      key={option.value}
+                      className={styles.langChip}
+                      onClick={() => changeAppearance(option.value)}
+                      aria-current={isCurrent}
+                      data-active={isCurrent ? "true" : undefined}
+                      aria-label={
+                        isCurrent
+                          ? `${t(`appearance.${option.value}`)}, ${t(
+                              "actions.currentAppearance"
+                            )}`
+                          : t(`appearance.${option.value}`)
+                      }
+                    >
+                      <Icon />
+                      <span>{t(`appearance.${option.value}`)}</span>
+                    </button>
+                  );
+                })}
                 {LANGUAGE_OPTIONS.map((option) => {
                   const isCurrent = option.code === lang;
                   return (

@@ -706,10 +706,17 @@ export const da = {
     "actions": {
       "book": "Book",
       "bookNow": "Book nu",
+      "changeAppearance": "Skift udseende",
       "changeLanguage": "Skift sprog",
       "closeMenu": "Luk menu",
       "openMenu": "Åbn menu",
-      "currentLanguage": "Aktuelt sprog"
+      "currentLanguage": "Aktuelt sprog",
+      "currentAppearance": "Aktuelt udseende"
+    },
+    "appearance": {
+      "system": "System",
+      "light": "Lys",
+      "dark": "Mørk"
     },
     "menu": {
       "main": "Hovednavigation",

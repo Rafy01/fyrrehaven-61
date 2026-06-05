@@ -706,10 +706,17 @@ export const de = {
     "actions": {
       "book": "Buchen",
       "bookNow": "Jetzt buchen",
+      "changeAppearance": "Darstellung wechseln",
       "changeLanguage": "Sprache wechseln",
       "closeMenu": "Menü schließen",
       "openMenu": "Menü öffnen",
-      "currentLanguage": "Aktuelle Sprache"
+      "currentLanguage": "Aktuelle Sprache",
+      "currentAppearance": "Aktuelle Darstellung"
+    },
+    "appearance": {
+      "system": "System",
+      "light": "Hell",
+      "dark": "Dunkel"
     },
     "menu": {
       "main": "Hauptnavigation",
