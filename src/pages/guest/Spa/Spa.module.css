@@ -28,7 +28,7 @@
 
 .caption {
   font-size: 0.9rem;
-  color: #555;
+  color: var(--muted);
   margin-top: 0.5rem;
 }
 

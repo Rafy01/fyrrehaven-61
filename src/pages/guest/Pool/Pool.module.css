@@ -14,13 +14,13 @@
 
 .subtitle {
   text-align: center;
-  color: #999;
+  color: var(--muted);
   margin-bottom: 2rem;
 }
 
 .warningBox {
-  background-color: #fef3c7;
-  border-left: 4px solid #facc15;
+  background-color: color-mix(in srgb, var(--gold-500) 14%, var(--surface));
+  border-left: 4px solid var(--gold-500);
   padding: 1rem;
   margin-bottom: 2rem;
 }
