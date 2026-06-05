@@ -28,6 +28,10 @@ const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
   { code: "en", flag: "🇬🇧", label: "English" },
 ];
 
+const LIGHT_LOGO_SRC = "/logo_trans.png";
+const DARK_LOGO_SRC =
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/logo_trans_white-scaled.png";
+
 export default function Header({
   lang,
   guest = false,
@@ -136,6 +140,7 @@ useEffect(() => {
   const flag = lang === "da" ? "🇩🇰" : lang === "de" ? "🇩🇪" : "🇬🇧";
   const isDark = resolvedAppearance === "dark";
   const ThemeActionIcon = isDark ? SunIcon : MoonIcon;
+  const logoSrc = isDark ? DARK_LOGO_SRC : LIGHT_LOGO_SRC;
 
   const changeAppearance = (next: ResolvedAppearance) => {
     onAppearanceChange(next);
@@ -160,7 +165,7 @@ useEffect(() => {
           aria-label="Fyrrehaven 61"
         >
           <img
-            src="/logo_trans.png"
+            src={logoSrc}
             alt="Fyrrehaven 61 - logo"
             onError={(e) => {
               e.currentTarget.style.display = "none";
