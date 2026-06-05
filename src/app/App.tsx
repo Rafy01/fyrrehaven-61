@@ -299,7 +299,7 @@ export default function App({
           </Box>
         </Container>
       </main>
-      <Footer lang={lang} guest={guest} />
+      <Footer lang={lang} guest={guest} resolvedAppearance={resolvedAppearance} />
       <ScrollMemory />
       {showMessengerButton && (
         <MessengerButton onDismiss={() => setShowMessengerButton(false)} />
