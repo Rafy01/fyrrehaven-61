@@ -4,7 +4,6 @@ import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   ChevronDownIcon,
-  DesktopIcon,
   MoonIcon,
   SunIcon,
 } from "@radix-ui/react-icons";
@@ -14,17 +13,13 @@ import styles from "./Header.module.css";
 import { type Lang, saveLang } from "../../lib/lang";
 import { pathOf, switchLangPath, GUEST_PAGES } from "../../lib/routes";
 import Buttons from "../Buttons";
-import type {
-  AppearancePreference,
-  ResolvedAppearance,
-} from "../../app/App";
+import type { ResolvedAppearance } from "../../app/App";
 
 type Props = {
   lang: Lang;
   guest?: boolean;
-  appearancePreference: AppearancePreference;
   resolvedAppearance: ResolvedAppearance;
-  onAppearanceChange: (preference: AppearancePreference) => void;
+  onAppearanceChange: (preference: ResolvedAppearance) => void;
 };
 
 const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
@@ -33,19 +28,9 @@ const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
   { code: "en", flag: "🇬🇧", label: "English" },
 ];
 
-const APPEARANCE_OPTIONS: Array<{
-  value: AppearancePreference;
-  icon: typeof SunIcon;
-}> = [
-  { value: "system", icon: DesktopIcon },
-  { value: "light", icon: SunIcon },
-  { value: "dark", icon: MoonIcon },
-];
-
 export default function Header({
   lang,
   guest = false,
-  appearancePreference,
   resolvedAppearance,
   onAppearanceChange,
 }: Props) {
@@ -60,7 +45,6 @@ export default function Header({
   const idleTimer = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [appearanceOpen, setAppearanceOpen] = useState(false);
 
 useEffect(() => {
   const onScroll = () => {
@@ -150,11 +134,15 @@ useEffect(() => {
   }, [lang, guest, t]);
 
   const flag = lang === "da" ? "🇩🇰" : lang === "de" ? "🇩🇪" : "🇬🇧";
-  const AppearanceIcon = resolvedAppearance === "dark" ? MoonIcon : SunIcon;
+  const isDark = resolvedAppearance === "dark";
+  const ThemeActionIcon = isDark ? SunIcon : MoonIcon;
 
-  const changeAppearance = (next: AppearancePreference) => {
+  const changeAppearance = (next: ResolvedAppearance) => {
     onAppearanceChange(next);
-    setOpen(false);
+  };
+
+  const toggleAppearance = () => {
+    changeAppearance(isDark ? "light" : "dark");
   };
 
   return (
@@ -206,54 +194,15 @@ useEffect(() => {
             />
           )}
 
-          <DropdownMenu.Root
-            open={appearanceOpen}
-            onOpenChange={setAppearanceOpen}
+          <button
+            type="button"
+            className={styles.themeButton}
+            aria-label={t("actions.toggleAppearance")}
+            data-state={resolvedAppearance}
+            onClick={toggleAppearance}
           >
-            <DropdownMenu.Trigger asChild>
-              <button
-                type="button"
-                className={styles.iconTrigger}
-                aria-label={t("actions.changeAppearance")}
-                data-state={appearanceOpen ? "open" : "closed"}
-              >
-                <AppearanceIcon />
-              </button>
-            </DropdownMenu.Trigger>
-
-            <DropdownMenu.Content
-              sideOffset={6}
-              align="end"
-              className={styles.ddContent}
-              data-theme={resolvedAppearance}
-            >
-              {APPEARANCE_OPTIONS.map((option) => {
-                const isCurrent = option.value === appearancePreference;
-                const Icon = option.icon;
-                return (
-                  <DropdownMenu.Item
-                    key={option.value}
-                    onSelect={() => changeAppearance(option.value)}
-                    className={styles.ddItem}
-                    aria-current={isCurrent ? "true" : undefined}
-                    data-active={isCurrent ? "true" : undefined}
-                    aria-label={
-                      isCurrent
-                        ? `${t(`appearance.${option.value}`)}, ${t(
-                            "actions.currentAppearance"
-                          )}`
-                        : t(`appearance.${option.value}`)
-                    }
-                  >
-                    <span className={styles.langOptionText}>
-                      <Icon />
-                      {t(`appearance.${option.value}`)}
-                    </span>
-                  </DropdownMenu.Item>
-                );
-              })}
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
+            <ThemeActionIcon aria-hidden="true" />
+          </button>
 
           <DropdownMenu.Root open={langOpen} onOpenChange={setLangOpen}>
             <DropdownMenu.Trigger asChild>
@@ -358,30 +307,17 @@ useEffect(() => {
                 />
               )}
               <div className={styles.langGroup}>
-                {APPEARANCE_OPTIONS.map((option) => {
-                  const isCurrent = option.value === appearancePreference;
-                  const Icon = option.icon;
-                  return (
-                    <button
-                      type="button"
-                      key={option.value}
-                      className={styles.langChip}
-                      onClick={() => changeAppearance(option.value)}
-                      aria-current={isCurrent}
-                      data-active={isCurrent ? "true" : undefined}
-                      aria-label={
-                        isCurrent
-                          ? `${t(`appearance.${option.value}`)}, ${t(
-                              "actions.currentAppearance"
-                            )}`
-                          : t(`appearance.${option.value}`)
-                      }
-                    >
-                      <Icon />
-                      <span>{t(`appearance.${option.value}`)}</span>
-                    </button>
-                  );
-                })}
+                <button
+                  type="button"
+                  className={styles.themeChip}
+                  onClick={() => {
+                    toggleAppearance();
+                    setOpen(false);
+                  }}
+                  aria-label={t("actions.toggleAppearance")}
+                >
+                  <ThemeActionIcon aria-hidden="true" />
+                </button>
                 {LANGUAGE_OPTIONS.map((option) => {
                   const isCurrent = option.code === lang;
                   return (

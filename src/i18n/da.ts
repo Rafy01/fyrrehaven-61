@@ -707,6 +707,7 @@ export const da = {
       "book": "Book",
       "bookNow": "Book nu",
       "changeAppearance": "Skift udseende",
+      "toggleAppearance": "Skift mellem lys og mørk tilstand",
       "changeLanguage": "Skift sprog",
       "closeMenu": "Luk menu",
       "openMenu": "Åbn menu",

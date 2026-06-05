@@ -707,6 +707,7 @@ export const en = {
       "book": "Book",
       "bookNow": "Book now",
       "changeAppearance": "Change appearance",
+      "toggleAppearance": "Switch between light and dark mode",
       "changeLanguage": "Change language",
       "closeMenu": "Close menu",
       "openMenu": "Open menu",

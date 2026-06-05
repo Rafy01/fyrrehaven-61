@@ -1,5 +1,5 @@
 // src/app/App.tsx
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Theme, Container, Box } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
@@ -21,17 +21,14 @@ import { cookieData } from "../data/cookies";
 import CookieCategoryList from "../components/CookieButton/CookieCategoryList";
 import MessengerButton from "../components/MessengerButton";
 
-export type AppearancePreference = "system" | "light" | "dark";
 export type ResolvedAppearance = "light" | "dark";
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
 
-function readStoredAppearance(): AppearancePreference {
-  if (typeof window === "undefined") return "system";
+function readStoredAppearance(): ResolvedAppearance {
+  if (typeof window === "undefined") return "light";
   const value = window.localStorage.getItem(APPEARANCE_STORAGE_KEY);
-  return value === "light" || value === "dark" || value === "system"
-    ? value
-    : "system";
+  return value === "light" || value === "dark" ? value : getSystemAppearance();
 }
 
 function getSystemAppearance(): ResolvedAppearance {
@@ -54,24 +51,16 @@ export default function App({
   const { i18n } = useTranslation();
   const location = useLocation();
   const [showMessengerButton, setShowMessengerButton] = useState(true);
-  const [appearancePreference, setAppearancePreference] =
-    useState<AppearancePreference>(() => readStoredAppearance());
-  const [systemAppearance, setSystemAppearance] =
-    useState<ResolvedAppearance>(() => getSystemAppearance());
-
-  const resolvedAppearance: ResolvedAppearance = useMemo(
-    () =>
-      appearancePreference === "system"
-        ? systemAppearance
-        : appearancePreference,
-    [appearancePreference, systemAppearance]
-  );
+  const [resolvedAppearance, setResolvedAppearance] =
+    useState<ResolvedAppearance>(() => readStoredAppearance());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const update = () => setSystemAppearance(media.matches ? "dark" : "light");
-    update();
+    const update = () => {
+      if (window.localStorage.getItem(APPEARANCE_STORAGE_KEY)) return;
+      setResolvedAppearance(media.matches ? "dark" : "light");
+    };
     media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
@@ -79,10 +68,10 @@ export default function App({
   useLayoutEffect(() => {
     const html = document.documentElement;
     html.dataset.theme = resolvedAppearance;
-    html.dataset.appearancePreference = appearancePreference;
+    html.dataset.appearancePreference = resolvedAppearance;
     html.style.colorScheme = resolvedAppearance;
-    window.localStorage.setItem(APPEARANCE_STORAGE_KEY, appearancePreference);
-  }, [appearancePreference, resolvedAppearance]);
+    window.localStorage.setItem(APPEARANCE_STORAGE_KEY, resolvedAppearance);
+  }, [resolvedAppearance]);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -298,9 +287,8 @@ export default function App({
       <Header
         lang={lang}
         guest={guest}
-        appearancePreference={appearancePreference}
         resolvedAppearance={resolvedAppearance}
-        onAppearanceChange={setAppearancePreference}
+        onAppearanceChange={setResolvedAppearance}
       />
       <HashScroll />
       <Analytics />

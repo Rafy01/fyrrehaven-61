@@ -707,6 +707,7 @@ export const de = {
       "book": "Buchen",
       "bookNow": "Jetzt buchen",
       "changeAppearance": "Darstellung wechseln",
+      "toggleAppearance": "Zwischen hellem und dunklem Modus wechseln",
       "changeLanguage": "Sprache wechseln",
       "closeMenu": "Menü schließen",
       "openMenu": "Menü öffnen",
