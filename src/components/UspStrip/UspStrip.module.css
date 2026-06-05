@@ -1,14 +1,15 @@
 .wrap{
-  --chip-bg: rgba(255,255,255,.75);
-  --chip-brd: rgba(0,0,0,.08);
+  --chip-bg: var(--surface-elevated);
+  --chip-bg-hover: var(--surface);
+  --chip-brd: var(--border-muted);
+  --chip-shadow: 0 10px 26px var(--shadow-soft);
   --ink: var(--ink-900);
 
   padding-block: .6rem;
-  /* “glass” strip */
-  background: rgba(255,255,255,.28);
+  background: var(--header-bg);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
   backdrop-filter: blur(10px) saturate(140%);
-  border-bottom: 1px solid rgba(0,0,0,.04);
+  border-bottom: 1px solid var(--border-muted);
 }
 
 .center{ text-align: center; }
@@ -33,7 +34,7 @@
 
 .list::-webkit-scrollbar{ height: 8px; }
 .list::-webkit-scrollbar-thumb{
-  background: rgba(0,0,0,.12);
+  background: var(--border-subtle);
   border-radius: 8px;
 }
 
@@ -58,12 +59,17 @@
   border: 1px solid var(--chip-brd);
   border-radius: 999px;
   color: var(--ink);
+  box-shadow: var(--chip-shadow);
   white-space: nowrap;
 
   /* subtle interaction */
   transition: transform .12s ease, background .2s ease, border-color .2s ease;
 }
-.item:hover{ transform: translateY(-1px); background: rgba(255,255,255,.9); border-color: rgba(0,0,0,.12); }
+.item:hover{
+  transform: translateY(-1px);
+  background: var(--chip-bg-hover);
+  border-color: var(--border-subtle);
+}
 .item:focus-within{ outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* sizes */
@@ -76,3 +82,11 @@
 .icon :where(svg){ width: 18px; height: 18px; }
 
 .text{ line-height: 1; }
+
+:global(html[data-theme="dark"]) .wrap {
+  --chip-bg: color-mix(in srgb, var(--surface) 82%, var(--gold-500) 18%);
+  --chip-bg-hover: color-mix(in srgb, var(--surface) 72%, var(--gold-500) 28%);
+  --chip-brd: color-mix(in srgb, var(--gold-500) 38%, transparent);
+  --chip-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  --ink: var(--ink-900);
+}

@@ -1,14 +1,13 @@
 .card{
   --ring: rgba(37,99,235,.25);
-  --bg: #fff;
-  --fg: #0f172a;
-  --muted: #64748b;
+  --bg: var(--surface);
+  --fg: var(--form-text);
 
   background: var(--bg);
   color: var(--fg);
-  border: 1px solid rgba(0,0,0,.06);
+  border: 1px solid var(--border-muted);
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.06);
+  box-shadow: 0 10px 30px var(--shadow-soft);
   padding: 14px 16px;
   max-width: 360px;
 }
@@ -35,9 +34,9 @@
 .badge{
   font-size: .78rem;
   font-weight: 800;
-  color: #0b1220;
-  background: #e5f0ff;
-  border: 1px solid #cfe0ff;
+  color: var(--form-text);
+  background: var(--surface-soft);
+  border: 1px solid var(--border-muted);
   padding: 2px 8px;
   border-radius: 999px;
 }

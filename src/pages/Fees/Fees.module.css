@@ -19,16 +19,16 @@
 }
 
 .badge {
-  border: 1px solid rgba(0,0,0,.08);
-  background: #fff;
+  border: 1px solid var(--border-muted);
+  background: var(--surface);
   border-radius: 999px;
   padding: .4rem .7rem;
   font-weight: 650;
-  box-shadow: 0 6px 16px rgba(2,6,23,.06);
+  box-shadow: 0 6px 16px var(--shadow-soft);
 }
 
 .note {
-  color: #6b7280;
+  color: var(--muted);
 }
 
 
@@ -38,12 +38,12 @@
 }
 
 .item {
-  background: #fff;
-  border: 1px solid rgba(0,0,0,.08);
+  background: var(--surface);
+  border: 1px solid var(--border-muted);
   border-radius: 12px;
   padding: .7rem .85rem;
   margin-bottom: 5px;
-  box-shadow: 0 8px 22px rgba(0,0,0,.06);
+  box-shadow: 0 8px 22px var(--shadow-soft);
 }
 
 .title {
@@ -51,7 +51,7 @@
 }
 
 .unit {
-  color: #6b7280;
+  color: var(--muted);
   font-size: .9rem;
 }
 
@@ -63,7 +63,7 @@
 
 .hr {
   height: 1px;
-  background: rgba(0,0,0,.08);
+  background: var(--border-muted);
   margin: .25rem 0 .65rem;
 }
 
