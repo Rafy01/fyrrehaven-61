@@ -77,6 +77,9 @@ body {
 html {
   scroll-behavior: smooth;
 }
+html.scroll-restore-instant {
+  scroll-behavior: auto !important;
+}
 #filters,
 #map,
 #trips {

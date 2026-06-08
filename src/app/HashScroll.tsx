@@ -8,10 +8,10 @@ export default function HashScroll() {
   useEffect(() => {
     if (!hash) return;
     const id = hash.slice(1);
-    // vent ét frame så DOM-sektionen med id'et findes
+    // Vent et frame saa DOM-sektionen med id'et findes.
     requestAnimationFrame(() => {
       const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
     });
   }, [hash, key]);
 
