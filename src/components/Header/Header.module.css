@@ -438,6 +438,11 @@
 .panel[data-state="open"] {
   animation: panelIn 0.42s cubic-bezier(0.2, 0.85, 0.2, 1) both;
 }
+.panel[data-state="open"][data-settled="true"] {
+  animation: none;
+  opacity: 1;
+  transform: translateY(var(--panel-drag-y));
+}
 .panel[data-state="closed"] {
   animation: panelOut 0.24s ease both;
 }
@@ -531,6 +536,12 @@
 }
 .panel[data-state="open"] .panelLink {
   animation: itemIn 0.34s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+.panel[data-settled="true"] .panelLink,
+.panel[data-dragging="true"] .panelLink {
+  animation: none;
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 .panel[data-state="open"] .panelLink:nth-child(1) {
   animation-delay: 0.04s;
@@ -725,6 +736,11 @@
   }
   .panel[data-state="open"] {
     animation-name: panelInTablet;
+  }
+  .panel[data-state="open"][data-settled="true"] {
+    animation: none;
+    opacity: 1;
+    transform: translateX(-50%) translateY(var(--panel-drag-y));
   }
   .panel[data-state="closed"] {
     animation-name: panelOutTablet;

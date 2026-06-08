@@ -60,10 +60,12 @@ export default function Header({
   const [scrolled, setScrolled] = useState(false);
   const lastY = useRef(typeof window !== "undefined" ? window.scrollY : 0);
   const idleTimer = useRef<number | null>(null);
+  const menuOpenAnimationTimer = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDraggingMenu, setIsDraggingMenu] = useState(false);
+  const [isMenuAnimationSettled, setIsMenuAnimationSettled] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const menuDrag = useRef({
     active: false,
@@ -115,12 +117,34 @@ useEffect(() => {
   useEffect(() => {
     if (open) setHidden(false);
     if (!open) {
+      if (menuOpenAnimationTimer.current) {
+        window.clearTimeout(menuOpenAnimationTimer.current);
+        menuOpenAnimationTimer.current = null;
+      }
+      setIsMenuAnimationSettled(false);
       setDragOffset(0);
       setIsDraggingMenu(false);
       menuDrag.current.active = false;
       menuDrag.current.offset = 0;
       menuDrag.current.moved = false;
     }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    setIsMenuAnimationSettled(false);
+    menuOpenAnimationTimer.current = window.setTimeout(() => {
+      setIsMenuAnimationSettled(true);
+      menuOpenAnimationTimer.current = null;
+    }, 460);
+
+    return () => {
+      if (menuOpenAnimationTimer.current) {
+        window.clearTimeout(menuOpenAnimationTimer.current);
+        menuOpenAnimationTimer.current = null;
+      }
+    };
   }, [open]);
 
   const switchLang = (next: Lang) => {
@@ -496,6 +520,7 @@ useEffect(() => {
               className={styles.panel}
               aria-label={t("menu.mobile")}
               data-dragging={isDraggingMenu ? "true" : undefined}
+              data-settled={isMenuAnimationSettled ? "true" : undefined}
               style={menuDragStyle}
               ref={panelRef}
               onPointerDownCapture={beginMenuDragFromReact}
