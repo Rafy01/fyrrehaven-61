@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Container, Box, Flex, Text } from "@radix-ui/themes";
 import styles from "./Footer.module.css";
 import { useTranslation } from "react-i18next";
+import * as CookieConsent from "vanilla-cookieconsent";
 import { type Lang } from "../../lib/lang";
 import { GUEST_PAGES, guestPathOf, pathOf } from "../../lib/routes";
 import type { ResolvedAppearance } from "../../app/App";
@@ -277,12 +278,13 @@ export default function Footer({
                 </Link>
               </li>
               <li>
-                <Link
-                  className={styles.bottomLink}
-                  to={pathOf(currentLang, "cookies")}
+                <button
+                  type="button"
+                  className={styles.bottomLinkButton}
+                  onClick={() => CookieConsent.showPreferences()}
                 >
                   {t("links.cookies")}
-                </Link>
+                </button>
               </li>
               <li>
                 <Link

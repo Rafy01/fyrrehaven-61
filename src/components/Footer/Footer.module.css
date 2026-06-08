@@ -141,10 +141,26 @@
   text-decoration: none;
   font-size: 0.9rem;
 }
-@media (hover: hover) and (pointer: fine) {
-.bottomLink:hover {
-  text-decoration: underline;
+.bottomLinkButton {
+  padding: 0;
+  color: color-mix(in srgb, var(--ink-900) 80%, transparent);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
 }
+.bottomLinkButton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .bottomLink:hover,
+  .bottomLinkButton:hover {
+    text-decoration: underline;
+  }
 }
 
 /* Responsive */

@@ -14,7 +14,6 @@ import "./i18n";
 
 import App from "./app/App";
 import Home from "./pages/Home";
-import CookiesPage from "./pages/Cookies";
 import House from "./pages/House";
 import Area from "./pages/Area";
 import Gallery from "./pages/Gallery";
@@ -47,7 +46,6 @@ const langRoutes = (lang: Lang) => [
   { path: SLUGS.faq[lang], element: <Faq lang={lang} /> },
   { path: SLUGS.contact[lang], element: <Contact lang={lang} /> },
   { path: SLUGS.book[lang], element: <Book lang={lang} /> },
-  { path: SLUGS.cookies[lang], element: <CookiesPage lang={lang} /> },
   { path: SLUGS.privacy[lang], element: <Privacy lang={lang} /> },
   { path: SLUGS.fees[lang], element: <Fees lang={lang} /> },
 ];

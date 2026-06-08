@@ -744,7 +744,7 @@ export const de = {
       "faq": "Häufig gestellte Fragen",
       "extraServices": "Zusatzleistungen",
       "privacy": "Datenschutz",
-      "cookies": "Cookies",
+      "cookies": "Cookie-Einstellungen",
       "sitemap": "Sitemap",
       "fees": "Gebühren"
     },
@@ -1151,30 +1151,34 @@ export const de = {
   "cookiesPage": {
     "consent": {
       "title": "Wir verwenden Cookies",
-      "description": "Wir verwenden notwendige Cookies, damit die Website funktioniert, sowie optionale Cookies für Statistik und Marketing.",
-      "acceptAll": "Alle akzeptieren",
+      "description": "Wir verwenden notwendige Cookies, damit die Website funktioniert und Ihre Cookie-Einstellungen gespeichert werden.",
+      "acceptAll": "OK",
       "rejectAll": "Ablehnen",
       "preferences": "Cookie-Einstellungen",
       "settingsTitle": "Cookie-Einstellungen",
       "close": "Schließen",
-      "save": "Einstellungen speichern"
+      "save": "Einstellungen speichern",
+      "manageButton": "Cookie-Einstellungen verwalten",
+      "footer": "Sie können Ihre Einwilligung jederzeit über die Cookie-Einstellungen ändern oder widerrufen."
     },
     "categories": {
       "necessary": {
         "title": "Notwendige Cookies",
         "label": "Notwendige",
-        "description": "Erforderlich, damit die Website funktioniert."
-      },
-      "analytics": {
-        "title": "Statistik",
-        "label": "Statistik",
-        "description": "Hilft uns zu verstehen, wie die Website genutzt wird."
-      },
-      "marketing": {
-        "title": "Marketing",
-        "label": "Marketing",
-        "description": "Wird für personalisierte Inhalte und Werbung verwendet."
+        "description": "Erforderlich, damit die Website funktioniert. Diese Cookies können nicht deaktiviert werden.",
+        "tableCaption": "Notwendige Cookies"
       }
+    },
+    "preferences": {
+      "introTitle": "Cookie-Einstellungen",
+      "introDescription": "Fyrrehaven 61 verwendet derzeit nur notwendige Cookies. Diese sind immer aktiv, weil die Website sie zum Funktionieren benötigt."
+    },
+    "table": {
+      "name": "Name",
+      "provider": "Anbieter",
+      "purpose": "Zweck",
+      "expiration": "Ablauf",
+      "type": "Typ"
     },
     "page": {
       "title": "Cookies bei Fyrrehaven 61",
@@ -1282,7 +1286,7 @@ export const de = {
       },
       "cookies": {
         "title": "Cookies und ähnliche Technologien",
-        "body": "Wir verwenden hauptsächlich technisch notwendige Cookies/Speicherungen, um die Website sicher bereitzustellen. Marketing- oder Trackingtechnologien verwenden wir nicht ohne Ihre Einwilligung. Wenn nicht notwendige Cookies aktiviert werden, wird ein Einwilligungsbanner angezeigt."
+        "body": "Wir verwenden derzeit nur technisch notwendige Cookies/Speicherungen, um die Website sicher bereitzustellen und Ihre Cookie-Einstellungen zu speichern. Wir verwenden keine Statistik-, Marketing- oder Tracking-Cookies."
       },
       "rights": {
         "title": "Ihre Rechte",
