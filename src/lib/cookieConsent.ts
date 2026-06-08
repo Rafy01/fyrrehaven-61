@@ -97,6 +97,7 @@ export async function setupCookieConsent(lang: Lang, i18n: I18n) {
     autoShow: true,
     manageScriptTags: true,
     autoClearCookies: true,
+    disablePageInteraction: true,
     cookie: {
       name: "fh61_cookie_consent",
       expiresAfterDays: 180,
