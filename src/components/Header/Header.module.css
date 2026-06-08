@@ -398,8 +398,8 @@
   inset: 0;
   z-index: 40;
   background: rgba(8, 9, 11, var(--menu-overlay-opacity, 0.18));
-  -webkit-backdrop-filter: blur(12px) saturate(145%);
-  backdrop-filter: blur(12px) saturate(145%);
+  -webkit-backdrop-filter: blur(var(--menu-overlay-blur, 12px)) saturate(145%);
+  backdrop-filter: blur(var(--menu-overlay-blur, 12px)) saturate(145%);
 }
 .overlay[data-state="open"] {
   animation: overlayIn 0.22s ease both;
@@ -466,26 +466,11 @@
   touch-action: none;
 }
 .panelGrabber span {
-  position: relative;
   width: 44px;
   height: 5px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink-900) 22%, transparent);
-  transition: width 0.18s ease, background 0.18s ease, transform 0.18s ease;
-}
-.panelGrabber span::before,
-.panelGrabber span::after {
-  content: "";
-  position: absolute;
-  top: 9px;
-  width: 0;
-  height: 5px;
-  border-radius: inherit;
-  background: currentColor;
-  opacity: 0;
-  transform-origin: center;
-  transition: left 0.18s ease, right 0.18s ease, width 0.18s ease,
-    opacity 0.18s ease, transform 0.18s ease;
+  transition: background 0.18s ease, transform 0.18s ease, width 0.18s ease;
 }
 .panelGrabber:focus-visible {
   outline: 3px solid var(--focus);
@@ -495,24 +480,9 @@
   cursor: grabbing;
 }
 .panel[data-dragging="true"] .panelGrabber span {
-  width: 28px;
-  background: transparent;
-  transform: translateY(-4px);
-}
-.panel[data-dragging="true"] .panelGrabber span::before,
-.panel[data-dragging="true"] .panelGrabber span::after {
-  opacity: 1;
-  width: 22px;
-}
-.panel[data-dragging="true"] .panelGrabber span::before {
-  right: 50%;
-  transform: translateX(2px) rotate(45deg);
-  transform-origin: right center;
-}
-.panel[data-dragging="true"] .panelGrabber span::after {
-  left: 50%;
-  transform: translateX(-2px) rotate(-45deg);
-  transform-origin: left center;
+  width: 52px;
+  background: color-mix(in srgb, var(--ink-900) 34%, transparent);
+  transform: translateY(1px);
 }
 
 .panelNav {

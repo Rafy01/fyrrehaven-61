@@ -11,7 +11,6 @@ import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
-  CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   MoonIcon,
@@ -359,14 +358,14 @@ useEffect(() => {
     menuDrag.current.moved = false;
   };
 
-  const overlayOpacity = Math.max(
-    0.04,
-    0.18 - (Math.min(dragOffset, 180) / 180) * 0.14
-  );
+  const dragProgress = Math.min(dragOffset, 140) / 140;
+  const overlayOpacity = Math.max(0, 0.18 - dragProgress * 0.18);
+  const overlayBlur = Math.max(0, 12 - dragProgress * 12);
   const isMenuPulled = dragOffset > 0;
   const menuDragStyle = {
     "--panel-drag-y": `${dragOffset}px`,
     "--menu-overlay-opacity": overlayOpacity,
+    "--menu-overlay-blur": `${overlayBlur}px`,
   } as CSSProperties;
 
   return (
@@ -585,7 +584,6 @@ useEffect(() => {
                         >
                           <span aria-hidden="true">{option.flag}</span>
                           <span>{option.label}</span>
-                          {isCurrent && <CheckIcon aria-hidden="true" />}
                         </button>
                       );
                     })}
