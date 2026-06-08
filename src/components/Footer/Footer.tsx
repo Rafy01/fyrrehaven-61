@@ -4,6 +4,15 @@ import styles from "./Footer.module.css";
 import { useTranslation } from "react-i18next";
 import { type Lang } from "../../lib/lang";
 import { GUEST_PAGES, guestPathOf, pathOf } from "../../lib/routes";
+import type { ResolvedAppearance } from "../../app/App";
+
+const LIGHT_LOGO_SRC = "/logo_trans.png";
+const DARK_LOGO_SRC =
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/logo_trans_white-scaled.png";
+const LIGHT_SUPERHOST_SRC =
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/superhost-1.webp";
+const DARK_SUPERHOST_SRC =
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2026/06/white-airbnb-superhost.png";
 
 export type FooterProps = {
   /** Valgfrit: giv sproget eksplicit. Ellers læses det fra i18n.language. */
@@ -19,6 +28,7 @@ export type FooterProps = {
   showSuperhost?: boolean;
   /** Om footeren vises i gæste-universet */
   guest?: boolean;
+  resolvedAppearance?: ResolvedAppearance;
 };
 
 export default function Footer({
@@ -26,6 +36,7 @@ export default function Footer({
   socials,
   showSuperhost = true,
   guest = false,
+  resolvedAppearance = "light",
 }: FooterProps) {
   const { t, i18n } = useTranslation("footer");
   const currentLang: Lang = lang ??
@@ -35,6 +46,9 @@ export default function Footer({
       ? "de"
       : "en");
   const year = new Date().getFullYear();
+  const logoSrc = resolvedAppearance === "dark" ? DARK_LOGO_SRC : LIGHT_LOGO_SRC;
+  const superhostSrc =
+    resolvedAppearance === "dark" ? DARK_SUPERHOST_SRC : LIGHT_SUPERHOST_SRC;
 
   const s = {
     instagram: socials?.instagram || "https://www.instagram.com/fyrrehaven61/",
@@ -51,7 +65,7 @@ export default function Footer({
           <div className={styles.topRow}>
             <div className={styles.brand}>
               <img
-                src="/logo_trans.png"
+                src={logoSrc}
                 alt=""
                 className={styles.logo}
                 onError={(e) => {
@@ -81,7 +95,7 @@ export default function Footer({
                 >
                   <img
                     className={styles.superhostBadge}
-                    src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/superhost-1.webp"
+                    src={superhostSrc}
                     alt="Airbnb Superhost"
                   />
                 </a>

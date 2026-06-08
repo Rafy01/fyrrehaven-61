@@ -10,7 +10,7 @@
 }
 
 .subtext {
-  color: #555;
+  color: var(--muted);
   margin-bottom: 1rem;
 }
 
@@ -24,22 +24,25 @@
 
 .linkButton {
   padding: 0.5rem 1rem;
-  border: 2px solid #cfae00;
+  border: 2px solid var(--gold-500);
   border-radius: 4px;
   text-decoration: none;
-  color: #000;
+  color: var(--form-text);
   background-color: transparent;
   font-weight: 500;
   transition: background-color 0.2s ease;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .linkButton:hover {
-  background-color: #f7f2c6;
+  background-color: color-mix(in srgb, var(--gold-500) 14%, var(--surface));
+}
 }
 
 .noticeBox {
-  background-color: #fef3c7;
-  border-left: 4px solid #facc15;
+  background-color: color-mix(in srgb, var(--gold-500) 14%, var(--surface));
+  border-left: 4px solid var(--gold-500);
   padding: 1rem;
   margin-bottom: 2rem;
 }
@@ -50,7 +53,7 @@
 }
 
 .noticeBox a {
-  color: #1e40af;
+  color: var(--gold-700);
   text-decoration: underline;
 }
 

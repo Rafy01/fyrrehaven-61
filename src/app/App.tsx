@@ -21,6 +21,26 @@ import { cookieData } from "../data/cookies";
 import CookieCategoryList from "../components/CookieButton/CookieCategoryList";
 import MessengerButton from "../components/MessengerButton";
 
+export type ResolvedAppearance = "light" | "dark";
+
+const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
+
+function readStoredAppearance(): ResolvedAppearance {
+  if (typeof window === "undefined") return "light";
+  const value = window.localStorage.getItem(APPEARANCE_STORAGE_KEY);
+  return value === "light" || value === "dark" ? value : getSystemAppearance();
+}
+
+function getSystemAppearance(): ResolvedAppearance {
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  ) {
+    return "dark";
+  }
+  return "light";
+}
+
 export default function App({
   lang,
   guest = false,
@@ -31,6 +51,27 @@ export default function App({
   const { i18n } = useTranslation();
   const location = useLocation();
   const [showMessengerButton, setShowMessengerButton] = useState(true);
+  const [resolvedAppearance, setResolvedAppearance] =
+    useState<ResolvedAppearance>(() => readStoredAppearance());
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const update = () => {
+      if (window.localStorage.getItem(APPEARANCE_STORAGE_KEY)) return;
+      setResolvedAppearance(media.matches ? "dark" : "light");
+    };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    html.dataset.theme = resolvedAppearance;
+    html.dataset.appearancePreference = resolvedAppearance;
+    html.style.colorScheme = resolvedAppearance;
+    window.localStorage.setItem(APPEARANCE_STORAGE_KEY, resolvedAppearance);
+  }, [resolvedAppearance]);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -241,9 +282,14 @@ export default function App({
   }, [lang]);
 
   return (
-    <Theme accentColor="gray" radius="large" appearance="light">
+    <Theme accentColor="gray" radius="large" appearance={resolvedAppearance}>
       <Gtag />
-      <Header lang={lang} guest={guest} />
+      <Header
+        lang={lang}
+        guest={guest}
+        resolvedAppearance={resolvedAppearance}
+        onAppearanceChange={setResolvedAppearance}
+      />
       <HashScroll />
       <Analytics />
       <main>
@@ -253,7 +299,7 @@ export default function App({
           </Box>
         </Container>
       </main>
-      <Footer lang={lang} guest={guest} />
+      <Footer lang={lang} guest={guest} resolvedAppearance={resolvedAppearance} />
       <ScrollMemory />
       {showMessengerButton && (
         <MessengerButton onDismiss={() => setShowMessengerButton(false)} />

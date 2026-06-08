@@ -2,17 +2,31 @@
   position: fixed;
   bottom: 1rem;
   left: 1rem;
-  background: white;
-  border: 1px solid #ccc;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
   border-radius: 100px;
   padding: 0.5rem 0.7rem;
   font-size: 1.2rem;
   cursor: pointer;
   z-index: 10000;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
-  transition: background 0.2s;
+  color: var(--ink-900);
+  box-shadow: 0 8px 22px var(--shadow-soft);
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease,
+    color 0.16s ease, box-shadow 0.16s ease;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .cookieButton:hover {
-  background: #f5f5f5;
+  background: var(--ink-900);
+  border-color: var(--ink-900);
+  color: var(--sand-50);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px var(--shadow-soft);
+}
+}
+
+.cookieButton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }

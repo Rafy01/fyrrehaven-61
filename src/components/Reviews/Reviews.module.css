@@ -31,15 +31,17 @@
 }
 .navBtn {
   appearance: none;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #fff;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
   width: 38px;
   height: 38px;
   border-radius: 10px;
   cursor: pointer;
 }
+@media (hover: hover) and (pointer: fine) {
 .navBtn:hover {
-  background: #f6f6f6;
+  background: var(--surface-hover);
+}
 }
 
 .row {
@@ -62,9 +64,9 @@
 /* ---- Card: flex-col så vi kan pinne .source i bunden ---- */
 .card {
   scroll-snap-align: start;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-muted);
   border-radius: 14px;
-  background: #fff;
+  background: var(--surface);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
   padding: 0.85rem;
   display: flex; /* ← skift fra grid til flex */
@@ -103,7 +105,7 @@
   font-weight: 700;
 }
 .date {
-  color: #6b7280;
+  color: var(--muted);
   font-size: 0.85rem;
 }
 
@@ -118,7 +120,7 @@
 
 .text {
   margin: 0;
-  color: #111;
+  color: var(--ink-900);
   flex: 1 1 auto; /* ← fylder midterpladsen */
   overflow: hidden;
   display: -webkit-box;
@@ -135,7 +137,7 @@
 }
 
 .emptyText {
-  color: #6b7280;
+  color: var(--muted);
   font-style: italic;
 }
 
@@ -152,8 +154,11 @@
   cursor: pointer;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .readMore:hover {
   text-decoration: underline;
+}
 }
 
 .readMore:focus-visible {
@@ -166,7 +171,7 @@
   margin-top: auto; /* ← skub til bunden */
   padding-top: 10px;
   border-top: 1px solid rgba(0, 0, 0, 0.12);
-  color: #6b7280;
+  color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.2;
 }

@@ -2,17 +2,24 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon } from "@radix-ui/react-icons";
+import {
+  ChevronDownIcon,
+  MoonIcon,
+  SunIcon,
+} from "@radix-ui/react-icons";
 import { useTranslation } from "react-i18next";
 import styles from "./Header.module.css";
 
 import { type Lang, saveLang } from "../../lib/lang";
 import { pathOf, switchLangPath, GUEST_PAGES } from "../../lib/routes";
 import Buttons from "../Buttons";
+import type { ResolvedAppearance } from "../../app/App";
 
 type Props = {
   lang: Lang;
   guest?: boolean;
+  resolvedAppearance: ResolvedAppearance;
+  onAppearanceChange: (preference: ResolvedAppearance) => void;
 };
 
 const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
@@ -21,7 +28,16 @@ const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
   { code: "en", flag: "🇬🇧", label: "English" },
 ];
 
-export default function Header({ lang, guest = false }: Props) {
+const LIGHT_LOGO_SRC = "/logo_trans.png";
+const DARK_LOGO_SRC =
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/logo_trans_white-scaled.png";
+
+export default function Header({
+  lang,
+  guest = false,
+  resolvedAppearance,
+  onAppearanceChange,
+}: Props) {
   const { i18n } = useTranslation();
   const { t } = useTranslation("navigation");
   const location = useLocation();
@@ -122,6 +138,17 @@ useEffect(() => {
   }, [lang, guest, t]);
 
   const flag = lang === "da" ? "🇩🇰" : lang === "de" ? "🇩🇪" : "🇬🇧";
+  const isDark = resolvedAppearance === "dark";
+  const ThemeActionIcon = isDark ? SunIcon : MoonIcon;
+  const logoSrc = isDark ? DARK_LOGO_SRC : LIGHT_LOGO_SRC;
+
+  const changeAppearance = (next: ResolvedAppearance) => {
+    onAppearanceChange(next);
+  };
+
+  const toggleAppearance = () => {
+    changeAppearance(isDark ? "light" : "dark");
+  };
 
   return (
     <div
@@ -138,7 +165,7 @@ useEffect(() => {
           aria-label="Fyrrehaven 61"
         >
           <img
-            src="/logo_trans.png"
+            src={logoSrc}
             alt="Fyrrehaven 61 - logo"
             onError={(e) => {
               e.currentTarget.style.display = "none";
@@ -172,6 +199,16 @@ useEffect(() => {
             />
           )}
 
+          <button
+            type="button"
+            className={styles.themeButton}
+            aria-label={t("actions.toggleAppearance")}
+            data-state={resolvedAppearance}
+            onClick={toggleAppearance}
+          >
+            <ThemeActionIcon aria-hidden="true" />
+          </button>
+
           <DropdownMenu.Root open={langOpen} onOpenChange={setLangOpen}>
             <DropdownMenu.Trigger asChild>
               <button
@@ -189,6 +226,7 @@ useEffect(() => {
               sideOffset={6}
               align="end"
               className={styles.ddContent}
+              data-theme={resolvedAppearance}
             >
               {LANGUAGE_OPTIONS.map((option) => {
                 const isCurrent = option.code === lang;
@@ -274,6 +312,14 @@ useEffect(() => {
                 />
               )}
               <div className={styles.langGroup}>
+                <button
+                  type="button"
+                  className={styles.themeChip}
+                  onClick={toggleAppearance}
+                  aria-label={t("actions.toggleAppearance")}
+                >
+                  <ThemeActionIcon aria-hidden="true" />
+                </button>
                 {LANGUAGE_OPTIONS.map((option) => {
                   const isCurrent = option.code === lang;
                   return (

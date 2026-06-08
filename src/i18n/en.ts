@@ -706,10 +706,18 @@ export const en = {
     "actions": {
       "book": "Book",
       "bookNow": "Book now",
+      "changeAppearance": "Change appearance",
+      "toggleAppearance": "Switch between light and dark mode",
       "changeLanguage": "Change language",
       "closeMenu": "Close menu",
       "openMenu": "Open menu",
-      "currentLanguage": "Current language"
+      "currentLanguage": "Current language",
+      "currentAppearance": "Current appearance"
+    },
+    "appearance": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
     },
     "menu": {
       "main": "Main navigation",

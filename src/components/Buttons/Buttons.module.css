@@ -49,18 +49,26 @@
 /* Primær – præcis som ønsket */
 .primary{
   background: var(--gold-500);
-  color: var(--ink-900);
+  color: var(--on-gold);
   font-weight: 700;
   border: 0;
 }
-.primary:hover{ background: var(--gold-600); }
+@media (hover: hover) and (pointer: fine){
+.primary:hover{
+  background: var(--ink-900);
+  color: var(--sand-50);
+  transform: translateY(-1px);
+}
+}
 .primary:disabled,
 .primary[aria-disabled="true"]{ background: var(--gold-500); }
 
 /* Sekundær – neutral glas/overflade */
 .secondary{
-  background: rgba(0,0,0,.04);
-  border: 1px solid rgba(0,0,0,.12);
+  background: var(--surface-soft);
+  border: 1px solid var(--border-subtle);
   color: var(--ink-900);
 }
-.secondary:hover{ background: rgba(0,0,0,.06); }
+@media (hover: hover) and (pointer: fine){
+.secondary:hover{ background: var(--surface-hover); }
+}

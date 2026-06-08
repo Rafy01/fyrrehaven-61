@@ -1,14 +1,14 @@
 /* Container */
 .form {
-  background: white;
+  background: var(--surface);
   padding: 1.5rem 2rem;
   border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 30px var(--shadow-soft);
   max-width: 640px;
   margin: 2rem auto;
   display: grid;
   gap: 1.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-muted);
 }
 
 /* Row */
@@ -22,7 +22,7 @@
 .label {
   font-weight: 600;
   font-size: 0.95rem;
-  color: #111827;
+  color: var(--form-text);
   margin-bottom: -0.1rem;
 }
 .selectIcon {
@@ -31,7 +31,7 @@
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  color: #000000; /* grå */
+  color: var(--muted);
 }
 
 .selectWrapper {
@@ -44,10 +44,11 @@
   -moz-appearance: none;
   width: 100%;
   padding: 0.75rem 2.5rem 0.75rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
   border-radius: 12px;
   font-size: 1rem;
-  color: #111827;
+  color: var(--form-text);
   box-sizing: border-box;
   transition: border 0.2s ease, box-shadow 0.2s ease;
 }
@@ -56,11 +57,11 @@
 .input,
 .textarea {
   padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   font-size: 1rem;
-  background: #fff;
-  color: #111827;
+  background: var(--surface);
+  color: var(--form-text);
   transition: border 0.2s ease, box-shadow 0.2s ease;
   width: 100%;
   box-sizing: border-box;
@@ -107,17 +108,17 @@ input:focus-visible, .textarea:focus-visible {
 /* Description */
 .description {
   font-size: 0.85rem;
-  color: #6b7280;
+  color: var(--muted);
   margin-top: -0.2rem;
 }
 
 /* Error */
 .error {
-  color: #b91c1c;
-  background: #fef2f2;
+  color: var(--danger-text);
+  background: var(--danger-bg);
   padding: 0.75rem 1rem;
   border-radius: 12px;
-  border: 1px solid #fca5a5;
+  border: 1px solid var(--danger-border);
   font-weight: 500;
   font-size: 0.9rem;
 }
@@ -131,11 +132,11 @@ input:focus-visible, .textarea:focus-visible {
 
 input[type="file"] {
   padding: 0.6rem 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   font-size: 1rem;
-  background: #fff;
-  color: #111827;
+  background: var(--surface);
+  color: var(--form-text);
   width: 100%;
   box-sizing: border-box;
   cursor: pointer;
@@ -146,15 +147,16 @@ input[type="file"] {
   border: 1px solid #d1d5db;
   border-radius: 12px;
   font-size: 1rem;
-  background: #fff;
-  color: #111827;
+  background: var(--surface);
+  color: var(--form-text);
   width: 100%;
   box-sizing: border-box;
   cursor: pointer;
 }
 
 .fileInput::file-selector-button {
-  background-color: #f3f4f6;
+  background-color: var(--surface-soft);
+  color: var(--form-text);
   border: none;
   padding: 0.5rem 0.75rem;
   margin-right: 1rem;
@@ -165,13 +167,16 @@ input[type="file"] {
   transition: background-color 0.2s ease;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .fileInput::file-selector-button:hover {
-  background-color: #e5e7eb;
+  background-color: var(--surface-hover);
+}
 }
 
 .fileList {
   font-size: 0.85rem;
-  color: #374151;
+  color: var(--muted);
   margin-top: 0.4rem;
 }
 
@@ -192,7 +197,7 @@ input[type="file"] {
 
 .fileList {
   font-size: 0.85rem;
-  color: #374151;
+  color: var(--muted);
   margin-top: -0.2rem;
 }
 
