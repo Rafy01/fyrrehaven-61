@@ -1,10 +1,36 @@
 // src/app/ScrollMemory.tsx
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { useLocation, useNavigationType } from "react-router-dom";
 
 export default function ScrollMemory() {
   const loc = useLocation();
   const navType = useNavigationType(); // "POP" | "PUSH" | "REPLACE"
+  const lastKeyboardActivation = useRef(0);
+
+  useEffect(() => {
+    const interactiveSelector =
+      'a[href], button, [role="button"], [role="link"], [role="menuitem"]';
+
+    const onPointerDown = () => {
+      lastKeyboardActivation.current = 0;
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      if (!(event.target instanceof Element)) return;
+      if (!event.target.closest(interactiveSelector)) return;
+
+      lastKeyboardActivation.current = Date.now();
+    };
+
+    window.addEventListener("pointerdown", onPointerDown, true);
+    window.addEventListener("keydown", onKeyDown, true);
+
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, []);
 
   // Lad os selv styre scroll-restore
   useEffect(() => {
@@ -31,7 +57,10 @@ export default function ScrollMemory() {
   useLayoutEffect(() => {
     const key = `fh61:scroll:${loc.pathname}${loc.search}`;
     const savedY = parseInt(sessionStorage.getItem(key) || "0", 10);
-    const targetY = navType === "POP" && Number.isFinite(savedY) ? savedY : 0;
+    const keyboardNavigation =
+      navType !== "POP" && Date.now() - lastKeyboardActivation.current < 1500;
+    const shouldRestore = navType === "POP" || keyboardNavigation;
+    const targetY = shouldRestore && Number.isFinite(savedY) ? savedY : 0;
 
     const restoreInstantly = () => {
       document.documentElement.classList.add("scroll-restore-instant");
@@ -42,7 +71,7 @@ export default function ScrollMemory() {
 
     let cancelled = false;
     let attempts = 0;
-    const maxAttempts = navType === "POP" ? 12 : 2;
+    const maxAttempts = shouldRestore ? 12 : 2;
 
     const tick = () => {
       if (cancelled) return;
@@ -59,6 +88,7 @@ export default function ScrollMemory() {
     };
 
     requestAnimationFrame(tick);
+    lastKeyboardActivation.current = 0;
 
     return () => {
       cancelled = true;
