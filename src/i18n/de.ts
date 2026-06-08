@@ -1143,8 +1143,8 @@ export const de = {
   "cookiesPage": {
     "consent": {
       "title": "Wir verwenden Cookies",
-      "description": "Wir verwenden notwendige Cookies, damit die Website funktioniert, sowie optionale Cookies für Statistik und Marketing.",
-      "acceptAll": "Alle akzeptieren",
+      "description": "Wir verwenden notwendige Cookies, damit die Website funktioniert und Ihre Cookie-Einstellungen gespeichert werden.",
+      "acceptAll": "OK",
       "rejectAll": "Ablehnen",
       "preferences": "Cookie-Einstellungen",
       "settingsTitle": "Cookie-Einstellungen",
@@ -1159,23 +1159,11 @@ export const de = {
         "label": "Notwendige",
         "description": "Erforderlich, damit die Website funktioniert. Diese Cookies können nicht deaktiviert werden.",
         "tableCaption": "Notwendige Cookies"
-      },
-      "analytics": {
-        "title": "Statistik",
-        "label": "Statistik",
-        "description": "Hilft uns zu verstehen, wie die Website genutzt wird, damit wir sie verbessern können.",
-        "tableCaption": "Statistik-Cookies"
-      },
-      "marketing": {
-        "title": "Marketing",
-        "label": "Marketing",
-        "description": "Wird für personalisierte Inhalte, Werbung und Kampagnenmessung verwendet.",
-        "tableCaption": "Marketing-Cookies"
       }
     },
     "preferences": {
-      "introTitle": "Ihre Auswahl",
-      "introDescription": "Wählen Sie aus, welche optionalen Cookies Fyrrehaven 61 verwenden darf. Notwendige Cookies sind immer aktiv, weil die Website sie zum Funktionieren benötigt."
+      "introTitle": "Cookie-Einstellungen",
+      "introDescription": "Fyrrehaven 61 verwendet derzeit nur notwendige Cookies. Diese sind immer aktiv, weil die Website sie zum Funktionieren benötigt."
     },
     "table": {
       "name": "Name",
@@ -1290,7 +1278,7 @@ export const de = {
       },
       "cookies": {
         "title": "Cookies und ähnliche Technologien",
-        "body": "Wir verwenden hauptsächlich technisch notwendige Cookies/Speicherungen, um die Website sicher bereitzustellen. Marketing- oder Trackingtechnologien verwenden wir nicht ohne Ihre Einwilligung. Wenn nicht notwendige Cookies aktiviert werden, wird ein Einwilligungsbanner angezeigt."
+        "body": "Wir verwenden derzeit nur technisch notwendige Cookies/Speicherungen, um die Website sicher bereitzustellen und Ihre Cookie-Einstellungen zu speichern. Wir verwenden keine Statistik-, Marketing- oder Tracking-Cookies."
       },
       "rights": {
         "title": "Ihre Rechte",

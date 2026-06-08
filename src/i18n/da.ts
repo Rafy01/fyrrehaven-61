@@ -1146,8 +1146,8 @@ export const da = {
   "cookiesPage": {
     "consent": {
       "title": "Vi bruger cookies",
-      "description": "Vi bruger nødvendige cookies for at få siden til at fungere, samt valgfrie cookies til statistik og marketing.",
-      "acceptAll": "Accepter alle",
+      "description": "Vi bruger nødvendige cookies for at få siden til at fungere og huske dine cookieindstillinger.",
+      "acceptAll": "OK",
       "rejectAll": "Afvis",
       "preferences": "Indstil cookies",
       "settingsTitle": "Cookieindstillinger",
@@ -1162,23 +1162,11 @@ export const da = {
         "label": "Nødvendige",
         "description": "Påkrævet for at siden fungerer. Disse cookies kan ikke fravælges.",
         "tableCaption": "Nødvendige cookies"
-      },
-      "analytics": {
-        "title": "Statistik",
-        "label": "Statistik",
-        "description": "Hjælper os med at forstå, hvordan siden bruges, så vi kan forbedre den.",
-        "tableCaption": "Statistikcookies"
-      },
-      "marketing": {
-        "title": "Marketing",
-        "label": "Marketing",
-        "description": "Bruges til personaliseret indhold, annoncering og kampagnemåling.",
-        "tableCaption": "Marketingcookies"
       }
     },
     "preferences": {
-      "introTitle": "Dine valg",
-      "introDescription": "Vælg hvilke valgfrie cookies Fyrrehaven 61 må bruge. Nødvendige cookies er altid aktive, fordi hjemmesiden skal bruge dem for at fungere."
+      "introTitle": "Cookieindstillinger",
+      "introDescription": "Fyrrehaven 61 bruger lige nu kun nødvendige cookies. De er altid aktive, fordi hjemmesiden skal bruge dem for at fungere."
     },
     "table": {
       "name": "Navn",
@@ -1293,7 +1281,7 @@ export const da = {
       },
       "cookies": {
         "title": "Cookies og lignende teknologier",
-        "body": "Vi bruger primært teknisk nødvendige cookies/lagring for at levere siden sikkert. Vi anvender ikke marketing- eller trackingteknologier uden dit samtykke. Hvis ikke-nødvendige cookies aktiveres, vises et samtykkebanner."
+        "body": "Vi bruger lige nu kun teknisk nødvendige cookies/lagring for at levere siden sikkert og huske dine cookieindstillinger. Vi anvender ikke statistik-, marketing- eller trackingcookies."
       },
       "rights": {
         "title": "Dine rettigheder",

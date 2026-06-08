@@ -1145,8 +1145,8 @@ export const en = {
   "cookiesPage": {
     "consent": {
       "title": "We use cookies",
-      "description": "We use necessary cookies to make the site work, and optional cookies for analytics and marketing.",
-      "acceptAll": "Accept all",
+      "description": "We use necessary cookies to make the site work and remember your cookie settings.",
+      "acceptAll": "OK",
       "rejectAll": "Reject all",
       "preferences": "Manage preferences",
       "settingsTitle": "Cookie settings",
@@ -1161,23 +1161,11 @@ export const en = {
         "label": "Necessary",
         "description": "Required for the site to function. These cookies cannot be disabled.",
         "tableCaption": "Necessary cookies"
-      },
-      "analytics": {
-        "title": "Analytics",
-        "label": "Analytics",
-        "description": "Helps us understand how the site is used so we can improve it.",
-        "tableCaption": "Analytics cookies"
-      },
-      "marketing": {
-        "title": "Marketing",
-        "label": "Marketing",
-        "description": "Used for personalised content, advertising and campaign measurement.",
-        "tableCaption": "Marketing cookies"
       }
     },
     "preferences": {
-      "introTitle": "Your choices",
-      "introDescription": "Choose which optional cookies Fyrrehaven 61 may use. Necessary cookies are always active because the website needs them to work."
+      "introTitle": "Cookie settings",
+      "introDescription": "Fyrrehaven 61 currently only uses necessary cookies. These are always active because the website needs them to work."
     },
     "table": {
       "name": "Name",
@@ -1292,7 +1280,7 @@ export const en = {
       },
       "cookies": {
         "title": "Cookies and similar technologies",
-        "body": "We primarily use technically necessary cookies/storage to deliver the site securely. We do not use marketing or tracking technologies without your consent. If non-essential cookies are enabled, a consent banner will be shown."
+        "body": "We currently use only technically necessary cookies/storage to deliver the site securely and remember your cookie settings. We do not use analytics, marketing or tracking cookies."
       },
       "rights": {
         "title": "Your rights",

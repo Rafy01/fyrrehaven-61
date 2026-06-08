@@ -10,8 +10,6 @@ declare global {
   interface Window {
     fh61Consent?: () => {
       necessary: boolean;
-      analytics: boolean;
-      marketing: boolean;
     };
   }
 }
@@ -48,8 +46,6 @@ function cookieTable(
 function updateConsentState() {
   window.fh61Consent = () => ({
     necessary: true,
-    analytics: CookieConsent.acceptedCategory("analytics"),
-    marketing: CookieConsent.acceptedCategory("marketing"),
   });
 
   window.dispatchEvent(new CustomEvent("fh61:consentchange"));
@@ -63,14 +59,11 @@ function translationsFor(lng: Lang, i18n: I18n) {
       title: t("consent.title"),
       description: t("consent.description"),
       acceptAllBtn: t("consent.acceptAll"),
-      acceptNecessaryBtn: t("consent.rejectAll"),
       showPreferencesBtn: t("consent.preferences"),
       footer: t("consent.footer"),
     },
     preferencesModal: {
       title: t("consent.settingsTitle"),
-      acceptAllBtn: t("consent.acceptAll"),
-      acceptNecessaryBtn: t("consent.rejectAll"),
       savePreferencesBtn: t("consent.save"),
       closeIconLabel: t("consent.close"),
       sections: [
@@ -83,18 +76,6 @@ function translationsFor(lng: Lang, i18n: I18n) {
           description: t("categories.necessary.description"),
           linkedCategory: "necessary",
           cookieTable: cookieTable(lng, "necessary", t),
-        },
-        {
-          title: t("categories.analytics.title"),
-          description: t("categories.analytics.description"),
-          linkedCategory: "analytics",
-          cookieTable: cookieTable(lng, "analytics", t),
-        },
-        {
-          title: t("categories.marketing.title"),
-          description: t("categories.marketing.description"),
-          linkedCategory: "marketing",
-          cookieTable: cookieTable(lng, "marketing", t),
         },
       ],
     },
@@ -136,26 +117,6 @@ export async function setupCookieConsent(lang: Lang, i18n: I18n) {
       necessary: {
         enabled: true,
         readOnly: true,
-      },
-      analytics: {
-        enabled: false,
-        autoClear: {
-          cookies: [
-            { name: /^_ga/ },
-            { name: "_gid" },
-            { name: "_gat" },
-          ],
-        },
-      },
-      marketing: {
-        enabled: false,
-        autoClear: {
-          cookies: [
-            { name: "_fbp" },
-            { name: "fr" },
-            { name: "IDE" },
-          ],
-        },
       },
     },
     language: {

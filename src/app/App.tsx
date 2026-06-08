@@ -10,8 +10,6 @@ import Footer from "../components/Footer";
 import { saveLang, type Lang } from "../lib/lang";
 import ScrollMemory from "./ScrollMemory";
 import HashScroll from "./HashScroll";
-import Gtag from "../components/Analytics/Gtag";
-import { Analytics } from "@vercel/analytics/react";
 
 import "vanilla-cookieconsent/dist/cookieconsent.css";
 import "../components/CookieButton/CookieConsentTheme.css";
@@ -77,10 +75,8 @@ export default function App({
 
   return (
     <Theme accentColor="gray" radius="large" appearance="light">
-      <Gtag />
       <Header lang={lang} guest={guest} />
       <HashScroll />
-      <Analytics />
       <main>
         <Container size="3">
           <Box px="4" py="6">
