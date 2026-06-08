@@ -82,16 +82,16 @@
   border: 1px solid color-mix(in srgb, var(--gold-500) 34%, var(--divider));
   border-radius: 10px;
   background:
-    url("/logo_trans.png") center / 2rem 2rem no-repeat,
-    color-mix(in srgb, var(--sand-0) 92%, var(--gold-500));
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+    url("/logo_trans_white.png") center / 2rem 2rem no-repeat,
+    color-mix(in srgb, var(--ink-900) 94%, var(--gold-500));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 html[data-theme="dark"] #cc-main .cm__title::before {
   background:
-    url("/logo_trans_white.png") center / 2rem 2rem no-repeat,
-    color-mix(in srgb, var(--ink-900) 94%, var(--gold-500));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    url("/logo_trans.png") center / 2rem 2rem no-repeat,
+    color-mix(in srgb, var(--sand-0) 92%, var(--gold-500));
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 #cc-main .cm__desc {
