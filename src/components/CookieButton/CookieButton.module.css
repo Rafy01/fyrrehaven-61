@@ -9,7 +9,7 @@
   padding: 0;
   color: var(--ink-900);
   background: var(--sand-0);
-  border: 1px solid rgba(76, 107, 51, 0.22);
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 999px;
   font-size: 1.15rem;
   cursor: pointer;
@@ -23,8 +23,8 @@
 }
 
 .cookieButton:hover {
-  background: var(--forest-100);
-  border-color: rgba(76, 107, 51, 0.4);
+  background: color-mix(in srgb, var(--gold-500) 12%, white);
+  border-color: color-mix(in srgb, var(--gold-500) 34%, rgba(0, 0, 0, 0.12));
   box-shadow: 0 12px 32px rgba(27, 27, 27, 0.2);
   transform: translateY(-1px);
 }

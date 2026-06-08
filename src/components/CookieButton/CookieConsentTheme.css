@@ -6,34 +6,34 @@
   --cc-modal-border-radius: 8px;
   --cc-btn-border-radius: 8px;
   --cc-modal-margin: 1rem;
-  --cc-btn-primary-bg: var(--forest-500);
-  --cc-btn-primary-color: #ffffff;
-  --cc-btn-primary-border-color: var(--forest-500);
-  --cc-btn-primary-hover-bg: #3f5a2a;
-  --cc-btn-primary-hover-color: #ffffff;
-  --cc-btn-primary-hover-border-color: #3f5a2a;
+  --cc-btn-primary-bg: var(--gold-500);
+  --cc-btn-primary-color: var(--ink-900);
+  --cc-btn-primary-border-color: var(--gold-500);
+  --cc-btn-primary-hover-bg: var(--gold-600);
+  --cc-btn-primary-hover-color: var(--ink-900);
+  --cc-btn-primary-hover-border-color: var(--gold-600);
   --cc-btn-secondary-bg: var(--sand-0);
   --cc-btn-secondary-color: var(--ink-900);
   --cc-btn-secondary-border-color: var(--divider);
-  --cc-btn-secondary-hover-bg: var(--forest-100);
+  --cc-btn-secondary-hover-bg: rgba(0, 0, 0, 0.04);
   --cc-btn-secondary-hover-color: var(--ink-900);
-  --cc-btn-secondary-hover-border-color: #d4dfd0;
+  --cc-btn-secondary-hover-border-color: rgba(0, 0, 0, 0.14);
   --cc-separator-border-color: var(--divider);
-  --cc-toggle-on-bg: var(--forest-500);
+  --cc-toggle-on-bg: var(--gold-500);
   --cc-toggle-off-bg: #d7d7d0;
   --cc-toggle-on-knob-bg: #ffffff;
   --cc-toggle-off-knob-bg: #ffffff;
-  --cc-toggle-readonly-bg: #d4dfd0;
+  --cc-toggle-readonly-bg: color-mix(in srgb, var(--gold-500) 28%, white);
   --cc-toggle-readonly-knob-bg: #ffffff;
-  --cc-toggle-readonly-knob-icon-color: var(--forest-500);
-  --cc-cookie-category-block-bg: #f7f8f4;
-  --cc-cookie-category-block-border: #e1e7dc;
-  --cc-cookie-category-block-hover-bg: var(--forest-100);
-  --cc-cookie-category-block-hover-border: #d4dfd0;
+  --cc-toggle-readonly-knob-icon-color: var(--gold-700);
+  --cc-cookie-category-block-bg: var(--sand-50);
+  --cc-cookie-category-block-border: var(--divider);
+  --cc-cookie-category-block-hover-bg: color-mix(in srgb, var(--gold-500) 10%, white);
+  --cc-cookie-category-block-hover-border: color-mix(in srgb, var(--gold-500) 28%, var(--divider));
   --cc-cookie-category-expanded-block-bg: #ffffff;
-  --cc-cookie-category-expanded-block-hover-bg: #e8efe4;
+  --cc-cookie-category-expanded-block-hover-bg: color-mix(in srgb, var(--gold-500) 14%, white);
   --cc-overlay-bg: rgba(27, 27, 27, 0.42);
-  --cc-footer-bg: #f7f8f4;
+  --cc-footer-bg: var(--sand-50);
   --cc-footer-color: var(--ink-600);
   --cc-footer-border-color: var(--divider);
   z-index: 10020;
@@ -41,7 +41,7 @@
 
 #cc-main .cm {
   width: min(43rem, calc(100vw - 2rem));
-  border: 1px solid rgba(76, 107, 51, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 18px 48px rgba(27, 27, 27, 0.18);
 }
 
@@ -103,7 +103,7 @@
 }
 
 #cc-main .pm {
-  border: 1px solid rgba(76, 107, 51, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 20px 60px rgba(27, 27, 27, 0.22);
 }
 

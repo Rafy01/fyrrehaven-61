@@ -28,7 +28,7 @@
 .table th {
   color: var(--ink-900);
   font-weight: 700;
-  background: var(--forest-100);
+  background: color-mix(in srgb, var(--gold-500) 14%, white);
 }
 
 .table tr:last-child td {
