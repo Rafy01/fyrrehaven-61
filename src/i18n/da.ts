@@ -1152,24 +1152,40 @@ export const da = {
       "preferences": "Indstil cookies",
       "settingsTitle": "Cookieindstillinger",
       "close": "Luk",
-      "save": "Gem præferencer"
+      "save": "Gem præferencer",
+      "manageButton": "Administrer cookieindstillinger",
+      "footer": "Du kan til enhver tid ændre eller trække dit samtykke tilbage via cookieindstillingerne."
     },
     "categories": {
       "necessary": {
         "title": "Nødvendige cookies",
         "label": "Nødvendige",
-        "description": "Påkrævet for at siden fungerer."
+        "description": "Påkrævet for at siden fungerer. Disse cookies kan ikke fravælges.",
+        "tableCaption": "Nødvendige cookies"
       },
       "analytics": {
         "title": "Statistik",
         "label": "Statistik",
-        "description": "Hjælper os med at forstå brugen af siden."
+        "description": "Hjælper os med at forstå, hvordan siden bruges, så vi kan forbedre den.",
+        "tableCaption": "Statistikcookies"
       },
       "marketing": {
         "title": "Marketing",
         "label": "Marketing",
-        "description": "Bruges til personaliserede annoncer og indhold."
+        "description": "Bruges til personaliseret indhold, annoncering og kampagnemåling.",
+        "tableCaption": "Marketingcookies"
       }
+    },
+    "preferences": {
+      "introTitle": "Dine valg",
+      "introDescription": "Vælg hvilke valgfrie cookies Fyrrehaven 61 må bruge. Nødvendige cookies er altid aktive, fordi hjemmesiden skal bruge dem for at fungere."
+    },
+    "table": {
+      "name": "Navn",
+      "provider": "Udbyder",
+      "purpose": "Formål",
+      "expiration": "Udløb",
+      "type": "Type"
     },
     "page": {
       "title": "Cookies hos Fyrrehaven 61",

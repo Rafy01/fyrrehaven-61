@@ -33,8 +33,7 @@ export default function Gtag() {
             linker: { domains: ['fyrrehaven-61.dk','booking.fyrrehaven-61.dk'] }
           });
 
-          // Opdater consent når banneret ændres
-          window.addEventListener('fh61:consentchange', function() {
+          function applyFh61Consent() {
             try {
               var c = (window.fh61Consent && window.fh61Consent()) || {analytics:false, marketing:false};
               gtag('consent', 'update', {
@@ -44,7 +43,10 @@ export default function Gtag() {
                 ad_personalization: c.marketing ? 'granted' : 'denied'
               });
             } catch(e) {}
-          });
+          }
+
+          applyFh61Consent();
+          window.addEventListener('fh61:consentchange', applyFh61Consent);
         `}
       </script>
     </>

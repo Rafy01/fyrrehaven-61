@@ -1151,24 +1151,40 @@ export const en = {
       "preferences": "Manage preferences",
       "settingsTitle": "Cookie settings",
       "close": "Close",
-      "save": "Save preferences"
+      "save": "Save preferences",
+      "manageButton": "Manage cookie settings",
+      "footer": "You can change or withdraw your consent at any time from the cookie settings."
     },
     "categories": {
       "necessary": {
         "title": "Necessary cookies",
         "label": "Necessary",
-        "description": "Required for the site to function."
+        "description": "Required for the site to function. These cookies cannot be disabled.",
+        "tableCaption": "Necessary cookies"
       },
       "analytics": {
         "title": "Analytics",
         "label": "Analytics",
-        "description": "Helps us understand how the site is used."
+        "description": "Helps us understand how the site is used so we can improve it.",
+        "tableCaption": "Analytics cookies"
       },
       "marketing": {
         "title": "Marketing",
         "label": "Marketing",
-        "description": "Used for personalised content and advertising."
+        "description": "Used for personalised content, advertising and campaign measurement.",
+        "tableCaption": "Marketing cookies"
       }
+    },
+    "preferences": {
+      "introTitle": "Your choices",
+      "introDescription": "Choose which optional cookies Fyrrehaven 61 may use. Necessary cookies are always active because the website needs them to work."
+    },
+    "table": {
+      "name": "Name",
+      "provider": "Provider",
+      "purpose": "Purpose",
+      "expiration": "Expiration",
+      "type": "Type"
     },
     "page": {
       "title": "Cookies at Fyrrehaven 61",

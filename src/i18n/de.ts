@@ -1149,24 +1149,40 @@ export const de = {
       "preferences": "Cookie-Einstellungen",
       "settingsTitle": "Cookie-Einstellungen",
       "close": "Schließen",
-      "save": "Einstellungen speichern"
+      "save": "Einstellungen speichern",
+      "manageButton": "Cookie-Einstellungen verwalten",
+      "footer": "Sie können Ihre Einwilligung jederzeit über die Cookie-Einstellungen ändern oder widerrufen."
     },
     "categories": {
       "necessary": {
         "title": "Notwendige Cookies",
         "label": "Notwendige",
-        "description": "Erforderlich, damit die Website funktioniert."
+        "description": "Erforderlich, damit die Website funktioniert. Diese Cookies können nicht deaktiviert werden.",
+        "tableCaption": "Notwendige Cookies"
       },
       "analytics": {
         "title": "Statistik",
         "label": "Statistik",
-        "description": "Hilft uns zu verstehen, wie die Website genutzt wird."
+        "description": "Hilft uns zu verstehen, wie die Website genutzt wird, damit wir sie verbessern können.",
+        "tableCaption": "Statistik-Cookies"
       },
       "marketing": {
         "title": "Marketing",
         "label": "Marketing",
-        "description": "Wird für personalisierte Inhalte und Werbung verwendet."
+        "description": "Wird für personalisierte Inhalte, Werbung und Kampagnenmessung verwendet.",
+        "tableCaption": "Marketing-Cookies"
       }
+    },
+    "preferences": {
+      "introTitle": "Ihre Auswahl",
+      "introDescription": "Wählen Sie aus, welche optionalen Cookies Fyrrehaven 61 verwenden darf. Notwendige Cookies sind immer aktiv, weil die Website sie zum Funktionieren benötigt."
+    },
+    "table": {
+      "name": "Name",
+      "provider": "Anbieter",
+      "purpose": "Zweck",
+      "expiration": "Ablauf",
+      "type": "Typ"
     },
     "page": {
       "title": "Cookies bei Fyrrehaven 61",
