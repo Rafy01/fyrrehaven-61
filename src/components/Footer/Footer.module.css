@@ -140,19 +140,41 @@
   margin: 0;
 }
 .link {
+  position: relative;
   color: var(--ink-900);
   text-decoration: none;
   display: inline-block;
-  padding: 0.25rem 0;
+  padding: 0.25rem 0.15rem;
 }
 
 :global(html[data-theme="dark"]) .link {
   color: #f7f4ea;
 }
 
+.link::after,
+.bottomLink::after,
+.bottomLinkButton::after {
+  content: "";
+  position: absolute;
+  left: 0.15rem;
+  right: 0.15rem;
+  bottom: 0.05rem;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.9;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.22s ease;
+}
+
 @media (hover: hover) and (pointer: fine) {
-.link:hover {
-  text-decoration: underline;
+.link:hover::after,
+.link:focus-visible::after,
+.bottomLink:hover::after,
+.bottomLink:focus-visible::after,
+.bottomLinkButton:hover::after,
+.bottomLinkButton:focus-visible::after {
+  transform: scaleX(1);
 }
 }
 
@@ -179,12 +201,17 @@
   flex-wrap: wrap;
 }
 .bottomLink {
+  position: relative;
   color: color-mix(in srgb, var(--ink-900) 80%, transparent);
   text-decoration: none;
+  display: inline-block;
+  padding: 0.15rem 0.15rem;
   font-size: 0.9rem;
 }
 .bottomLinkButton {
-  padding: 0;
+  position: relative;
+  display: inline-block;
+  padding: 0.15rem 0.15rem;
   color: color-mix(in srgb, var(--ink-900) 80%, transparent);
   background: transparent;
   border: 0;
@@ -203,12 +230,6 @@
   outline: 3px solid var(--focus);
   outline-offset: 3px;
   border-radius: 4px;
-}
-@media (hover: hover) and (pointer: fine) {
-  .bottomLink:hover,
-  .bottomLinkButton:hover {
-    text-decoration: underline;
-  }
 }
 
 /* Responsive */
