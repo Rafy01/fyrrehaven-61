@@ -9,6 +9,10 @@ import type { ResolvedAppearance } from "../../app/App";
 const LIGHT_LOGO_SRC = "/logo_trans.png";
 const DARK_LOGO_SRC =
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/logo_trans_white-scaled.png";
+const LIGHT_SUPERHOST_SRC =
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/superhost-1.webp";
+const DARK_SUPERHOST_SRC =
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2026/06/white-airbnb-superhost.png";
 
 export type FooterProps = {
   /** Valgfrit: giv sproget eksplicit. Ellers læses det fra i18n.language. */
@@ -43,6 +47,8 @@ export default function Footer({
       : "en");
   const year = new Date().getFullYear();
   const logoSrc = resolvedAppearance === "dark" ? DARK_LOGO_SRC : LIGHT_LOGO_SRC;
+  const superhostSrc =
+    resolvedAppearance === "dark" ? DARK_SUPERHOST_SRC : LIGHT_SUPERHOST_SRC;
 
   const s = {
     instagram: socials?.instagram || "https://www.instagram.com/fyrrehaven61/",
@@ -89,7 +95,7 @@ export default function Footer({
                 >
                   <img
                     className={styles.superhostBadge}
-                    src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/superhost-1.webp"
+                    src={superhostSrc}
                     alt="Airbnb Superhost"
                   />
                 </a>
