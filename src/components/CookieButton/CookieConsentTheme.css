@@ -1,0 +1,188 @@
+#cc-main {
+  --cc-font-family: Arial, Helvetica, sans-serif;
+  --cc-bg: var(--sand-0);
+  --cc-primary-color: var(--ink-900);
+  --cc-secondary-color: var(--ink-600);
+  --cc-modal-border-radius: 8px;
+  --cc-btn-border-radius: 8px;
+  --cc-modal-margin: 1rem;
+  --cc-btn-primary-bg: var(--forest-500);
+  --cc-btn-primary-color: #ffffff;
+  --cc-btn-primary-border-color: var(--forest-500);
+  --cc-btn-primary-hover-bg: #3f5a2a;
+  --cc-btn-primary-hover-color: #ffffff;
+  --cc-btn-primary-hover-border-color: #3f5a2a;
+  --cc-btn-secondary-bg: var(--sand-0);
+  --cc-btn-secondary-color: var(--ink-900);
+  --cc-btn-secondary-border-color: var(--divider);
+  --cc-btn-secondary-hover-bg: var(--forest-100);
+  --cc-btn-secondary-hover-color: var(--ink-900);
+  --cc-btn-secondary-hover-border-color: #d4dfd0;
+  --cc-separator-border-color: var(--divider);
+  --cc-toggle-on-bg: var(--forest-500);
+  --cc-toggle-off-bg: #d7d7d0;
+  --cc-toggle-on-knob-bg: #ffffff;
+  --cc-toggle-off-knob-bg: #ffffff;
+  --cc-toggle-readonly-bg: #d4dfd0;
+  --cc-toggle-readonly-knob-bg: #ffffff;
+  --cc-toggle-readonly-knob-icon-color: var(--forest-500);
+  --cc-cookie-category-block-bg: #f7f8f4;
+  --cc-cookie-category-block-border: #e1e7dc;
+  --cc-cookie-category-block-hover-bg: var(--forest-100);
+  --cc-cookie-category-block-hover-border: #d4dfd0;
+  --cc-cookie-category-expanded-block-bg: #ffffff;
+  --cc-cookie-category-expanded-block-hover-bg: #e8efe4;
+  --cc-overlay-bg: rgba(27, 27, 27, 0.42);
+  --cc-footer-bg: #f7f8f4;
+  --cc-footer-color: var(--ink-600);
+  --cc-footer-border-color: var(--divider);
+  z-index: 10020;
+}
+
+#cc-main .cm {
+  width: min(43rem, calc(100vw - 2rem));
+  border: 1px solid rgba(76, 107, 51, 0.18);
+  box-shadow: 0 18px 48px rgba(27, 27, 27, 0.18);
+}
+
+#cc-main .cm__body {
+  gap: 1.1rem;
+  padding: 1.15rem;
+}
+
+#cc-main .cm__texts {
+  padding: 0;
+}
+
+#cc-main .cm__title {
+  margin-bottom: 0.45rem;
+  font-size: 1.12rem;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+#cc-main .cm__desc {
+  padding: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+#cc-main .cm__btns {
+  gap: 0.55rem;
+  min-width: 15rem;
+  padding: 0;
+  border-left: 0;
+}
+
+#cc-main .cm__btn-group {
+  gap: 0.55rem;
+}
+
+#cc-main .cm__btn {
+  min-height: 2.75rem;
+  padding: 0.72rem 1rem;
+  border-width: 1px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+#cc-main .cm__btn--secondary {
+  font-weight: 600;
+}
+
+#cc-main .cm__footer {
+  padding: 0 1.15rem 1.05rem;
+  border-top: 0;
+  background: transparent;
+}
+
+#cc-main .cm__links {
+  padding: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+#cc-main .pm {
+  border: 1px solid rgba(76, 107, 51, 0.18);
+  box-shadow: 0 20px 60px rgba(27, 27, 27, 0.22);
+}
+
+#cc-main .pm__header,
+#cc-main .pm__body,
+#cc-main .pm__footer {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+#cc-main .pm__title {
+  font-size: 1.08rem;
+  letter-spacing: 0;
+}
+
+#cc-main .pm__section:first-child {
+  margin-bottom: 1.25rem;
+}
+
+#cc-main .pm__section-title {
+  letter-spacing: 0;
+}
+
+#cc-main .pm__section-desc {
+  line-height: 1.55;
+}
+
+#cc-main .pm__btn {
+  min-height: 2.65rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+#cc-main .pm__section-table {
+  font-size: 0.86rem;
+}
+
+#cc-main .pm__table-caption,
+#cc-main .pm__table-td,
+#cc-main .pm__table-th {
+  padding: 0.7rem 0.75rem;
+}
+
+#cc-main .cm__btn:focus-visible,
+#cc-main .pm__btn:focus-visible,
+#cc-main .pm__close-btn:focus-visible,
+#cc-main .section__toggle:focus-visible ~ .toggle__icon {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  #cc-main {
+    --cc-modal-margin: 0.75rem;
+  }
+
+  #cc-main .cm {
+    width: auto;
+    border-radius: 8px;
+  }
+
+  #cc-main .cm__body {
+    padding: 1rem;
+  }
+
+  #cc-main .cm__btns {
+    padding-top: 0.9rem;
+  }
+
+  #cc-main .cm__btn,
+  #cc-main .pm__btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cc-main .cc--anim .cm,
+  #cc-main .cc--anim .pm,
+  #cc-main .cc--anim .pm-overlay {
+    transition: none !important;
+  }
+}
