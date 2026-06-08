@@ -397,7 +397,7 @@
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(8, 9, 11, 0.18);
+  background: rgba(8, 9, 11, var(--menu-overlay-opacity, 0.18));
   -webkit-backdrop-filter: blur(12px) saturate(145%);
   backdrop-filter: blur(12px) saturate(145%);
 }

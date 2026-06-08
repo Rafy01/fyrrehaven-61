@@ -41,8 +41,9 @@ const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
 const LIGHT_LOGO_SRC = "/logo_trans.png";
 const DARK_LOGO_SRC =
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/logo_trans_white-scaled.png";
-const DRAG_CLOSE_DISTANCE = 96;
-const DRAG_CLOSE_VELOCITY = 0.55;
+const DRAG_START_DISTANCE = 18;
+const DRAG_CLOSE_DISTANCE = 124;
+const DRAG_CLOSE_VELOCITY = 0.85;
 const MOUSE_DRAG_ID = -2;
 
 export default function Header({
@@ -194,9 +195,11 @@ useEffect(() => {
     drag.lastY = clientY;
     drag.lastTime = now;
 
-    const nextOffset = Math.max(0, clientY - drag.startY);
+    const rawOffset = Math.max(0, clientY - drag.startY);
+    const nextOffset =
+      rawOffset <= DRAG_START_DISTANCE ? 0 : rawOffset - DRAG_START_DISTANCE;
     drag.offset = nextOffset;
-    drag.moved = drag.moved || nextOffset > 6;
+    drag.moved = drag.moved || nextOffset > 0;
     setDragOffset(nextOffset);
   };
 
@@ -206,7 +209,7 @@ useEffect(() => {
 
     const shouldClose =
       drag.offset >= DRAG_CLOSE_DISTANCE ||
-      (drag.velocity >= DRAG_CLOSE_VELOCITY && drag.offset > 28);
+      (drag.velocity >= DRAG_CLOSE_VELOCITY && drag.offset > 56);
 
     drag.active = false;
     setIsDraggingMenu(false);
@@ -356,8 +359,14 @@ useEffect(() => {
     menuDrag.current.moved = false;
   };
 
-  const panelStyle = {
+  const overlayOpacity = Math.max(
+    0.04,
+    0.18 - (Math.min(dragOffset, 180) / 180) * 0.14
+  );
+  const isMenuPulled = dragOffset > 0;
+  const menuDragStyle = {
     "--panel-drag-y": `${dragOffset}px`,
+    "--menu-overlay-opacity": overlayOpacity,
   } as CSSProperties;
 
   return (
@@ -480,13 +489,16 @@ useEffect(() => {
           </button>
 
           <Dialog.Portal>
-            <Dialog.Overlay className={styles.overlay} />
+            <Dialog.Overlay
+              className={styles.overlay}
+              style={menuDragStyle}
+            />
             <Dialog.Content
               id="mobile-menu-panel"
               className={styles.panel}
               aria-label={t("menu.mobile")}
-              data-dragging={isDraggingMenu ? "true" : undefined}
-              style={panelStyle}
+              data-dragging={isMenuPulled ? "true" : undefined}
+              style={menuDragStyle}
               ref={panelRef}
               onPointerDownCapture={beginMenuDragFromReact}
               onClickCapture={preventMenuClickAfterDrag}
