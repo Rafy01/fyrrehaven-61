@@ -23,16 +23,16 @@
   --cc-toggle-off-bg: #d7d7d0;
   --cc-toggle-on-knob-bg: #ffffff;
   --cc-toggle-off-knob-bg: #ffffff;
-  --cc-toggle-readonly-bg: color-mix(in srgb, var(--gold-500) 28%, white);
+  --cc-toggle-readonly-bg: color-mix(in srgb, var(--gold-500) 28%, var(--surface));
   --cc-toggle-readonly-knob-bg: #ffffff;
   --cc-toggle-readonly-knob-icon-color: var(--gold-700);
   --cc-cookie-category-block-bg: var(--sand-50);
   --cc-cookie-category-block-border: var(--divider);
-  --cc-cookie-category-block-hover-bg: color-mix(in srgb, var(--gold-500) 10%, white);
+  --cc-cookie-category-block-hover-bg: color-mix(in srgb, var(--gold-500) 10%, var(--surface));
   --cc-cookie-category-block-hover-border: color-mix(in srgb, var(--gold-500) 28%, var(--divider));
-  --cc-cookie-category-expanded-block-bg: #ffffff;
-  --cc-cookie-category-expanded-block-hover-bg: color-mix(in srgb, var(--gold-500) 14%, white);
-  --cc-overlay-bg: rgba(27, 27, 27, 0.58);
+  --cc-cookie-category-expanded-block-bg: var(--surface);
+  --cc-cookie-category-expanded-block-hover-bg: color-mix(in srgb, var(--gold-500) 10%, var(--surface));
+  --cc-overlay-bg: rgba(8, 9, 11, 0.48);
   --cc-footer-bg: var(--sand-50);
   --cc-footer-color: var(--ink-600);
   --cc-footer-border-color: var(--divider);
@@ -41,16 +41,15 @@
 
 #cc-main .cm {
   width: min(43rem, calc(100vw - 2rem));
-  border: 1px solid color-mix(in srgb, var(--gold-500) 36%, var(--border-subtle));
+  border: 1px solid var(--border-subtle);
   box-shadow:
-    0 24px 70px rgba(27, 27, 27, 0.34),
-    0 0 0 1px rgba(255, 255, 255, 0.72),
-    0 0 0 7px color-mix(in srgb, var(--gold-500) 14%, transparent);
+    0 28px 70px rgba(0, 0, 0, 0.28),
+    0 0 0 1px color-mix(in srgb, var(--surface) 84%, transparent);
 }
 
 #cc-main .cm-wrapper:before {
-  -webkit-backdrop-filter: blur(14px) saturate(135%);
-  backdrop-filter: blur(14px) saturate(135%);
+  -webkit-backdrop-filter: blur(10px) saturate(125%);
+  backdrop-filter: blur(10px) saturate(125%);
 }
 
 #cc-main .cm__body {
@@ -64,7 +63,7 @@
 
 #cc-main .cm__title {
   margin-bottom: 0.45rem;
-  font-size: 1.22rem;
+  font-size: 1.18rem;
   line-height: 1.25;
   letter-spacing: 0;
 }
@@ -95,7 +94,7 @@
 }
 
 #cc-main .cm__btn--primary {
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--gold-500) 32%, transparent);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--gold-500) 22%, transparent);
 }
 
 #cc-main .cm__btn--secondary {
@@ -115,8 +114,8 @@
 }
 
 #cc-main .pm {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 20px 60px rgba(27, 27, 27, 0.22);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
 }
 
 #cc-main .pm__header,
@@ -151,12 +150,27 @@
 
 #cc-main .pm__section-table {
   font-size: 0.86rem;
+  color: var(--cc-primary-color);
 }
 
 #cc-main .pm__table-caption,
 #cc-main .pm__table-td,
 #cc-main .pm__table-th {
   padding: 0.7rem 0.75rem;
+}
+
+#cc-main .pm__table-caption,
+#cc-main .pm__table-th {
+  color: var(--cc-primary-color);
+}
+
+#cc-main .pm__table-td {
+  color: var(--cc-secondary-color);
+}
+
+#cc-main .pm__section-desc-wrapper,
+#cc-main .pm__table-tr {
+  background: var(--cc-cookie-category-expanded-block-bg);
 }
 
 #cc-main .cm__btn:focus-visible,
