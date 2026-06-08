@@ -737,6 +737,7 @@ export const en = {
       "extraServices": "Extra services",
       "privacy": "Privacy",
       "cookies": "Cookies",
+      "cookieSettings": "Cookie settings",
       "sitemap": "Sitemap",
       "fees": "Fees"
     },

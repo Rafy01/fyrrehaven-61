@@ -15,7 +15,6 @@ import { Analytics } from "@vercel/analytics/react";
 
 import "vanilla-cookieconsent/dist/cookieconsent.css";
 import "../components/CookieButton/CookieConsentTheme.css";
-import CookieButton from "../components/CookieButton/CookieButton";
 import MessengerButton from "../components/MessengerButton";
 import { setupCookieConsent } from "../lib/cookieConsent";
 
@@ -94,7 +93,6 @@ export default function App({
       {showMessengerButton && (
         <MessengerButton onDismiss={() => setShowMessengerButton(false)} />
       )}
-      <CookieButton lang={lang} />
     </Theme>
   );
 }
