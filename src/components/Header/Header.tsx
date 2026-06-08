@@ -315,10 +315,7 @@ useEffect(() => {
                 <button
                   type="button"
                   className={styles.themeChip}
-                  onClick={() => {
-                    toggleAppearance();
-                    setOpen(false);
-                  }}
+                  onClick={toggleAppearance}
                   aria-label={t("actions.toggleAppearance")}
                 >
                   <ThemeActionIcon aria-hidden="true" />
