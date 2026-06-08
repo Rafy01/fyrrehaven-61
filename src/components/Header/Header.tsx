@@ -3,7 +3,9 @@ import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
+  CheckIcon,
   ChevronDownIcon,
+  ChevronRightIcon,
   MoonIcon,
   SunIcon,
 } from "@radix-ui/react-icons";
@@ -269,81 +271,88 @@ useEffect(() => {
             <span className={styles.burger} aria-hidden="true" />
           </button>
 
-          <Dialog.Overlay className={styles.overlay} />
-          <Dialog.Content
-            id="mobile-menu-panel"
-            className={styles.panel}
-            aria-label={t("menu.mobile")}
-          >
-            <Dialog.Title className={styles.srOnly}>
-              {t("menu.title")}
-            </Dialog.Title>
-            <Dialog.Description className={styles.srOnly}>
-              {t("menu.description")}
-            </Dialog.Description>
+          <Dialog.Portal>
+            <Dialog.Overlay className={styles.overlay} />
+            <Dialog.Content
+              id="mobile-menu-panel"
+              className={styles.panel}
+              aria-label={t("menu.mobile")}
+            >
+              <div className={styles.panelGrabber} aria-hidden="true" />
+              <Dialog.Title className={styles.srOnly}>
+                {t("menu.title")}
+              </Dialog.Title>
+              <Dialog.Description className={styles.srOnly}>
+                {t("menu.description")}
+              </Dialog.Description>
 
-            <nav className={styles.panelNav}>
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) =>
-                    [styles.panelLink, isActive && styles.panelLinkActive]
-                      .filter(Boolean)
-                      .join(" ")
-                  }
-                  onClick={() => setOpen(false)}
-                >
-                  <span>{item.label}</span>
-                  <span aria-hidden="true">›</span>
-                </NavLink>
-              ))}
-            </nav>
+              <nav className={styles.panelNav}>
+                {navItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      [styles.panelLink, isActive && styles.panelLinkActive]
+                        .filter(Boolean)
+                        .join(" ")
+                    }
+                    onClick={() => setOpen(false)}
+                  >
+                    <span>{item.label}</span>
+                    <ChevronRightIcon aria-hidden="true" />
+                  </NavLink>
+                ))}
+              </nav>
 
-            <div className={styles.panelFooter}>
-              {!guest && (
-                <Buttons
-                  to={pathOf(lang, "book")}
-                  onClick={() => setOpen(false)}
-                  className={styles.ctaLink}
-                  label={t("actions.book")}
-                  buttonType="button"
-                  fullWidth
-                />
-              )}
-              <div className={styles.langGroup}>
-                <button
-                  type="button"
-                  className={styles.themeChip}
-                  onClick={toggleAppearance}
-                  aria-label={t("actions.toggleAppearance")}
-                >
-                  <ThemeActionIcon aria-hidden="true" />
-                </button>
-                {LANGUAGE_OPTIONS.map((option) => {
-                  const isCurrent = option.code === lang;
-                  return (
-                    <button
-                      type="button"
-                      key={option.code}
-                      className={styles.langChip}
-                      onClick={() => switchLang(option.code)}
-                      aria-current={isCurrent}
-                      data-active={isCurrent ? "true" : undefined}
-                      aria-label={
-                        isCurrent
-                          ? `${option.label}, ${t("actions.currentLanguage")}`
-                          : option.label
-                      }
-                    >
-                      <span aria-hidden="true">{option.flag}</span>
-                      <span>{option.label}</span>
-                    </button>
-                  );
-                })}
+              <div className={styles.panelFooter}>
+                {!guest && (
+                  <Buttons
+                    to={pathOf(lang, "book")}
+                    onClick={() => setOpen(false)}
+                    className={styles.ctaLink}
+                    label={t("actions.book")}
+                    buttonType="button"
+                    fullWidth
+                  />
+                )}
+                <div className={styles.panelControls}>
+                  <button
+                    type="button"
+                    className={styles.themeChip}
+                    onClick={toggleAppearance}
+                    aria-label={t("actions.toggleAppearance")}
+                  >
+                    <ThemeActionIcon aria-hidden="true" />
+                    <span>{t(`appearance.${isDark ? "light" : "dark"}`)}</span>
+                  </button>
+                  <div className={styles.langGroup}>
+                    {LANGUAGE_OPTIONS.map((option) => {
+                      const isCurrent = option.code === lang;
+                      return (
+                        <button
+                          type="button"
+                          key={option.code}
+                          className={styles.langChip}
+                          onClick={() => switchLang(option.code)}
+                          aria-current={isCurrent}
+                          data-active={isCurrent ? "true" : undefined}
+                          aria-label={
+                            isCurrent
+                              ? `${option.label}, ${t("actions.currentLanguage")}`
+                              : option.label
+                          }
+                        >
+                          <span aria-hidden="true">{option.flag}</span>
+                          <span>{option.label}</span>
+                          {isCurrent && <CheckIcon aria-hidden="true" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
-          </Dialog.Content>
+            </Dialog.Content>
+          </Dialog.Portal>
         </Dialog.Root>
       </div>
     </div>

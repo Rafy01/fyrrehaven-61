@@ -392,12 +392,14 @@
   transform: rotate(-45deg);
 }
 
-/* === Dialog: overlay + panel (CLEAN GLASS) === */
+/* === Dialog: iOS-style mobile menu === */
 .overlay {
   position: fixed;
   inset: 0;
-  -webkit-backdrop-filter: blur(1px);
-  backdrop-filter: blur(6px);
+  z-index: 40;
+  background: rgba(8, 9, 11, 0.18);
+  -webkit-backdrop-filter: blur(12px) saturate(145%);
+  backdrop-filter: blur(12px) saturate(145%);
 }
 .overlay[data-state="open"] {
   animation: overlayIn 0.22s ease both;
@@ -407,100 +409,199 @@
 }
 
 .panel {
+  --panel-pad-x: clamp(1rem, 5vw, 1.35rem);
   position: fixed;
-  top: 0;
-  right: 0;
-  height: 100svh;
-  min-height: 100dvh;
-  max-height: 100svh;
-  background: var(--panel-bg);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  backdrop-filter: blur(18px) saturate(160%);
-  border-left: 1px solid var(--border-muted);
+  inset: auto 0 0 0;
+  z-index: 60;
   display: flex;
   flex-direction: column;
-  height: 100svh; /* sikrer hele højde i mobilen */
-  max-height: 100svh;
-
-  padding: 1rem;
-  padding-bottom: max(1rem, env(safe-area-inset-bottom));
-  box-shadow: -24px 0 48px var(--shadow-strong);
-  animation: panelIn 0.38s cubic-bezier(0.2, 0.8, 0.2, 1.05) both;
+  gap: 0.9rem;
+  max-height: min(82svh, 760px);
+  overflow: hidden;
+  padding: 0.75rem var(--panel-pad-x)
+    max(1rem, calc(env(safe-area-inset-bottom) + 0.85rem));
+  color: var(--ink-900);
+  background: color-mix(in srgb, var(--panel-bg) 92%, var(--surface));
+  border: 1px solid var(--border-muted);
+  border-bottom: 0;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -18px 56px var(--shadow-strong);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+  transform-origin: bottom center;
+  outline: none;
+}
+.panel[data-state="open"] {
+  animation: panelIn 0.42s cubic-bezier(0.2, 0.85, 0.2, 1) both;
 }
 .panel[data-state="closed"] {
-  animation: panelOut 0.22s ease both;
+  animation: panelOut 0.24s ease both;
 }
 
-.panelHeader {
+.panelGrabber {
+  width: 44px;
+  height: 5px;
+  flex: 0 0 auto;
+  align-self: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-900) 22%, transparent);
+}
+
+.panelNav {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.2rem 0 0.35rem;
+  -webkit-overflow-scrolling: touch;
+}
+.panelNav::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.panelLink {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-muted);
+  gap: 1rem;
+  min-height: 56px;
+  padding: 0 1rem;
+  color: var(--ink-900);
+  text-decoration: none;
+  font-size: clamp(1.05rem, 4vw, 1.28rem);
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: 0;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-muted) 55%, transparent);
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
+  transition: background 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease, transform 0.18s ease;
 }
-.closeBtn {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  font-size: 1.2rem;
-  line-height: 1;
-  padding: 0.35rem;
-  border-radius: 8px;
-  transition: transform 0.18s ease, background 0.18s ease;
+.panelLink svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  color: color-mix(in srgb, var(--ink-900) 48%, transparent);
+}
+.panel[data-state="open"] .panelLink {
+  animation: itemIn 0.34s cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+.panel[data-state="open"] .panelLink:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.panel[data-state="open"] .panelLink:nth-child(2) {
+  animation-delay: 0.075s;
+}
+.panel[data-state="open"] .panelLink:nth-child(3) {
+  animation-delay: 0.11s;
+}
+.panel[data-state="open"] .panelLink:nth-child(4) {
+  animation-delay: 0.145s;
+}
+.panel[data-state="open"] .panelLink:nth-child(5) {
+  animation-delay: 0.18s;
+}
+.panel[data-state="open"] .panelLink:nth-child(6) {
+  animation-delay: 0.215s;
 }
 @media (hover: hover) and (pointer: fine) {
-.closeBtn:hover {
-  transform: rotate(90deg) scale(1.05);
-  background: var(--surface-soft);
+  .panelLink:hover {
+    background: var(--surface-hover);
+    transform: translateY(-1px);
+  }
 }
-
+.panelLink:active {
+  transform: scale(0.985);
 }
-.closeBtn:focus-visible {
+.panelLink:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
-.closeBtn:active {
-  transform: rotate(135deg) scale(0.98);
+.panelLinkActive {
+  background: color-mix(in srgb, var(--gold-500) 15%, var(--surface));
+  border-color: color-mix(in srgb, var(--gold-500) 28%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold-500) 18%, transparent);
+}
+.panelLinkActive svg {
+  color: var(--gold-700);
 }
 
 .panelFooter {
   display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+.ctaLink {
+  box-sizing: border-box;
+  min-height: 52px;
+  border-radius: 16px;
+}
+.panelControls {
+  display: grid;
+  gap: 0.6rem;
 }
 .langGroup {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
 .langChip,
-.themeChip
-{
+.themeChip {
   appearance: none;
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 0.45rem 0.55rem;
+  min-height: 46px;
+  border: 1px solid var(--border-muted);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  color: var(--ink-900);
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  color: var(--ink-900);
-  border-radius: 10px;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.18s ease, background 0.18s ease,
-    border-color 0.18s ease, box-shadow 0.18s ease;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.55rem 0.45rem;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 0;
+  transition: background 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease, transform 0.18s ease;
+}
+.themeChip {
+  width: 100%;
+}
+.langChip span:last-of-type {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.langChip svg,
+.themeChip svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
 }
 @media (hover: hover) and (pointer: fine) {
-.langChip:hover,
-.themeChip:hover {
-  background: var(--surface-soft);
+  .langChip:hover,
+  .themeChip:hover {
+    background: var(--surface-hover);
+    transform: translateY(-1px);
+  }
 }
-
+.langChip:active,
+.themeChip:active {
+  transform: scale(0.98);
 }
 .langChip:focus-visible,
 .themeChip:focus-visible {
@@ -508,89 +609,26 @@
   outline-offset: 3px;
 }
 .langChip[data-active="true"] {
-  background: rgba(126, 119, 38, 0.13);
-  border-color: rgba(126, 119, 38, 0.32);
-  box-shadow: inset 0 0 0 1px rgba(126, 119, 38, 0.12);
-  font-weight: 800;
+  background: color-mix(in srgb, var(--gold-500) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--gold-500) 32%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold-500) 18%, transparent);
 }
-.themeChip svg {
-  width: 16px;
-  height: 16px;
+.langChip[data-active="true"] svg {
+  color: var(--gold-700);
 }
 
-
-
-/* Scroll-hint (fade i top/bund) */
-.panelNav::before,
-.panelNav::after {
-  content: "";
-  position: sticky;
-  left: 0;
-  right: 0;
-  height: 12px;
-  pointer-events: none;
-  z-index: 1;
-}
-.panelNav::before {
-  top: 0;
-  background: linear-gradient(
-    to bottom,
-    var(--panel-bg),
-    transparent
-  );
-}
-.panelNav::after {
-  bottom: 0;
-  background: linear-gradient(
-    to top,
-    var(--panel-bg),
-    transparent
-  );
+.srOnly{
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  padding:0 !important;
+  margin:-1px !important;
+  overflow:hidden !important;
+  clip:rect(0 0 0 0) !important;
+  white-space:nowrap !important;
+  border:0 !important;
 }
 
-/* Kompakte mobil-links + aktiv markering */
-.panelLink {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.4rem 0;
-  min-height: 30px;
-  max-height: 120vh;
-  text-decoration: none;
-  color: var(--ink-900);
-  font-weight: 700;
-  border-bottom: 1px dashed var(--border-muted);
-  border-radius: 10px;
-  opacity: 0;
-  transform: translateX(12px);
-}
-.panel[data-state="open"] .panelLink {
-  animation: itemIn 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-.panel[data-state="open"] .panelLink:nth-child(1) {
-  animation-delay: 0.05s;
-}
-.panel[data-state="open"] .panelLink:nth-child(2) {
-  animation-delay: 0.09s;
-}
-.panel[data-state="open"] .panelLink:nth-child(3) {
-  animation-delay: 0.13s;
-}
-.panel[data-state="open"] .panelLink:nth-child(4) {
-  animation-delay: 0.17s;
-}
-.panel[data-state="open"] .panelLink:nth-child(5) {
-  animation-delay: 0.21s;
-}
-
-.panelLink:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 4px;
-  background: rgba(37, 99, 235, 0.06);
-}
-
-
-/* === Animations === */
 @keyframes overlayIn {
   from {
     opacity: 0;
@@ -608,40 +646,83 @@
   }
 }
 @keyframes panelIn {
-  0% {
-    transform: perspective(1000px) translateX(8%) rotateY(-8deg) scale(0.985);
+  from {
     opacity: 0;
+    transform: translateY(24px) scale(0.975);
   }
-  55% {
-    transform: perspective(1000px) translateX(0) rotateY(-2deg) scale(1.01);
+  to {
     opacity: 1;
-  }
-  100% {
-    transform: perspective(1000px) translateX(0) rotateY(0) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 @keyframes panelOut {
   from {
-    transform: perspective(1000px) translateX(0) rotateY(0) scale(1);
     opacity: 1;
+    transform: translateY(0) scale(1);
   }
   to {
-    transform: perspective(1000px) translateX(100%) rotateY(-6deg) scale(0.985);
     opacity: 0;
+    transform: translateY(20px) scale(0.985);
   }
 }
 @keyframes itemIn {
   from {
     opacity: 0;
-    transform: translateX(12px);
+    transform: translateY(10px) scale(0.985);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0) scale(1);
   }
 }
 
-/* Reduced motion / high contrast */
+@media (min-width: 720px) and (max-width: 1024px) {
+  .panel {
+    left: 50%;
+    right: auto;
+    width: min(92vw, 560px);
+    border-radius: 28px;
+    border-bottom: 1px solid var(--border-muted);
+    transform: translateX(-50%);
+  }
+  .panel[data-state="open"] {
+    animation-name: panelInTablet;
+  }
+  .panel[data-state="closed"] {
+    animation-name: panelOutTablet;
+  }
+}
+
+@keyframes panelInTablet {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(24px) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-16px) scale(1);
+  }
+}
+@keyframes panelOutTablet {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-16px) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(16px) scale(0.985);
+  }
+}
+
+@media (max-width: 360px) {
+  .langGroup {
+    grid-template-columns: 1fr;
+  }
+  .langChip {
+    justify-content: space-between;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wrapper,
   .overlay,
@@ -656,148 +737,10 @@
   .overlay {
     background: rgba(8, 15, 20, 0.45);
   }
-  .panel {
+  .panel,
+  .panelLink,
+  .langChip,
+  .themeChip {
     background: var(--surface);
-  }
-}
-:root {
-  --header-h: 56px; /* height of sticky header on mobile */
-}
-
-@media (min-width: 768px) {
-  :root { --header-h: 72px; }
-}
-
-/* make sure header always sits above the menu */
-.wrapper {
-  position: sticky;
-  top: 0;
-  z-index: 50; /* higher than overlay/panel below */
-}
-
-/* overlay/panel start *below* the header so the logo/burger remain visible */
-
-.panel {
-  position: fixed;
-  inset: var(--header-h) 0 0 0; /* top offset */
-  background: var(--panel-bg, #fff);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* remove old header row styles if you had them */
-.panelHeader { display: none; }
-
-
-.panel {
-  --panel-pad-x: 20px;             /* justér efter din nuværende padding */
-  padding: 0 var(--panel-pad-x) 24px;
-}
-
-/* standard link i mobilpanelet */
-.panelNav { padding: 8px 0; }
-.panelLink {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;              /* “indre” padding for selve linket */
-  margin: 6px 0;
-  border-radius: 12px;
-  text-decoration: none;
-}
-
-/* gør den aktive linje bredere i begge sider */
-.panelLinkActive {
-  background: var(--panel-active-bg, rgba(0,0,0,.06));
-  margin-left: calc(-1 * var(--panel-pad-x));
-  margin-right: calc(-1 * var(--panel-pad-x));
-  padding-left: calc(16px + var(--panel-pad-x));
-  padding-right: calc(16px + var(--panel-pad-x));
-  /* vælg én af disse alt efter look: */
-  /* border-radius: 0; */           /* går helt ud til kanterne */
-  border-radius: 999px;              /* beholder afrunding, men bredere flade */
-}
-
-/* valgfrit: undgå horisontal scroll hvis noget går i udbrud */
-.panelNav { overflow-x: hidden; }
-
-.srOnly{
-  position:absolute !important;
-  width:1px !important;
-  height:1px !important;
-  padding:0 !important;
-  margin:-1px !important;
-  overflow:hidden !important;
-  clip:rect(0 0 0 0) !important;
-  white-space:nowrap !important;
-  border:0 !important;
-}
-
-.group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.groupLabel {
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
-
-.groupItems {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.panelGroup {
-  margin-top: 1rem;
-}
-
-.panelGroupLabel {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  display: block;
-}
-.ddContent {
-  display: flex;
-  flex-direction: column;
-  min-width: 180px;
-  background-color: var(--dropdown-bg, var(--surface));
-  border: 1px solid var(--border-muted);
-  border-radius: 8px;
-  box-shadow: 0px 10px 30px var(--shadow-soft);
-  color: var(--dropdown-text, var(--ink-900));
-  padding: 6px 0;
-  z-index: 1000;
-}
-
-
-.ddItem {
-  all: unset;
-  display: block;
-  padding: 10px 16px;
-  font-size: 14px;
-  line-height: 1.4;
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
-}
-
-
-@media (min-width: 768px) {
-  .panelNav {
-    overflow-y: visible; /* scroll ikke på desktop */
-  }
-}
-@media (max-width: 768px) {
-  .panelNav {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
   }
 }
