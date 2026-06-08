@@ -184,9 +184,12 @@
   font-size: 1.45rem;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .calendarHeader button:hover,
 .days button:hover:not(:disabled) {
   background: var(--surface-soft);
+}
 }
 
 .weekDays,
@@ -228,8 +231,11 @@
   color: var(--on-gold);
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .days .selectedDay:hover:not(:disabled) {
   background: var(--gold-500);
+}
 }
 
 .total {

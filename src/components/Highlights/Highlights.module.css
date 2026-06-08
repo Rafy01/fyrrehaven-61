@@ -37,7 +37,9 @@
   padding: .9rem .95rem .8rem;
   color: inherit; text-decoration: none;
 }
+@media (hover: hover) and (pointer: fine){
 .cardBody:hover{ background: var(--surface-hover); }
+}
 .cardBody:focus-visible{ outline: 3px solid var(--focus); outline-offset: 4px; border-radius: 14px; }
 
 /* Media (ikon/billede) */

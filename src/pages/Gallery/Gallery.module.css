@@ -23,9 +23,11 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   transition: box-shadow .18s ease, transform .18s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .albumCard:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
+}
 }
 
 /* Label under thumbnail */

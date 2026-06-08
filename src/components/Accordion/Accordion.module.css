@@ -11,8 +11,11 @@
   transition: box-shadow 0.2s ease-in-out;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .accordionItem:hover {
   box-shadow: 0 4px 10px var(--shadow-soft);
+}
 }
 
 .accordionHeader {
@@ -35,9 +38,12 @@
   transition: background 0.2s ease, transform 0.15s ease;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .accordionTrigger:hover {
   background: linear-gradient(to right, var(--surface-soft), var(--surface-hover));
   transform: scale(1.01);
+}
 }
 
 .chevron {

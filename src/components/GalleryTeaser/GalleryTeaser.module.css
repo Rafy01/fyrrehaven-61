@@ -53,9 +53,11 @@
 .staggered .pillBtn:nth-child(4) {
   transform: translateY(calc(var(--amp) * 0.25));
 }
+@media (hover: hover) and (pointer: fine) {
 .staggered .pillBtn:hover,
 .staggered .pillBtn:focus-visible {
   transform: translateY(calc(var(--amp) * -0.15));
+}
 }
 
 /* Kort-kontainer & billede */
@@ -89,8 +91,10 @@
   transform: scale(1.001);
   transition: transform 0.25s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .pillBtn:hover .img {
   transform: scale(1.04);
+}
 }
 .placeholder {
   width: 100%;
@@ -191,8 +195,10 @@
   font-size: 1.1rem;
   cursor: pointer;
 }
+@media (hover: hover) and (pointer: fine) {
 .lbClose:hover {
   background: rgba(255, 255, 255, 0.18);
+}
 }
 
 .lbNav {
@@ -211,8 +217,10 @@
   display: grid;
   place-items: center;
 }
+@media (hover: hover) and (pointer: fine) {
 .lbNav:hover {
   background: rgba(255, 255, 255, 0.18);
+}
 }
 .prev {
   left: 0.75rem;

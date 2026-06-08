@@ -33,8 +33,11 @@
   transition: background-color 0.2s ease;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .linkButton:hover {
   background-color: color-mix(in srgb, var(--gold-500) 14%, var(--surface));
+}
 }
 
 .noticeBox {

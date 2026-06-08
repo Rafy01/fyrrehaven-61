@@ -87,7 +87,10 @@
 .cover { object-fit: cover; }
 .fill  { object-fit: fill;  }
 
+@media (hover: hover) and (pointer: fine) {
+
 .tileBtn:hover .img { transform: scale(1.04); }
+}
 
 /* Overlay + badge */
 .tileOverlay {
@@ -153,7 +156,9 @@
   font-size: 1.1rem;
   cursor: pointer;
 }
+@media (hover: hover) and (pointer: fine) {
 .lbClose:hover { background: rgba(255, 255, 255, 0.2); }
+}
 
 .lbNav {
   position: fixed;
@@ -171,7 +176,9 @@
   display: grid;
   place-items: center;
 }
+@media (hover: hover) and (pointer: fine) {
 .lbNav:hover { background: rgba(255, 255, 255, 0.18); }
+}
 .prev { left: 0.75rem; }
 .next { right: 0.75rem; }
 

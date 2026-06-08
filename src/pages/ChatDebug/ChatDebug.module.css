@@ -96,16 +96,24 @@
   height:38px; padding:0 .75rem; border-radius:10px; border:1px solid transparent; cursor:pointer; font-weight:700;
 }
 .btn { background:#111; color:#fff; }
+@media (hover: hover) and (pointer: fine) {
 .btn:hover { background:#222; }
+}
 .btnDanger { background:#fff0f0; color:#b91c1c; border-color:#fecaca; }
+@media (hover: hover) and (pointer: fine) {
 .btnDanger:hover { background:#ffe2e2; }
+}
 .btnGhost { background:#fff; color:#444; border-color:#ddd; }
+@media (hover: hover) and (pointer: fine) {
 .btnGhost:hover { background:#f6f6f6; }
+}
 .listWrap { background:#fff; border:1px solid #eee; border-radius:12px; overflow:auto; }
 .empty { padding:1rem; color:#666; }
 .table { width:100%; border-collapse:collapse; font-size:.95rem; }
 .table th, .table td { border-bottom:1px solid #f0f0f0; padding:.6rem .7rem; text-align:left; }
 .pageCol a { color:#2563eb; text-decoration:none; }
+@media (hover: hover) and (pointer: fine) {
 .pageCol a:hover { text-decoration:underline; }
+}
 .muted { color:#999; }
 .done td { color:#999; text-decoration: line-through; }

@@ -53,7 +53,13 @@
   font-weight: 700;
   border: 0;
 }
-.primary:hover{ background: var(--gold-600); }
+@media (hover: hover) and (pointer: fine){
+.primary:hover{
+  background: var(--ink-900);
+  color: var(--sand-50);
+  transform: translateY(-1px);
+}
+}
 .primary:disabled,
 .primary[aria-disabled="true"]{ background: var(--gold-500); }
 
@@ -63,4 +69,6 @@
   border: 1px solid var(--border-subtle);
   color: var(--ink-900);
 }
+@media (hover: hover) and (pointer: fine){
 .secondary:hover{ background: var(--surface-hover); }
+}

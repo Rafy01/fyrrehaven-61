@@ -38,8 +38,10 @@
   border-radius: 10px;
   cursor: pointer;
 }
+@media (hover: hover) and (pointer: fine) {
 .navBtn:hover {
   background: var(--surface-hover);
+}
 }
 
 .row {
@@ -152,8 +154,11 @@
   cursor: pointer;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .readMore:hover {
   text-decoration: underline;
+}
 }
 
 .readMore:focus-visible {

@@ -61,8 +61,10 @@
   text-decoration: none;
   font-weight: 600;
 }
+@media (hover: hover) and (pointer: fine) {
 .superhost:hover {
   background: rgba(255, 199, 0, 0.22);
+}
 }
 
 .socials {
@@ -82,8 +84,10 @@
   color: var(--ink-900);
   text-decoration: none;
 }
+@media (hover: hover) and (pointer: fine) {
 .socialBtn:hover {
   background: var(--surface-hover);
+}
 }
 
 .linksRow {
@@ -108,8 +112,10 @@
   display: inline-block;
   padding: 0.25rem 0;
 }
+@media (hover: hover) and (pointer: fine) {
 .link:hover {
   text-decoration: underline;
+}
 }
 
 .bottomRow {
@@ -135,8 +141,10 @@
   text-decoration: none;
   font-size: 0.9rem;
 }
+@media (hover: hover) and (pointer: fine) {
 .bottomLink:hover {
   text-decoration: underline;
+}
 }
 
 /* Responsive */

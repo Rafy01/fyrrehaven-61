@@ -77,9 +77,12 @@
   transition: transform 0.22s ease;
   opacity: 0.9;
 }
+@media (hover: hover) and (pointer: fine) {
 .link:hover::after,
 .link:focus-visible::after {
   transform: scaleX(1);
+}
+
 }
 
 /* Aktiv side: permanent underline */
@@ -101,8 +104,13 @@
   border-radius: var(--radius);
   border: 0;
 }
+@media (hover: hover) and (pointer: fine) {
 .cta:hover {
-  background: var(--gold-600);
+  background: var(--ink-900);
+  color: var(--sand-50);
+  transform: translateY(-1px);
+}
+
 }
 .cta:focus-visible {
   outline: 3px solid var(--focus);
@@ -142,9 +150,12 @@
   width: 19px;
   height: 19px;
 }
+@media (hover: hover) and (pointer: fine) {
 .themeButton:hover {
   background: var(--surface-hover);
   transform: translateY(-1px);
+}
+
 }
 .langTrigger:focus,
 .themeButton:focus {
@@ -244,8 +255,11 @@
   gap: 0.8rem;
   color: inherit;
 }
+@media (hover: hover) and (pointer: fine) {
 .ddItem:hover {
   background-color: var(--dropdown-hover);
+
+}
 
 }
 .ddItem[data-active="true"] {
@@ -436,9 +450,12 @@
   border-radius: 8px;
   transition: transform 0.18s ease, background 0.18s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .closeBtn:hover {
   transform: rotate(90deg) scale(1.05);
   background: var(--surface-soft);
+}
+
 }
 .closeBtn:focus-visible {
   outline: 3px solid var(--focus);
@@ -478,9 +495,12 @@
   transition: transform 0.18s ease, background 0.18s ease,
     border-color 0.18s ease, box-shadow 0.18s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .langChip:hover,
 .themeChip:hover {
   background: var(--surface-soft);
+}
+
 }
 .langChip:focus-visible,
 .themeChip:focus-visible {

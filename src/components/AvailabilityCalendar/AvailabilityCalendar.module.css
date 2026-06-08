@@ -271,8 +271,10 @@
   cursor: pointer;
   transition: background 0.15s ease, transform 0.05s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .navBtn:hover {
   background: var(--surface-hover);
+}
 }
 .navBtn:active {
   transform: translateY(0.5px);

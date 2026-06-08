@@ -59,8 +59,11 @@
 
 /* === LINK === */
 
+@media (hover: hover) and (pointer: fine) {
+
 .link:hover {
   color: var(--ink-900);
+}
 }
 
 /* === LISTE STYLING === */
@@ -83,10 +86,13 @@ a {
   transition: color 0.2s ease;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 a:hover,
 a:focus {
   color: var(--ink-900); /* fx gul på hover – tilpas efter din palette */
   text-decoration: none;
+}
 }
 
 ul {

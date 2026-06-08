@@ -28,9 +28,11 @@
   font-size: 22px;
   transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.15s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .fab:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 38px rgba(20, 28, 40, 0.28);
+}
 }
 .fab:active {
   transform: translateY(0);
@@ -129,8 +131,10 @@
   cursor: pointer;
   color: #0b0f14;
 }
+@media (hover: hover) and (pointer: fine) {
 .iconBtn:hover {
   background: rgba(0, 0, 0, 0.06);
+}
 }
 
 /* input row */
@@ -166,8 +170,10 @@
   font-weight: 700;
   letter-spacing: 0.01em;
 }
+@media (hover: hover) and (pointer: fine) {
 .inputRow button[type="submit"]:hover {
   filter: brightness(1.04);
+}
 }
 
 /* quick chips */
@@ -187,8 +193,10 @@
   border: 1px solid var(--border-subtle);
   cursor: pointer;
 }
+@media (hover: hover) and (pointer: fine) {
 .chip:hover {
   background: #f6f7ff;
+}
 }
 
 /* ... eksisterende styles fra tidligere svar ... */
@@ -235,8 +243,10 @@
   border-radius: 10px;
   cursor: pointer;
 }
+@media (hover: hover) and (pointer: fine) {
 .ghostBtn:hover {
   background: #f7f9ff;
+}
 }
 .msgBody strong {
   font-weight: 800; /* or 700 */

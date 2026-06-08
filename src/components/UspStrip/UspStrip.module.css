@@ -65,10 +65,12 @@
   /* subtle interaction */
   transition: transform .12s ease, background .2s ease, border-color .2s ease;
 }
+@media (hover: hover) and (pointer: fine){
 .item:hover{
   transform: translateY(-1px);
   background: var(--chip-bg-hover);
   border-color: var(--border-subtle);
+}
 }
 .item:focus-within{ outline: 3px solid var(--focus); outline-offset: 2px; }
 
