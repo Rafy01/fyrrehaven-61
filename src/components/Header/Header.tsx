@@ -64,6 +64,7 @@ export default function Header({
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
+  const [isTrackingMenuDrag, setIsTrackingMenuDrag] = useState(false);
   const [isDraggingMenu, setIsDraggingMenu] = useState(false);
   const [isMenuAnimationSettled, setIsMenuAnimationSettled] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -123,6 +124,7 @@ useEffect(() => {
       }
       setIsMenuAnimationSettled(false);
       setDragOffset(0);
+      setIsTrackingMenuDrag(false);
       setIsDraggingMenu(false);
       menuDrag.current.active = false;
       menuDrag.current.offset = 0;
@@ -209,7 +211,7 @@ useEffect(() => {
 
   const updateMenuDrag = (clientY: number) => {
     const drag = menuDrag.current;
-    if (!drag.active) return;
+    if (!drag.active) return false;
 
     const now = performance.now();
     const elapsed = Math.max(1, now - drag.lastTime);
@@ -223,7 +225,9 @@ useEffect(() => {
       rawOffset <= DRAG_START_DISTANCE ? 0 : rawOffset - DRAG_START_DISTANCE;
     drag.offset = nextOffset;
     drag.moved = drag.moved || nextOffset > 0;
+    if (nextOffset > 0) setIsDraggingMenu(true);
     setDragOffset(nextOffset);
+    return nextOffset > 0 || drag.moved;
   };
 
   const endMenuDrag = () => {
@@ -235,6 +239,7 @@ useEffect(() => {
       (drag.velocity >= DRAG_CLOSE_VELOCITY && drag.offset > 56);
 
     drag.active = false;
+    setIsTrackingMenuDrag(false);
     setIsDraggingMenu(false);
 
     if (shouldClose) {
@@ -250,6 +255,7 @@ useEffect(() => {
     if (!drag.active) return;
 
     drag.active = false;
+    setIsTrackingMenuDrag(false);
     setIsDraggingMenu(false);
     setDragOffset(0);
   };
@@ -273,7 +279,8 @@ useEffect(() => {
       offset: 0,
       moved: false,
     };
-    setIsDraggingMenu(true);
+    setIsTrackingMenuDrag(true);
+    setIsDraggingMenu(false);
     setDragOffset(0);
   };
 
@@ -321,17 +328,15 @@ useEffect(() => {
   }, [open]);
 
   useEffect(() => {
-    if (!isDraggingMenu) return;
+    if (!isTrackingMenuDrag) return;
 
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerId !== menuDrag.current.pointerId) return;
-      event.preventDefault();
-      updateMenuDrag(event.clientY);
+      if (updateMenuDrag(event.clientY)) event.preventDefault();
     };
     const onMouseMove = (event: MouseEvent) => {
       if (menuDrag.current.pointerId !== MOUSE_DRAG_ID) return;
-      event.preventDefault();
-      updateMenuDrag(event.clientY);
+      if (updateMenuDrag(event.clientY)) event.preventDefault();
     };
 
     const onPointerUp = (event: PointerEvent) => {
@@ -361,7 +366,7 @@ useEffect(() => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };
-  }, [isDraggingMenu]);
+  }, [isTrackingMenuDrag]);
 
   const closeFromMenuGrabber = () => {
     if (menuDrag.current.moved) {
