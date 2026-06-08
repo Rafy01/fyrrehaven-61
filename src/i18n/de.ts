@@ -736,7 +736,7 @@ export const de = {
       "faq": "Häufig gestellte Fragen",
       "extraServices": "Zusatzleistungen",
       "privacy": "Datenschutz",
-      "cookies": "Cookies / Einstellungen",
+      "cookies": "Cookie-Einstellungen",
       "sitemap": "Sitemap",
       "fees": "Gebühren"
     },
