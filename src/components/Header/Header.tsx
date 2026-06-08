@@ -361,7 +361,6 @@ useEffect(() => {
   const dragProgress = Math.min(dragOffset, 140) / 140;
   const overlayOpacity = Math.max(0, 0.18 - dragProgress * 0.18);
   const overlayBlur = Math.max(0, 12 - dragProgress * 12);
-  const isMenuPulled = dragOffset > 0;
   const menuDragStyle = {
     "--panel-drag-y": `${dragOffset}px`,
     "--menu-overlay-opacity": overlayOpacity,
@@ -496,7 +495,7 @@ useEffect(() => {
               id="mobile-menu-panel"
               className={styles.panel}
               aria-label={t("menu.mobile")}
-              data-dragging={isMenuPulled ? "true" : undefined}
+              data-dragging={isDraggingMenu ? "true" : undefined}
               style={menuDragStyle}
               ref={panelRef}
               onPointerDownCapture={beginMenuDragFromReact}
