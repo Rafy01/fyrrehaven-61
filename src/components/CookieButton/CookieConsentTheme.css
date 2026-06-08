@@ -183,20 +183,37 @@
 
 @media (max-width: 640px) {
   #cc-main {
-    --cc-modal-margin: 0.75rem;
+    --cc-modal-margin: 0.45rem;
   }
 
   #cc-main .cm {
-    width: auto;
+    width: calc(100vw - 0.9rem) !important;
     border-radius: 8px;
   }
 
   #cc-main .cm__body {
-    padding: 1rem;
+    padding: 0 !important;
+  }
+
+  #cc-main .cm__texts {
+    padding: 1.4rem 1.35rem 0 !important;
+  }
+
+  #cc-main .cm__title {
+    margin-bottom: 0.85rem;
+    padding: 0 !important;
+  }
+
+  #cc-main .cm__desc {
+    padding: 0 0 1.1rem !important;
   }
 
   #cc-main .cm__btns {
-    padding-top: 0.9rem;
+    padding: 1rem 1.35rem 0 !important;
+  }
+
+  #cc-main .cm__footer {
+    padding: 0.45rem 1.35rem 1.25rem !important;
   }
 
   #cc-main .cm__btn,
