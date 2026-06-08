@@ -736,8 +736,7 @@ export const da = {
       "faq": "Ofte stillede spørgsmål",
       "extraServices": "Ekstra services",
       "privacy": "Privatliv",
-      "cookies": "Cookies",
-      "cookieSettings": "Cookieindstillinger",
+      "cookies": "Cookies / indstillinger",
       "sitemap": "Sitemap",
       "fees": "Gebyr"
     },

@@ -264,20 +264,12 @@ export default function Footer({
                 </Link>
               </li>
               <li>
-                <Link
-                  className={styles.bottomLink}
-                  to={pathOf(currentLang, "cookies")}
-                >
-                  {t("links.cookies")}
-                </Link>
-              </li>
-              <li>
                 <button
                   type="button"
                   className={styles.bottomLinkButton}
                   onClick={() => CookieConsent.showPreferences()}
                 >
-                  {t("links.cookieSettings")}
+                  {t("links.cookies")}
                 </button>
               </li>
               <li>
