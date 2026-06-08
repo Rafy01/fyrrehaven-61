@@ -11,6 +11,12 @@
   color: var(--ink-900);
 }
 
+:global(html[data-theme="dark"]) .wrapper {
+  background: linear-gradient(180deg, #111318, #08090b);
+  border-top-color: rgba(255, 255, 255, 0.1);
+  color: #f7f4ea;
+}
+
 .topRow {
   display: flex;
   align-items: center;
@@ -19,6 +25,10 @@
   flex-wrap: wrap;
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--border-muted);
+}
+
+:global(html[data-theme="dark"]) .topRow {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
 .brand {
@@ -61,9 +71,20 @@
   text-decoration: none;
   font-weight: 600;
 }
+
+:global(html[data-theme="dark"]) .superhost {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f7f4ea;
+}
+
 @media (hover: hover) and (pointer: fine) {
 .superhost:hover {
   background: rgba(255, 199, 0, 0.22);
+}
+
+:global(html[data-theme="dark"]) .superhost:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 }
 
@@ -84,9 +105,20 @@
   color: var(--ink-900);
   text-decoration: none;
 }
+
+:global(html[data-theme="dark"]) .socialBtn {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.07);
+  color: #f7f4ea;
+}
+
 @media (hover: hover) and (pointer: fine) {
 .socialBtn:hover {
   background: var(--surface-hover);
+}
+
+:global(html[data-theme="dark"]) .socialBtn:hover {
+  background: rgba(255, 255, 255, 0.11);
 }
 }
 
@@ -112,6 +144,11 @@
   display: inline-block;
   padding: 0.25rem 0;
 }
+
+:global(html[data-theme="dark"]) .link {
+  color: #f7f4ea;
+}
+
 @media (hover: hover) and (pointer: fine) {
 .link:hover {
   text-decoration: underline;
@@ -126,6 +163,10 @@
   padding-top: 1rem;
   border-top: 1px solid var(--border-muted);
   flex-wrap: wrap;
+}
+
+:global(html[data-theme="dark"]) .bottomRow {
+  border-top-color: rgba(255, 255, 255, 0.1);
 }
 
 .bottomLinks {
@@ -151,6 +192,12 @@
   font-size: 0.9rem;
   cursor: pointer;
 }
+
+:global(html[data-theme="dark"]) .bottomLink,
+:global(html[data-theme="dark"]) .bottomLinkButton {
+  color: rgba(247, 244, 234, 0.78);
+}
+
 .bottomLinkButton:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
