@@ -1,5 +1,6 @@
 import {
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
   useMemo,
@@ -42,6 +43,7 @@ const DARK_LOGO_SRC =
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/logo_trans_white-scaled.png";
 const DRAG_CLOSE_DISTANCE = 96;
 const DRAG_CLOSE_VELOCITY = 0.55;
+const MOUSE_DRAG_ID = -2;
 
 export default function Header({
   lang,
@@ -62,6 +64,7 @@ export default function Header({
   const [langOpen, setLangOpen] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDraggingMenu, setIsDraggingMenu] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const menuDrag = useRef({
     active: false,
     pointerId: -1,
@@ -225,15 +228,20 @@ useEffect(() => {
     setDragOffset(0);
   };
 
-  const beginMenuDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0 && event.pointerType === "mouse") return;
-
+  const beginMenuDrag = (
+    pointerId: number,
+    clientY: number,
+    button: number,
+    pointerType: string
+  ) => {
+    if (button !== 0 && pointerType === "mouse") return;
+    if (menuDrag.current.active) return;
     const now = performance.now();
     menuDrag.current = {
       active: true,
-      pointerId: event.pointerId,
-      startY: event.clientY,
-      lastY: event.clientY,
+      pointerId,
+      startY: clientY,
+      lastY: clientY,
       lastTime: now,
       velocity: 0,
       offset: 0,
@@ -243,6 +251,49 @@ useEffect(() => {
     setDragOffset(0);
   };
 
+  const beginMenuDragFromReact = (event: ReactPointerEvent<HTMLElement>) => {
+    beginMenuDrag(
+      event.pointerId,
+      event.clientY,
+      event.button,
+      event.pointerType
+    );
+  };
+
+  const beginMenuMouseDragFromReact = (event: ReactMouseEvent<HTMLElement>) => {
+    beginMenuDrag(MOUSE_DRAG_ID, event.clientY, event.button, "mouse");
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      beginMenuDrag(
+        event.pointerId,
+        event.clientY,
+        event.button,
+        event.pointerType
+      );
+    };
+    const onMouseDown = (event: MouseEvent) => {
+      beginMenuDrag(MOUSE_DRAG_ID, event.clientY, event.button, "mouse");
+    };
+
+    panel.addEventListener("pointerdown", onPointerDown, { capture: true });
+    panel.addEventListener("mousedown", onMouseDown, { capture: true });
+    return () => {
+      panel.removeEventListener("pointerdown", onPointerDown, {
+        capture: true,
+      });
+      panel.removeEventListener("mousedown", onMouseDown, {
+        capture: true,
+      });
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!isDraggingMenu) return;
 
@@ -251,9 +302,18 @@ useEffect(() => {
       event.preventDefault();
       updateMenuDrag(event.clientY);
     };
+    const onMouseMove = (event: MouseEvent) => {
+      if (menuDrag.current.pointerId !== MOUSE_DRAG_ID) return;
+      event.preventDefault();
+      updateMenuDrag(event.clientY);
+    };
 
     const onPointerUp = (event: PointerEvent) => {
       if (event.pointerId !== menuDrag.current.pointerId) return;
+      endMenuDrag();
+    };
+    const onMouseUp = () => {
+      if (menuDrag.current.pointerId !== MOUSE_DRAG_ID) return;
       endMenuDrag();
     };
 
@@ -265,11 +325,15 @@ useEffect(() => {
     window.addEventListener("pointermove", onPointerMove, { passive: false });
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerCancel);
+    window.addEventListener("mousemove", onMouseMove, { passive: false });
+    window.addEventListener("mouseup", onMouseUp);
 
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerCancel);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
     };
   }, [isDraggingMenu]);
 
@@ -280,6 +344,16 @@ useEffect(() => {
     }
 
     setOpen(false);
+  };
+
+  const preventMenuClickAfterDrag = (
+    event: ReactPointerEvent<HTMLElement> | ReactMouseEvent<HTMLElement>
+  ) => {
+    if (!menuDrag.current.moved) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    menuDrag.current.moved = false;
   };
 
   const panelStyle = {
@@ -413,16 +487,17 @@ useEffect(() => {
               aria-label={t("menu.mobile")}
               data-dragging={isDraggingMenu ? "true" : undefined}
               style={panelStyle}
+              ref={panelRef}
+              onPointerDownCapture={beginMenuDragFromReact}
+              onClickCapture={preventMenuClickAfterDrag}
             >
               <button
                 type="button"
                 className={styles.panelGrabber}
                 aria-label={t("actions.closeMenu")}
-                onPointerDown={beginMenuDrag}
                 onClick={closeFromMenuGrabber}
               >
                 <span aria-hidden="true" />
-                <ChevronDownIcon aria-hidden="true" />
               </button>
               <Dialog.Title className={styles.srOnly}>
                 {t("menu.title")}
@@ -431,11 +506,16 @@ useEffect(() => {
                 {t("menu.description")}
               </Dialog.Description>
 
-              <nav className={styles.panelNav}>
+              <nav
+                className={styles.panelNav}
+                onPointerDownCapture={beginMenuDragFromReact}
+                onMouseDownCapture={beginMenuMouseDragFromReact}
+              >
                 {navItems.map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
+                    draggable={false}
                     className={({ isActive }) =>
                       [styles.panelLink, isActive && styles.panelLinkActive]
                         .filter(Boolean)
@@ -449,7 +529,11 @@ useEffect(() => {
                 ))}
               </nav>
 
-              <div className={styles.panelFooter}>
+              <div
+                className={styles.panelFooter}
+                onPointerDownCapture={beginMenuDragFromReact}
+                onMouseDownCapture={beginMenuMouseDragFromReact}
+              >
                 {!guest && (
                   <Buttons
                     to={pathOf(lang, "book")}
