@@ -42,8 +42,10 @@
 #cc-main .cm {
   width: min(43rem, calc(100vw - 2rem));
   border: 1px solid var(--border-subtle);
+  border-radius: 14px;
   box-shadow:
-    0 28px 70px rgba(0, 0, 0, 0.28),
+    0 30px 80px rgba(0, 0, 0, 0.34),
+    0 12px 28px rgba(0, 0, 0, 0.18),
     0 0 0 1px color-mix(in srgb, var(--surface) 84%, transparent);
 }
 
@@ -183,12 +185,17 @@
 
 @media (max-width: 640px) {
   #cc-main {
-    --cc-modal-margin: 0.45rem;
+    --cc-modal-margin: 1rem;
   }
 
   #cc-main .cm {
-    width: calc(100vw - 0.9rem) !important;
-    border-radius: 8px;
+    width: calc(100vw - 2rem) !important;
+    bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+    border-radius: 16px;
+    box-shadow:
+      0 28px 76px rgba(0, 0, 0, 0.42),
+      0 10px 28px rgba(0, 0, 0, 0.2),
+      0 0 0 1px color-mix(in srgb, var(--surface) 72%, transparent);
   }
 
   #cc-main .cm__body {
