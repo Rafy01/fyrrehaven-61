@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -33,6 +40,8 @@ const LANGUAGE_OPTIONS: Array<{ code: Lang; flag: string; label: string }> = [
 const LIGHT_LOGO_SRC = "/logo_trans.png";
 const DARK_LOGO_SRC =
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/logo_trans_white-scaled.png";
+const DRAG_CLOSE_DISTANCE = 96;
+const DRAG_CLOSE_VELOCITY = 0.55;
 
 export default function Header({
   lang,
@@ -51,6 +60,18 @@ export default function Header({
   const idleTimer = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDraggingMenu, setIsDraggingMenu] = useState(false);
+  const menuDrag = useRef({
+    active: false,
+    pointerId: -1,
+    startY: 0,
+    lastY: 0,
+    lastTime: 0,
+    velocity: 0,
+    offset: 0,
+    moved: false,
+  });
 
 useEffect(() => {
   const onScroll = () => {
@@ -90,6 +111,13 @@ useEffect(() => {
 
   useEffect(() => {
     if (open) setHidden(false);
+    if (!open) {
+      setDragOffset(0);
+      setIsDraggingMenu(false);
+      menuDrag.current.active = false;
+      menuDrag.current.offset = 0;
+      menuDrag.current.moved = false;
+    }
   }, [open]);
 
   const switchLang = (next: Lang) => {
@@ -151,6 +179,112 @@ useEffect(() => {
   const toggleAppearance = () => {
     changeAppearance(isDark ? "light" : "dark");
   };
+
+  const updateMenuDrag = (clientY: number) => {
+    const drag = menuDrag.current;
+    if (!drag.active) return;
+
+    const now = performance.now();
+    const elapsed = Math.max(1, now - drag.lastTime);
+    const deltaFromLast = clientY - drag.lastY;
+    drag.velocity = deltaFromLast / elapsed;
+    drag.lastY = clientY;
+    drag.lastTime = now;
+
+    const nextOffset = Math.max(0, clientY - drag.startY);
+    drag.offset = nextOffset;
+    drag.moved = drag.moved || nextOffset > 6;
+    setDragOffset(nextOffset);
+  };
+
+  const endMenuDrag = () => {
+    const drag = menuDrag.current;
+    if (!drag.active) return;
+
+    const shouldClose =
+      drag.offset >= DRAG_CLOSE_DISTANCE ||
+      (drag.velocity >= DRAG_CLOSE_VELOCITY && drag.offset > 28);
+
+    drag.active = false;
+    setIsDraggingMenu(false);
+
+    if (shouldClose) {
+      setOpen(false);
+      return;
+    }
+
+    setDragOffset(0);
+  };
+
+  const cancelMenuDrag = () => {
+    const drag = menuDrag.current;
+    if (!drag.active) return;
+
+    drag.active = false;
+    setIsDraggingMenu(false);
+    setDragOffset(0);
+  };
+
+  const beginMenuDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0 && event.pointerType === "mouse") return;
+
+    const now = performance.now();
+    menuDrag.current = {
+      active: true,
+      pointerId: event.pointerId,
+      startY: event.clientY,
+      lastY: event.clientY,
+      lastTime: now,
+      velocity: 0,
+      offset: 0,
+      moved: false,
+    };
+    setIsDraggingMenu(true);
+    setDragOffset(0);
+  };
+
+  useEffect(() => {
+    if (!isDraggingMenu) return;
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerId !== menuDrag.current.pointerId) return;
+      event.preventDefault();
+      updateMenuDrag(event.clientY);
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      if (event.pointerId !== menuDrag.current.pointerId) return;
+      endMenuDrag();
+    };
+
+    const onPointerCancel = (event: PointerEvent) => {
+      if (event.pointerId !== menuDrag.current.pointerId) return;
+      cancelMenuDrag();
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerCancel);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerCancel);
+    };
+  }, [isDraggingMenu]);
+
+  const closeFromMenuGrabber = () => {
+    if (menuDrag.current.moved) {
+      menuDrag.current.moved = false;
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  const panelStyle = {
+    "--panel-drag-y": `${dragOffset}px`,
+  } as CSSProperties;
 
   return (
     <div
@@ -277,8 +411,19 @@ useEffect(() => {
               id="mobile-menu-panel"
               className={styles.panel}
               aria-label={t("menu.mobile")}
+              data-dragging={isDraggingMenu ? "true" : undefined}
+              style={panelStyle}
             >
-              <div className={styles.panelGrabber} aria-hidden="true" />
+              <button
+                type="button"
+                className={styles.panelGrabber}
+                aria-label={t("actions.closeMenu")}
+                onPointerDown={beginMenuDrag}
+                onClick={closeFromMenuGrabber}
+              >
+                <span aria-hidden="true" />
+                <ChevronDownIcon aria-hidden="true" />
+              </button>
               <Dialog.Title className={styles.srOnly}>
                 {t("menu.title")}
               </Dialog.Title>
