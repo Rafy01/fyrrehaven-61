@@ -12,7 +12,8 @@
 }
 
 :global(html[data-theme="dark"]) .wrapper {
-  background: linear-gradient(180deg, #111318, #08090b);
+  background: #08090b;
+  backdrop-filter: none;
   border-top-color: rgba(255, 255, 255, 0.1);
   color: #f7f4ea;
 }
