@@ -1153,6 +1153,7 @@ export const da = {
   },
   "cookiesPage": {
     "consent": {
+      "brandName": "Fyrrehaven 61",
       "title": "Vi bruger cookies",
       "description": "Vi bruger nødvendige cookies for at få siden til at fungere og huske dine cookieindstillinger.",
       "acceptAll": "OK",

@@ -56,7 +56,7 @@ function translationsFor(lng: Lang, i18n: I18n) {
 
   return {
     consentModal: {
-      title: t("consent.title"),
+      title: `${t("consent.brandName")} · ${t("consent.title")}`,
       description: t("consent.description"),
       acceptAllBtn: t("consent.acceptAll"),
       showPreferencesBtn: t("consent.preferences"),

@@ -1150,6 +1150,7 @@ export const de = {
   },
   "cookiesPage": {
     "consent": {
+      "brandName": "Fyrrehaven 61",
       "title": "Wir verwenden Cookies",
       "description": "Wir verwenden notwendige Cookies, damit die Website funktioniert und Ihre Cookie-Einstellungen gespeichert werden.",
       "acceptAll": "OK",
