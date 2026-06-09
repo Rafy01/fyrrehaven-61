@@ -66,11 +66,12 @@
 .superhost {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   padding: 0.35rem 0.6rem;
-  border-radius: 999px;
+  border-radius: 10px;
   border: 1px solid var(--border-subtle);
-  background: rgba(255, 199, 0, 0.15);
+  background: var(--surface-soft);
   color: var(--ink-900);
   text-decoration: none;
   font-weight: 600;
@@ -84,7 +85,7 @@
 
 @media (hover: hover) and (pointer: fine) {
 .superhost:hover {
-  background: rgba(255, 199, 0, 0.22);
+  background: var(--surface-hover);
 }
 
 :global(html[data-theme="dark"]) .superhost:hover {
