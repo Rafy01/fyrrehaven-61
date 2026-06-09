@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Container, Box, Flex, Text } from "@radix-ui/themes";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 import styles from "./Footer.module.css";
 import { useTranslation } from "react-i18next";
 import * as CookieConsent from "vanilla-cookieconsent";
@@ -241,6 +242,145 @@ export default function Footer({
                 )}
               </div>
             </nav>
+          </div>
+
+          <div className={styles.mobileAccordion}>
+            <details className={styles.mobileSection} open>
+              <summary className={styles.mobileSummary}>
+                <span>{t("sections.explore")}</span>
+                <ChevronDownIcon aria-hidden="true" />
+              </summary>
+              <ul className={styles.mobileList}>
+                <li>
+                  <Link
+                    className={styles.mobileLink}
+                    to={pathOf(currentLang, "house")}
+                  >
+                    {t("links.house")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={styles.mobileLink}
+                    to={pathOf(currentLang, "area")}
+                  >
+                    {t("links.area")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={styles.mobileLink}
+                    to={pathOf(currentLang, "gallery")}
+                  >
+                    {t("links.gallery")}
+                  </Link>
+                </li>
+              </ul>
+            </details>
+
+            <details className={styles.mobileSection}>
+              <summary className={styles.mobileSummary}>
+                <span>{t("sections.contactBooking")}</span>
+                <ChevronDownIcon aria-hidden="true" />
+              </summary>
+              <ul className={styles.mobileList}>
+                <li>
+                  <a
+                    className={styles.mobileLink}
+                    href="https://www.airbnb.dk/h/fyrrehaven-61"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t("links.bookAirbnb")}
+                  </a>
+                </li>
+                <li>
+                  <Link
+                    className={styles.mobileLink}
+                    to={pathOf(currentLang, "contact")}
+                  >
+                    {t("links.contact")}
+                  </Link>
+                </li>
+              </ul>
+            </details>
+
+            <details className={styles.mobileSection}>
+              <summary className={styles.mobileSummary}>
+                <span>{t("sections.practical")}</span>
+                <ChevronDownIcon aria-hidden="true" />
+              </summary>
+              <ul className={styles.mobileList}>
+                <li>
+                  <Link
+                    className={styles.mobileLink}
+                    to={pathOf(currentLang, "house")}
+                  >
+                    {t("links.houseRules")}
+                  </Link>
+                </li>
+                {guest && (
+                  <li>
+                    <Link
+                      className={styles.mobileLink}
+                      to={guestPathOf(currentLang, "extraServices")}
+                    >
+                      {t("links.extraServices")}
+                    </Link>
+                  </li>
+                )}
+              </ul>
+              <div className={styles.mobileSocials} aria-label={t("socialAria")}>
+                {s.instagram && (
+                  <a
+                    href={s.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="Instagram"
+                    title="Instagram"
+                  >
+                    <InstaIcon />
+                  </a>
+                )}
+                {s.facebook && (
+                  <a
+                    href={s.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="Facebook"
+                    title="Facebook"
+                  >
+                    <FbIcon />
+                  </a>
+                )}
+                {s.tiktok && (
+                  <a
+                    href={s.tiktok}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="TikTok"
+                    title="TikTok"
+                  >
+                    <TiktokIcon />
+                  </a>
+                )}
+                {s.youtube && (
+                  <a
+                    href={s.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="YouTube"
+                    title="YouTube"
+                  >
+                    <YoutubeIcon />
+                  </a>
+                )}
+              </div>
+            </details>
           </div>
 
           {/* Bundlinje */}
