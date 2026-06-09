@@ -318,34 +318,39 @@ export default function Footer({
                 <span>{t("sections.explore")}</span>
                 <GlobeIcon aria-hidden="true" />
               </button>
-              {openMobileSection === "explore" && (
-                <ul className={styles.mobileList}>
-                  <li>
-                    <Link
-                      className={styles.mobileLink}
-                      to={pathOf(currentLang, "house")}
-                    >
-                      {t("links.house")}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      className={styles.mobileLink}
-                      to={pathOf(currentLang, "area")}
-                    >
-                      {t("links.area")}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      className={styles.mobileLink}
-                      to={pathOf(currentLang, "gallery")}
-                    >
-                      {t("links.gallery")}
-                    </Link>
-                  </li>
-                </ul>
-              )}
+              <div
+                className={styles.mobilePanel}
+                aria-hidden={openMobileSection !== "explore"}
+              >
+                <div className={styles.mobilePanelInner}>
+                  <ul className={styles.mobileList}>
+                    <li>
+                      <Link
+                        className={styles.mobileLink}
+                        to={pathOf(currentLang, "house")}
+                      >
+                        {t("links.house")}
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className={styles.mobileLink}
+                        to={pathOf(currentLang, "area")}
+                      >
+                        {t("links.area")}
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className={styles.mobileLink}
+                        to={pathOf(currentLang, "gallery")}
+                      >
+                        {t("links.gallery")}
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </section>
 
             <section
@@ -361,28 +366,33 @@ export default function Footer({
                 <span>{t("sections.contactBooking")}</span>
                 <EnvelopeClosedIcon aria-hidden="true" />
               </button>
-              {openMobileSection === "contact" && (
-                <ul className={styles.mobileList}>
-                  <li>
-                    <a
-                      className={styles.mobileLink}
-                      href="https://www.airbnb.dk/h/fyrrehaven-61"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {t("links.bookAirbnb")}
-                    </a>
-                  </li>
-                  <li>
-                    <Link
-                      className={styles.mobileLink}
-                      to={pathOf(currentLang, "contact")}
-                    >
-                      {t("links.contact")}
-                    </Link>
-                  </li>
-                </ul>
-              )}
+              <div
+                className={styles.mobilePanel}
+                aria-hidden={openMobileSection !== "contact"}
+              >
+                <div className={styles.mobilePanelInner}>
+                  <ul className={styles.mobileList}>
+                    <li>
+                      <a
+                        className={styles.mobileLink}
+                        href="https://www.airbnb.dk/h/fyrrehaven-61"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t("links.bookAirbnb")}
+                      </a>
+                    </li>
+                    <li>
+                      <Link
+                        className={styles.mobileLink}
+                        to={pathOf(currentLang, "contact")}
+                      >
+                        {t("links.contact")}
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </section>
 
             <section
@@ -400,28 +410,33 @@ export default function Footer({
                 <span>{t("sections.practical")}</span>
                 <GearIcon aria-hidden="true" />
               </button>
-              {openMobileSection === "practical" && (
-                <ul className={styles.mobileList}>
-                  <li>
-                    <Link
-                      className={styles.mobileLink}
-                      to={pathOf(currentLang, "house")}
-                    >
-                      {t("links.houseRules")}
-                    </Link>
-                  </li>
-                  {guest && (
+              <div
+                className={styles.mobilePanel}
+                aria-hidden={openMobileSection !== "practical"}
+              >
+                <div className={styles.mobilePanelInner}>
+                  <ul className={styles.mobileList}>
                     <li>
                       <Link
                         className={styles.mobileLink}
-                        to={guestPathOf(currentLang, "extraServices")}
+                        to={pathOf(currentLang, "house")}
                       >
-                        {t("links.extraServices")}
+                        {t("links.houseRules")}
                       </Link>
                     </li>
-                  )}
-                </ul>
-              )}
+                    {guest && (
+                      <li>
+                        <Link
+                          className={styles.mobileLink}
+                          to={guestPathOf(currentLang, "extraServices")}
+                        >
+                          {t("links.extraServices")}
+                        </Link>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </div>
             </section>
           </div>
 

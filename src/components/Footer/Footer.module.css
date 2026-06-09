@@ -378,6 +378,24 @@
     outline-offset: -6px;
   }
 
+  .mobilePanel {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 0.26s cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 0.18s ease;
+  }
+
+  .mobileSection[data-open="true"] .mobilePanel {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .mobilePanelInner {
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .mobileList {
     display: grid;
     gap: 0.15rem;
@@ -408,5 +426,12 @@
 
   .bottomLinks {
     gap: 0.55rem 0.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobilePanel,
+  .mobileSummary svg {
+    transition: none;
   }
 }
