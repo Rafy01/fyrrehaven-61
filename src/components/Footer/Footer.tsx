@@ -50,6 +50,9 @@ export default function Footer({
   const { t, i18n } = useTranslation("footer");
   const [openMobileSection, setOpenMobileSection] =
     useState<MobileFooterSection | null>(null);
+  const toggleMobileSection = (section: MobileFooterSection) => {
+    setOpenMobileSection((current) => (current === section ? null : section));
+  };
   const currentLang: Lang = lang ??
     (i18n.language?.toLowerCase().startsWith("da")
       ? "da"
@@ -313,7 +316,7 @@ export default function Footer({
                 type="button"
                 className={styles.mobileSummary}
                 aria-expanded={openMobileSection === "explore"}
-                onClick={() => setOpenMobileSection("explore")}
+                onClick={() => toggleMobileSection("explore")}
               >
                 <span>{t("sections.explore")}</span>
                 <GlobeIcon aria-hidden="true" />
@@ -361,7 +364,7 @@ export default function Footer({
                 type="button"
                 className={styles.mobileSummary}
                 aria-expanded={openMobileSection === "contact"}
-                onClick={() => setOpenMobileSection("contact")}
+                onClick={() => toggleMobileSection("contact")}
               >
                 <span>{t("sections.contactBooking")}</span>
                 <EnvelopeClosedIcon aria-hidden="true" />
@@ -405,7 +408,7 @@ export default function Footer({
                 type="button"
                 className={styles.mobileSummary}
                 aria-expanded={openMobileSection === "practical"}
-                onClick={() => setOpenMobileSection("practical")}
+                onClick={() => toggleMobileSection("practical")}
               >
                 <span>{t("sections.practical")}</span>
                 <GearIcon aria-hidden="true" />
