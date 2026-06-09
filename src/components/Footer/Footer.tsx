@@ -5,6 +5,7 @@ import {
   GearIcon,
   GlobeIcon,
 } from "@radix-ui/react-icons";
+import { useState } from "react";
 import styles from "./Footer.module.css";
 import { useTranslation } from "react-i18next";
 import * as CookieConsent from "vanilla-cookieconsent";
@@ -19,6 +20,8 @@ const LIGHT_SUPERHOST_SRC =
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/superhost-1.webp";
 const DARK_SUPERHOST_SRC =
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2026/06/white-airbnb-superhost.png";
+
+type MobileFooterSection = "explore" | "contact" | "practical";
 
 export type FooterProps = {
   /** Valgfrit: giv sproget eksplicit. Ellers læses det fra i18n.language. */
@@ -45,6 +48,8 @@ export default function Footer({
   resolvedAppearance = "light",
 }: FooterProps) {
   const { t, i18n } = useTranslation("footer");
+  const [openMobileSection, setOpenMobileSection] =
+    useState<MobileFooterSection>("explore");
   const currentLang: Lang = lang ??
     (i18n.language?.toLowerCase().startsWith("da")
       ? "da"
@@ -300,92 +305,124 @@ export default function Footer({
           </div>
 
           <div className={styles.mobileAccordion}>
-            <details className={styles.mobileSection} open>
-              <summary className={styles.mobileSummary}>
+            <section
+              className={styles.mobileSection}
+              data-open={openMobileSection === "explore" ? "true" : undefined}
+            >
+              <button
+                type="button"
+                className={styles.mobileSummary}
+                aria-expanded={openMobileSection === "explore"}
+                onClick={() => setOpenMobileSection("explore")}
+              >
                 <span>{t("sections.explore")}</span>
                 <GlobeIcon aria-hidden="true" />
-              </summary>
-              <ul className={styles.mobileList}>
-                <li>
-                  <Link
-                    className={styles.mobileLink}
-                    to={pathOf(currentLang, "house")}
-                  >
-                    {t("links.house")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className={styles.mobileLink}
-                    to={pathOf(currentLang, "area")}
-                  >
-                    {t("links.area")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    className={styles.mobileLink}
-                    to={pathOf(currentLang, "gallery")}
-                  >
-                    {t("links.gallery")}
-                  </Link>
-                </li>
-              </ul>
-            </details>
-
-            <details className={styles.mobileSection}>
-              <summary className={styles.mobileSummary}>
-                <span>{t("sections.contactBooking")}</span>
-                <EnvelopeClosedIcon aria-hidden="true" />
-              </summary>
-              <ul className={styles.mobileList}>
-                <li>
-                  <a
-                    className={styles.mobileLink}
-                    href="https://www.airbnb.dk/h/fyrrehaven-61"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {t("links.bookAirbnb")}
-                  </a>
-                </li>
-                <li>
-                  <Link
-                    className={styles.mobileLink}
-                    to={pathOf(currentLang, "contact")}
-                  >
-                    {t("links.contact")}
-                  </Link>
-                </li>
-              </ul>
-            </details>
-
-            <details className={styles.mobileSection}>
-              <summary className={styles.mobileSummary}>
-                <span>{t("sections.practical")}</span>
-                <GearIcon aria-hidden="true" />
-              </summary>
-              <ul className={styles.mobileList}>
-                <li>
-                  <Link
-                    className={styles.mobileLink}
-                    to={pathOf(currentLang, "house")}
-                  >
-                    {t("links.houseRules")}
-                  </Link>
-                </li>
-                {guest && (
+              </button>
+              {openMobileSection === "explore" && (
+                <ul className={styles.mobileList}>
                   <li>
                     <Link
                       className={styles.mobileLink}
-                      to={guestPathOf(currentLang, "extraServices")}
+                      to={pathOf(currentLang, "house")}
                     >
-                      {t("links.extraServices")}
+                      {t("links.house")}
                     </Link>
                   </li>
-                )}
-              </ul>
-            </details>
+                  <li>
+                    <Link
+                      className={styles.mobileLink}
+                      to={pathOf(currentLang, "area")}
+                    >
+                      {t("links.area")}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      className={styles.mobileLink}
+                      to={pathOf(currentLang, "gallery")}
+                    >
+                      {t("links.gallery")}
+                    </Link>
+                  </li>
+                </ul>
+              )}
+            </section>
+
+            <section
+              className={styles.mobileSection}
+              data-open={openMobileSection === "contact" ? "true" : undefined}
+            >
+              <button
+                type="button"
+                className={styles.mobileSummary}
+                aria-expanded={openMobileSection === "contact"}
+                onClick={() => setOpenMobileSection("contact")}
+              >
+                <span>{t("sections.contactBooking")}</span>
+                <EnvelopeClosedIcon aria-hidden="true" />
+              </button>
+              {openMobileSection === "contact" && (
+                <ul className={styles.mobileList}>
+                  <li>
+                    <a
+                      className={styles.mobileLink}
+                      href="https://www.airbnb.dk/h/fyrrehaven-61"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {t("links.bookAirbnb")}
+                    </a>
+                  </li>
+                  <li>
+                    <Link
+                      className={styles.mobileLink}
+                      to={pathOf(currentLang, "contact")}
+                    >
+                      {t("links.contact")}
+                    </Link>
+                  </li>
+                </ul>
+              )}
+            </section>
+
+            <section
+              className={styles.mobileSection}
+              data-open={
+                openMobileSection === "practical" ? "true" : undefined
+              }
+            >
+              <button
+                type="button"
+                className={styles.mobileSummary}
+                aria-expanded={openMobileSection === "practical"}
+                onClick={() => setOpenMobileSection("practical")}
+              >
+                <span>{t("sections.practical")}</span>
+                <GearIcon aria-hidden="true" />
+              </button>
+              {openMobileSection === "practical" && (
+                <ul className={styles.mobileList}>
+                  <li>
+                    <Link
+                      className={styles.mobileLink}
+                      to={pathOf(currentLang, "house")}
+                    >
+                      {t("links.houseRules")}
+                    </Link>
+                  </li>
+                  {guest && (
+                    <li>
+                      <Link
+                        className={styles.mobileLink}
+                        to={guestPathOf(currentLang, "extraServices")}
+                      >
+                        {t("links.extraServices")}
+                      </Link>
+                    </li>
+                  )}
+                </ul>
+              )}
+            </section>
           </div>
 
           {/* Bundlinje */}
