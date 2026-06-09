@@ -63,6 +63,10 @@ export default function Footer({
   const logoSrc = resolvedAppearance === "dark" ? DARK_LOGO_SRC : LIGHT_LOGO_SRC;
   const superhostSrc =
     resolvedAppearance === "dark" ? DARK_SUPERHOST_SRC : LIGHT_SUPERHOST_SRC;
+  const superhostBadgeClass =
+    resolvedAppearance === "dark"
+      ? `${styles.superhostBadge} ${styles.superhostBadgeDark}`
+      : styles.superhostBadge;
 
   const s = {
     instagram: socials?.instagram || "https://www.instagram.com/fyrrehaven61/",
@@ -156,7 +160,7 @@ export default function Footer({
                       aria-label={t("superhostAria")}
                     >
                       <img
-                        className={styles.superhostBadge}
+                        className={superhostBadgeClass}
                         src={superhostSrc}
                         alt="Airbnb Superhost"
                       />
@@ -176,7 +180,7 @@ export default function Footer({
                   aria-label={t("superhostAria")}
                 >
                   <img
-                    className={styles.superhostBadge}
+                    className={superhostBadgeClass}
                     src={superhostSrc}
                     alt="Airbnb Superhost"
                   />

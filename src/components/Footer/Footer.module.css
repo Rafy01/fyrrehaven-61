@@ -51,6 +51,11 @@
   object-fit: contain;
 }
 
+.superhostBadgeDark {
+  transform: scale(1.18);
+  transform-origin: center;
+}
+
 .tagline {
   margin-top: 0.15rem;
 }
