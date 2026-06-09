@@ -104,7 +104,7 @@ export default function Footer({
                   href="https://www.airbnb.dk/h/fyrrehaven-61"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={styles.superhost}
+                  className={`${styles.superhost} ${styles.desktopSuperhost}`}
                   aria-label={t("superhostAria")}
                 >
                   <img
@@ -114,59 +114,76 @@ export default function Footer({
                   />
                 </a>
               )}
+              <div className={styles.mobileSocials} aria-label={t("socialAria")}>
+                {s.instagram && (
+                  <a
+                    href={s.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="Instagram"
+                    title="Instagram"
+                  >
+                    <InstaIcon />
+                  </a>
+                )}
+                {s.facebook && (
+                  <a
+                    href={s.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="Facebook"
+                    title="Facebook"
+                  >
+                    <FbIcon />
+                  </a>
+                )}
+                {s.tiktok && (
+                  <a
+                    href={s.tiktok}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="TikTok"
+                    title="TikTok"
+                  >
+                    <TiktokIcon />
+                  </a>
+                )}
+                {s.youtube && (
+                  <a
+                    href={s.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.socialBtn}
+                    aria-label="YouTube"
+                    title="YouTube"
+                  >
+                    <YoutubeIcon />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className={styles.mobileSocials} aria-label={t("socialAria")}>
-            {s.instagram && (
+          {showSuperhost && (
+            <div className={styles.mobileSuperhostRow}>
               <a
-                href={s.instagram}
+                href="https://www.airbnb.dk/h/fyrrehaven-61"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={styles.socialBtn}
-                aria-label="Instagram"
-                title="Instagram"
+                className={styles.superhost}
+                aria-label={t("superhostAria")}
               >
-                <InstaIcon />
+                <img
+                  className={styles.superhostBadge}
+                  src={superhostSrc}
+                  alt="Airbnb Superhost"
+                />
               </a>
-            )}
-            {s.facebook && (
-              <a
-                href={s.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.socialBtn}
-                aria-label="Facebook"
-                title="Facebook"
-              >
-                <FbIcon />
-              </a>
-            )}
-            {s.tiktok && (
-              <a
-                href={s.tiktok}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.socialBtn}
-                aria-label="TikTok"
-                title="TikTok"
-              >
-                <TiktokIcon />
-              </a>
-            )}
-            {s.youtube && (
-              <a
-                href={s.youtube}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.socialBtn}
-                aria-label="YouTube"
-                title="YouTube"
-              >
-                <YoutubeIcon />
-              </a>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Link-sektioner */}
           <div className={styles.linksRow}>

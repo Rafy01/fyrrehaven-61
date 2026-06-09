@@ -138,6 +138,10 @@
   display: none;
 }
 
+.mobileSuperhostRow {
+  display: none;
+}
+
 .colTitle {
   font-weight: 700;
   margin: 0.25rem 0 0.5rem;
@@ -285,6 +289,10 @@
     justify-content: flex-end;
   }
 
+  .desktopSuperhost {
+    display: none;
+  }
+
   .superhost {
     min-height: 46px;
     box-sizing: border-box;
@@ -302,15 +310,29 @@
 
   .mobileSocials {
     display: flex;
-    justify-content: center;
-    gap: 0.7rem;
-    padding: 1rem 0.85rem 0.25rem;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    padding: 0;
   }
 
   .mobileSocials .socialBtn {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .mobileSuperhostRow {
+    display: flex;
+    justify-content: center;
+    padding: 1rem 0.85rem 0.25rem;
+  }
+
+  .mobileSuperhostRow .superhost {
+    min-height: 44px;
+  }
+
+  .mobileSuperhostRow .superhostBadge {
+    height: 36px;
   }
 
   .linksRow {
