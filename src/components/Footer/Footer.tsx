@@ -49,7 +49,7 @@ export default function Footer({
 }: FooterProps) {
   const { t, i18n } = useTranslation("footer");
   const [openMobileSection, setOpenMobileSection] =
-    useState<MobileFooterSection>("explore");
+    useState<MobileFooterSection | null>(null);
   const currentLang: Lang = lang ??
     (i18n.language?.toLowerCase().startsWith("da")
       ? "da"
