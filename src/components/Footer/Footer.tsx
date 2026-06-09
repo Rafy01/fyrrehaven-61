@@ -147,6 +147,21 @@ export default function Footer({
                       <YoutubeIcon />
                     </a>
                   )}
+                  {showSuperhost && (
+                    <a
+                      href="https://www.airbnb.dk/h/fyrrehaven-61"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${styles.superhost} ${styles.mobileSuperhost}`}
+                      aria-label={t("superhostAria")}
+                    >
+                      <img
+                        className={styles.superhostBadge}
+                        src={superhostSrc}
+                        alt="Airbnb Superhost"
+                      />
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -169,24 +184,6 @@ export default function Footer({
               )}
             </div>
           </div>
-
-          {showSuperhost && (
-            <div className={styles.mobileSuperhostRow}>
-              <a
-                href="https://www.airbnb.dk/h/fyrrehaven-61"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.superhost}
-                aria-label={t("superhostAria")}
-              >
-                <img
-                  className={styles.superhostBadge}
-                  src={superhostSrc}
-                  alt="Airbnb Superhost"
-                />
-              </a>
-            </div>
-          )}
 
           {/* Link-sektioner */}
           <div className={styles.linksRow}>
