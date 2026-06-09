@@ -95,6 +95,59 @@ export default function Footer({
                     {t("tagline")}
                   </Text>
                 </div>
+                <div
+                  className={styles.mobileSocials}
+                  aria-label={t("socialAria")}
+                >
+                  {s.instagram && (
+                    <a
+                      href={s.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.socialBtn}
+                      aria-label="Instagram"
+                      title="Instagram"
+                    >
+                      <InstaIcon />
+                    </a>
+                  )}
+                  {s.facebook && (
+                    <a
+                      href={s.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.socialBtn}
+                      aria-label="Facebook"
+                      title="Facebook"
+                    >
+                      <FbIcon />
+                    </a>
+                  )}
+                  {s.tiktok && (
+                    <a
+                      href={s.tiktok}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.socialBtn}
+                      aria-label="TikTok"
+                      title="TikTok"
+                    >
+                      <TiktokIcon />
+                    </a>
+                  )}
+                  {s.youtube && (
+                    <a
+                      href={s.youtube}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.socialBtn}
+                      aria-label="YouTube"
+                      title="YouTube"
+                    >
+                      <YoutubeIcon />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -114,56 +167,6 @@ export default function Footer({
                   />
                 </a>
               )}
-              <div className={styles.mobileSocials} aria-label={t("socialAria")}>
-                {s.instagram && (
-                  <a
-                    href={s.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialBtn}
-                    aria-label="Instagram"
-                    title="Instagram"
-                  >
-                    <InstaIcon />
-                  </a>
-                )}
-                {s.facebook && (
-                  <a
-                    href={s.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialBtn}
-                    aria-label="Facebook"
-                    title="Facebook"
-                  >
-                    <FbIcon />
-                  </a>
-                )}
-                {s.tiktok && (
-                  <a
-                    href={s.tiktok}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialBtn}
-                    aria-label="TikTok"
-                    title="TikTok"
-                  >
-                    <TiktokIcon />
-                  </a>
-                )}
-                {s.youtube && (
-                  <a
-                    href={s.youtube}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialBtn}
-                    aria-label="YouTube"
-                    title="YouTube"
-                  >
-                    <YoutubeIcon />
-                  </a>
-                )}
-              </div>
             </div>
           </div>
 
