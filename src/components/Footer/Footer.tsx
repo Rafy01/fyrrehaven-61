@@ -86,7 +86,7 @@ export default function Footer({
                   (e.currentTarget as HTMLImageElement).style.display = "none";
                 }}
               />
-              <div>
+              <div className={styles.brandCopy}>
                 <Text size="5" weight="bold">
                   Fjellerup Strand
                 </Text>

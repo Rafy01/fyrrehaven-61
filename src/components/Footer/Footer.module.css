@@ -37,6 +37,9 @@
   align-items: center;
   gap: 0.75rem;
 }
+.brandCopy {
+  min-width: 0;
+}
 .logo {
   width: 60px;
   height: 60px;
@@ -265,9 +268,17 @@
   }
 
   .brand {
+    align-items: flex-start;
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 1 1 100%;
     gap: 0.55rem;
+  }
+
+  .brandCopy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .logo {
@@ -285,8 +296,7 @@
   }
 
   .topRight {
-    flex: 0 0 auto;
-    justify-content: flex-end;
+    display: none;
   }
 
   .desktopSuperhost {
