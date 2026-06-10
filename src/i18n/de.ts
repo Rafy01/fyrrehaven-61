@@ -3,6 +3,16 @@ export const de = {
     "brand": "Fyrrehaven 61",
     "bookNow": "Auf Airbnb buchen",
     "sleepsX": "Platz für {{count}} Gäste",
+    "humanCheck": {
+      "eyebrow": "Kurzer Sicherheitscheck",
+      "title": "Bestätigen Sie, dass Sie ein Mensch sind",
+      "description": "Wir schützen die Website vor automatisiertem Traffic, damit sie für echte Gäste schnell und sicher bleibt.",
+      "checkbox": "Ich bin ein Mensch",
+      "continue": "Weiter zur Website",
+      "preparing": "Wird vorbereitet...",
+      "finePrint": "Wir speichern diesen Check nur in diesem Browser für 30 Tage. Es werden keine Statistik- oder Marketing-Cookies verwendet.",
+      "error": "Der Check konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
+    },
     "form": {
       "selectPlaceholder": "Auswählen",
       "chooseFile": "Datei auswählen",

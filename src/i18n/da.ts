@@ -3,6 +3,16 @@ export const da = {
     "brand": "Fyrrehaven 61",
     "bookNow": "Book via Airbnb",
     "sleepsX": "Plads til {{count}} personer",
+    "humanCheck": {
+      "eyebrow": "Hurtigt sikkerhedstjek",
+      "title": "Bekræft at du er et menneske",
+      "description": "Vi beskytter hjemmesiden mod automatiseret trafik, så den er hurtig og tryg for rigtige gæster.",
+      "checkbox": "Jeg er et menneske",
+      "continue": "Fortsæt til hjemmesiden",
+      "preparing": "Gør klar...",
+      "finePrint": "Vi husker kun dette tjek i denne browser i 30 dage. Der bruges ingen statistik- eller marketingcookies.",
+      "error": "Tjekket kunne ikke gennemføres. Prøv igen."
+    },
     "form": {
       "selectPlaceholder": "Vælg",
       "chooseFile": "Vælg fil",
