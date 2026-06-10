@@ -52,9 +52,44 @@
   margin-top: 0.5rem;
 }
 
-.noticeBox a {
-  color: var(--gold-700);
-  text-decoration: underline;
+.textLink {
+  position: relative;
+  display: inline-block;
+  padding: 0.08rem 0.04rem;
+  color: var(--ink-900);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+:global(html[data-theme="dark"]) .textLink {
+  color: #f7f4ea;
+}
+
+.textLink::after {
+  content: "";
+  position: absolute;
+  left: 0.04rem;
+  right: 0.04rem;
+  bottom: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.9;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.22s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .textLink:hover::after,
+  .textLink:focus-visible::after {
+    transform: scaleX(1);
+  }
+}
+
+.textLink:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 .mapBlock {

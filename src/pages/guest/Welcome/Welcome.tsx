@@ -65,13 +65,19 @@ export default function GuestWelcome({ lang }: Props) {
         <Typography>{t("welcome.guideIntro")}</Typography>
         <div className={styles.linkCenter}>
           <Typography as="p">
-            <a href={poolUrl}>{t("welcome.pool")}</a>
+            <a className={styles.textLink} href={poolUrl}>
+              {t("welcome.pool")}
+            </a>
           </Typography>
           <Typography as="p">
-            <a href={saunaUrl}>{t("welcome.sauna")}</a>
+            <a className={styles.textLink} href={saunaUrl}>
+              {t("welcome.sauna")}
+            </a>
           </Typography>
           <Typography as="p">
-            <a href={hotTubUrl}>{t("welcome.hotTub")}</a>
+            <a className={styles.textLink} href={hotTubUrl}>
+              {t("welcome.hotTub")}
+            </a>
           </Typography>
         </div>
 

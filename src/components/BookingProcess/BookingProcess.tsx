@@ -88,11 +88,21 @@ export default function BookingProcess({
       <div className={styles.note} role="note">
         <strong>{t("process.note.label")}</strong>{" "}
         {t("process.note.text", values)} {t("process.note.readMore")}{" "}
-        <a href={pathOf(lang, "fees")} target="_blank" rel="noreferrer">
+        <a
+          className={styles.textLink}
+          href={pathOf(lang, "fees")}
+          target="_blank"
+          rel="noreferrer"
+        >
           {t("process.note.fees")}
         </a>{" "}
         ·{" "}
-        <a href={pathOf(lang, "privacy")} target="_blank" rel="noreferrer">
+        <a
+          className={styles.textLink}
+          href={pathOf(lang, "privacy")}
+          target="_blank"
+          rel="noreferrer"
+        >
           {t("process.note.privacy")}
         </a>
         .
