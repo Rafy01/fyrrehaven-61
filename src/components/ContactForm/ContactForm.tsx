@@ -1069,7 +1069,12 @@ export default function ContactForm({
               "Ich willige ein, dass meine Daten gespeichert und zur Bearbeitung meiner Anfrage gemäß der Datenschutzerklärung verwendet werden "
             )}
           </span>
-          <a href={pathOf(lang, "privacy")} target="_blank" rel="noreferrer">
+          <a
+            className={styles.textLink}
+            href={pathOf(lang, "privacy")}
+            target="_blank"
+            rel="noreferrer"
+          >
             {t("privatlivspolitikken.", "privacy policy.", "Datenschutzerklärung.")}
           </a>
         </label>

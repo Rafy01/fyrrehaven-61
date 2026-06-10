@@ -1,29 +1,6 @@
 import styles from "./HostsSection.module.css";
 import { chooseLang, type Lang } from "../../lib/lang";
-
-/* ---------- Ikoner (små inline SVG’er) ---------- */
-const Ico = {
-  Star: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="m12 3 2.6 5.3 5.9.9-4.3 4.2 1 5.9-5.2-2.7-5.2 2.7 1-5.9L3.5 9.2l5.9-.9L12 3Z" />
-    </svg>
-  ),
-  Bolt: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" />
-    </svg>
-  ),
-  Badge: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M12 2 3 6v6c0 5 3.7 9.4 9 10 5.3-.6 9-5 9-10V6l-9-4Zm0 16 4.2 2.2-1.1-4.7L19 12l-4.8-.4L12 7l-2.2 4.6L5 12l3.9 3.5-1.1 4.7L12 18Z" />
-    </svg>
-  ),
-  Globe: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm6.9 6h-3.3a15 15 0 0 0-1.7-3.9A8 8 0 0 1 18.9 8ZM9.1 4.1A15 15 0 0 0 7.4 8H4.1a8 8 0 0 1 5-3.9ZM4.1 16h3.3c.4 1.4 1 2.8 1.7 3.9A8 8 0 0 1 4.1 16Zm6 0H8.4a13 13 0 0 1-1-4c0-1.4.3-2.8 1-4h1.7a20 20 0 0 0 0 8Zm1.8 3.9c.7-1.1 1.3-2.5 1.7-3.9h3.3a8 8 0 0 1-5 3.9ZM15.6 12c0 1.4-.3 2.8-1 4h-2.3a18 18 0 0 1 0-8h2.3c.7 1.2 1 2.6 1 4Zm.8-4h3.3a8 8 0 0 1-2.9-3.9c-.7 1.1-1.3 2.5-1.7 3.9Z" />
-    </svg>
-  ),
-};
+import { HOST_ICONS as Ico } from "../../lib/icons";
 
 export type Host = {
   id: string;
@@ -198,21 +175,21 @@ export default function HostsSection({
                 if (f.kind === "response") {
                   return (
                     <li key={`f-${i}`} className={styles.chip}>
-                      <Ico.Bolt /> <span>{t(f.textDa, f.textEn, f.textDe ?? f.textEn)}</span>
+                      <Ico.Bolt className={styles.icon} aria-hidden="true" /> <span>{t(f.textDa, f.textEn, f.textDe ?? f.textEn)}</span>
                     </li>
                   );
                 }
                 if (f.kind === "rating") {
                   return (
                     <li key={`f-${i}`} className={styles.chip}>
-                      <Ico.Star /> <span>{f.value} ★</span>
+                      <Ico.Star className={styles.icon} aria-hidden="true" /> <span>{f.value} ★</span>
                     </li>
                   );
                 }
                 if (f.kind === "years") {
                   return (
                     <li key={`f-${i}`} className={styles.chip}>
-                      <Ico.Badge />{" "}
+                      <Ico.Badge className={styles.icon} aria-hidden="true" />{" "}
                       <span>
                         {t("Værtsår", "Years hosting", "Jahre als Gastgeber")}: {f.value}
                       </span>
@@ -222,7 +199,7 @@ export default function HostsSection({
                 // lang
                 return (
                   <li key={`f-${i}`} className={styles.chip}>
-                    <Ico.Globe /> <span>{t(f.textDa, f.textEn, f.textDe ?? f.textEn)}</span>
+                    <Ico.Globe className={styles.icon} aria-hidden="true" /> <span>{t(f.textDa, f.textEn, f.textDe ?? f.textEn)}</span>
                   </li>
                 );
               })}

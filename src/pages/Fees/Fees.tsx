@@ -70,7 +70,7 @@ export default function Fees({ lang }: { lang: Lang }) {
                 {t("page.consumptionTitle")}
               </strong>
             </Text>
-            <ul>
+            <ul className={styles.list}>
               <li>
                 {t("page.consumptionElectricity")}
               </li>

@@ -4,6 +4,7 @@ import styles from "./Reviews.module.css";
 import Buttons from "../Buttons";
 import type { Lang } from "../../lib/lang";
 import { reviews as allReviews, type ReviewItem } from "../../data/reviews";
+import { UI_ICONS } from "../../lib/icons";
 
 export type ReviewsProps = {
   lang: Lang;
@@ -15,21 +16,12 @@ export type ReviewsProps = {
 };
 
 function Star({ filled }: { filled: boolean }) {
+  const StarIcon = filled ? UI_ICONS.Rating : UI_ICONS.EmptyRating;
   return (
-    <svg
+    <StarIcon
       aria-hidden="true"
-      width="16"
-      height="16"
-      viewBox="0 0 20 20"
       className={styles.star}
-    >
-      <path
-        d="M10 1.8l2.47 4.99 5.51.8-3.99 3.89.94 5.48L10 14.98 5.07 17.96 6.01 12.48 2.02 8.59l5.51-.8L10 1.8z"
-        fill={filled ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="1.1"
-      />
-    </svg>
+    />
   );
 }
 function Stars({ value, ariaLabel }: { value: number; ariaLabel: string }) {

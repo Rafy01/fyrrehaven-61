@@ -231,7 +231,7 @@ export default function Manual({ lang }: Props) {
 
           <p>
             {tg("manualPage.notice.meterLinkIntro")}
-            <a href={meterReadingUrl}>
+            <a className={styles.textLink} href={meterReadingUrl}>
               {tg("manualPage.notice.meterLink")}
             </a>
             .

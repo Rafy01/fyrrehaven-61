@@ -116,6 +116,8 @@
 }
 .star {
   display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .text {

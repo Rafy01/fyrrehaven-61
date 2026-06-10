@@ -79,7 +79,7 @@
   padding:.35rem .55rem; border-radius:999px;
   font-weight:600; font-size:.9rem;
 }
-.icon{ width:16px; height:16px; fill: currentColor; }
+.icon{ width:16px; height:16px; }
 
 .ctaRow{
   margin-top:.7rem;

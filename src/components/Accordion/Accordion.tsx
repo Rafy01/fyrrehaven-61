@@ -1,8 +1,8 @@
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { ChevronDownIcon } from "@radix-ui/react-icons";
 import styles from "./Accordion.module.css";
 import React, { useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { UI_ICONS } from "../../lib/icons";
 
 type Item = {
   id: string;
@@ -58,7 +58,7 @@ export default function Accordion({
           <AccordionPrimitive.Header className={styles.accordionHeader}>
             <AccordionPrimitive.Trigger className={styles.accordionTrigger}>
               <span>{item.titleKey ? t(item.titleKey) : item.title}</span>
-              <ChevronDownIcon className={styles.chevron} aria-hidden />
+              <UI_ICONS.ChevronDown className={styles.chevron} aria-hidden />
             </AccordionPrimitive.Trigger>
           </AccordionPrimitive.Header>
           <AccordionPrimitive.Content className={styles.accordionContent}>

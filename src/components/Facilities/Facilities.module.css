@@ -44,28 +44,20 @@
 }
 
 .list {
-  --bullet: var(--gold-500, #e0b64b);
-  list-style: none;
-  padding: 0;
+  padding-left: 1.35rem;
   margin: 0;
   display: grid;
   gap: .4rem;
 }
 
 .item {
-  position: relative;
-  padding-left: 1.4rem;
+  padding-left: .25rem;
+  line-height: 1.55;
 }
-.item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: .38rem;
-  width: .8rem;
-  height: .8rem;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, var(--surface) 0 30%, var(--bullet) 32% 100%);
-  box-shadow: 0 0 0 2px var(--border-muted);
+.item::marker {
+  color: var(--gold-600);
+  font-size: .82em;
+  font-weight: 800;
 }
 
 @media (min-width: 720px) {

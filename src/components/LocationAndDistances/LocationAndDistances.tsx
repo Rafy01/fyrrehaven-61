@@ -3,40 +3,7 @@ import styles from "./LocationAndDistances.module.css";
 import Buttons from "../Buttons";
 import { pathOf } from "../../lib/routes";
 import { chooseLang, type Lang } from "../../lib/lang";
-
-/** Små inline-ikoner (ingen ekstra lib) */
-const Icon = {
-  Beach: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M3 18h18v2H3v-2Zm7.5-9c1.7 0 3.2.8 4.2 2.1l-1.6.9c-.7-.9-1.7-1.4-2.6-1.4-1 0-2 .5-2.7 1.4l-1.6-.9c1-1.3 2.5-2.1 4.3-2.1Zm0-4c3.1 0 5.8 1.9 7 4.6l-1.8 1c-.9-2-3-3.4-5.2-3.4s-4.4 1.4-5.3 3.4l-1.7-1C4.7 6.9 7.4 5 10.5 5Zm8 12c-1.2 0-2.1.5-2.8 1.1-.7-.6-1.6-1.1-2.7-1.1s-2.1.5-2.8 1.1c-.7-.6-1.6-1.1-2.7-1.1S5.4 17.5 4.7 18c.8.7 1.7 1.1 2.8 1.1s2.1-.4 2.8-1.1c.7.7 1.7 1.1 2.8 1.1s2.1-.4 2.8-1.1c.7.7 1.7 1.1 2.8 1.1s2.1-.4 2.8-1.1c-.7-.5-1.6-1.1-2.8-1.1Z" />
-    </svg>
-  ),
-  Forest: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M7 2 2 10h3l-3 5h4v5h2v-5h4l-3-5h3L7 2Zm10 3-4 7h3l-3 4h4v4h2v-4h3l-3-4h3l-5-7Z" />
-    </svg>
-  ),
-  Walk: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M13 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm-1.3 6.2 1.9.6c1 .3 1.7 1.3 1.7 2.4V20h-2v-5.3l-1-.3-1.7 2.7L9 20H7.1l1.7-3-1.3-2.1-2.4 1.2-.9-1.8 3.4-1.7 1.3-2.4c.5-1 1.7-1.5 2.8-1.1Z" />
-    </svg>
-  ),
-  Car: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M5 11 7.2 6.2A2 2 0 0 1 9 5h6a2 2 0 0 1 1.8 1.2L19 11v6h-1a2 2 0 1 1-4 0H10a2 2 0 1 1-4 0H5v-6Zm3.2-4L7.5 9H16.5l-.7-2h-7.6Z" />
-    </svg>
-  ),
-  Shop: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M4 7h16l-1 12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 7Zm2-4h12l1 3H5l1-3Zm2 9h2v6H8v-6Zm6 0h2v6h-2v-6Z" />
-    </svg>
-  ),
-  City: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M4 20V8h6V4h4l6 6v10h-6v-4H10v4H4Zm8-12v2h2V8h-2Z" />
-    </svg>
-  ),
-};
+import { DISTANCE_ICONS as Icon } from "../../lib/icons";
 
 export type DistanceItem = {
   key: string;
@@ -237,7 +204,7 @@ export default function LocationAndDistances({
               return (
                 <li key={it.key} className={styles.li}>
                   <span className={styles.ico}>
-                    <Ico />
+                    <Ico className={styles.icon} aria-hidden="true" />
                   </span>
                   <span className={styles.label}>
                     {t(it.labelDa, it.labelEn, it.labelDe ?? it.labelEn)}
