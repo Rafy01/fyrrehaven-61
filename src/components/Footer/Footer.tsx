@@ -66,7 +66,7 @@ export default function Footer({
 
   const s = {
     instagram: socials?.instagram || "https://www.instagram.com/fyrrehaven61/",
-    facebook: socials?.facebook || "http://facebook.com/fyrrehaven61",
+    facebook: socials?.facebook || "https://www.facebook.com/fyrrehaven61",
     tiktok: socials?.tiktok || "https://www.tiktok.com/@fyrrehaven61",
     youtube: socials?.youtube || "",
   };
