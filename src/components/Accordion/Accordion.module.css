@@ -83,6 +83,33 @@
   line-height: 1.6;
 }
 
+.accordionInner :where(ul, ol) {
+  margin: 0.7rem 0 0;
+  padding-left: 1.35rem;
+}
+
+.accordionInner :where(ul, ol) :where(ul, ol) {
+  margin-top: 0.45rem;
+}
+
+.accordionInner li {
+  padding-left: 0.25rem;
+  margin: 0.35rem 0;
+}
+
+.accordionInner li::marker {
+  color: var(--gold-600);
+  font-weight: 800;
+}
+
+.accordionInner ul li::marker {
+  font-size: 0.82em;
+}
+
+.accordionInner ol li::marker {
+  font-variant-numeric: tabular-nums;
+}
+
 /* 📱 Responsivt */
 @media (max-width: 600px) {
   .accordionTrigger {
