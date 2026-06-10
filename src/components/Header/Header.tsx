@@ -10,12 +10,6 @@ import {
 import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-  MoonIcon,
-  SunIcon,
-} from "@radix-ui/react-icons";
 import { useTranslation } from "react-i18next";
 import styles from "./Header.module.css";
 
@@ -23,6 +17,7 @@ import { type Lang, saveLang } from "../../lib/lang";
 import { pathOf, switchLangPath, GUEST_PAGES } from "../../lib/routes";
 import Buttons from "../Buttons";
 import type { ResolvedAppearance } from "../../app/App";
+import { UI_ICONS } from "../../lib/icons";
 
 type Props = {
   lang: Lang;
@@ -198,7 +193,7 @@ useEffect(() => {
 
   const flag = lang === "da" ? "🇩🇰" : lang === "de" ? "🇩🇪" : "🇬🇧";
   const isDark = resolvedAppearance === "dark";
-  const ThemeActionIcon = isDark ? SunIcon : MoonIcon;
+  const ThemeActionIcon = isDark ? UI_ICONS.LightMode : UI_ICONS.DarkMode;
   const logoSrc = isDark ? DARK_LOGO_SRC : LIGHT_LOGO_SRC;
 
   const changeAppearance = (next: ResolvedAppearance) => {
@@ -464,7 +459,7 @@ useEffect(() => {
                 data-state={langOpen ? "open" : "closed"}
               >
                 <span className={styles.flag}>{flag}</span>
-                <ChevronDownIcon />
+                <UI_ICONS.ChevronDown aria-hidden="true" />
               </button>
             </DropdownMenu.Trigger>
 
@@ -564,7 +559,7 @@ useEffect(() => {
                     onClick={() => setOpen(false)}
                   >
                     <span>{item.label}</span>
-                    <ChevronRightIcon aria-hidden="true" />
+                    <UI_ICONS.ChevronForward aria-hidden="true" />
                   </NavLink>
                 ))}
               </nav>

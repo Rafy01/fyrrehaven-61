@@ -1,10 +1,5 @@
 import { Link } from "react-router-dom";
 import { Container, Box, Flex, Text } from "@radix-ui/themes";
-import {
-  EnvelopeClosedIcon,
-  GearIcon,
-  GlobeIcon,
-} from "@radix-ui/react-icons";
 import { useState } from "react";
 import styles from "./Footer.module.css";
 import { useTranslation } from "react-i18next";
@@ -12,6 +7,7 @@ import * as CookieConsent from "vanilla-cookieconsent";
 import { type Lang } from "../../lib/lang";
 import { GUEST_PAGES, guestPathOf, pathOf } from "../../lib/routes";
 import type { ResolvedAppearance } from "../../app/App";
+import { FOOTER_ACCORDION_ICONS, SOCIAL_ICONS } from "../../lib/icons";
 
 const LIGHT_LOGO_SRC = "/logo_trans.png";
 const DARK_LOGO_SRC =
@@ -112,7 +108,7 @@ export default function Footer({
                       aria-label="Instagram"
                       title="Instagram"
                     >
-                      <InstaIcon />
+                      <SOCIAL_ICONS.Instagram aria-hidden="true" />
                     </a>
                   )}
                   {s.facebook && (
@@ -124,7 +120,7 @@ export default function Footer({
                       aria-label="Facebook"
                       title="Facebook"
                     >
-                      <FbIcon />
+                      <SOCIAL_ICONS.Facebook aria-hidden="true" />
                     </a>
                   )}
                   {s.tiktok && (
@@ -136,7 +132,7 @@ export default function Footer({
                       aria-label="TikTok"
                       title="TikTok"
                     >
-                      <TiktokIcon />
+                      <SOCIAL_ICONS.TikTok aria-hidden="true" />
                     </a>
                   )}
                   {s.youtube && (
@@ -148,7 +144,7 @@ export default function Footer({
                       aria-label="YouTube"
                       title="YouTube"
                     >
-                      <YoutubeIcon />
+                      <SOCIAL_ICONS.YouTube aria-hidden="true" />
                     </a>
                   )}
                   {showSuperhost && (
@@ -285,7 +281,7 @@ export default function Footer({
                     aria-label="Instagram"
                     title="Instagram"
                   >
-                    <InstaIcon />
+                    <SOCIAL_ICONS.Instagram aria-hidden="true" />
                   </a>
                 )}
                 {s.facebook && (
@@ -297,7 +293,7 @@ export default function Footer({
                     aria-label="Facebook"
                     title="Facebook"
                   >
-                    <FbIcon />
+                    <SOCIAL_ICONS.Facebook aria-hidden="true" />
                   </a>
                 )}
                 {s.tiktok && (
@@ -309,7 +305,7 @@ export default function Footer({
                     aria-label="TikTok"
                     title="TikTok"
                   >
-                    <TiktokIcon />
+                    <SOCIAL_ICONS.TikTok aria-hidden="true" />
                   </a>
                 )}
                 {s.youtube && (
@@ -321,7 +317,7 @@ export default function Footer({
                     aria-label="YouTube"
                     title="YouTube"
                   >
-                    <YoutubeIcon />
+                    <SOCIAL_ICONS.YouTube aria-hidden="true" />
                   </a>
                 )}
               </div>
@@ -340,7 +336,7 @@ export default function Footer({
                 onClick={() => toggleMobileSection("explore")}
               >
                 <span>{t("sections.explore")}</span>
-                <GlobeIcon aria-hidden="true" />
+                <FOOTER_ACCORDION_ICONS.Explore aria-hidden="true" />
               </button>
               <div
                 className={styles.mobilePanel}
@@ -388,7 +384,7 @@ export default function Footer({
                 onClick={() => toggleMobileSection("contact")}
               >
                 <span>{t("sections.contactBooking")}</span>
-                <EnvelopeClosedIcon aria-hidden="true" />
+                <FOOTER_ACCORDION_ICONS.Contact aria-hidden="true" />
               </button>
               <div
                 className={styles.mobilePanel}
@@ -432,7 +428,7 @@ export default function Footer({
                 onClick={() => toggleMobileSection("practical")}
               >
                 <span>{t("sections.practical")}</span>
-                <GearIcon aria-hidden="true" />
+                <FOOTER_ACCORDION_ICONS.Practical aria-hidden="true" />
               </button>
               <div
                 className={styles.mobilePanel}
@@ -528,75 +524,5 @@ export default function Footer({
         </Container>
       </footer>
     </Box>
-  );
-}
-
-/* ====== Ikoner (små, inline SVG’er) ====== */
-
-function InstaIcon() {
-  return (
-    <svg
-      width="25"
-      height="25"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        fill="currentColor"
-        d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm0 2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H7zm5 3.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zm0 2a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM18 6.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z"
-      />
-    </svg>
-  );
-}
-
-function FbIcon() {
-  return (
-    <svg
-      width="35"
-      height="35"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        fill="currentColor"
-        d="M13.5 9H16V6h-2.5C11.6 6 11 7.3 11 9v2H9v3h2v6h3v-6h2.1l.4-3H14v-1.7c0-.6.2-1.3 1-1.3z"
-      />
-    </svg>
-  );
-}
-
-function TiktokIcon() {
-  return (
-    <svg
-      width="25"
-      height="25"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        fill="currentColor"
-        d="M15 3c.6 2.3 2.2 3.9 4.4 4.4V10c-1.7 0-3.3-.6-4.4-1.6V15a6 6 0 11-6-6c.4 0 .8 0 1.2.1V11a3 3 0 103 3V3h1.4z"
-      />
-    </svg>
-  );
-}
-
-function YoutubeIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        fill="currentColor"
-        d="M23 12s0-3.4-.4-5a3 3 0 00-2.1-2.1C18.9 4.4 12 4.4 12 4.4s-6.9 0-8.5.5A3 3 0 001.4 7C1 8.6 1 12 1 12s0 3.4.4 5a3 3 0 002.1 2.1c1.6.5 8.5.5 8.5.5s6.9 0 8.5-.5A3 3 0 0022.6 17c.4-1.6.4-5 .4-5zM9.8 15.5v-7l6 3.5-6 3.5z"
-      />
-    </svg>
   );
 }

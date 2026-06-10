@@ -1,39 +1,6 @@
 import styles from "./PracticalInfoTeaser.module.css";
 import { chooseLang, type Lang } from "../../lib/lang";
-
-/* ---------- Ikoner (små inline SVG’er) ---------- */
-const Icon = {
-  Key: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M14.5 3a4.5 4.5 0 1 0 2.8 8.03L22 15.7V18h-2v2h-2v2h-2v-3.3l-4.1-4.1a4.5 4.5 0 0 0 2.6-4.1A4.5 4.5 0 0 0 14.5 3Zm0 2a2.5 2.5 0 1 1 0 5a2.5 2.5 0 0 1 0-5Z" />
-    </svg>
-  ),
-  Clock: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm1 5h-2v6l5 3 .9-1.8L13 12.3V7Z" />
-    </svg>
-  ),
-  Wifi: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M12 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm0-6a8 8 0 0 1 5.7 2.3l1.4-1.4A10 10 0 0 0 12 10a10 10 0 0 0-7.1 2.9l1.4 1.4A8 8 0 0 1 12 12Zm0-6c3.6 0 7 1.4 9.5 3.9l1.4-1.4A14 14 0 0 0 12 2 14 14 0 0 0 1.1 8.6l1.4 1.4A12 12 0 0 1 12 6Z" />
-    </svg>
-  ),
-  Car: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M5 11 7.2 6.2A2 2 0 0 1 9 5h6a2 2 0 0 1 1.8 1.2L19 11v6h-1a2 2 0 1 1-4 0H10a2 2 0 1 1-4 0H5v-6Zm3.2-4L7.5 9H16.5l-.7-2h-7.6Z" />
-    </svg>
-  ),
-  Bed: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M3 7h7a3 3 0 0 1 3 3v1h8v6h-2v-2H5v2H3V7Zm2 2v4h6v-1a1 1 0 0 0-1-1H5Zm8 2h6v-1a1 1 0 0 0-1-1h-5v2Z" />
-    </svg>
-  ),
-  NoParty: () => (
-    <svg viewBox="0 0 24 24" className={styles.icon} aria-hidden="true">
-      <path d="M4.2 3 21 19.8 19.8 21 17.6 18.8A8 8 0 0 1 4 12h2a6 6 0 0 0 9.9 4.7L13 13.8V15h-2v-3.2L5.4 5.2 4.2 3ZM12 4a8 8 0 0 1 8 8h-2a6 6 0 0 0-8.7-5.3L7.8 5.2A7.9 7.9 0 0 1 12 4Z" />
-    </svg>
-  ),
-};
+import { PRACTICAL_INFO_ICONS as Icon } from "../../lib/icons";
 
 export type PracticalInfoItem = {
   key: string;
@@ -147,7 +114,7 @@ export default function PracticalInfoTeaser({
           const content = (
             <>
               <div className={styles.ico}>
-                <Ico />
+                <Ico className={styles.icon} aria-hidden="true" />
               </div>
               <div className={styles.texts}>
                 <div className={styles.itemTitle}>

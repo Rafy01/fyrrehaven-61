@@ -4,12 +4,6 @@ import Hero from "../../components/Hero";
 import Highlights from "../../components/Highlights"; 
 import { pathOf } from "../../lib/routes";
 import UspStrip from "../../components/UspStrip";
-import {
-  ClockIcon,
-  LightningBoltIcon,
-  LockClosedIcon,
-  StarFilledIcon,
-} from "@radix-ui/react-icons";
 import GalleryTeaser from "../../components/GalleryTeaser";
 import Reviews from "../../components/Reviews";
 
@@ -18,6 +12,7 @@ import PracticalInfo from "../../components/PracticalInfo";
 import { getSeoMeta } from "../../i18n/seo";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
+import { HOME_USP_ICONS } from "../../lib/icons";
 
 export default function Home({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
@@ -83,7 +78,7 @@ export default function Home({ lang }: { lang: Lang }) {
         ariaLabel={t("Hurtige fakta", "Quick facts", "Schnelle Fakten")}
         items={[
           {
-            icon: <LightningBoltIcon />,
+            icon: <HOME_USP_ICONS.Response />,
             text: t(
               "Lynhurtigt svar på henvendelser",
               "Lightning-fast replies",
@@ -96,7 +91,7 @@ export default function Home({ lang }: { lang: Lang }) {
             ),
           },
           {
-            icon: <LockClosedIcon />,
+            icon: <HOME_USP_ICONS.CheckIn />,
             text: t(
               "Nem indtjekning (nøgleboks)",
               "Easy self check-in (key box)",
@@ -109,7 +104,7 @@ export default function Home({ lang }: { lang: Lang }) {
             ),
           },
           {
-            icon: <StarFilledIcon />,
+            icon: <HOME_USP_ICONS.Rating />,
             text: t(
               "4,8+ stjerner på Airbnb",
               "4.8+ stars on Airbnb",
@@ -122,7 +117,7 @@ export default function Home({ lang }: { lang: Lang }) {
             ),
           },
           {
-            icon: <ClockIcon />,
+            icon: <HOME_USP_ICONS.Experience />,
             text: t(
               "+3 års værts erfaring",
               "+3 years hosting experience",
