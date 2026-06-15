@@ -195,6 +195,11 @@
   font-weight: 700;
 }
 
+:global(.grecaptcha-badge) {
+  transform: scale(0.72);
+  transform-origin: right bottom;
+}
+
 @media (max-width: 420px) {
   .panel {
     border-radius: 14px;
