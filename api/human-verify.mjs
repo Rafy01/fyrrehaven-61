@@ -35,6 +35,28 @@ function getAllowedHostnames() {
   return ["fyrrehaven-61.dk", "www.fyrrehaven-61.dk", "localhost", "127.0.0.1"];
 }
 
+function isLocalIpAddress(ip) {
+  return (
+    !ip ||
+    ip === "::1" ||
+    ip === "127.0.0.1" ||
+    ip === "::ffff:127.0.0.1" ||
+    ip.startsWith("10.") ||
+    ip.startsWith("192.168.") ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(ip)
+  );
+}
+
+function getGoogleErrorMessage(result) {
+  return (
+    result?.error?.message ||
+    result?.error_description ||
+    result?.message ||
+    result?.tokenProperties?.invalidReason ||
+    ""
+  );
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     sendError(res, 405, "METHOD_NOT_ALLOWED");
@@ -138,20 +160,22 @@ async function verifyEnterpriseRecaptcha(req, res, { action, token }) {
   const assessmentUrl = `https://recaptchaenterprise.googleapis.com/v1/projects/${encodeURIComponent(
     projectId
   )}/assessments?key=${encodeURIComponent(apiKey)}`;
+  const event = {
+    expectedAction,
+    siteKey,
+    token,
+    userAgent: req.headers["user-agent"] || "",
+  };
+
+  if (!isLocalIpAddress(requestIp)) {
+    event.userIpAddress = requestIp;
+  }
 
   try {
     const response = await fetch(assessmentUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({
-        event: {
-          expectedAction,
-          siteKey,
-          token,
-          userAgent: req.headers["user-agent"] || "",
-          userIpAddress: requestIp,
-        },
-      }),
+      body: JSON.stringify({ event }),
     });
     const result = await response.json();
     const tokenProperties = result.tokenProperties || {};
@@ -165,7 +189,7 @@ async function verifyEnterpriseRecaptcha(req, res, { action, token }) {
       sendError(res, 502, "RECAPTCHA_ENTERPRISE_API_ERROR", {
         status: response.status,
         statusText: response.statusText,
-        message: result.error?.message,
+        message: getGoogleErrorMessage(result),
       });
       return;
     }
@@ -175,6 +199,7 @@ async function verifyEnterpriseRecaptcha(req, res, { action, token }) {
         hostname,
         hostnameAllowed,
         invalidReason: tokenProperties.invalidReason,
+        message: getGoogleErrorMessage(result),
         score,
         scoreThreshold,
         validAction,
