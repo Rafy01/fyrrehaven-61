@@ -127,6 +127,18 @@
   min-height: 78px;
 }
 
+.securityNote {
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--border-muted);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .hiddenField {
   position: absolute;
   width: 1px;

@@ -11,6 +11,7 @@ export const da = {
       "continue": "Fortsæt til hjemmesiden",
       "preparing": "Gør klar...",
       "verifying": "Tjekker...",
+      "enterpriseNote": "Sikkerhedstjekket kører automatisk i baggrunden, når du fortsætter.",
       "finePrint": "Vi husker kun dette tjek i denne browser i 30 dage. Der bruges ingen statistik- eller marketingcookies.",
       "recaptchaError": "Google reCAPTCHA kunne ikke indlæses. Tjek forbindelsen, og prøv igen.",
       "error": "Tjekket kunne ikke gennemføres. Prøv igen."

@@ -11,10 +11,12 @@ const LIGHT_LOGO_SRC = "/logo_trans.png";
 const DARK_LOGO_SRC =
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/logo_trans_white-scaled.png";
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+const RECAPTCHA_ENTERPRISE_SITE_KEY = import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY;
+const RECAPTCHA_ENTERPRISE_ACTION = "human_verification";
 
 type RecaptchaTheme = "dark" | "light";
 
-type RecaptchaRenderParams = {
+type ClassicRecaptchaRenderParams = {
   sitekey: string;
   theme: RecaptchaTheme;
   callback: (token: string) => void;
@@ -22,15 +24,24 @@ type RecaptchaRenderParams = {
   "error-callback": () => void;
 };
 
-type Grecaptcha = {
-  render: (container: HTMLElement, parameters: RecaptchaRenderParams) => number;
+type ClassicGrecaptcha = {
+  render: (container: HTMLElement, parameters: ClassicRecaptchaRenderParams) => number;
   reset: (widgetId?: number) => void;
+};
+
+type EnterpriseGrecaptcha = {
+  ready: (callback: () => void) => void;
+  execute: (siteKey: string, parameters: { action: string }) => Promise<string>;
+};
+
+type Grecaptcha = ClassicGrecaptcha & {
+  enterprise?: EnterpriseGrecaptcha;
 };
 
 declare global {
   interface Window {
     grecaptcha?: Grecaptcha;
-    fh61RecaptchaReady?: () => void;
+    fh61ClassicRecaptchaReady?: () => void;
   }
 }
 
@@ -57,16 +68,16 @@ function getRecaptchaLanguage(language?: string) {
   return "da";
 }
 
-function loadRecaptcha(language: string) {
+function loadClassicRecaptcha(language: string) {
   if (typeof window === "undefined") return Promise.reject();
   if (window.grecaptcha) return Promise.resolve(window.grecaptcha);
 
-  return new Promise<Grecaptcha>((resolve, reject) => {
+  return new Promise<ClassicGrecaptcha>((resolve, reject) => {
     const existing = document.querySelector<HTMLScriptElement>(
-      'script[data-fh61-recaptcha="true"]'
+      'script[data-fh61-recaptcha="classic"]'
     );
 
-    window.fh61RecaptchaReady = () => {
+    window.fh61ClassicRecaptchaReady = () => {
       if (window.grecaptcha) {
         resolve(window.grecaptcha);
       } else {
@@ -82,13 +93,53 @@ function loadRecaptcha(language: string) {
     }
 
     const script = document.createElement("script");
-    script.src = `https://www.google.com/recaptcha/api.js?onload=fh61RecaptchaReady&render=explicit&hl=${encodeURIComponent(
+    script.src = `https://www.google.com/recaptcha/api.js?onload=fh61ClassicRecaptchaReady&render=explicit&hl=${encodeURIComponent(
       language
     )}`;
     script.async = true;
     script.defer = true;
-    script.dataset.fh61Recaptcha = "true";
+    script.dataset.fh61Recaptcha = "classic";
     script.onerror = () => reject(new Error("RECAPTCHA_LOAD_FAILED"));
+    document.head.appendChild(script);
+  });
+}
+
+function loadEnterpriseRecaptcha(siteKey: string, language: string) {
+  if (typeof window === "undefined") return Promise.reject();
+  if (window.grecaptcha?.enterprise) return Promise.resolve(window.grecaptcha.enterprise);
+
+  return new Promise<EnterpriseGrecaptcha>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[data-fh61-recaptcha="enterprise"]'
+    );
+
+    const handleReady = () => {
+      if (window.grecaptcha?.enterprise) {
+        resolve(window.grecaptcha.enterprise);
+      } else {
+        reject(new Error("RECAPTCHA_ENTERPRISE_NOT_READY"));
+      }
+    };
+
+    if (existing) {
+      existing.addEventListener("load", handleReady, { once: true });
+      existing.addEventListener(
+        "error",
+        () => reject(new Error("RECAPTCHA_ENTERPRISE_LOAD_FAILED")),
+        { once: true }
+      );
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(
+      siteKey
+    )}&hl=${encodeURIComponent(language)}`;
+    script.async = true;
+    script.defer = true;
+    script.dataset.fh61Recaptcha = "enterprise";
+    script.onload = handleReady;
+    script.onerror = () => reject(new Error("RECAPTCHA_ENTERPRISE_LOAD_FAILED"));
     document.head.appendChild(script);
   });
 }
@@ -103,6 +154,11 @@ export default function HumanVerificationGate({
   const descriptionId = useId();
   const recaptchaRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<number | null>(null);
+  const recaptchaMode = RECAPTCHA_ENTERPRISE_SITE_KEY
+    ? "enterprise"
+    : RECAPTCHA_SITE_KEY
+      ? "classic"
+      : "local";
   const [visible, setVisible] = useState(() => !readVerified());
   const [ready, setReady] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -123,7 +179,9 @@ export default function HumanVerificationGate({
   }, [visible]);
 
   useEffect(() => {
-    if (!visible || !RECAPTCHA_SITE_KEY || !recaptchaRef.current) return;
+    if (!visible || recaptchaMode !== "classic" || !RECAPTCHA_SITE_KEY || !recaptchaRef.current) {
+      return;
+    }
 
     let cancelled = false;
     widgetIdRef.current = null;
@@ -131,7 +189,7 @@ export default function HumanVerificationGate({
     setRecaptchaToken("");
     setError("");
 
-    loadRecaptcha(getRecaptchaLanguage(i18n.resolvedLanguage || i18n.language))
+    loadClassicRecaptcha(getRecaptchaLanguage(i18n.resolvedLanguage || i18n.language))
       .then((grecaptcha) => {
         if (cancelled || !recaptchaRef.current) return;
         recaptchaRef.current.innerHTML = "";
@@ -161,13 +219,13 @@ export default function HumanVerificationGate({
     return () => {
       cancelled = true;
     };
-  }, [i18n.language, i18n.resolvedLanguage, resolvedAppearance, t, visible]);
+  }, [i18n.language, i18n.resolvedLanguage, recaptchaMode, resolvedAppearance, t, visible]);
 
   if (!visible) return null;
 
   const logoSrc = resolvedAppearance === "dark" ? DARK_LOGO_SRC : LIGHT_LOGO_SRC;
-  const hasRecaptcha = Boolean(RECAPTCHA_SITE_KEY);
-  const canContinue = ready && checked && !submitting;
+  const canContinue =
+    ready && !submitting && (recaptchaMode === "classic" ? checked : true);
 
   const resetRecaptcha = () => {
     if (typeof window === "undefined") return;
@@ -185,7 +243,7 @@ export default function HumanVerificationGate({
     }
     if (!canContinue) return;
 
-    if (!hasRecaptcha) {
+    if (recaptchaMode === "local") {
       rememberVerified();
       setVisible(false);
       return;
@@ -195,10 +253,37 @@ export default function HumanVerificationGate({
     setError("");
 
     try {
+      let token = recaptchaToken;
+
+      if (recaptchaMode === "enterprise") {
+        if (!RECAPTCHA_ENTERPRISE_SITE_KEY) {
+          setError(t("humanCheck.error"));
+          return;
+        }
+        const enterprise = await loadEnterpriseRecaptcha(
+          RECAPTCHA_ENTERPRISE_SITE_KEY,
+          getRecaptchaLanguage(i18n.resolvedLanguage || i18n.language)
+        );
+        token = await new Promise<string>((resolve) => {
+          enterprise.ready(() => {
+            enterprise
+              .execute(RECAPTCHA_ENTERPRISE_SITE_KEY, {
+                action: RECAPTCHA_ENTERPRISE_ACTION,
+              })
+              .then(resolve);
+          });
+        });
+      }
+
       const response = await fetch("/api/human-verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: recaptchaToken, website: honeypot }),
+        body: JSON.stringify({
+          action: recaptchaMode === "enterprise" ? RECAPTCHA_ENTERPRISE_ACTION : undefined,
+          provider: recaptchaMode,
+          token,
+          website: honeypot,
+        }),
       });
       const result = (await response.json().catch(() => null)) as { ok?: boolean } | null;
 
@@ -246,10 +331,12 @@ export default function HumanVerificationGate({
           </p>
 
           <div className={styles.challenge}>
-            {hasRecaptcha ? (
+            {recaptchaMode === "classic" ? (
               <div className={styles.recaptchaBox}>
                 <div ref={recaptchaRef} className={styles.recaptcha} />
               </div>
+            ) : recaptchaMode === "enterprise" ? (
+              <p className={styles.securityNote}>{t("humanCheck.enterpriseNote")}</p>
             ) : (
               <label className={styles.checkRow}>
                 <input
