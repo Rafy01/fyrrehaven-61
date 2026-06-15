@@ -196,8 +196,10 @@
 }
 
 :global(.grecaptcha-badge) {
+  right: auto !important;
+  left: max(0.75rem, env(safe-area-inset-left)) !important;
   transform: scale(0.72);
-  transform-origin: right bottom;
+  transform-origin: left bottom;
 }
 
 @media (max-width: 420px) {
