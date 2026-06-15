@@ -1,5 +1,23 @@
 # React + TypeScript + Vite
 
+## Secret Safety
+
+Never commit `.env` or real credentials. Keep real values in local/Vercel environment variables and keep only placeholders in `.env.example`.
+
+This repo includes a secret scanner:
+
+```bash
+npm run secrets:scan
+```
+
+Enable the committed pre-commit hook once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+If a secret has already been pushed, rotate/revoke it. Removing it from Git later does not make the old value safe.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

@@ -158,10 +158,11 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Brug ENV hvis sat; ellers falder vi tilbage til din Airbnb-ICS
-    const rawUrl =
-      process.env.ICAL_URL ||
-      "https://www.airbnb.dk/calendar/ical/753979717276295801.ics?s=96fba3a2d2bd50b6e5f75ee483059169";
+    const rawUrl = process.env.ICAL_URL || process.env.BOOKING_ICAL_URL;
+    if (!rawUrl) {
+      res.status(500).json({ ok: false, error: "ICAL_URL_MISSING" });
+      return;
+    }
 
     // webcal:// -> https:// (Airbnb bruger https i forvejen)
     const url = rawUrl.replace(/^webcal:\/\//i, "https://");
