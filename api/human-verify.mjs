@@ -1,5 +1,17 @@
 const CLASSIC_RECAPTCHA_VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
 
+function isDevelopment() {
+  return process.env.NODE_ENV !== "production" && process.env.VERCEL_ENV !== "production";
+}
+
+function sendError(res, statusCode, error, detail) {
+  res.status(statusCode).json({
+    ok: false,
+    error,
+    ...(isDevelopment() && detail ? { detail } : {}),
+  });
+}
+
 function getRequesterIp(req) {
   const forwardedFor = req.headers["x-forwarded-for"];
   const firstForwarded = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
@@ -25,13 +37,13 @@ function getAllowedHostnames() {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
+    sendError(res, 405, "METHOD_NOT_ALLOWED");
     return;
   }
 
   const { action, provider, token, website } = req.body || {};
   if (website || typeof token !== "string" || token.length < 20) {
-    res.status(400).json({ ok: false, error: "INVALID_REQUEST" });
+    sendError(res, 400, "INVALID_REQUEST");
     return;
   }
 
@@ -46,7 +58,7 @@ export default async function handler(req, res) {
 async function verifyClassicRecaptcha(req, res, token) {
   const secret = process.env.RECAPTCHA_SECRET_KEY;
   if (!secret) {
-    res.status(500).json({ ok: false, error: "RECAPTCHA_NOT_CONFIGURED" });
+    sendError(res, 500, "RECAPTCHA_NOT_CONFIGURED");
     return;
   }
 
@@ -69,13 +81,18 @@ async function verifyClassicRecaptcha(req, res, token) {
     const hostnameAllowed = hostname && allowedHostnames.includes(hostname);
 
     if (!result.success || !hostnameAllowed) {
-      res.status(403).json({ ok: false, error: "RECAPTCHA_FAILED" });
+      sendError(res, 403, "RECAPTCHA_FAILED", {
+        hostname,
+        hostnameAllowed,
+        success: Boolean(result.success),
+        errorCodes: result["error-codes"],
+      });
       return;
     }
 
     res.status(200).json({ ok: true });
   } catch {
-    res.status(502).json({ ok: false, error: "RECAPTCHA_UNAVAILABLE" });
+    sendError(res, 502, "RECAPTCHA_UNAVAILABLE");
   }
 }
 
@@ -87,12 +104,33 @@ async function verifyEnterpriseRecaptcha(req, res, { action, token }) {
   const scoreThreshold = Number(process.env.RECAPTCHA_ENTERPRISE_SCORE_THRESHOLD || "0.5");
 
   if (!apiKey || !projectId || !siteKey) {
-    res.status(500).json({ ok: false, error: "RECAPTCHA_ENTERPRISE_NOT_CONFIGURED" });
+    sendError(res, 500, "RECAPTCHA_ENTERPRISE_NOT_CONFIGURED", {
+      missing: {
+        apiKey: !apiKey,
+        projectId: !projectId,
+        siteKey: !siteKey,
+      },
+    });
+    return;
+  }
+
+  if (projectId.startsWith("your-")) {
+    sendError(res, 500, "RECAPTCHA_ENTERPRISE_PROJECT_ID_PLACEHOLDER", {
+      message: "Replace RECAPTCHA_ENTERPRISE_PROJECT_ID with your real Google Cloud project id.",
+    });
+    return;
+  }
+
+  if (apiKey === siteKey || apiKey.startsWith("6L")) {
+    sendError(res, 500, "RECAPTCHA_ENTERPRISE_API_KEY_INVALID", {
+      message:
+        "RECAPTCHA_ENTERPRISE_API_KEY must be a Google Cloud API key, not the reCAPTCHA site key.",
+    });
     return;
   }
 
   if (action !== expectedAction) {
-    res.status(400).json({ ok: false, error: "INVALID_ACTION" });
+    sendError(res, 400, "INVALID_ACTION", { received: action, expected: expectedAction });
     return;
   }
 
@@ -123,13 +161,31 @@ async function verifyEnterpriseRecaptcha(req, res, { action, token }) {
     const validAction = tokenProperties.action === expectedAction;
     const score = Number(result.riskAnalysis?.score ?? 0);
 
+    if (!response.ok) {
+      sendError(res, 502, "RECAPTCHA_ENTERPRISE_API_ERROR", {
+        status: response.status,
+        statusText: response.statusText,
+        message: result.error?.message,
+      });
+      return;
+    }
+
     if (!tokenProperties.valid || !hostnameAllowed || !validAction || score < scoreThreshold) {
-      res.status(403).json({ ok: false, error: "RECAPTCHA_ENTERPRISE_FAILED" });
+      sendError(res, 403, "RECAPTCHA_ENTERPRISE_FAILED", {
+        hostname,
+        hostnameAllowed,
+        invalidReason: tokenProperties.invalidReason,
+        score,
+        scoreThreshold,
+        validAction,
+      });
       return;
     }
 
     res.status(200).json({ ok: true });
-  } catch {
-    res.status(502).json({ ok: false, error: "RECAPTCHA_ENTERPRISE_UNAVAILABLE" });
+  } catch (error) {
+    sendError(res, 502, "RECAPTCHA_ENTERPRISE_UNAVAILABLE", {
+      message: error instanceof Error ? error.message : String(error),
+    });
   }
 }

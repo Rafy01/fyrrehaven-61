@@ -38,6 +38,12 @@ type Grecaptcha = ClassicGrecaptcha & {
   enterprise?: EnterpriseGrecaptcha;
 };
 
+type VerificationResult = {
+  detail?: unknown;
+  error?: string;
+  ok?: boolean;
+};
+
 declare global {
   interface Window {
     grecaptcha?: Grecaptcha;
@@ -285,11 +291,15 @@ export default function HumanVerificationGate({
           website: honeypot,
         }),
       });
-      const result = (await response.json().catch(() => null)) as { ok?: boolean } | null;
+      const result = (await response.json().catch(() => null)) as VerificationResult | null;
 
       if (!response.ok || !result?.ok) {
         resetRecaptcha();
-        setError(t("humanCheck.error"));
+        const devDetail =
+          import.meta.env.DEV && result?.error
+            ? ` (${result.error}${result.detail ? `: ${JSON.stringify(result.detail)}` : ""})`
+            : "";
+        setError(`${t("humanCheck.error")}${devDetail}`);
         return;
       }
 
