@@ -10,7 +10,9 @@ export const da = {
       "checkbox": "Jeg er et menneske",
       "continue": "Fortsæt til hjemmesiden",
       "preparing": "Gør klar...",
+      "verifying": "Tjekker...",
       "finePrint": "Vi husker kun dette tjek i denne browser i 30 dage. Der bruges ingen statistik- eller marketingcookies.",
+      "recaptchaError": "Google reCAPTCHA kunne ikke indlæses. Tjek forbindelsen, og prøv igen.",
       "error": "Tjekket kunne ikke gennemføres. Prøv igen."
     },
     "form": {

@@ -115,6 +115,18 @@
   line-height: 1.25;
 }
 
+.recaptchaBox {
+  display: flex;
+  justify-content: center;
+  min-height: 78px;
+  padding: 0.35rem 0;
+  overflow: hidden;
+}
+
+.recaptcha {
+  min-height: 78px;
+}
+
 .hiddenField {
   position: absolute;
   width: 1px;

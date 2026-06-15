@@ -10,7 +10,9 @@ export const de = {
       "checkbox": "Ich bin ein Mensch",
       "continue": "Weiter zur Website",
       "preparing": "Wird vorbereitet...",
+      "verifying": "Wird geprüft...",
       "finePrint": "Wir speichern diesen Check nur in diesem Browser für 30 Tage. Es werden keine Statistik- oder Marketing-Cookies verwendet.",
+      "recaptchaError": "Google reCAPTCHA konnte nicht geladen werden. Prüfen Sie die Verbindung und versuchen Sie es erneut.",
       "error": "Der Check konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
     },
     "form": {

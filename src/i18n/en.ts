@@ -10,7 +10,9 @@ export const en = {
       "checkbox": "I am human",
       "continue": "Continue to the website",
       "preparing": "Getting ready...",
+      "verifying": "Checking...",
       "finePrint": "We only remember this check in this browser for 30 days. No analytics or marketing cookies are used.",
+      "recaptchaError": "Google reCAPTCHA could not load. Check the connection and try again.",
       "error": "The check could not be completed. Please try again."
     },
     "form": {
