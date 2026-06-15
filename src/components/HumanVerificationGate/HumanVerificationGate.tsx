@@ -230,8 +230,7 @@ export default function HumanVerificationGate({
   if (!visible) return null;
 
   const logoSrc = resolvedAppearance === "dark" ? DARK_LOGO_SRC : LIGHT_LOGO_SRC;
-  const canContinue =
-    ready && !submitting && (recaptchaMode === "classic" ? checked : true);
+  const canContinue = ready && checked && !submitting;
 
   const resetRecaptcha = () => {
     if (typeof window === "undefined") return;
@@ -346,7 +345,18 @@ export default function HumanVerificationGate({
                 <div ref={recaptchaRef} className={styles.recaptcha} />
               </div>
             ) : recaptchaMode === "enterprise" ? (
-              <p className={styles.securityNote}>{t("humanCheck.enterpriseNote")}</p>
+              <>
+                <label className={styles.checkRow}>
+                  <input
+                    className={styles.checkbox}
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(event) => setChecked(event.target.checked)}
+                  />
+                  <span className={styles.checkText}>{t("humanCheck.checkbox")}</span>
+                </label>
+                <p className={styles.securityNote}>{t("humanCheck.enterpriseNote")}</p>
+              </>
             ) : (
               <label className={styles.checkRow}>
                 <input
