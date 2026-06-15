@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./HumanVerificationGate.module.css";
@@ -43,6 +43,8 @@ type VerificationResult = {
   error?: string;
   ok?: boolean;
 };
+
+type RecaptchaMode = "classic" | "enterprise" | "local";
 
 declare global {
   interface Window {
@@ -150,6 +152,11 @@ function loadEnterpriseRecaptcha(siteKey: string, language: string) {
   });
 }
 
+function getVerificationError(result: VerificationResult | null) {
+  if (!import.meta.env.DEV || !result?.error) return "";
+  return ` (${result.error}${result.detail ? `: ${JSON.stringify(result.detail)}` : ""})`;
+}
+
 export default function HumanVerificationGate({
   resolvedAppearance,
 }: {
@@ -160,18 +167,52 @@ export default function HumanVerificationGate({
   const descriptionId = useId();
   const recaptchaRef = useRef<HTMLDivElement | null>(null);
   const widgetIdRef = useRef<number | null>(null);
-  const recaptchaMode = RECAPTCHA_ENTERPRISE_SITE_KEY
+  const verifiedOnLoadRef = useRef(readVerified());
+  const recaptchaMode: RecaptchaMode = RECAPTCHA_ENTERPRISE_SITE_KEY
     ? "enterprise"
     : RECAPTCHA_SITE_KEY
       ? "classic"
       : "local";
-  const [visible, setVisible] = useState(() => !readVerified());
+  const [visible, setVisible] = useState(false);
   const [ready, setReady] = useState(false);
   const [checked, setChecked] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const executeEnterpriseCheck = useCallback(async () => {
+    if (!RECAPTCHA_ENTERPRISE_SITE_KEY) throw new Error("RECAPTCHA_ENTERPRISE_SITE_KEY_MISSING");
+    const enterprise = await loadEnterpriseRecaptcha(
+      RECAPTCHA_ENTERPRISE_SITE_KEY,
+      getRecaptchaLanguage(i18n.resolvedLanguage || i18n.language)
+    );
+    return new Promise<string>((resolve, reject) => {
+      enterprise.ready(() => {
+        enterprise
+          .execute(RECAPTCHA_ENTERPRISE_SITE_KEY, {
+            action: RECAPTCHA_ENTERPRISE_ACTION,
+          })
+          .then(resolve)
+          .catch(reject);
+      });
+    });
+  }, [i18n.language, i18n.resolvedLanguage]);
+
+  const verifyToken = useCallback(async (token: string, mode: RecaptchaMode) => {
+    const response = await fetch("/api/human-verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: mode === "enterprise" ? RECAPTCHA_ENTERPRISE_ACTION : undefined,
+        provider: mode,
+        token,
+        website: honeypot,
+      }),
+    });
+    const result = (await response.json().catch(() => null)) as VerificationResult | null;
+    return { response, result };
+  }, [honeypot]);
 
   useEffect(() => {
     if (!visible) return;
@@ -183,6 +224,36 @@ export default function HumanVerificationGate({
       document.body.style.overflow = previousOverflow;
     };
   }, [visible]);
+
+  useEffect(() => {
+    if (verifiedOnLoadRef.current || recaptchaMode !== "enterprise") return;
+
+    let cancelled = false;
+
+    executeEnterpriseCheck()
+      .then((token) => verifyToken(token, "enterprise"))
+      .then(({ response, result }) => {
+        if (cancelled) return;
+        if (response.ok && result?.ok) {
+          rememberVerified();
+          return;
+        }
+
+        if (response.status === 403 && result?.error === "RECAPTCHA_ENTERPRISE_FAILED") {
+          setChecked(false);
+          setError("");
+          setReady(false);
+          setVisible(true);
+        }
+      })
+      .catch(() => {
+        // Fail open: a network/config issue should not block normal visitors.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [executeEnterpriseCheck, recaptchaMode, verifyToken]);
 
   useEffect(() => {
     if (!visible || recaptchaMode !== "classic" || !RECAPTCHA_SITE_KEY || !recaptchaRef.current) {
@@ -261,44 +332,14 @@ export default function HumanVerificationGate({
       let token = recaptchaToken;
 
       if (recaptchaMode === "enterprise") {
-        if (!RECAPTCHA_ENTERPRISE_SITE_KEY) {
-          setError(t("humanCheck.error"));
-          return;
-        }
-        const enterprise = await loadEnterpriseRecaptcha(
-          RECAPTCHA_ENTERPRISE_SITE_KEY,
-          getRecaptchaLanguage(i18n.resolvedLanguage || i18n.language)
-        );
-        token = await new Promise<string>((resolve) => {
-          enterprise.ready(() => {
-            enterprise
-              .execute(RECAPTCHA_ENTERPRISE_SITE_KEY, {
-                action: RECAPTCHA_ENTERPRISE_ACTION,
-              })
-              .then(resolve);
-          });
-        });
+        token = await executeEnterpriseCheck();
       }
 
-      const response = await fetch("/api/human-verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: recaptchaMode === "enterprise" ? RECAPTCHA_ENTERPRISE_ACTION : undefined,
-          provider: recaptchaMode,
-          token,
-          website: honeypot,
-        }),
-      });
-      const result = (await response.json().catch(() => null)) as VerificationResult | null;
+      const { response, result } = await verifyToken(token, recaptchaMode);
 
       if (!response.ok || !result?.ok) {
         resetRecaptcha();
-        const devDetail =
-          import.meta.env.DEV && result?.error
-            ? ` (${result.error}${result.detail ? `: ${JSON.stringify(result.detail)}` : ""})`
-            : "";
-        setError(`${t("humanCheck.error")}${devDetail}`);
+        setError(`${t("humanCheck.error")}${getVerificationError(result)}`);
         return;
       }
 
