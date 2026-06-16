@@ -31,9 +31,12 @@ type Segment = {
   row: number;
   colStart: number; // 1..7
   colEnd: number; // 2..8 (8 = end-of-week)
+  spanDays: number;
   isFirst: boolean;
   isLast: boolean;
   labelHere: boolean;
+  continuesFromPrevWeek: boolean;
+  continuesToNextWeek: boolean;
 };
 
 /** Brugerens valg */
@@ -231,7 +234,25 @@ async function loadIcal(apiPath: string): Promise<CacheEntry> {
 }
 
 /* ─── Component ─── */
-type CSSVars = React.CSSProperties & { ["--weeks"]?: number };
+type CSSVars = React.CSSProperties & {
+  ["--checkin-offset"]?: string;
+  ["--checkout-width"]?: string;
+  ["--segment-days"]?: number;
+  ["--weeks"]?: number;
+};
+
+function getSegmentStyle(
+  s: Segment,
+  extra?: React.CSSProperties
+): CSSVars {
+  const spanDays = Math.max(1, s.spanDays);
+  return {
+    ...extra,
+    "--checkin-offset": s.isFirst ? `${66.667 / spanDays}%` : "0%",
+    "--checkout-width": s.isLast ? `${41.667 / spanDays}%` : "0%",
+    "--segment-days": spanDays,
+  };
+}
 
 export default function AvailabilityCalendar({
   lang,
@@ -731,11 +752,19 @@ export default function AvailabilityCalendar({
           {segments.map((s) => (
             <div
               key={s.id}
-              className={styles.bar}
-              style={{
+              className={[
+                styles.bar,
+                s.isLast && s.colEnd < 8 ? styles.timeEnd : "",
+                s.continuesFromPrevWeek ? styles.weekContinueStart : "",
+                s.continuesToNextWeek ? styles.weekContinueEnd : "",
+                s.spanDays >= 2 ? styles.barHasRoom : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              style={getSegmentStyle(s, {
                 gridRow: s.row + 1,
                 gridColumn: `${s.colStart + 1} / ${s.colEnd + 1}`,
-              }}
+              })}
             >
               {s.labelHere && (
                 <span className={styles.barLabel}>{reservedLabel}</span>
@@ -758,12 +787,12 @@ export default function AvailabilityCalendar({
               <div
                 key={`sel-${s.id}`}
                 className={`${styles.selBar} ${
-                  s.isLast ? styles.nibbleRight : ""
+                  s.isLast && s.colEnd < 8 ? styles.timeEnd : ""
                 }`}
-                style={{
+                style={getSegmentStyle(s, {
                   gridRow: s.row + 1,
                   gridColumn: `${s.colStart + 1} / ${s.colEnd + 1}`,
-                }}
+                })}
               />
             ))}
           </div>
@@ -819,9 +848,12 @@ function splitIntoSegments(
       row,
       colStart: (segStartIx % 7) + 1,
       colEnd: endColLine(segEndIx),
+      spanDays: Math.max(1, segEndIx - segStartIx),
       isFirst: segStartIx === firstIx,
       isLast: segEndIx === lastIxEx,
       labelHere: segStartIx === firstIx,
+      continuesFromPrevWeek: segStartIx !== firstIx,
+      continuesToNextWeek: segEndIx !== lastIxEx,
     });
 
     cursor = segEndIx;
