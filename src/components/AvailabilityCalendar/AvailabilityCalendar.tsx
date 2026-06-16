@@ -35,6 +35,8 @@ type Segment = {
   isFirst: boolean;
   isLast: boolean;
   labelHere: boolean;
+  continuesFromPrevWeek: boolean;
+  continuesToNextWeek: boolean;
 };
 
 /** Brugerens valg */
@@ -750,9 +752,15 @@ export default function AvailabilityCalendar({
           {segments.map((s) => (
             <div
               key={s.id}
-              className={`${styles.bar} ${
-                s.isLast && s.colEnd < 8 ? styles.timeEnd : ""
-              }`}
+              className={[
+                styles.bar,
+                s.isLast && s.colEnd < 8 ? styles.timeEnd : "",
+                s.continuesFromPrevWeek ? styles.weekContinueStart : "",
+                s.continuesToNextWeek ? styles.weekContinueEnd : "",
+                s.spanDays >= 2 ? styles.barHasRoom : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               style={getSegmentStyle(s, {
                 gridRow: s.row + 1,
                 gridColumn: `${s.colStart + 1} / ${s.colEnd + 1}`,
@@ -844,6 +852,8 @@ function splitIntoSegments(
       isFirst: segStartIx === firstIx,
       isLast: segEndIx === lastIxEx,
       labelHere: segStartIx === firstIx,
+      continuesFromPrevWeek: segStartIx !== firstIx,
+      continuesToNextWeek: segEndIx !== lastIxEx,
     });
 
     cursor = segEndIx;
