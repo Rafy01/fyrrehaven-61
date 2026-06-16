@@ -4,9 +4,27 @@
   --ink-900: #1b1b1b;
   --ink-600: #545454;
   --divider: #eaeaea;
+  --surface: #ffffff;
+  --surface-elevated: rgba(255, 255, 255, 0.92);
+  --surface-soft: rgba(0, 0, 0, 0.04);
+  --surface-hover: rgba(0, 0, 0, 0.06);
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --border-muted: rgba(0, 0, 0, 0.06);
+  --muted: #6b7280;
+  --form-bg: #ffffff;
+  --form-text: #111827;
+  --danger-bg: #fff1f2;
+  --danger-border: #fecaca;
+  --danger-text: #991b1b;
+  --header-bg: rgba(255, 255, 255, 0.28);
+  --header-bg-scrolled: rgba(255, 255, 255, 0.36);
+  --panel-bg: rgba(255, 255, 255, 0.9);
+  --shadow-soft: rgba(0, 0, 0, 0.08);
+  --shadow-strong: rgba(0, 0, 0, 0.2);
   --gold-500: #918821;
   --gold-600: #7b721c;
   --gold-700: #635c17;
+  --on-gold: #111111;
   --forest-500: #4c6b33;
   --forest-100: #eef3ed;
   --coast-500: #2f6f91;
@@ -15,6 +33,34 @@
   --error: #c62828;
   --focus: #918821;
   --radius: 12px;
+}
+
+html[data-theme="dark"] {
+  --sand-50: #08090b;
+  --sand-0: #101216;
+  --ink-900: #f7f4ea;
+  --ink-600: #c8c0ab;
+  --divider: rgba(255, 255, 255, 0.13);
+  --surface: #111318;
+  --surface-elevated: rgba(20, 22, 28, 0.94);
+  --surface-soft: rgba(255, 255, 255, 0.07);
+  --surface-hover: rgba(255, 255, 255, 0.11);
+  --border-subtle: rgba(255, 255, 255, 0.16);
+  --border-muted: rgba(255, 255, 255, 0.1);
+  --muted: #b9b09d;
+  --on-gold: #111111;
+  --forest-100: #182118;
+  --coast-100: #101b22;
+  --form-bg: #151820;
+  --form-text: #f7f4ea;
+  --danger-bg: rgba(127, 29, 29, 0.22);
+  --danger-border: rgba(248, 113, 113, 0.42);
+  --danger-text: #fecaca;
+  --header-bg: rgba(12, 14, 18, 0.72);
+  --header-bg-scrolled: rgba(12, 14, 18, 0.82);
+  --panel-bg: rgba(15, 17, 22, 0.94);
+  --shadow-soft: rgba(0, 0, 0, 0.42);
+  --shadow-strong: rgba(0, 0, 0, 0.58);
 }
 html,
 body,
@@ -26,9 +72,13 @@ body {
   background: var(--sand-50);
   color: var(--ink-900);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 html {
   scroll-behavior: smooth;
+}
+html.scroll-restore-instant {
+  scroll-behavior: auto !important;
 }
 #filters,
 #map,

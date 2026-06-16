@@ -283,12 +283,12 @@ export const SNIPPETS: Snippet[] = [
     triggers: ["tv", "chromecast", "streaming", "apps", "netflix", "hbo", "viaplay"],
   },
   {
-    id: "ps5",
-    titleDa: "PlayStation 5",
-    titleEn: "PlayStation 5",
-    bodyDa: "Der er **PS5** og spil. Du må gerne **logge ind med dit eget PSN**.",
-    bodyEn: "We provide a **PS5** with games. You may **sign in with your own PSN**.",
-    triggers: ["ps5", "playstation", "spil", "games", "console"],
+    id: "ps4",
+    titleDa: "PlayStation 4",
+    titleEn: "PlayStation 4",
+    bodyDa: "Der er **PS4** og spil. Du må gerne **logge ind med dit eget PSN**.",
+    bodyEn: "We provide a **PS4** with games. You may **sign in with your own PSN**.",
+    triggers: ["ps4", "playstation", "spil", "games", "console"],
   },
 
   /* =========================

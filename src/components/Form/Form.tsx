@@ -4,7 +4,7 @@ import styles from "./Form.module.css";
 import Buttons from "../Buttons";
 
 import { useTranslation } from "react-i18next";
-import { ChevronDownIcon } from "@radix-ui/react-icons";
+import { UI_ICONS } from "../../lib/icons";
 
 export type Field =
   | {
@@ -173,7 +173,7 @@ export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
                     </option>
                   ))}
                 </select>
-                <ChevronDownIcon className={styles.selectIcon} />
+                <UI_ICONS.ChevronDown className={styles.selectIcon} />
               </div>
             ) : field.type === "checkbox" ? (
               <label className={styles.checkbox}>

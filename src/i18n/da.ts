@@ -3,6 +3,19 @@ export const da = {
     "brand": "Fyrrehaven 61",
     "bookNow": "Book via Airbnb",
     "sleepsX": "Plads til {{count}} personer",
+    "humanCheck": {
+      "eyebrow": "Hurtigt sikkerhedstjek",
+      "title": "Bekræft at du er et menneske",
+      "description": "Vi beskytter hjemmesiden mod automatiseret trafik, så den er hurtig og tryg for rigtige gæster.",
+      "checkbox": "Jeg er et menneske",
+      "continue": "Fortsæt til hjemmesiden",
+      "preparing": "Gør klar...",
+      "verifying": "Tjekker...",
+      "enterpriseNote": "Sikkerhedstjekket kører automatisk i baggrunden, når du fortsætter.",
+      "finePrint": "Vi husker kun dette tjek i denne browser i 30 dage. Der bruges ingen statistik- eller marketingcookies.",
+      "recaptchaError": "Google reCAPTCHA kunne ikke indlæses. Tjek forbindelsen, og prøv igen.",
+      "error": "Tjekket kunne ikke gennemføres. Prøv igen."
+    },
     "form": {
       "selectPlaceholder": "Vælg",
       "chooseFile": "Vælg fil",
@@ -706,10 +719,18 @@ export const da = {
     "actions": {
       "book": "Book",
       "bookNow": "Book nu",
+      "changeAppearance": "Skift udseende",
+      "toggleAppearance": "Skift mellem lys og mørk tilstand",
       "changeLanguage": "Skift sprog",
       "closeMenu": "Luk menu",
       "openMenu": "Åbn menu",
-      "currentLanguage": "Aktuelt sprog"
+      "currentLanguage": "Aktuelt sprog",
+      "currentAppearance": "Aktuelt udseende"
+    },
+    "appearance": {
+      "system": "System",
+      "light": "Lys",
+      "dark": "Mørk"
     },
     "menu": {
       "main": "Hovednavigation",
@@ -736,11 +757,13 @@ export const da = {
       "faq": "Ofte stillede spørgsmål",
       "extraServices": "Ekstra services",
       "privacy": "Privatliv",
-      "cookies": "Cookies",
+      "cookies": "Cookieindstillinger",
       "sitemap": "Sitemap",
       "fees": "Gebyr"
     },
     "socialAria": "Sociale medier",
+    "messengerAria": "Skriv til os på Messenger",
+    "messengerDismissAria": "Skjul Messenger-knap",
     "guestPageAria": "Gæsteside",
     "rights": "Alle rettigheder forbeholdes."
   },
@@ -1079,7 +1102,7 @@ export const da = {
         "TV-område med sofa, stole og 55″ TV",
         "Udendørs rutsjebane",
         "Trampolin",
-        "PlayStation 5"
+        "PlayStation 4"
       ]
     }
   },
@@ -1105,7 +1128,7 @@ export const da = {
         "title": "Ophold & praktisk",
         "bullets": [
           "Stort spisebord til 10",
-          "TV 55\" og PlayStation 5 i stuen",
+          "TV 55\" og PlayStation 4 i stuen",
           "Gulvvarme i hele huset · Aircondition",
           "Vaskemaskine og tørretumbler",
           "Rejseseng til børn (bestilles gratis forud)",
@@ -1143,31 +1166,36 @@ export const da = {
   },
   "cookiesPage": {
     "consent": {
+      "brandName": "Fyrrehaven 61",
       "title": "Vi bruger cookies",
-      "description": "Vi bruger nødvendige cookies for at få siden til at fungere, samt valgfrie cookies til statistik og marketing.",
-      "acceptAll": "Accepter alle",
+      "description": "Vi bruger nødvendige cookies for at få siden til at fungere og huske dine cookieindstillinger.",
+      "acceptAll": "OK",
       "rejectAll": "Afvis",
       "preferences": "Indstil cookies",
       "settingsTitle": "Cookieindstillinger",
       "close": "Luk",
-      "save": "Gem præferencer"
+      "save": "Gem præferencer",
+      "manageButton": "Administrer cookieindstillinger",
+      "footer": "Du kan til enhver tid ændre eller trække dit samtykke tilbage via cookieindstillingerne."
     },
     "categories": {
       "necessary": {
         "title": "Nødvendige cookies",
         "label": "Nødvendige",
-        "description": "Påkrævet for at siden fungerer."
-      },
-      "analytics": {
-        "title": "Statistik",
-        "label": "Statistik",
-        "description": "Hjælper os med at forstå brugen af siden."
-      },
-      "marketing": {
-        "title": "Marketing",
-        "label": "Marketing",
-        "description": "Bruges til personaliserede annoncer og indhold."
+        "description": "Påkrævet for at siden fungerer. Disse cookies kan ikke fravælges.",
+        "tableCaption": "Nødvendige cookies"
       }
+    },
+    "preferences": {
+      "introTitle": "Cookieindstillinger",
+      "introDescription": "Fyrrehaven 61 bruger lige nu kun nødvendige cookies. De er altid aktive, fordi hjemmesiden skal bruge dem for at fungere."
+    },
+    "table": {
+      "name": "Navn",
+      "provider": "Udbyder",
+      "purpose": "Formål",
+      "expiration": "Udløb",
+      "type": "Type"
     },
     "page": {
       "title": "Cookies hos Fyrrehaven 61",
@@ -1275,7 +1303,7 @@ export const da = {
       },
       "cookies": {
         "title": "Cookies og lignende teknologier",
-        "body": "Vi bruger primært teknisk nødvendige cookies/lagring for at levere siden sikkert. Vi anvender ikke marketing- eller trackingteknologier uden dit samtykke. Hvis ikke-nødvendige cookies aktiveres, vises et samtykkebanner."
+        "body": "Vi bruger lige nu kun teknisk nødvendige cookies/lagring for at levere siden sikkert og huske dine cookieindstillinger. Vi anvender ikke statistik-, marketing- eller trackingcookies."
       },
       "rights": {
         "title": "Dine rettigheder",

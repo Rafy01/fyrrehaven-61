@@ -1,16 +1,16 @@
 /* Card shell – glassy, playful, “piv fræk” */
 .card {
-  --bg: rgba(255, 255, 255, 0.72);
-  --bd: rgba(0, 0, 0, 0.06);
+  --bg: var(--surface-elevated);
+  --bd: var(--border-muted);
   --ring: #6d28d9; /* purple-ish focus */
   --accent: #ef4444; /* red for required star */
-  --text: #0f172a;
-  --muted: #6b7280;
+  --text: var(--form-text);
+  --muted: var(--muted);
 
   position: relative;
   border-radius: 18px;
   padding: clamp(0rem, 1.2rem + 1.2vw, 2rem);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), var(--bg));
+  background: linear-gradient(180deg, var(--surface-elevated), var(--bg));
   border: 1px solid var(--bd);
   box-shadow: 0 20px 50px rgba(2, 6, 23, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
@@ -85,8 +85,8 @@
 .select,
 .textarea {
   border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  background: #fff;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
   padding: 0.85rem 1rem;
   font: inherit;
   color: var(--text);
@@ -111,7 +111,7 @@
 }
 .select:focus-visible {
   outline: none;
-  border-color: rgba(15, 23, 42, 0.12);
+  border-color: var(--border-subtle);
   box-shadow: none;
 }
 :global(html[data-input-modality="keyboard"]) .select:focus-visible {
@@ -153,10 +153,50 @@
   line-height: 46px;
   text-align: center;
   border-radius: 12px;
-  background: #f1f5f9;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  color: #0f172a;
+  background: var(--surface-soft);
+  border: 1px solid var(--border-subtle);
+  color: var(--form-text);
   font-weight: 700;
+}
+
+.textLink {
+  position: relative;
+  display: inline-block;
+  padding: 0.08rem 0.04rem;
+  color: var(--ink-900);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+:global(html[data-theme="dark"]) .textLink {
+  color: #f7f4ea;
+}
+
+.textLink::after {
+  content: "";
+  position: absolute;
+  left: 0.04rem;
+  right: 0.04rem;
+  bottom: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.9;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.22s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .textLink:hover::after,
+  .textLink:focus-visible::after {
+    transform: scaleX(1);
+  }
+}
+
+.textLink:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 /* Textarea tweaks */
@@ -168,9 +208,9 @@
 /* Error + success */
 .error {
   padding: 0.75rem 0.9rem;
-  border: 1px solid #fecaca;
-  background: #fff1f2;
-  color: #991b1b;
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
   border-radius: 12px;
   font-weight: 600;
 }
@@ -206,6 +246,7 @@
 }
 
 /* Tiny flourish on hover/focus for inputs */
+@media (hover: hover) and (pointer: fine) {
 .inputphone:hover,
 .input:hover,
 .select:hover,
@@ -213,6 +254,7 @@
   transform: translateY(-1px);
   border-color: var(--gold-500);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold-500) 14%, transparent);
+}
 }
 
 /* Use system fonts for crispness */
@@ -286,7 +328,7 @@
   display: flex;
   flex-direction: column;
   line-height: 1.05;
-  color: #64748b;
+  color: var(--muted);
   font-weight: 650;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -348,18 +390,15 @@
   } /* mobil stack */
 }
 
-/* Mørk tilstand */
-@media (prefers-color-scheme: dark) {
-  .totalsBox {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.14);
-  }
-  .tLabel {
-    color: #cbd5e1;
-  }
-  .metaValue {
-    background: rgba(255, 255, 255, 0.06);
-  }
+:global(html[data-theme="dark"]) .totalsBox {
+  background: var(--surface-soft);
+  border-color: var(--border-subtle);
+}
+:global(html[data-theme="dark"]) .tLabel {
+  color: var(--muted);
+}
+:global(html[data-theme="dark"]) .metaValue {
+  background: var(--surface-soft);
 }
 
 /* ==== MOBILE TWEAKS (append at the end) ==== */
@@ -418,9 +457,9 @@
   .totalsBox {
     gap: 10px;
     padding: 0.6rem 0.75rem;
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--border-muted);
     border-radius: 12px;
-    background: #fafafa;
+    background: var(--surface-soft);
   }
   .tLabel {
     font-size: 0.92rem;
@@ -485,7 +524,7 @@
   width: clamp(180px, 40vw, 240px);
   border: 1px solid var(--bd);
   border-radius: 12px;
-  background: linear-gradient(180deg, #fff, var(--bg));
+  background: linear-gradient(180deg, var(--surface), var(--bg));
   padding: 10px;
   display: grid;
   grid-template-columns: auto 1fr;
@@ -497,15 +536,17 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.45);
   transition: transform 0.12s ease, box-shadow 0.18s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .card .extraCard:hover {
   transform: translateY(-1px);
+}
 }
 
 .card .extraThumb {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: #f1f5f9;
+  background: var(--surface-soft);
   border: 1px solid var(--bd);
   display: grid;
   place-items: center;
@@ -548,7 +589,7 @@
   height: 40px;
   border-radius: 10px;
   border: 1px solid var(--bd);
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   font-size: 18px;
   font-weight: 900;
@@ -560,8 +601,10 @@
   box-shadow: 0 6px 14px rgba(2, 6, 23, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
+@media (hover: hover) and (pointer: fine) {
 .card .extraBtn:hover {
   transform: translateY(-1px);
+}
 }
 .card .extraBtn:active {
   transform: translateY(0);
@@ -582,7 +625,7 @@
   font-variant-numeric: tabular-nums;
   padding: 6px 12px;
   border-radius: 999px;
-  background: #f8fafc;
+  background: var(--surface-soft);
   border: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
   color: var(--text);
 }
@@ -632,26 +675,23 @@
   }
 }
 
-/* Hold lys finish i dark mode */
-@media (prefers-color-scheme: dark) {
-  .card .extrasWrap,
-  .card .extraCard,
-  .card .extraBtn,
-  .card .extraThumb,
-  .card .extraQty {
-    background: #fff;
-    border-color: var(--bd);
-    color: var(--text);
-    box-shadow: 0 12px 24px rgba(2, 6, 23, 0.06),
-      inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  }
-  .card .extraThumb {
-    background: #f1f5f9;
-  }
-  .card .extraQty {
-    background: #f8fafc;
-  }
-  .card .extrasScroller::-webkit-scrollbar-thumb {
-    background: color-mix(in srgb, var(--text) 18%, transparent);
-  }
+:global(html[data-theme="dark"]) .card .extrasWrap,
+:global(html[data-theme="dark"]) .card .extraCard,
+:global(html[data-theme="dark"]) .card .extraBtn,
+:global(html[data-theme="dark"]) .card .extraThumb,
+:global(html[data-theme="dark"]) .card .extraQty {
+  background: var(--surface);
+  border-color: var(--bd);
+  color: var(--text);
+  box-shadow: 0 12px 24px rgba(2, 6, 23, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+:global(html[data-theme="dark"]) .card .extraThumb {
+  background: var(--surface-soft);
+}
+:global(html[data-theme="dark"]) .card .extraQty {
+  background: var(--surface-soft);
+}
+:global(html[data-theme="dark"]) .card .extrasScroller::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text) 18%, transparent);
 }

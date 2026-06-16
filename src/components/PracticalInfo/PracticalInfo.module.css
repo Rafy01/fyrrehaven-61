@@ -33,18 +33,20 @@
   align-items: center;
   gap: 0.7rem;
   padding: 0.8rem 0.9rem;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-muted);
   border-radius: 14px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 6px 20px var(--shadow-soft);
   text-decoration: none;
   color: inherit;
   transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .card:hover {
   transform: translateY(-1px);
-  background: #fff;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.09);
+  background: var(--surface);
+  box-shadow: 0 10px 26px var(--shadow-soft);
+}
 }
 .card:focus-visible {
   outline: 3px solid var(--focus);
@@ -65,14 +67,13 @@
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: #f6f7f8;
-  color: #111;
+  background: var(--surface-soft);
+  color: var(--ink-900);
 }
 
 .icon {
   width: 20px;
   height: 20px;
-  fill: currentColor;
 }
 
 .texts {
@@ -85,7 +86,7 @@
 }
 
 .itemSub {
-  color: #6b7280;
+  color: var(--muted);
 }
 
 /* CTA */
@@ -104,15 +105,17 @@
   font-weight: 700;
   text-decoration: none;
   background: var(--gold-500, #e0b64b);
-  color: var(--ink-900, #0b0b0b);
+  color: var(--on-gold, #0b0b0b);
   border: 0;
   box-shadow: 0 8px 18px rgba(0,0,0,.08);
   transition: transform .1s ease, background .15s ease, box-shadow .15s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .ctaBtn:hover{
   background: var(--gold-600, #d4a83a);
   transform: translateY(-1px);
   box-shadow: 0 12px 26px rgba(0,0,0,.12);
+}
 }
 .ctaBtn:focus-visible{
   outline: 3px solid var(--focus);

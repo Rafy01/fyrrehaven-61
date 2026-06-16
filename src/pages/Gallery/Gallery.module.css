@@ -18,14 +18,16 @@
   border-radius: 20px;
   overflow: hidden;          /* ⬅️ clip billede til de runde hjørner */
   min-width: 0;              /* ⬅️ tillad at børn må krympe i gridcelle */
-  background: #fff;
+  background: var(--surface);
   border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
   transition: box-shadow .18s ease, transform .18s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .albumCard:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
+}
 }
 
 /* Label under thumbnail */
@@ -33,7 +35,7 @@
   margin: 0 4px 2px;
   font-weight: 750;
   letter-spacing: 0.005em;
-  color: #0f172a;
+  color: var(--form-text);
   font-size: 0.98rem;
 }
 

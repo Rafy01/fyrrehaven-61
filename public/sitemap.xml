@@ -127,24 +127,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://fyrrehaven-61.dk/da/cookies</loc>
-    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/cookies" />
-    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/cookies" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/cookies" />
-    <lastmod>2026-05-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  <url>
-    <loc>https://fyrrehaven-61.dk/en/cookies</loc>
-    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/cookies" />
-    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/cookies" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/cookies" />
-    <lastmod>2026-05-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  <url>
     <loc>https://fyrrehaven-61.dk/da/gebyrer</loc>
     <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/gebyrer" />
     <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/fees" />

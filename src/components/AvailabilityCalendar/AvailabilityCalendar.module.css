@@ -9,9 +9,9 @@
   --cell-h: 82px; /* dagcellernes højde */
   --gap: 12px;
   --radius: 12px;
-  --ink: #111;
-  --muted: #9aa0a6;
-  --bar: #1f1f1f;
+  --ink: var(--ink-900);
+  --muted: var(--ink-600);
+  --bar: var(--gold-600);
   --today: #e3003c; /* rød cirkel for i dag */
 }
 
@@ -33,8 +33,8 @@
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  border: 1px solid #e6e6e6;
-  background: #fff;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
   color: var(--ink);
 }
 .navBtn:disabled {
@@ -62,8 +62,8 @@
 
 /* Dato-celler */
 .cell {
-  background: #fff;
-  border: 1px solid #efefef;
+  background: var(--surface);
+  border: 1px solid var(--border-muted);
   border-radius: var(--radius);
   position: relative;
 }
@@ -145,8 +145,8 @@
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: #fff;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
   cursor: pointer;
 }
 .navBtn:disabled {
@@ -164,7 +164,7 @@
 }
 .dow {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--muted);
   padding: 0 4px 6px;
   text-align: center;
 }
@@ -177,8 +177,8 @@
   position: relative;
   height: var(--cell-h);
   border-radius: 18px;
-  background: #fff;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border-muted);
 }
 .dayNum {
   position: absolute;
@@ -252,16 +252,16 @@
   font-weight: 700;
   font-size: clamp(16px, 3.8vw, 20px); /* mobil → desktop */
   letter-spacing: 0.2px;
-  color: #111;
+  color: var(--ink-900);
 }
 .navBtn {
   justify-self: center;
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background: #fff;
-  color: #111;
-  border: 1px solid #e5e7eb;
+  background: var(--surface);
+  color: var(--ink-900);
+  border: 1px solid var(--border-subtle);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -271,8 +271,10 @@
   cursor: pointer;
   transition: background 0.15s ease, transform 0.05s ease;
 }
+@media (hover: hover) and (pointer: fine) {
 .navBtn:hover {
-  background: #f6f7f8;
+  background: var(--surface-hover);
+}
 }
 .navBtn:active {
   transform: translateY(0.5px);
@@ -420,7 +422,7 @@
   justify-content: right;
   font-size: 12px;
   color: var(--muted);
-  background: #fff;
+  background: var(--surface);
 } */
 
 .weeknumCell {
@@ -440,13 +442,13 @@
   z-index: 3; /* over bars (z=2) */
   font-size: 12px;
   font-weight: 600;
-  color: #111;
+  color: var(--ink-900);
   opacity: 0.9;
 }
 .priceCur {
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   bottom: 100px;
@@ -473,15 +475,15 @@
 
 /* Single-day selection highlight */
 .cell[data-selected="1"] {
-  box-shadow: inset 0 0 0 2px #0ea5e9; /* blå ring */
-  background: #f0f9ff;
+  box-shadow: inset 0 0 0 2px var(--gold-500);
+  background: color-mix(in srgb, var(--gold-500) 12%, var(--surface));
 }
 
 /* Markér start/slut (hvis du vil, kan du holde dem ens) */
 .cell[data-edge="start"] .dayNum,
 .cell[data-edge="end"] .dayNum {
   background: var(--gold-500);
-  color: #fff;
+  color: var(--on-gold);
   padding: 0 6px;
   border-radius: 999px;
 }
@@ -621,5 +623,96 @@
   }
   .selBar {
     height: 18px;
+  }
+}
+
+.bar,
+.selBar {
+  position: relative;
+  overflow: visible;
+  margin-left: var(--checkin-offset, 0%);
+  border-radius: 999px;
+  justify-self: stretch;
+}
+
+.bar {
+  height: 20px;
+  margin-top: 14px;
+  border: 1px solid color-mix(in srgb, var(--ink-600) 18%, transparent);
+  background: color-mix(in srgb, var(--ink-700) 18%, var(--surface));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+}
+
+.selBar {
+  height: 20px;
+  margin-top: 14px;
+  background: color-mix(in srgb, var(--gold-500) 24%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--gold-600) 18%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  opacity: 1;
+}
+
+.timeEnd {
+  margin-right: calc(-1 * var(--checkout-width, 0%));
+}
+
+.weekContinueStart {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.weekContinueEnd {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+.barLabel {
+  color: var(--ink-900);
+  opacity: 0.72;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .bar,
+  .selBar {
+    align-self: start;
+    height: 9px;
+    margin-top: 24px;
+  }
+
+  .barLabel {
+    display: none;
+    font-size: 8px;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    opacity: 0.78;
+  }
+
+  .barHasRoom .barLabel {
+    display: inline;
+  }
+
+  .weekContinueStart {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+  }
+
+  .weekContinueEnd {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+  }
+}
+
+@media (max-width: 360px) {
+  .bar,
+  .selBar {
+    height: 8px;
+    margin-top: 22px;
   }
 }

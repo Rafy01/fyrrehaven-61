@@ -10,7 +10,6 @@ export type PageKey =
   | "faq"
   | "contact"
   | "book"
-  | "cookies"
   | "fees"
   | "chat"
   | "privacy"
@@ -29,7 +28,6 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   faq: { da: "ofte-stillede-sporgsmal", en: "frequently-asked-questions", de: "haufig-gestellte-fragen" },
   contact: { da: "kontakt", en: "contact", de: "kontakt" },
   book: { da: "booking", en: "book", de: "buchung" },
-  cookies: { da: "cookies", en: "cookies", de: "cookies" },
   fees: { da: "gebyrer", en: "fees", de: "gebuehren" },
   chat: { da: "chat-ukendte-sporgsmal", en: "chat-unknown-questions", de: "chat-unbekannte-fragen" },
   privacy: { da: "privatlivspolitik", en: "privacy-policy", de: "datenschutzrichtlinie" },

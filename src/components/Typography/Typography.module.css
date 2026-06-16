@@ -59,21 +59,29 @@
 
 /* === LINK === */
 
+@media (hover: hover) and (pointer: fine) {
+
 .link:hover {
   color: var(--ink-900);
+}
 }
 
 /* === LISTE STYLING === */
 .ul {
-  list-style-type: disc;
-  padding-left: 1.5rem; /* ← indrykning */
-  margin-bottom: 1rem;
+  padding-left: 1.35rem;
+  margin: 0.7rem 0 1rem;
 }
 
 .li {
-  margin-bottom: 0.4rem;
-  line-height: 1.5;
   padding-left: 0.25rem;
+  margin: 0.38rem 0;
+  line-height: 1.6;
+}
+
+.li::marker {
+  color: var(--gold-600);
+  font-size: 0.82em;
+  font-weight: 800;
 }
 
 a {
@@ -83,21 +91,30 @@ a {
   transition: color 0.2s ease;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 a:hover,
 a:focus {
   color: var(--ink-900); /* fx gul på hover – tilpas efter din palette */
   text-decoration: none;
 }
+}
 
 ul {
-  padding-left: 1.25rem;
-  margin-top: 0.5rem;
-  margin-bottom: 1rem;
+  padding-left: 1.35rem;
+  margin: 0.7rem 0 1rem;
 }
 
 li {
-  margin-bottom: 0.5rem;
+  padding-left: 0.25rem;
+  margin: 0.38rem 0;
   color: var(--ink-900);
   font-size: 1rem;
   line-height: 1.6;
+}
+
+li::marker {
+  color: var(--gold-600);
+  font-size: 0.82em;
+  font-weight: 800;
 }

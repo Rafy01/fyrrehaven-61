@@ -32,8 +32,10 @@
     border-color 0.15s ease, box-shadow 0.15s ease;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
 }
+@media (hover: hover) and (pointer: fine) {
 .chip:hover {
   transform: translateY(-1px);
+}
 }
 .chip:focus-visible {
   outline: 3px solid var(--focus);

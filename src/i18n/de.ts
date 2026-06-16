@@ -3,6 +3,19 @@ export const de = {
     "brand": "Fyrrehaven 61",
     "bookNow": "Auf Airbnb buchen",
     "sleepsX": "Platz für {{count}} Gäste",
+    "humanCheck": {
+      "eyebrow": "Kurzer Sicherheitscheck",
+      "title": "Bestätigen Sie, dass Sie ein Mensch sind",
+      "description": "Wir schützen die Website vor automatisiertem Traffic, damit sie für echte Gäste schnell und sicher bleibt.",
+      "checkbox": "Ich bin ein Mensch",
+      "continue": "Weiter zur Website",
+      "preparing": "Wird vorbereitet...",
+      "verifying": "Wird geprüft...",
+      "enterpriseNote": "Der Sicherheitscheck läuft automatisch im Hintergrund, wenn Sie fortfahren.",
+      "finePrint": "Wir speichern diesen Check nur in diesem Browser für 30 Tage. Es werden keine Statistik- oder Marketing-Cookies verwendet.",
+      "recaptchaError": "Google reCAPTCHA konnte nicht geladen werden. Prüfen Sie die Verbindung und versuchen Sie es erneut.",
+      "error": "Der Check konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut."
+    },
     "form": {
       "selectPlaceholder": "Auswählen",
       "chooseFile": "Datei auswählen",
@@ -706,10 +719,18 @@ export const de = {
     "actions": {
       "book": "Buchen",
       "bookNow": "Jetzt buchen",
+      "changeAppearance": "Darstellung wechseln",
+      "toggleAppearance": "Zwischen hellem und dunklem Modus wechseln",
       "changeLanguage": "Sprache wechseln",
       "closeMenu": "Menü schließen",
       "openMenu": "Menü öffnen",
-      "currentLanguage": "Aktuelle Sprache"
+      "currentLanguage": "Aktuelle Sprache",
+      "currentAppearance": "Aktuelle Darstellung"
+    },
+    "appearance": {
+      "system": "System",
+      "light": "Hell",
+      "dark": "Dunkel"
     },
     "menu": {
       "main": "Hauptnavigation",
@@ -736,11 +757,13 @@ export const de = {
       "faq": "Häufig gestellte Fragen",
       "extraServices": "Zusatzleistungen",
       "privacy": "Datenschutz",
-      "cookies": "Cookies",
+      "cookies": "Cookie-Einstellungen",
       "sitemap": "Sitemap",
       "fees": "Gebühren"
     },
     "socialAria": "Soziale Medien",
+    "messengerAria": "Schreiben Sie uns auf Messenger",
+    "messengerDismissAria": "Messenger-Schaltfläche ausblenden",
     "guestPageAria": "Gästeseite",
     "rights": "Alle Rechte vorbehalten."
   },
@@ -1076,7 +1099,7 @@ export const de = {
         "TV-Bereich mit Sofa, Stühlen und 55-Zoll-TV",
         "Außenrutsche",
         "Trampolin",
-        "PlayStation 5"
+        "PlayStation 4"
       ]
     }
   },
@@ -1102,7 +1125,7 @@ export const de = {
         "title": "Wohnen & Praktisches",
         "bullets": [
           "Großer Esstisch für 10 Personen",
-          "55-Zoll-TV und PlayStation 5 im Wohnzimmer",
+          "55-Zoll-TV und PlayStation 4 im Wohnzimmer",
           "Fußbodenheizung im ganzen Haus · Klimaanlage",
           "Waschmaschine und Trockner",
           "Reisebett für Kinder (kostenlos vorab bestellen)",
@@ -1140,31 +1163,36 @@ export const de = {
   },
   "cookiesPage": {
     "consent": {
+      "brandName": "Fyrrehaven 61",
       "title": "Wir verwenden Cookies",
-      "description": "Wir verwenden notwendige Cookies, damit die Website funktioniert, sowie optionale Cookies für Statistik und Marketing.",
-      "acceptAll": "Alle akzeptieren",
+      "description": "Wir verwenden notwendige Cookies, damit die Website funktioniert und Ihre Cookie-Einstellungen gespeichert werden.",
+      "acceptAll": "OK",
       "rejectAll": "Ablehnen",
       "preferences": "Cookie-Einstellungen",
       "settingsTitle": "Cookie-Einstellungen",
       "close": "Schließen",
-      "save": "Einstellungen speichern"
+      "save": "Einstellungen speichern",
+      "manageButton": "Cookie-Einstellungen verwalten",
+      "footer": "Sie können Ihre Einwilligung jederzeit über die Cookie-Einstellungen ändern oder widerrufen."
     },
     "categories": {
       "necessary": {
         "title": "Notwendige Cookies",
         "label": "Notwendige",
-        "description": "Erforderlich, damit die Website funktioniert."
-      },
-      "analytics": {
-        "title": "Statistik",
-        "label": "Statistik",
-        "description": "Hilft uns zu verstehen, wie die Website genutzt wird."
-      },
-      "marketing": {
-        "title": "Marketing",
-        "label": "Marketing",
-        "description": "Wird für personalisierte Inhalte und Werbung verwendet."
+        "description": "Erforderlich, damit die Website funktioniert. Diese Cookies können nicht deaktiviert werden.",
+        "tableCaption": "Notwendige Cookies"
       }
+    },
+    "preferences": {
+      "introTitle": "Cookie-Einstellungen",
+      "introDescription": "Fyrrehaven 61 verwendet derzeit nur notwendige Cookies. Diese sind immer aktiv, weil die Website sie zum Funktionieren benötigt."
+    },
+    "table": {
+      "name": "Name",
+      "provider": "Anbieter",
+      "purpose": "Zweck",
+      "expiration": "Ablauf",
+      "type": "Typ"
     },
     "page": {
       "title": "Cookies bei Fyrrehaven 61",
@@ -1272,7 +1300,7 @@ export const de = {
       },
       "cookies": {
         "title": "Cookies und ähnliche Technologien",
-        "body": "Wir verwenden hauptsächlich technisch notwendige Cookies/Speicherungen, um die Website sicher bereitzustellen. Marketing- oder Trackingtechnologien verwenden wir nicht ohne Ihre Einwilligung. Wenn nicht notwendige Cookies aktiviert werden, wird ein Einwilligungsbanner angezeigt."
+        "body": "Wir verwenden derzeit nur technisch notwendige Cookies/Speicherungen, um die Website sicher bereitzustellen und Ihre Cookie-Einstellungen zu speichern. Wir verwenden keine Statistik-, Marketing- oder Tracking-Cookies."
       },
       "rights": {
         "title": "Ihre Rechte",

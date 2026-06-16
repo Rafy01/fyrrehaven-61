@@ -4,14 +4,18 @@
 
 .accordionItem {
   border-radius: 12px 0px 12px 0px;
-  background: #fff;
+  background: var(--surface);
+  border: 1px solid var(--border-muted);
   margin-top: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 6px var(--shadow-soft);
   transition: box-shadow 0.2s ease-in-out;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .accordionItem:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 10px var(--shadow-soft);
+}
 }
 
 .accordionHeader {
@@ -27,16 +31,19 @@
   padding: 1rem 0rem; /* match med .accordionInner */
   font-size: 1.1rem;
   font-weight: 600;
-  background: linear-gradient(to right, #fafafa, #f5f5f5);
-  color: #1a1a1a;
+  background: linear-gradient(to right, var(--surface), var(--surface-soft));
+  color: var(--ink-900);
   cursor: pointer;
   border-radius: 12px 12px 0px 0px;
   transition: background 0.2s ease, transform 0.15s ease;
 }
 
+@media (hover: hover) and (pointer: fine) {
+
 .accordionTrigger:hover {
-  background: linear-gradient(to right, #f3f3f3, #eeeeee);
+  background: linear-gradient(to right, var(--surface-soft), var(--surface-hover));
   transform: scale(1.01);
+}
 }
 
 .chevron {
@@ -44,21 +51,21 @@
   height: 20px;
   margin-right: 1rem;
   transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  color: #888;
+  color: var(--muted);
 }
 
 .accordionTrigger[data-state="open"] .chevron {
   transform: rotate(540deg) scale(1.2);
-  color: #7e7726;
+  color: var(--gold-500);
 }
 
 .accordionContent {
   overflow: hidden;
-  background-color: #fff;
+  background-color: var(--surface);
   animation-duration: 300ms;
   animation-timing-function: ease-out;
   will-change: height, opacity;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-muted);
 }
 
 .accordionContent[data-state="open"] {
@@ -72,8 +79,35 @@
 .accordionInner {
   padding: 1rem 1.5rem; /* match med .accordionTrigger */
   font-size: 1rem;
-  color: #333;
+  color: var(--ink-900);
   line-height: 1.6;
+}
+
+.accordionInner :where(ul, ol) {
+  margin: 0.7rem 0 0;
+  padding-left: 1.35rem;
+}
+
+.accordionInner :where(ul, ol) :where(ul, ol) {
+  margin-top: 0.45rem;
+}
+
+.accordionInner li {
+  padding-left: 0.25rem;
+  margin: 0.35rem 0;
+}
+
+.accordionInner li::marker {
+  color: var(--gold-600);
+  font-weight: 800;
+}
+
+.accordionInner ul li::marker {
+  font-size: 0.82em;
+}
+
+.accordionInner ol li::marker {
+  font-variant-numeric: tabular-nums;
 }
 
 /* 📱 Responsivt */
