@@ -599,12 +599,6 @@ export default function AvailabilityCalendar({
     if (day < start) {
       emitSelection({ kind: "range", start: day, end: start });
     } else {
-      const nights = daysBetween(start, day);
-      const required = getEffectiveMinNightsForStart(start, bookedDays);
-      if (nights < required) {
-        setValidationError(formatMinNightsError(start, required, lang));
-        return;
-      }
       emitSelection({ kind: "range", start, end: day });
     }
   }
@@ -707,18 +701,7 @@ export default function AvailabilityCalendar({
                   } else {
                     const start = startOfDay(sel!.start);
                     const endEx = startOfDay(d);
-                    const nights = daysBetween(start, endEx);
-                    const required = getEffectiveMinNightsForStart(
-                      start,
-                      bookedDays
-                    );
-                    if (
-                      !(
-                        endEx > start &&
-                        rangeIsFree(start, endEx, bookedDays) &&
-                        nights >= required
-                      )
-                    ) {
+                    if (!(endEx > start && rangeIsFree(start, endEx, bookedDays))) {
                       canClick = false;
                     }
                   }
