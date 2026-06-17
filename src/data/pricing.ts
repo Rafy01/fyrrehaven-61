@@ -101,7 +101,7 @@ export function getMinNightsForStart(
   const yr = plan.years[y];
   if (!yr) return GLOBAL_FALLBACK;
 
-  const ymd = date.toISOString().slice(0, 10);
+  const ymd = toYMDLocal(date);
   if (yr.daysMinNights && yr.daysMinNights[ymd] != null) {
     return yr.daysMinNights[ymd]!;
   }
@@ -115,144 +115,300 @@ export function getMinNightsForStart(
   return GLOBAL_FALLBACK;
 }
 
-/* =========
- * Hjælpere til at udfylde days
- * ========= */
+type DateRange = { from: string; to: string };
 
-function addRange(
-  store: Partial<Record<string, number>>,
-  fromYMD: string,
-  toYMD: string,
-  price: number
-) {
-  const start = new Date(fromYMD + "T00:00:00");
-  const end = new Date(toYMD + "T00:00:00");
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const ymd = d.toISOString().slice(0, 10);
-    store[ymd] = price;
+type SchoolHolidayCalendar = {
+  winterBreak: DateRange;
+  easterBreak: DateRange;
+  ascensionBreak: DateRange;
+  pentecostBreak: DateRange;
+  summerBreak: DateRange;
+  autumnBreak: DateRange;
+  christmasBreak: DateRange;
+};
+
+type YearMarketProfile = {
+  schoolHolidays: SchoolHolidayCalendar;
+  newYearPeak: DateRange;
+};
+
+const VISITOR_PRICE_STORAGE_KEY = "fh61_price_profile_v1";
+const FIRST_VISIT_INTRO_DISCOUNT_PCT = 6;
+let visitorPriceMultiplierCache: number | null = null;
+
+// Market-informed benchmark:
+// - Fjellerup / Norddjurs coastal placement
+// - large family house
+// - heated pool + spa + sauna
+// - lead-time behavior inspired by current Danish summerhouse market patterns
+const MARKET_BENCHMARK_NIGHT_DKK = 1500;
+const PROPERTY_PROFILE_MULTIPLIER =
+  1 +
+  0.11 + // beach / forest placement in Djursland
+  0.27 + // pool premium
+  0.09 + // spa premium
+  0.05 + // sauna premium
+  0.15; // sleeps 10 / large-house premium
+const PROPERTY_MARKET_ANCHOR_DKK = Math.round(
+  MARKET_BENCHMARK_NIGHT_DKK * PROPERTY_PROFILE_MULTIPLIER
+);
+
+function toYMDLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function addDaysLocal(d: Date, days: number): Date {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() + days);
+  return x;
+}
+
+function easterSunday(year: number): Date {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+function isoWeekStart(year: number, week: number): Date {
+  const jan4 = new Date(year, 0, 4);
+  const jan4Day = jan4.getDay() || 7;
+  const mondayWeek1 = addDaysLocal(jan4, 1 - jan4Day);
+  return addDaysLocal(mondayWeek1, (week - 1) * 7);
+}
+
+function isoWeekRange(year: number, fromWeek: number, toWeek: number): DateRange {
+  const start = isoWeekStart(year, fromWeek);
+  const end = addDaysLocal(isoWeekStart(year, toWeek), 6);
+  return { from: toYMDLocal(start), to: toYMDLocal(end) };
+}
+
+function buildSchoolHolidayCalendar(year: number): SchoolHolidayCalendar {
+  const easter = easterSunday(year);
+  const ascension = addDaysLocal(easter, 39);
+  const pentecost = addDaysLocal(easter, 49);
+
+  return {
+    winterBreak: isoWeekRange(year, 7, 7),
+    easterBreak: {
+      from: toYMDLocal(addDaysLocal(easter, -7)),
+      to: toYMDLocal(addDaysLocal(easter, 1)),
+    },
+    ascensionBreak: {
+      from: toYMDLocal(ascension),
+      to: toYMDLocal(addDaysLocal(ascension, 3)),
+    },
+    pentecostBreak: {
+      from: toYMDLocal(addDaysLocal(pentecost, -1)),
+      to: toYMDLocal(addDaysLocal(pentecost, 1)),
+    },
+    summerBreak: isoWeekRange(year, 27, 32),
+    autumnBreak: isoWeekRange(year, 42, 42),
+    christmasBreak: {
+      from: `${year}-12-20`,
+      to: `${year + 1}-01-03`,
+    },
+  };
+}
+
+function isWithinRange(date: Date, range: DateRange): boolean {
+  const value = toYMDLocal(date);
+  return value >= range.from && value <= range.to;
+}
+
+function roundPriceDKK(value: number): number {
+  return Math.round(value / 5) * 5;
+}
+
+function monthBaseMultiplier(date: Date): number {
+  const month = date.getMonth() + 1;
+  if (month === 1 || month === 2) return 0.4;
+  if (month === 3) return 0.44;
+  if (month === 4) return 0.91;
+  if (month === 5) return 1.12;
+  if (month === 6) return 1.24;
+  if (month === 7 || month === 8) return 1.33;
+  if (month === 9) return 1.18;
+  if (month === 10) return 0.72;
+  if (month === 11) return 0.64;
+  return 0.7;
+}
+
+function danishPublicHolidayType(date: Date): string | null {
+  const year = date.getFullYear();
+  const easter = easterSunday(year);
+  const holidays: Record<string, string> = {
+    [`${year}-01-01`]: "new-year",
+    [toYMDLocal(addDaysLocal(easter, -3))]: "maundy-thursday",
+    [toYMDLocal(addDaysLocal(easter, -2))]: "good-friday",
+    [toYMDLocal(easter)]: "easter-sunday",
+    [toYMDLocal(addDaysLocal(easter, 1))]: "easter-monday",
+    [toYMDLocal(addDaysLocal(easter, 39))]: "ascension-day",
+    [toYMDLocal(addDaysLocal(easter, 49))]: "pentecost-sunday",
+    [toYMDLocal(addDaysLocal(easter, 50))]: "pentecost-monday",
+    [`${year}-06-05`]: "constitution-day",
+    [`${year}-12-24`]: "christmas-eve",
+    [`${year}-12-25`]: "christmas-day",
+    [`${year}-12-26`]: "boxing-day",
+    [`${year}-12-31`]: "new-years-eve",
+  };
+
+  return holidays[toYMDLocal(date)] ?? null;
+}
+
+function isBridgeDay(date: Date): boolean {
+  const dc = dayCodeOf(date);
+  if (dc !== "fri" && dc !== "mon") return false;
+  const prev = addDaysLocal(date, -1);
+  const next = addDaysLocal(date, 1);
+  return Boolean(danishPublicHolidayType(prev) || danishPublicHolidayType(next));
+}
+
+function holidayFloorMultiplier(date: Date, profile: YearMarketProfile): number {
+  const holidays = profile.schoolHolidays;
+
+  if (toYMDLocal(date).endsWith("-12-31")) return 2.2;
+  if (isWithinRange(date, profile.newYearPeak)) return 2.0;
+  if (isWithinRange(date, holidays.christmasBreak)) return 1.0;
+  if (isWithinRange(date, holidays.summerBreak)) return 1.33;
+  if (isWithinRange(date, holidays.easterBreak)) return 1.06;
+  if (isWithinRange(date, holidays.winterBreak)) return 0.84;
+  if (isWithinRange(date, holidays.autumnBreak)) return 0.88;
+  if (isWithinRange(date, holidays.ascensionBreak)) return 1.12;
+  if (isWithinRange(date, holidays.pentecostBreak)) return 1.08;
+
+  const publicHoliday = danishPublicHolidayType(date);
+  if (publicHoliday === "christmas-eve") return 1.16;
+  if (publicHoliday === "christmas-day" || publicHoliday === "boxing-day")
+    return 1.12;
+  if (publicHoliday === "constitution-day") return 1.06;
+  if (publicHoliday) return 1.04;
+
+  return 0;
+}
+
+function nightlyDemandMultiplier(date: Date, profile: YearMarketProfile): number {
+  const weekend = DEFAULT_WEEKEND.includes(dayCodeOf(date)) ? 1.05 : 1;
+  const bridge = isBridgeDay(date) ? 1.04 : 1;
+  const monthBase = monthBaseMultiplier(date);
+  const floor = holidayFloorMultiplier(date, profile);
+  return Math.max(monthBase, floor) * weekend * bridge;
+}
+
+function yearDefaultPrice(year: number): number {
+  const reference = new Date(year, 9, 1);
+  const multiplier = monthBaseMultiplier(reference);
+  return roundPriceDKK(PROPERTY_MARKET_ANCHOR_DKK * multiplier);
+}
+
+function computeCleaningFee(date: Date, profile: YearMarketProfile): number {
+  const month = date.getMonth() + 1;
+  if (
+    isWithinRange(date, profile.schoolHolidays.summerBreak) ||
+    isWithinRange(date, profile.newYearPeak)
+  ) {
+    return DEFAULT_CLEANING_FEE_DKK;
   }
+  if (month <= 3 || month === 11) return 1000;
+  if (month === 4 || month === 10 || month === 12) return 1250;
+  return DEFAULT_CLEANING_FEE_DKK;
 }
 
-function addOne(
-  store: Partial<Record<string, number>>,
-  ymd: string,
-  price: number
-) {
-  store[ymd] = price;
-}
-
-/** Helper til at udfylde dags-specifikke min.-nætter */
-function addRangeMinNights(
-  store: Partial<Record<string, number>>,
-  fromYMD: string,
-  toYMD: string,
-  minNights: number
-) {
-  const start = new Date(fromYMD + "T00:00:00");
-  const end = new Date(toYMD + "T00:00:00");
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const ymd = d.toISOString().slice(0, 10);
-    store[ymd] = minNights;
+function computeMinNights(date: Date, profile: YearMarketProfile): number {
+  const holidays = profile.schoolHolidays;
+  if (isWithinRange(date, profile.newYearPeak)) return 4;
+  if (isWithinRange(date, holidays.summerBreak)) return 6;
+  if (
+    isWithinRange(date, holidays.winterBreak) ||
+    isWithinRange(date, holidays.easterBreak) ||
+    isWithinRange(date, holidays.autumnBreak) ||
+    isWithinRange(date, holidays.christmasBreak) ||
+    isWithinRange(date, holidays.ascensionBreak) ||
+    isWithinRange(date, holidays.pentecostBreak)
+  ) {
+    return 3;
   }
+  return 2;
 }
 
+function computeGeneratedNightlyPrice(date: Date, profile: YearMarketProfile): number {
+  const multiplier = nightlyDemandMultiplier(date, profile);
+  let price = PROPERTY_MARKET_ANCHOR_DKK * multiplier;
 
-/* =========
- * Airbnb-matchende priser (ud fra screenshots)
- * ========= */
+  if (dayCodeOf(date) === "sun" && monthBaseMultiplier(date) < 0.8) {
+    price *= 0.96;
+  }
 
-const days2025: Partial<Record<string, number>> = {};
-const days2026: Partial<Record<string, number>> = {};
-const days2027: Partial<Record<string, number>> = {};
+  return roundPriceDKK(price);
+}
 
-// Mulighed for dags-specifik min. nætter
-const daysMinNights2025: Partial<Record<string, number>> = {};
-const daysMinNights2026: Partial<Record<string, number>> = {};
-const daysMinNights2027: Partial<Record<string, number>> = {};
+function buildYearMarketProfile(year: number): YearMarketProfile {
+  return {
+    schoolHolidays: buildSchoolHolidayCalendar(year),
+    newYearPeak: {
+      from: `${year}-12-27`,
+      to: `${year}-12-31`,
+    },
+  };
+}
 
-// Mulighed for dags-specifik rengøring
-const daysCleaningFee2025: Partial<Record<string, number>> = {};
-const daysCleaningFee2026: Partial<Record<string, number>> = {};
-const daysCleaningFee2027: Partial<Record<string, number>> = {};
+function generateYearPricing(year: number): YearPricing {
+  const profile = buildYearMarketProfile(year);
+  const days: Partial<Record<string, number>> = {};
+  const daysMinNights: Partial<Record<string, number>> = {};
+  const daysCleaningFeeDKK: Partial<Record<string, number>> = {};
+  const start = new Date(year, 0, 1);
+  const end = new Date(year, 11, 31);
 
-/** ——— 2025 ——— **/
+  for (let d = new Date(start); d <= end; d = addDaysLocal(d, 1)) {
+    const ymd = toYMDLocal(d);
+    days[ymd] = computeGeneratedNightlyPrice(d, profile);
 
-// SEPTEMBER 2025
-addRange(days2025, "2025-09-01", "2025-09-06", 2090);
-addRange(days2025, "2025-09-07", "2025-09-20", 2090);
-addRange(days2025, "2025-09-21", "2025-09-26", 2200);
-addRange(days2025, "2025-09-27", "2025-09-30", 2500);
+    const minNights = computeMinNights(d, profile);
+    if (minNights !== 2) daysMinNights[ymd] = minNights;
 
-// OKTOBER 2025
-addRange(days2025, "2025-10-01", "2025-10-04", 2500);
-addRange(days2025, "2025-10-05", "2025-10-08", 1800);
-addRange(days2025, "2025-10-09", "2025-10-19", 2200); // efterårsferie
-addRange(days2025, "2025-10-20", "2025-10-31", 1800);
+    const cleaningFee = computeCleaningFee(d, profile);
+    if (cleaningFee !== DEFAULT_CLEANING_FEE_DKK) {
+      daysCleaningFeeDKK[ymd] = cleaningFee;
+    }
+  }
 
-// NOVEMBER 2025 — fladt 1.800
-addRange(days2025, "2025-11-01", "2025-11-30", 1800);
-
-// DECEMBER 2025
-addRange(days2025, "2025-12-01", "2025-12-15", 1800);
-addRange(days2025, "2025-12-16", "2025-12-25", 1710);
-addOne(days2025, "2025-12-26", 1140);
-addRange(days2025, "2025-12-27", "2025-12-31", 5000);
-
-/** ——— 2026 ——— **/
-
-// JANUAR 2026 — fladt 750
-addRange(days2026, "2026-01-01", "2026-01-31", 1000);
-addRangeCleaning(daysCleaningFee2026, "2026-01-01", "2026-01-31", 1000);
-
-
-
-// FEBRUAR 2026 — 1.805 m/ vinterferie (uge 7) på 2.090 (man–lør)
-addRange(days2026, "2026-02-01", "2026-02-08", 1000);
-addRangeCleaning(daysCleaningFee2026, "2026-02-01", "2026-02-08", 1000);
-addRange(days2026, "2026-02-09", "2026-02-14", 2090); // man–lør
-addRange(days2026, "2026-02-15", "2026-02-28", 1000);
-addRangeCleaning(daysCleaningFee2026, "2026-02-15", "2026-02-28", 1000);
-
-// MARTS 2026 — fladt 1.805
-addRange(days2026, "2026-03-01", "2026-03-31", 1000);
-addRangeCleaning(daysCleaningFee2026, "2026-03-01", "2026-03-31", 1000);
-
-// APRIL 2026 — 1–5: 2.660, 6–30: 2.280
-addRange(days2026, "2026-04-01", "2026-04-05", 2660);
-addRange(days2026, "2026-04-06", "2026-04-30", 2280);
-
-// MAJ 2026 — fladt 3.325
-addRange(days2026, "2026-05-01", "2026-05-31", 3325);
-
-// JUNI 2026 — fladt 3.325
-addRange(days2026, "2026-06-01", "2026-06-30", 3325);
-
-// JULI–SEPTEMBER 2026 — fladt 3.325 (matcher screenshots)
-addRange(days2026, "2026-07-01", "2026-09-30", 3325);
-
-// (Eksempel på kendt enkelt-dag senere)
-addRange(days2026, "2026-12-27", "2026-12-31", 5000);
-addOne(days2026, "2026-12-31", 5500); // nytårsaften 2026
-
-/** ——— 2027 ——— **/
-/* Her kan du senere udfylde days2027 ligesom 2026, hvis du vil. */
-
-/** ——— JULEFERIE MIN. NÆTTER (3) ——— **/
-
-// Juleferie 2025 → 20/12–31/12 (3 nætter)
-addRangeMinNights(daysMinNights2025, "2025-12-20", "2025-12-31", 3);
-
-// Fortsættelse af juleferien ind i 2026 → 01/01–03/01 (3 nætter)
-addRangeMinNights(daysMinNights2026, "2026-01-01", "2026-01-03", 3);
-
-// Juleferie 2026 → 20/12–31/12 (3 nætter)
-addRangeMinNights(daysMinNights2026, "2026-12-20", "2026-12-31", 3);
-
-// Fortsættelse ind i 2027 → 01/01–03/01 (3 nætter)
-addRangeMinNights(daysMinNights2027, "2027-01-01", "2027-01-03", 3);
-
-// Juleferie 2027 → 20/12–31/12 (3 nætter)
-addRangeMinNights(daysMinNights2027, "2027-12-20", "2027-12-31", 3);
+  return {
+    default: {
+      price: yearDefaultPrice(year),
+      weekendDays: DEFAULT_WEEKEND,
+      minNights: 2,
+      cleaningFeeDKK: DEFAULT_CLEANING_FEE_DKK,
+    },
+    days,
+    daysMinNights,
+    daysCleaningFeeDKK,
+    weeks: {
+      7: { minNights: 3, note: "Vinterferie" },
+      27: { minNights: 6, note: "Sommerferie" },
+      28: { minNights: 6, note: "Sommerferie" },
+      29: { minNights: 6, note: "Sommerferie" },
+      30: { minNights: 6, note: "Sommerferie" },
+      31: { minNights: 6, note: "Sommerferie" },
+      32: { minNights: 6, note: "Sommerferie" },
+      42: { minNights: 3, note: "Efterårsferie" },
+    },
+  };
+}
 
 /* =========
  * Eksporter prisplan
@@ -261,105 +417,9 @@ addRangeMinNights(daysMinNights2027, "2027-12-20", "2027-12-31", 3);
 export const PRICES: PricePlan = {
   currency: "DKK",
   years: {
-    2025: {
-      default: {
-        price: 1800,
-        weekendDays: ["fri", "sat"],
-        minNights: 2,
-        cleaningFeeDKK: DEFAULT_CLEANING_FEE_DKK,
-      },
-      days: days2025,
-      daysMinNights: daysMinNights2025,
-      daysCleaningFeeDKK: daysCleaningFee2025,
-
-      // ★ NYT: 20% rabat fra 1. oktober til og med 31. december 2025
-      lastMinuteRules: [
-        {
-          from: "2025-09-20",
-          to: "2025-12-31",
-          days: "all", // gælder alle ugedage
-          tiers: [
-            // stort threshold => rabat gælder for hele perioden (ikke kun “x dage før”)
-            { daysOrLess: 14, percentOff: 44 },
-          ],
-        },
-      ],
-
-      weeks: {
-        7: { minNights: 3 },
-        27: { minNights: 6 },
-        28: { minNights: 6 },
-        29: { minNights: 6 },
-        30: { minNights: 6 },
-        31: { minNights: 6 },
-        32: { minNights: 6 },
-        42: {
-          price: 2200,
-          note: "Efterårsferie – dækket af days",
-          minNights: 3,
-        },
-      },
-    },
-
-    2026: {
-      // Fallback uden for de specificerede perioder
-      default: {
-        price: 3500, // generel lavsæson; justér hvis du vil splitte weekday/weekend
-        weekendDays: ["fri", "sat"],
-        minNights: 2, // globalt default minimum booking
-        cleaningFeeDKK: DEFAULT_CLEANING_FEE_DKK,
-      },
-      // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
-      days: days2026,
-      daysMinNights: daysMinNights2026,
-      daysCleaningFeeDKK: daysCleaningFee2026,
-      // lastMinuteRules: [] // <- default ingen rabat
-      weeks: {
-        // VINTERFERIE (uge 7)
-        7: { minNights: 3 },
-
-        // SOMMERFERIE (uge 27–32)
-        27: { minNights: 6 },
-        28: { minNights: 6 },
-        29: { minNights: 6 },
-        30: { minNights: 6 },
-        31: { minNights: 6 },
-        32: { minNights: 6 },
-
-        // EFTERÅRSFERIE (uge 42)
-        42: { minNights: 3 },
-      },
-    },
-
-    2027: {
-      // Fallback uden for de specificerede perioder
-      default: {
-        price: 3700, // generel lavsæson; justér hvis du vil splitte weekday/weekend
-        weekendDays: ["fri", "sat"],
-        minNights: 2, // globalt default minimum booking
-        cleaningFeeDKK: DEFAULT_CLEANING_FEE_DKK,
-      },
-      // Sommeren + vinter/forår er dagsspecifik (mest præcis ift. Airbnb)
-      days: days2027,
-      daysMinNights: daysMinNights2027,
-      daysCleaningFeeDKK: daysCleaningFee2027,
-      // lastMinuteRules: [] // <- default ingen rabat
-      weeks: {
-        // VINTERFERIE (uge 7)
-        7: { minNights: 3 },
-
-        // SOMMERFERIE (uge 27–32)
-        27: { minNights: 6 },
-        28: { minNights: 6 },
-        29: { minNights: 6 },
-        30: { minNights: 6 },
-        31: { minNights: 6 },
-        32: { minNights: 6 },
-
-        // EFTERÅRSFERIE (uge 42)
-        42: { minNights: 3 },
-      },
-    },
+    2025: generateYearPricing(2025),
+    2026: generateYearPricing(2026),
+    2027: generateYearPricing(2027),
   },
 };
 
@@ -399,19 +459,63 @@ function isWithinYMD(date: Date, fromYMD: string, toYMD: string): boolean {
   return x >= parseYMD(fromYMD) && x <= parseYMD(toYMD);
 }
 
-/** Helper til at udfylde dags-specifik rengøring */
-function addRangeCleaning(
-  store: Partial<Record<string, number>>,
-  fromYMD: string,
-  toYMD: string,
-  fee: number
-) {
-  const start = new Date(fromYMD + "T00:00:00");
-  const end = new Date(toYMD + "T00:00:00");
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const ymd = d.toISOString().slice(0, 10);
-    store[ymd] = fee;
+function getLeadTimeAdjustmentPercent(date: Date): number {
+  const today = startOfDayLocal(new Date());
+  const target = startOfDayLocal(date);
+  const daysUntil = Math.floor((target.getTime() - today.getTime()) / 86400000);
+  if (daysUntil < 0) return 0;
+
+  if (daysUntil <= 3) return 18;
+  if (daysUntil <= 7) return 12;
+  if (daysUntil <= 21) return 6;
+
+  const profile = buildYearMarketProfile(date.getFullYear());
+  const farAheadSummerDemand =
+    isWithinRange(date, profile.schoolHolidays.summerBreak) && daysUntil >= 120;
+  const farAheadHolidayDemand =
+    isWithinRange(date, profile.schoolHolidays.easterBreak) && daysUntil >= 60;
+
+  if (farAheadSummerDemand) return -4;
+  if (farAheadHolidayDemand) return -2;
+  return 0;
+}
+
+function getVisitorPriceMultiplier(): number {
+  if (typeof window === "undefined") return 1;
+  if (visitorPriceMultiplierCache != null) return visitorPriceMultiplierCache;
+
+  try {
+    const raw = window.localStorage.getItem(VISITOR_PRICE_STORAGE_KEY);
+    if (!raw) {
+      window.localStorage.setItem(
+        VISITOR_PRICE_STORAGE_KEY,
+        JSON.stringify({
+          activatedAt: new Date().toISOString(),
+          lockedMultiplier: 1,
+        })
+      );
+      visitorPriceMultiplierCache = 1 - FIRST_VISIT_INTRO_DISCOUNT_PCT / 100;
+      return visitorPriceMultiplierCache;
+    }
+  } catch {
+    visitorPriceMultiplierCache = 1;
+    return visitorPriceMultiplierCache;
   }
+
+  visitorPriceMultiplierCache = 1;
+  return visitorPriceMultiplierCache;
+}
+
+function applyLeadTimeAdjustment(
+  date: Date,
+  base: number | null,
+): number | null {
+  if (base == null) return base;
+  const percent = getLeadTimeAdjustmentPercent(date);
+  if (percent === 0) return base;
+
+  const multiplier = percent > 0 ? 1 - percent / 100 : 1 + Math.abs(percent) / 100;
+  return roundPriceDKK(base * multiplier);
 }
 
 /** Anvend evt. last-minute rabat (i procent) på en grundpris. */
@@ -422,15 +526,17 @@ function applyLastMinuteDiscount(
 ): number | null {
   if (base == null) return base;
 
+  const leadTimeAdjusted = applyLeadTimeAdjustment(date, base);
+
   const y = date.getFullYear();
   const yr = plan.years[y];
   const rules = yr?.lastMinuteRules;
-  if (!rules || rules.length === 0) return base; // default: ingen rabat
+  if (!rules || rules.length === 0) return leadTimeAdjusted; // default: ingen rabat
 
   const today = startOfDayLocal(new Date());
   const target = startOfDayLocal(date);
   const daysUntil = Math.floor((target.getTime() - today.getTime()) / 86400000);
-  if (daysUntil < 0) return base; // ingen rabat for fortid
+  if (daysUntil < 0) return leadTimeAdjusted; // ingen rabat for fortid
 
   // Brug årets weekenddefinition hvis en regel siger "weekend"
   const yearWeekend =
@@ -467,10 +573,15 @@ function applyLastMinuteDiscount(
     maxPercent = Math.max(maxPercent, tierPct);
   }
 
-  if (maxPercent <= 0) return base;
+  if (maxPercent <= 0) return leadTimeAdjusted;
 
   // Rund af til heltal som resten af prisplanen
-  return Math.round(base * (1 - maxPercent / 100));
+  return roundPriceDKK((leadTimeAdjusted ?? base) * (1 - maxPercent / 100));
+}
+
+function applyVisitorAdjustment(base: number | null): number | null {
+  if (base == null) return base;
+  return roundPriceDKK(base * getVisitorPriceMultiplier());
 }
 
 export function getPriceForDate(
@@ -482,9 +593,9 @@ export function getPriceForDate(
   if (!yr) return null;
 
   // 1) Dags-override (YYYY-MM-DD)
-  const ymd = date.toISOString().slice(0, 10);
+  const ymd = toYMDLocal(date);
   if (yr.days && yr.days[ymd] != null)
-    return applyLastMinuteDiscount(date, yr.days[ymd]!, plan);
+    return applyVisitorAdjustment(applyLastMinuteDiscount(date, yr.days[ymd]!, plan));
 
   // 2) Ugepris
   const w = isoWeek(date);
@@ -492,26 +603,31 @@ export function getPriceForDate(
   if (wp) {
     const dc = dayCodeOf(date);
     if (wp.days && wp.days[dc] != null)
-      return applyLastMinuteDiscount(date, wp.days[dc]!, plan);
+      return applyVisitorAdjustment(
+        applyLastMinuteDiscount(date, wp.days[dc]!, plan)
+      );
 
     if (wp.weekdays != null || wp.weekend != null) {
       const weekend = wp.weekendDays ?? DEFAULT_WEEKEND;
       const isWeekend = weekend.includes(dc);
       const val = isWeekend ? wp.weekend : wp.weekdays;
-      if (val != null) return applyLastMinuteDiscount(date, val!, plan);
+      if (val != null)
+        return applyVisitorAdjustment(applyLastMinuteDiscount(date, val!, plan));
     }
-    if (wp.price != null) return applyLastMinuteDiscount(date, wp.price, plan);
+    if (wp.price != null)
+      return applyVisitorAdjustment(applyLastMinuteDiscount(date, wp.price, plan));
   }
 
   // 3) Års-default
   if (yr.default) {
     const def = yr.default;
     if (def.price != null)
-      return applyLastMinuteDiscount(date, def.price, plan);
+      return applyVisitorAdjustment(applyLastMinuteDiscount(date, def.price, plan));
     const weekend = def.weekendDays ?? DEFAULT_WEEKEND;
     const isWeekend = weekend.includes(dayCodeOf(date));
     const val = isWeekend ? def.weekend : def.weekdays;
-    if (val != null) return applyLastMinuteDiscount(date, val!, plan);
+    if (val != null)
+      return applyVisitorAdjustment(applyLastMinuteDiscount(date, val!, plan));
   }
 
   return null;
@@ -528,7 +644,7 @@ export function getCleaningFeeForDate(
   const yr = plan.years[y];
   if (!yr) return DEFAULT_CLEANING_FEE_DKK;
 
-  const ymd = date.toISOString().slice(0, 10);
+  const ymd = toYMDLocal(date);
 
   // 1) Dags-specifik rengøring
   const dayFee = yr.daysCleaningFeeDKK?.[ymd];
