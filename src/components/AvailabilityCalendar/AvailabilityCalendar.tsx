@@ -90,14 +90,6 @@ function rangeIsFree(
   }
   return true;
 }
-
-function isBookableCheckoutBoundary(
-  day: Date,
-  bookedDays: Set<string>
-): boolean {
-  const ymd = startOfDay(day).toISOString().slice(0, 10);
-  return !bookedDays.has(ymd);
-}
 function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -633,7 +625,6 @@ export default function AvailabilityCalendar({
     if (day < start) {
       emitSelection({ kind: "range", start: day, end: start });
     } else {
-      if (!isBookableCheckoutBoundary(day, bookedDays)) return;
       emitSelection({ kind: "range", start, end: day });
     }
   }
@@ -739,13 +730,7 @@ export default function AvailabilityCalendar({
                   } else {
                     const start = startOfDay(sel!.start);
                     const endEx = startOfDay(d);
-                    if (
-                      !(
-                        endEx > start &&
-                        rangeIsFree(start, endEx, bookedDays) &&
-                        isBookableCheckoutBoundary(endEx, bookedDays)
-                      )
-                    ) {
+                    if (!(endEx > start && rangeIsFree(start, endEx, bookedDays))) {
                       canClick = false;
                     }
                   }
