@@ -177,6 +177,33 @@ function getEffectiveMinNightsForStart(
   return getShortGapMinNights(start, bookedDays) ?? base;
 }
 
+function formatMinNightsError(
+  start: Date,
+  required: number,
+  lang: Lang
+): string {
+  const dateStr = start.toLocaleDateString(
+    lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }
+  );
+
+  return lang === "da"
+    ? `Minimum ${required} ${
+        required === 1 ? "nat" : "nætter"
+      } ved ankomst ${dateStr}.`
+    : lang === "de"
+    ? `Mindestens ${required} ${
+        required === 1 ? "Nacht" : "Nächte"
+      } bei Anreise ${dateStr}.`
+    : `Minimum ${required} night${
+        required === 1 ? "" : "s"
+      } required for arrival ${dateStr}.`;
+}
+
 /* ─── API → bookings ─── */
 function looksLikeBooking(ev: ApiEvent): boolean {
   // Alt fra kalenderen tæller som reservation/blokering,
@@ -502,27 +529,7 @@ export default function AvailabilityCalendar({
     const nights = days.length;
     const isOk = nights >= required;
 
-    const dateStr = start.toLocaleDateString(
-      lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB",
-      {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }
-    );
-    const errMsg = !isOk
-      ? lang === "da"
-        ? `Minimum ${required} ${
-            required === 1 ? "nat" : "nætter"
-          } ved ankomst ${dateStr}.`
-        : lang === "de"
-        ? `Mindestens ${required} ${
-            required === 1 ? "Nacht" : "Nächte"
-          } bei Anreise ${dateStr}.`
-        : `Minimum ${required} night${
-            required === 1 ? "" : "s"
-          } required for arrival ${dateStr}.`
-      : null;
+    const errMsg = !isOk ? formatMinNightsError(start, required, lang) : null;
 
     setValidationError(errMsg);
 
@@ -592,6 +599,12 @@ export default function AvailabilityCalendar({
     if (day < start) {
       emitSelection({ kind: "range", start: day, end: start });
     } else {
+      const nights = daysBetween(start, day);
+      const required = getEffectiveMinNightsForStart(start, bookedDays);
+      if (nights < required) {
+        setValidationError(formatMinNightsError(start, required, lang));
+        return;
+      }
       emitSelection({ kind: "range", start, end: day });
     }
   }
@@ -694,13 +707,20 @@ export default function AvailabilityCalendar({
                   } else {
                     const start = startOfDay(sel!.start);
                     const endEx = startOfDay(d);
+                    const nights = daysBetween(start, endEx);
+                    const required = getEffectiveMinNightsForStart(
+                      start,
+                      bookedDays
+                    );
                     if (
-                      !(endEx > start && rangeIsFree(start, endEx, bookedDays))
+                      !(
+                        endEx > start &&
+                        rangeIsFree(start, endEx, bookedDays) &&
+                        nights >= required
+                      )
                     ) {
                       canClick = false;
                     }
-                    // (Bevidst: Vi begrænser ikke klik baseret på min. nætter her,
-                    //  men viser i stedet en klar fejlbesked under kalenderen.)
                   }
                 }
                 if (inCurrentRange) canClick = true;
