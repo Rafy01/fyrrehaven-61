@@ -453,6 +453,19 @@ export default function AvailabilityCalendar({
     return set;
   }, [bookings, gridStart]);
 
+  const checkinDays = React.useMemo(() => {
+    const set = new Set<string>();
+    if (!bookings) return set;
+
+    const gridEnd = addDays(gridStart, WEEKS * 7);
+    for (const b of bookings) {
+      if (b.startDay >= gridStart && b.startDay < gridEnd) {
+        set.add(b.startDay.toISOString().slice(0, 10));
+      }
+    }
+    return set;
+  }, [bookings, gridStart]);
+
   // selection overlay segments
   const selSegments = React.useMemo(() => {
     if (selectionMode !== "range") return [];
@@ -689,6 +702,7 @@ export default function AvailabilityCalendar({
                 const ymd = d.toISOString().slice(0, 10);
                 const isBooked = bookedDays.has(ymd);
                 const isCheckoutDay = checkoutDays.has(ymd);
+                const isCheckinDay = checkinDays.has(ymd);
 
                 const awaitingEnd =
                   selectionMode === "range" &&
@@ -731,7 +745,9 @@ export default function AvailabilityCalendar({
 
                 // Vis ikke pris for fortid eller i dag
                 const shouldShowPrice =
-                  inMonth && d > today && (!isBooked || isCheckoutDay);
+                  inMonth &&
+                  d > today &&
+                  (!isBooked || (isCheckoutDay && !isCheckinDay));
 
                 const value = shouldShowPrice ? getPriceForDate(d) : null;
                 const priceMain =
