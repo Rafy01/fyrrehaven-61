@@ -89,6 +89,16 @@ export type PricePlan = {
 export const DEFAULT_WEEKEND: DayCode[] = ["fri", "sat"];
 export const DEFAULT_CLEANING_FEE_DKK = 1500;
 
+export function isPoolSeason(date: Date): boolean {
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  if (month < 4 || month > 9) return false;
+  if (month === 4) return day >= 1; // May 1+
+  if (month === 9) return day <= 1; // through Oct 1
+  return true;
+}
+
 /** Returnerer min. nætter baseret på ANKOMSTDATO.
  *  Prioritet: daysMinNights[YYYY-MM-DD] > weeks[w].minNights > default.minNights > GLOBAL_FALLBACK(2)
  */
@@ -329,20 +339,8 @@ function computeCleaningFee(date: Date, profile: YearMarketProfile): number {
 }
 
 function computeMinNights(date: Date, profile: YearMarketProfile): number {
-  const holidays = profile.schoolHolidays;
-  if (isWithinRange(date, profile.newYearPeak)) return 4;
-  if (isWithinRange(date, holidays.summerBreak)) return 6;
-  if (
-    isWithinRange(date, holidays.winterBreak) ||
-    isWithinRange(date, holidays.easterBreak) ||
-    isWithinRange(date, holidays.autumnBreak) ||
-    isWithinRange(date, holidays.christmasBreak) ||
-    isWithinRange(date, holidays.ascensionBreak) ||
-    isWithinRange(date, holidays.pentecostBreak)
-  ) {
-    return 3;
-  }
-  return 2;
+  void profile;
+  return isPoolSeason(date) ? 6 : 2;
 }
 
 function computeGeneratedNightlyPrice(date: Date, profile: YearMarketProfile): number {

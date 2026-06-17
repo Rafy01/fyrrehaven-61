@@ -2,7 +2,11 @@
 import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import { chooseLang, type Lang } from "../../lib/lang";
-import { getPriceForDate, getMinNightsForStart } from "../../data/pricing";
+import {
+  getPriceForDate,
+  getMinNightsForStart,
+  isPoolSeason,
+} from "../../data/pricing";
 
 /* ─── Types ─── */
 type ApiEvent = {
@@ -138,6 +142,39 @@ function eachDay(start: Date, endExclusive: Date): Date[] {
     d = addDays(d, 1);
   }
   return out;
+}
+
+function getShortGapMinNights(
+  start: Date,
+  bookedDays: Set<string>
+): number | null {
+  if (!isPoolSeason(start)) return null;
+
+  let freeNights = 0;
+  let cursor = startOfDay(start);
+
+  while (freeNights < 6) {
+    const ymd = cursor.toISOString().slice(0, 10);
+    if (bookedDays.has(ymd)) break;
+    freeNights += 1;
+    cursor = addDays(cursor, 1);
+  }
+
+  if (freeNights >= 1 && freeNights <= 5) {
+    const nextYmd = cursor.toISOString().slice(0, 10);
+    if (bookedDays.has(nextYmd)) return freeNights;
+  }
+
+  return null;
+}
+
+function getEffectiveMinNightsForStart(
+  start: Date,
+  bookedDays: Set<string>
+): number {
+  const base = getMinNightsForStart(start);
+  if (base !== 6) return base;
+  return getShortGapMinNights(start, bookedDays) ?? base;
 }
 
 /* ─── API → bookings ─── */
@@ -461,7 +498,7 @@ export default function AvailabilityCalendar({
     const hasMissing = breakdown.some((it) => it.price == null);
 
     // NY: min. nætter for ankomstdagen
-    const required = getMinNightsForStart(start) ?? 1;
+    const required = getEffectiveMinNightsForStart(start, bookedDays) ?? 1;
     const nights = days.length;
     const isOk = nights >= required;
 
@@ -501,7 +538,7 @@ export default function AvailabilityCalendar({
       isMinNightsSatisfied: isOk,
       validationError: errMsg ?? undefined,
     });
-  }, [sel, lang]);
+  }, [sel, lang, bookedDays]);
 
   // Klik-håndtering med bookingvalidering
   function handleDayClick(d: Date) {
