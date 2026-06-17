@@ -703,6 +703,7 @@ export default function AvailabilityCalendar({
                 const isBooked = bookedDays.has(ymd);
                 const isCheckoutDay = checkoutDays.has(ymd);
                 const isCheckinDay = checkinDays.has(ymd);
+                const isTurnoverDay = isCheckoutDay && isCheckinDay;
 
                 const awaitingEnd =
                   selectionMode === "range" &&
@@ -747,7 +748,8 @@ export default function AvailabilityCalendar({
                 const shouldShowPrice =
                   inMonth &&
                   d > today &&
-                  (!isBooked || (isCheckoutDay && !isCheckinDay));
+                  (!isBooked ||
+                    ((isCheckoutDay || isCheckinDay) && !isTurnoverDay));
 
                 const value = shouldShowPrice ? getPriceForDate(d) : null;
                 const priceMain =
