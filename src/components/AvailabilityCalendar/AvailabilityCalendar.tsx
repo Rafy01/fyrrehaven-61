@@ -586,6 +586,22 @@ export default function AvailabilityCalendar({
       day >= startOfDay(sel.start) &&
       day <= startOfDay(sel.end)
     ) {
+      const start = startOfDay(sel.start);
+      const end = startOfDay(sel.end);
+
+      if (day.getTime() === start.getTime() && day.getTime() === end.getTime()) {
+        emitSelection(null);
+      } else if (day.getTime() === start.getTime()) {
+        emitSelection({ kind: "range", start: end });
+      } else if (day.getTime() === end.getTime()) {
+        emitSelection({ kind: "range", start });
+      } else {
+        emitSelection({ kind: "range", start: day });
+      }
+      return;
+    }
+
+    if (selectionMode === "range" && sel?.kind === "range" && sel.end) {
       emitSelection(null);
       return;
     }
@@ -730,7 +746,10 @@ export default function AvailabilityCalendar({
                   } else {
                     const start = startOfDay(sel!.start);
                     const endEx = startOfDay(d);
-                    if (!(endEx > start && rangeIsFree(start, endEx, bookedDays))) {
+                    if (
+                      endEx.getTime() !== start.getTime() &&
+                      !(endEx > start && rangeIsFree(start, endEx, bookedDays))
+                    ) {
                       canClick = false;
                     }
                   }
@@ -761,6 +780,7 @@ export default function AvailabilityCalendar({
                     className={styles.cell}
                     data-dim={!inMonth ? "1" : undefined}
                     data-today={isToday ? "1" : undefined}
+                    data-clickable={!disabled ? "1" : undefined}
                     data-selected={selectedSingle ? "1" : undefined}
                     data-edge={edge || undefined}
                   >

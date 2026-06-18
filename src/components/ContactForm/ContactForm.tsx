@@ -670,15 +670,16 @@ export default function ContactForm({
               >
                 {t("Ankomst", "Check-in", "Anreise")}
               </label>
-              <input
+              <output
                 id="cf-checkin"
-                className={styles.input}
-                type="text"
-                readOnly
-                required
-                value={selPrice.start ? fmtDate.format(selPrice.start) : ""}
-                placeholder={t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
-              />
+                className={`${styles.input} ${styles.displayField}`}
+                data-empty={!selPrice.start ? "true" : undefined}
+                aria-live="polite"
+              >
+                {selPrice.start
+                  ? fmtDate.format(selPrice.start)
+                  : t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
+              </output>
             </div>
 
             <div className={styles.row}>
@@ -689,19 +690,16 @@ export default function ContactForm({
               >
                 {t("Afrejse", "Check-out", "Abreise")}
               </label>
-              <input
+              <output
                 id="cf-checkout"
-                className={styles.input}
-                type="text"
-                readOnly
-                required
-                value={
-                  selPrice.endExclusive
-                    ? fmtDate.format(selPrice.endExclusive)
-                    : ""
-                }
-                placeholder={t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
-              />
+                className={`${styles.input} ${styles.displayField}`}
+                data-empty={!selPrice.endExclusive ? "true" : undefined}
+                aria-live="polite"
+              >
+                {selPrice.endExclusive
+                  ? fmtDate.format(selPrice.endExclusive)
+                  : t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
+              </output>
             </div>
 
             {/* Nætter + min.-nætter inline fejl */}
