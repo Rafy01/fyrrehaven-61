@@ -134,6 +134,7 @@ export default function ContactForm({
   const [sending, setSending] = React.useState(false);
   const [sent, setSent] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const formStartedAtRef = React.useRef<number>(Date.now());
 
   const selectedCountry = findCountry(state.countryIso);
   const dial = selectedCountry?.dial ?? "";
@@ -430,6 +431,10 @@ export default function ContactForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lang,
+          website: "",
+          company: "",
+          faxNumber: "",
+          formStartedAt: formStartedAtRef.current,
           purpose: purposeForApi,
           name: state.name.trim(),
           email,

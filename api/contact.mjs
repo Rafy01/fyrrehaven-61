@@ -4,8 +4,10 @@ import {
   getRequesterIp,
   normalizeEmail,
   validateContactHeaders,
+  validateHumanSignals,
   validateContactPayload,
 } from "./_lib/contactSecurity.mjs";
+import { applySecurityHeaders, sendJson } from "./_lib/httpSecurity.mjs";
 import { normalizeLang, t, yesNo } from "./_lib/i18n.mjs";
 
 /** --- Utils ---------------------------------------------------- */
@@ -73,6 +75,9 @@ const esc = (s = "") =>
     .replaceAll('"', "&quot;");
 
 const OR_DASH = (v) => (v === 0 ? "0" : v ? String(v) : "—");
+const SHOULD_EXPOSE_INTERNAL_ERRORS =
+  String(process.env.EXPOSE_INTERNAL_API_ERRORS || "").toLowerCase() ===
+  "true";
 
 /** —— Din faste signatur (uforandret) —— */
 const SIGNATURE_HTML = `
@@ -95,7 +100,7 @@ const SIGNATURE_HTML = `
               <tbody>
                 <tr>
                   <td valign="top" style="margin: 0.1px; padding: 0px 12px 0px 0px; cursor: pointer;">
-                    <a href="fyrrehaven-61.dk" target="_blank">
+                    <a href="https://fyrrehaven-61.dk" target="_blank" rel="noreferrer">
                       <img src="https://media.fyrrehaven-61.dk/logo_trans_white/" width="100" alt="" style="display: block; min-width: 100px; max-width: 100%; height: auto;">
                     </a>
                   </td>
@@ -159,38 +164,53 @@ const SIGNATURE_HTML = `
 /** --- Handler -------------------------------------------------- */
 export default async function handler(req, res) {
   try {
+    applySecurityHeaders(res);
+    res.setHeader("Allow", "POST");
+
     if (req.method !== "POST") {
-      res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
+      sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });
       return;
     }
 
     const headerValidation = validateContactHeaders(req);
     if (!headerValidation.ok) {
-      res
-        .status(headerValidation.status)
-        .json({ ok: false, error: headerValidation.error, detail: headerValidation.detail });
+      sendJson(res, headerValidation.status, {
+        ok: false,
+        error: headerValidation.error,
+        detail: headerValidation.detail,
+      });
       return;
     }
 
     const requestIp = getRequesterIp(req);
-    const rateLimit = checkRateLimit(requestIp);
+    const rateLimit = checkRateLimit(requestIp, "contact");
     if (!rateLimit.ok) {
-      res
-        .status(429)
-        .setHeader("Retry-After", String(rateLimit.retryAfter || 60))
-        .json({
-          ok: false,
-          error: "RATE_LIMIT_EXCEEDED",
-          detail: `Too many submissions from this IP. Try again in ${rateLimit.retryAfter || 60} seconds.`,
-        });
+      res.setHeader("Retry-After", String(rateLimit.retryAfter || 60));
+      sendJson(res, 429, {
+        ok: false,
+        error: "RATE_LIMIT_EXCEEDED",
+        detail: `Too many submissions from this IP. Try again in ${rateLimit.retryAfter || 60} seconds.`,
+      });
+      return;
+    }
+
+    const humanValidation = validateHumanSignals(req.body);
+    if (!humanValidation.ok) {
+      sendJson(res, humanValidation.status, {
+        ok: false,
+        error: humanValidation.error,
+        detail: humanValidation.detail,
+      });
       return;
     }
 
     const payloadValidation = validateContactPayload(req.body);
     if (!payloadValidation.ok) {
-      res
-        .status(payloadValidation.status)
-        .json({ ok: false, error: payloadValidation.error, detail: payloadValidation.detail });
+      sendJson(res, payloadValidation.status, {
+        ok: false,
+        error: payloadValidation.error,
+        detail: payloadValidation.detail,
+      });
       return;
     }
 
@@ -237,7 +257,7 @@ export default async function handler(req, res) {
 
     // Validering
     if (!name || !email) {
-      res.status(400).json({
+      sendJson(res, 400, {
         ok: false,
         error: "VALIDATION_ERROR",
         detail: "Missing name or email",
@@ -245,7 +265,7 @@ export default async function handler(req, res) {
       return;
     }
     if (!isBookingReq && !isExtraServicesReq && !message) {
-      res.status(400).json({
+      sendJson(res, 400, {
         ok: false,
         error: "VALIDATION_ERROR",
         detail: "Missing message",
@@ -657,7 +677,7 @@ export default async function handler(req, res) {
     });
 
     // -------- 3) Response --------
-    res.status(200).json({
+    sendJson(res, 200, {
       ok: true,
       autoReply: {
         id: autoInfo?.messageId || null,
@@ -678,10 +698,12 @@ export default async function handler(req, res) {
     const msgLower = msg.toLowerCase();
 
     if (msg.startsWith("ENV_MISSING:")) {
-      res.status(500).json({
+      sendJson(res, 500, {
         ok: false,
         error: "ENV_MISSING",
-        detail: msg.replace("ENV_MISSING:", "Missing env: "),
+        detail: SHOULD_EXPOSE_INTERNAL_ERRORS
+          ? msg.replace("ENV_MISSING:", "Missing env: ")
+          : "The email service is not configured correctly.",
       });
       return;
     }
@@ -692,7 +714,7 @@ export default async function handler(req, res) {
       msgLower.includes("invalid login") ||
       msgLower.includes("authentication failed")
     ) {
-      res.status(502).json({
+      sendJson(res, 502, {
         ok: false,
         error: "MAIL_AUTH_FAILED",
         detail: "Mail server authentication failed.",
@@ -709,7 +731,7 @@ export default async function handler(req, res) {
       msgLower.includes("rejected") ||
       msgLower.includes("relay")
     ) {
-      res.status(502).json({
+      sendJson(res, 502, {
         ok: false,
         error: "MAIL_AUTOREPLY_FAILED",
         detail: "Mail delivery failed.",
@@ -717,6 +739,12 @@ export default async function handler(req, res) {
       return;
     }
 
-    res.status(500).json({ ok: false, error: "MAIL_ERROR", detail: "Mail delivery failed." });
+    sendJson(res, 500, {
+      ok: false,
+      error: "MAIL_ERROR",
+      detail: SHOULD_EXPOSE_INTERNAL_ERRORS
+        ? msg
+        : "Mail delivery failed.",
+    });
   }
 }

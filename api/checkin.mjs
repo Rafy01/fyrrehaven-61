@@ -1,5 +1,13 @@
 import nodemailer from "nodemailer";
 import Busboy from "busboy";
+import {
+  checkRateLimit,
+  getRequesterIp,
+  normalizeEmail,
+  validateHumanSignals,
+  validateMultipartHeaders,
+} from "./_lib/contactSecurity.mjs";
+import { applySecurityHeaders, sendJson } from "./_lib/httpSecurity.mjs";
 import { normalizeLang, t, yesNo } from "./_lib/i18n.mjs";
 
 const reqEnv = (k) => {
@@ -30,27 +38,120 @@ const esc = (s = "") =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
 
+const SHOULD_EXPOSE_INTERNAL_ERRORS =
+  String(process.env.EXPOSE_INTERNAL_API_ERRORS || "").toLowerCase() ===
+  "true";
+const MAX_UPLOAD_FILES = Number(process.env.CHECKIN_MAX_UPLOAD_FILES || 6);
+const MAX_UPLOAD_FILE_SIZE =
+  Number(process.env.CHECKIN_MAX_UPLOAD_FILE_SIZE_MB || 8) * 1024 * 1024;
+const MAX_TOTAL_UPLOAD_SIZE =
+  Number(process.env.CHECKIN_MAX_TOTAL_UPLOAD_SIZE_MB || 20) * 1024 * 1024;
+const ALLOWED_UPLOAD_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
+const ALLOWED_UPLOAD_EXTENSIONS = /\.(jpe?g|png|webp|heic|heif)$/i;
+const READING_RE = /^\d{1,10}(?:[.,]\d{1,3})?$/;
+
 // Vercel handler
 export default async function handler(req, res) {
+  applySecurityHeaders(res);
+  res.setHeader("Allow", "POST");
+
   if (req.method !== "POST") {
-    res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
+    sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });
     return;
   }
 
   try {
     const fields = {};
     const files = [];
+    let uploadError = null;
+    let totalUploadSize = 0;
 
-    const busboy = Busboy({ headers: req.headers });
+    const headerValidation = validateMultipartHeaders(req);
+    if (!headerValidation.ok) {
+      sendJson(res, headerValidation.status, {
+        ok: false,
+        error: headerValidation.error,
+        detail: headerValidation.detail,
+      });
+      return;
+    }
+
+    const requestIp = getRequesterIp(req);
+    const rateLimit = checkRateLimit(requestIp, "checkin");
+    if (!rateLimit.ok) {
+      res.setHeader("Retry-After", String(rateLimit.retryAfter || 60));
+      sendJson(res, 429, {
+        ok: false,
+        error: "RATE_LIMIT_EXCEEDED",
+        detail: `Too many submissions from this IP. Try again in ${rateLimit.retryAfter || 60} seconds.`,
+      });
+      return;
+    }
+
+    const busboy = Busboy({
+      headers: req.headers,
+      limits: {
+        files: MAX_UPLOAD_FILES,
+        fileSize: MAX_UPLOAD_FILE_SIZE,
+        fields: 30,
+      },
+    });
 
     busboy.on("file", (name, file, info) => {
+      if (uploadError) {
+        file.resume();
+        return;
+      }
+
+      const filename = String(info.filename || "").trim();
+      const contentType = String(info.mimeType || "").toLowerCase();
+      if (
+        !filename ||
+        !ALLOWED_UPLOAD_EXTENSIONS.test(filename) ||
+        !ALLOWED_UPLOAD_MIME_TYPES.has(contentType)
+      ) {
+        uploadError = {
+          status: 400,
+          error: "INVALID_FILE_TYPE",
+          detail: "Only image uploads are allowed for meter readings.",
+        };
+        file.resume();
+        return;
+      }
+
       const buffers = [];
-      file.on("data", (data) => buffers.push(data));
+      file.on("data", (data) => {
+        totalUploadSize += data.length;
+        if (totalUploadSize > MAX_TOTAL_UPLOAD_SIZE && !uploadError) {
+          uploadError = {
+            status: 413,
+            error: "PAYLOAD_TOO_LARGE",
+            detail: "The uploaded files are too large.",
+          };
+          file.resume();
+          return;
+        }
+        buffers.push(data);
+      });
+      file.on("limit", () => {
+        uploadError = {
+          status: 413,
+          error: "FILE_TOO_LARGE",
+          detail: "One of the uploaded files is too large.",
+        };
+      });
       file.on("end", () => {
+        if (uploadError) return;
         files.push({
           fieldname: name,
-          filename: info.filename,
-          contentType: info.mimeType,
+          filename,
+          contentType,
           content: Buffer.concat(buffers),
         });
       });
@@ -60,60 +161,130 @@ export default async function handler(req, res) {
       fields[name] = val;
     });
 
+    busboy.on("filesLimit", () => {
+      uploadError = {
+        status: 413,
+        error: "TOO_MANY_FILES",
+        detail: "Too many files were uploaded.",
+      };
+    });
+
+    busboy.on("fieldsLimit", () => {
+      uploadError = {
+        status: 413,
+        error: "TOO_MANY_FIELDS",
+        detail: "Too many form fields were submitted.",
+      };
+    });
+
     busboy.on("finish", async () => {
-      const {
-        name,
-        keycode,
-        email,
-        checkType,
-        elReading,
-        waterHouse,
-        waterPool,
-        comment,
-        consent,
-        lang = "da",
-      } = fields;
-      const uiLang = normalizeLang(lang);
+      try {
+        if (uploadError) {
+          sendJson(res, uploadError.status, {
+            ok: false,
+            error: uploadError.error,
+            detail: uploadError.detail,
+          });
+          return;
+        }
 
-      if (
-        !name ||
-        !email ||
-        !checkType ||
-        !elReading ||
-        !waterHouse ||
-        !consent
-      ) {
-        res.status(400).json({
-          ok: false,
-          error: "VALIDATION_ERROR",
-          detail: "Missing required fields",
+        const humanValidation = validateHumanSignals(fields);
+        if (!humanValidation.ok) {
+          sendJson(res, humanValidation.status, {
+            ok: false,
+            error: humanValidation.error,
+            detail: humanValidation.detail,
+          });
+          return;
+        }
+
+        const {
+          name,
+          keycode,
+          email,
+          checkType,
+          elReading,
+          waterHouse,
+          waterPool,
+          comment,
+          consent,
+          lang = "da",
+        } = fields;
+        const uiLang = normalizeLang(lang);
+        const emailNormalized = normalizeEmail(email);
+        const consentAccepted =
+          consent === true || String(consent || "").toLowerCase() === "true";
+
+        if (
+          !name ||
+          !email ||
+          !checkType ||
+          !elReading ||
+          !waterHouse ||
+          !consent
+        ) {
+          sendJson(res, 400, {
+            ok: false,
+            error: "VALIDATION_ERROR",
+            detail: "Missing required fields",
+          });
+          return;
+        }
+
+        if (
+          String(name).trim().length < 2 ||
+          String(name).trim().length > 120 ||
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNormalized) ||
+          String(keycode || "").trim().length > 50 ||
+          !["checkin", "checkout"].includes(String(checkType || "")) ||
+          !READING_RE.test(String(elReading || "").trim()) ||
+          !READING_RE.test(String(waterHouse || "").trim()) ||
+          (typeof waterPool !== "undefined" &&
+            String(waterPool).trim() !== "" &&
+            !READING_RE.test(String(waterPool).trim())) ||
+          String(comment || "").trim().length > 2000 ||
+          !consentAccepted
+        ) {
+          sendJson(res, 400, {
+            ok: false,
+            error: "VALIDATION_ERROR",
+            detail: "One or more fields are invalid.",
+          });
+          return;
+        }
+
+        if (!files.length) {
+          sendJson(res, 400, {
+            ok: false,
+            error: "MISSING_FILES",
+            detail: "At least one meter image is required.",
+          });
+          return;
+        }
+
+        // SMTP setup
+        const host = reqEnv("SMTP_HOST");
+        const port = Number(process.env.SMTP_PORT || 587);
+        const from = reqEnv("MAIL_FROM");
+        const user = normalizeSmtpUser(process.env.SMTP_USER || from, from);
+        const pass = reqEnvAny("SMTP_PASS", "SMTP_PASSWORD");
+        const to = reqEnv("MAIL_TO");
+
+        const transporter = nodemailer.createTransport({
+          host,
+          port,
+          secure: port === 465,
+          auth: { user, pass },
         });
-        return;
-      }
 
-      // SMTP setup
-      const host = reqEnv("SMTP_HOST");
-      const port = Number(process.env.SMTP_PORT || 587);
-      const from = reqEnv("MAIL_FROM");
-      const user = normalizeSmtpUser(process.env.SMTP_USER || from, from);
-      const pass = reqEnvAny("SMTP_PASS", "SMTP_PASSWORD");
-      const to = reqEnv("MAIL_TO");
+        const typeKey = checkType === "checkin" ? "checkin" : "checkout";
+        const subject = t(uiLang, "checkin.subject", {
+          type: t(uiLang, `checkin.type.${typeKey}`),
+          name,
+        });
+        const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
 
-      const transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure: port === 465,
-        auth: { user, pass },
-      });
-
-      const typeKey = checkType === "checkin" ? "checkin" : "checkout";
-      const subject = t(uiLang, "checkin.subject", {
-        type: t(uiLang, `checkin.type.${typeKey}`),
-        name,
-      });
-      const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
-
-      const html = `
+        const html = `
         <div style="font-family:Arial,sans-serif;line-height:1.5">
           <h2>${esc(subject)}</h2>
           <p><b>${esc(t(uiLang, "checkin.fields.name"))}:</b> ${esc(name)}</p>
@@ -135,7 +306,7 @@ export default async function handler(req, res) {
         </div>
       `;
 
-      const text = `
+        const text = `
 ${t(uiLang, "checkin.fields.name")}: ${name}
 ${t(uiLang, "checkin.fields.email")}: ${email}
 ${t(uiLang, "checkin.fields.keycode")}: ${keycode}
@@ -151,39 +322,82 @@ ${t(uiLang, "checkin.fields.consent")}: ${yesNo(Boolean(consent), uiLang)}
 ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
       `;
 
-      await transporter.sendMail({
-        from,
-        to,
-        subject,
-        html,
-        text,
-        attachments: files.map((file) => ({
-          filename: file.filename,
-          content: file.content,
-          contentType: file.contentType,
-        })),
-      });
+        await transporter.sendMail({
+          from,
+          to,
+          subject,
+          html,
+          text,
+          attachments: files.map((file) => ({
+            filename: file.filename,
+            content: file.content,
+            contentType: file.contentType,
+          })),
+        });
 
-      res.status(200).json({ ok: true });
+        sendJson(res, 200, { ok: true });
+      } catch (err) {
+        console.error("MAIL_ERROR", err?.response || err);
+        const msg =
+          typeof err === "object" && err !== null && "message" in err
+            ? String(err.message)
+            : String(err);
+
+        if (msg.startsWith("ENV_MISSING:")) {
+          sendJson(res, 500, {
+            ok: false,
+            error: "ENV_MISSING",
+            detail: SHOULD_EXPOSE_INTERNAL_ERRORS
+              ? msg.replace("ENV_MISSING:", "Missing env: ")
+              : "The email service is not configured correctly.",
+          });
+          return;
+        }
+
+        sendJson(res, 500, {
+          ok: false,
+          error: "MAIL_ERROR",
+          detail: SHOULD_EXPOSE_INTERNAL_ERRORS
+            ? msg
+            : "The message could not be sent right now.",
+        });
+      }
+    });
+
+    busboy.on("error", (err) => {
+      console.error("BUSBOY_ERROR", err);
+      sendJson(res, 400, {
+        ok: false,
+        error: "INVALID_MULTIPART_PAYLOAD",
+        detail: "The upload could not be processed.",
+      });
     });
 
     req.pipe(busboy);
   } catch (err) {
-    console.error("MAIL_ERROR", err?.response || err);
+    console.error("CHECKIN_HANDLER_ERROR", err?.response || err);
     const msg =
       typeof err === "object" && err !== null && "message" in err
         ? String(err.message)
         : String(err);
 
     if (msg.startsWith("ENV_MISSING:")) {
-      res.status(500).json({
+      sendJson(res, 500, {
         ok: false,
         error: "ENV_MISSING",
-        detail: msg.replace("ENV_MISSING:", "Missing env: "),
+        detail: SHOULD_EXPOSE_INTERNAL_ERRORS
+          ? msg.replace("ENV_MISSING:", "Missing env: ")
+          : "The email service is not configured correctly.",
       });
       return;
     }
 
-    res.status(500).json({ ok: false, error: "MAIL_ERROR", detail: msg });
+    sendJson(res, 500, {
+      ok: false,
+      error: "MAIL_ERROR",
+      detail: SHOULD_EXPOSE_INTERNAL_ERRORS
+        ? msg
+        : "The message could not be sent right now.",
+    });
   }
 }

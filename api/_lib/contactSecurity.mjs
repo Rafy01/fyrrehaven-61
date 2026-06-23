@@ -11,8 +11,12 @@ const requestCounts = new Map();
 const getRateLimitWindowMs = () =>
   Number(process.env.CONTACT_RATE_WINDOW_MS || 60 * 60 * 1000);
 const getRateLimitMax = () => Number(process.env.CONTACT_RATE_LIMIT || 10);
+const getMinFormFillMs = () =>
+  Number(process.env.CONTACT_MIN_FORM_FILL_MS || 1500);
+const getMaxFormAgeMs = () =>
+  Number(process.env.CONTACT_MAX_FORM_AGE_MS || 12 * 60 * 60 * 1000);
 
-function getHeader(req, name) {
+export function getHeader(req, name) {
   return String(req.headers?.[name.toLowerCase()] ?? "").trim();
 }
 
@@ -111,6 +115,94 @@ export function validateContactHeaders(req) {
       status: 403,
       error: "FORBIDDEN_USER_AGENT",
       detail: "Automated crawlers are not allowed to submit contact forms.",
+    };
+  }
+
+  return { ok: true };
+}
+
+export function validateMultipartHeaders(req) {
+  const contentType = getHeader(req, "content-type");
+  if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
+    return {
+      ok: false,
+      status: 415,
+      error: "UNSUPPORTED_MEDIA_TYPE",
+      detail: "Content-Type must be multipart/form-data",
+    };
+  }
+
+  if (!isOriginAllowed(req)) {
+    return {
+      ok: false,
+      status: 403,
+      error: "FORBIDDEN_ORIGIN",
+      detail: "Origin or Referer is not allowed for submissions.",
+    };
+  }
+
+  if (isBlockedBotUserAgent(req)) {
+    return {
+      ok: false,
+      status: 403,
+      error: "FORBIDDEN_USER_AGENT",
+      detail: "Automated crawlers are not allowed to submit forms.",
+    };
+  }
+
+  return { ok: true };
+}
+
+export function validateHumanSignals(body) {
+  if (!body || typeof body !== "object") {
+    return {
+      ok: false,
+      status: 400,
+      error: "INVALID_PAYLOAD",
+      detail: "Request body must be an object.",
+    };
+  }
+
+  const honeypotValues = [
+    body.website,
+    body.company,
+    body.faxNumber,
+    body.url,
+  ];
+  if (honeypotValues.some((value) => String(value || "").trim() !== "")) {
+    return {
+      ok: false,
+      status: 400,
+      error: "BOT_DETECTED",
+      detail: "Hidden fields must be empty.",
+    };
+  }
+
+  const startedAt = Number(body.formStartedAt);
+  if (!Number.isFinite(startedAt) || startedAt <= 0) {
+    return {
+      ok: false,
+      status: 400,
+      error: "INVALID_FORM_STATE",
+      detail: "Form state is missing or invalid.",
+    };
+  }
+
+  const age = Date.now() - startedAt;
+  if (age < getMinFormFillMs()) {
+    return {
+      ok: false,
+      status: 400,
+      error: "FORM_SUBMITTED_TOO_FAST",
+      detail: "Form was submitted too quickly.",
+    };
+  }
+  if (age > getMaxFormAgeMs()) {
+    return {
+      ok: false,
+      status: 400,
+      error: "FORM_EXPIRED",
+      detail: "Form has expired. Please reload and try again.",
     };
   }
 
@@ -371,13 +463,21 @@ export function validateContactPayload(body) {
   return { ok: true };
 }
 
-export function checkRateLimit(ip) {
+export function checkRateLimit(ip, scope = "contact") {
   const now = Date.now();
   const windowMs = getRateLimitWindowMs();
   const max = getRateLimitMax();
-  const record = requestCounts.get(ip);
+  const key = `${scope}:${ip}`;
+
+  if (requestCounts.size > 5000) {
+    for (const [recordKey, value] of requestCounts) {
+      if (!value || value.expiresAt <= now) requestCounts.delete(recordKey);
+    }
+  }
+
+  const record = requestCounts.get(key);
   if (!record || record.expiresAt <= now) {
-    requestCounts.set(ip, { count: 1, expiresAt: now + windowMs });
+    requestCounts.set(key, { count: 1, expiresAt: now + windowMs });
     return { ok: true, remaining: max - 1 };
   }
 

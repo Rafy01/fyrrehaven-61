@@ -34,6 +34,7 @@ export default function CheckInOut() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0); // 🔁 Brugt til at nulstille formen
+  const [formStartedAt, setFormStartedAt] = useState(() => String(Date.now()));
 
   useEffect(() => {
     setPoolOpen(isPoolOpen());
@@ -95,6 +96,7 @@ export default function CheckInOut() {
 
       setSuccess(true);
       setFormKey((k) => k + 1); // 🧼 Nulstil formularen
+      setFormStartedAt(String(Date.now()));
     } catch (err: any) {
       console.error("Submit error:", err);
       setError(err?.message || tg("checkInOutPage.fallbackError"));
@@ -104,6 +106,31 @@ export default function CheckInOut() {
   };
 
   const fields: Field[] = [
+    {
+      type: "hidden",
+      name: "website",
+      value: "",
+    },
+    {
+      type: "hidden",
+      name: "company",
+      value: "",
+    },
+    {
+      type: "hidden",
+      name: "faxNumber",
+      value: "",
+    },
+    {
+      type: "hidden",
+      name: "formStartedAt",
+      value: formStartedAt,
+    },
+    {
+      type: "hidden",
+      name: "lang",
+      value: lang,
+    },
     {
       type: "text",
       name: "name",
