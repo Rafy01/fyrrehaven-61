@@ -16,6 +16,7 @@ import PracticalInfo from "../../components/PracticalInfo";
 import Facilities from "../../components/Facilities";
 import { getSeoMeta } from "../../i18n/seo";
 import type { Lang } from "../../lib/lang";
+import { buildVacationRentalSchema } from "../../lib/structuredData";
 
 export default function House({ lang }: { lang: Lang }) {
   const { t } = useTranslation("house");
@@ -23,38 +24,17 @@ export default function House({ lang }: { lang: Lang }) {
     t(key, { returnObjects: true }) as unknown as string[];
   const Meta = getSeoMeta(lang, "house");
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "VacationRental",
-    name: "Fyrrehaven 61 – House",
-    description: Meta.description,
+  const jsonLd = buildVacationRentalSchema({
     url: `https://fyrrehaven-61.dk${pathOf(lang, "house")}`,
-    maximumAttendeeCapacity: 10,
-    amenityFeature: [
-      {
-        "@type": "LocationFeatureSpecification",
-        name: t("jsonLd.outdoorPool"),
-        value: true,
-        description: t("jsonLd.poolSeason"),
-      },
-      {
-        "@type": "LocationFeatureSpecification",
-        name: t("jsonLd.hotTub"),
-        value: true,
-      },
-      {
-        "@type": "LocationFeatureSpecification",
-        name: t("jsonLd.sauna"),
-        value: true,
-      },
-      {
-        "@type": "LocationFeatureSpecification",
-        name: t("jsonLd.beachForest"),
-        value: true,
-      },
+    description: Meta.description,
+    name: "Fyrrehaven 61 – House",
+    amenities: [
+      { name: t("jsonLd.outdoorPool"), description: t("jsonLd.poolSeason") },
+      { name: t("jsonLd.hotTub") },
+      { name: t("jsonLd.sauna") },
+      { name: t("jsonLd.beachForest") },
     ],
-    address: { "@type": "PostalAddress", addressCountry: "DK" },
-  };
+  });
 
   return (
     <>

@@ -78,6 +78,7 @@ export default function ExtraServices({ lang }: { lang: Lang }) {
   const [sent, setSent] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const datePickerRef = React.useRef<HTMLDivElement>(null);
+  const formStartedAtRef = React.useRef<number>(Date.now());
 
   React.useEffect(() => {
     function onPointerDown(event: PointerEvent) {
@@ -263,6 +264,10 @@ export default function ExtraServices({ lang }: { lang: Lang }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lang,
+          website: "",
+          company: "",
+          faxNumber: "",
+          formStartedAt: formStartedAtRef.current,
           purpose: "extra-services",
           context: "extra-services",
           name: trimmedName,

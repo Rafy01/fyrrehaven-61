@@ -6,7 +6,6 @@ import { pathOf } from "../../lib/routes";
 import { getSeoMeta } from "../../i18n/seo";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
-import PoolTemp from "../../components/PoolTemp";
 
 export default function Faq({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
@@ -117,8 +116,6 @@ export default function Faq({ lang }: { lang: Lang }) {
       <Container size="3">
         <Box py="6" />
       </Container>
-
-      <PoolTemp />
     </>
   );
 }

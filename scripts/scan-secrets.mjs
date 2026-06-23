@@ -7,6 +7,7 @@ const allowlistedLinePatterns = [
   /placeholder/i,
   /example/i,
   /VITE_CHAT_DEBUG_SHA256=/,
+  /^\s*"integrity":\s*"sha(?:1|256|512)-/i,
 ];
 
 const secretPatterns = [

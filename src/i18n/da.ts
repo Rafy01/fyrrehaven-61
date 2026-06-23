@@ -3,19 +3,6 @@ export const da = {
     "brand": "Fyrrehaven 61",
     "bookNow": "Book via Airbnb",
     "sleepsX": "Plads til {{count}} personer",
-    "humanCheck": {
-      "eyebrow": "Hurtigt sikkerhedstjek",
-      "title": "Bekræft at du er et menneske",
-      "description": "Vi beskytter hjemmesiden mod automatiseret trafik, så den er hurtig og tryg for rigtige gæster.",
-      "checkbox": "Jeg er et menneske",
-      "continue": "Fortsæt til hjemmesiden",
-      "preparing": "Gør klar...",
-      "verifying": "Tjekker...",
-      "enterpriseNote": "Sikkerhedstjekket kører automatisk i baggrunden, når du fortsætter.",
-      "finePrint": "Vi husker kun dette tjek i denne browser i 30 dage. Der bruges ingen statistik- eller marketingcookies.",
-      "recaptchaError": "Google reCAPTCHA kunne ikke indlæses. Tjek forbindelsen, og prøv igen.",
-      "error": "Tjekket kunne ikke gennemføres. Prøv igen."
-    },
     "form": {
       "selectPlaceholder": "Vælg",
       "chooseFile": "Vælg fil",
@@ -1184,11 +1171,17 @@ export const da = {
         "label": "Nødvendige",
         "description": "Påkrævet for at siden fungerer. Disse cookies kan ikke fravælges.",
         "tableCaption": "Nødvendige cookies"
+      },
+      "statistics": {
+        "title": "Statistikcookies",
+        "label": "Statistik",
+        "description": "Valgfri statistik, som hjælper os med at forstå hvordan siden bruges. De indlæses kun hvis du tillader dem.",
+        "tableCaption": "Statistikcookies"
       }
     },
     "preferences": {
       "introTitle": "Cookieindstillinger",
-      "introDescription": "Fyrrehaven 61 bruger lige nu kun nødvendige cookies. De er altid aktive, fordi hjemmesiden skal bruge dem for at fungere."
+      "introDescription": "Nødvendige cookies er altid aktive, fordi hjemmesiden skal bruge dem for at fungere. Hvis vi aktiverer statistik, kører den kun efter dit samtykke."
     },
     "table": {
       "name": "Navn",
@@ -1303,7 +1296,7 @@ export const da = {
       },
       "cookies": {
         "title": "Cookies og lignende teknologier",
-        "body": "Vi bruger lige nu kun teknisk nødvendige cookies/lagring for at levere siden sikkert og huske dine cookieindstillinger. Vi anvender ikke statistik-, marketing- eller trackingcookies."
+        "body": "Vi bruger teknisk nødvendige cookies/lagring for at levere siden sikkert og huske dine cookieindstillinger. Valgfri statistik kører kun hvis du aktivt tillader statistikcookies."
       },
       "rights": {
         "title": "Dine rettigheder",
