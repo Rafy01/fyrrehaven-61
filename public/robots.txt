@@ -2,6 +2,18 @@
 # Allow search engines to crawl the public marketing site,
 # but avoid indexing backend, API and guest pages.
 
+User-agent: Googlebot
+Allow: /
+Disallow: /api
+Disallow: /debug
+Disallow: /guest
+
+User-agent: Googlebot-Image
+Allow: /
+Disallow: /api
+Disallow: /debug
+Disallow: /guest
+
 User-agent: *
 Allow: /
 Disallow: /api
