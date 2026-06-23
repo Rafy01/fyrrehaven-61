@@ -15,6 +15,11 @@ import "vanilla-cookieconsent/dist/cookieconsent.css";
 import "../components/CookieButton/CookieConsentTheme.css";
 import MessengerButton from "../components/MessengerButton";
 import { setupCookieConsent } from "../lib/cookieConsent";
+import {
+  isAnalyticsConfigured,
+  syncAnalyticsConsent,
+  trackPageView,
+} from "../lib/analytics";
 
 export type ResolvedAppearance = "light" | "dark";
 
@@ -113,6 +118,20 @@ export default function App({
   useEffect(() => {
     void setupCookieConsent(lang, i18n);
   }, [lang, i18n]);
+
+  useEffect(() => {
+    if (!isAnalyticsConfigured()) return;
+
+    const handleConsentChange = () => {
+      syncAnalyticsConsent();
+      trackPageView(location.pathname + location.search, document.title);
+    };
+
+    handleConsentChange();
+    window.addEventListener("fh61:consentchange", handleConsentChange);
+    return () =>
+      window.removeEventListener("fh61:consentchange", handleConsentChange);
+  }, [location.pathname, location.search]);
 
   return (
     <Theme accentColor="gray" radius="large" appearance={resolvedAppearance}>

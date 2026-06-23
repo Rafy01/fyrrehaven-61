@@ -1,6 +1,7 @@
 // src/lib/Head.tsx
 import { useEffect } from "react";
 import { site } from "./siteMeta";
+import { buildOrganizationSchema } from "./structuredData";
 
 import type { Lang } from "./lang";
 
@@ -256,6 +257,7 @@ export default function Head({
           logo: site.publisher.logo,
         },
       },
+      buildOrganizationSchema(),
       {
         "@context": "https://schema.org",
         "@type": "WebPage",

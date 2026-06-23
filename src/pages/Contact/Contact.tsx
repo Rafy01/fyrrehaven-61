@@ -28,6 +28,11 @@ export default function ContactPage({ lang }: { lang: Lang }) {
           name: seo.title,
           description: seo.description,
           url: `https://fyrrehaven-61.dk${path}`,
+          about: {
+            "@type": "LodgingBusiness",
+            name: "Fyrrehaven 61",
+            url: "https://fyrrehaven-61.dk",
+          },
         }}
         robots={seo.robots}
         keywords={seo.keywords}

@@ -7,6 +7,7 @@ import { pathOf } from "../../lib/routes";
 import { getSeoMeta } from "../../i18n/seo";
 import type { Lang } from "../../lib/lang";
 import styles from "./Book.module.css";
+import { buildLodgingBusinessSchema } from "../../lib/structuredData";
 
 
 // Hvis du har en index-barrel for AvailabilityCalendar, kan du bruge
@@ -22,24 +23,10 @@ export default function Book({ lang }: { lang: Lang }) {
   const seo = getSeoMeta(lang, "book");
 
   // Struktureret data
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "LodgingBusiness",
-    name: "Fyrrehaven 61",
+  const jsonLd = buildLodgingBusinessSchema({
     url: `https://fyrrehaven-61.dk${path}`,
     description: seo.description,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: "Fyrrehaven 61",
-      postalCode: "8585",
-      addressLocality: "Glesborg",
-      addressCountry: "DK",
-    },
-    potentialAction: {
-      "@type": "ReserveAction",
-      target: `https://fyrrehaven-61.dk${path}`,
-    },
-  };
+  });
 
   /** ——— Hero ——— */
   const heroTitle = t("hero.title");

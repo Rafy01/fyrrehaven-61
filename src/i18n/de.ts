@@ -1168,11 +1168,17 @@ export const de = {
         "label": "Notwendige",
         "description": "Erforderlich, damit die Website funktioniert. Diese Cookies können nicht deaktiviert werden.",
         "tableCaption": "Notwendige Cookies"
+      },
+      "statistics": {
+        "title": "Statistik-Cookies",
+        "label": "Statistik",
+        "description": "Optionale Analyse-Cookies, die uns helfen zu verstehen, wie die Website genutzt wird. Sie werden nur geladen, wenn Sie zustimmen.",
+        "tableCaption": "Statistik-Cookies"
       }
     },
     "preferences": {
       "introTitle": "Cookie-Einstellungen",
-      "introDescription": "Fyrrehaven 61 verwendet derzeit nur notwendige Cookies. Diese sind immer aktiv, weil die Website sie zum Funktionieren benötigt."
+      "introDescription": "Notwendige Cookies sind immer aktiv, weil die Website sie zum Funktionieren benötigt. Falls wir Analysen aktivieren, laufen diese nur nach Ihrer Zustimmung."
     },
     "table": {
       "name": "Name",
@@ -1287,7 +1293,7 @@ export const de = {
       },
       "cookies": {
         "title": "Cookies und ähnliche Technologien",
-        "body": "Wir verwenden derzeit nur technisch notwendige Cookies/Speicherungen, um die Website sicher bereitzustellen und Ihre Cookie-Einstellungen zu speichern. Wir verwenden keine Statistik-, Marketing- oder Tracking-Cookies."
+        "body": "Wir verwenden technisch notwendige Cookies/Speicherungen, um die Website sicher bereitzustellen und Ihre Cookie-Einstellungen zu speichern. Optionale Analysen laufen nur, wenn Sie Statistik-Cookies aktiv erlauben."
       },
       "rights": {
         "title": "Ihre Rechte",
