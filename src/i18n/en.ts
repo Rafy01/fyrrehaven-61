@@ -3,19 +3,6 @@ export const en = {
     "brand": "Fyrrehaven 61",
     "bookNow": "Book on Airbnb",
     "sleepsX": "Sleeps {{count}} guests",
-    "humanCheck": {
-      "eyebrow": "Quick security check",
-      "title": "Confirm you are human",
-      "description": "We protect the website from automated traffic so it stays fast and safe for real guests.",
-      "checkbox": "I am human",
-      "continue": "Continue to the website",
-      "preparing": "Getting ready...",
-      "verifying": "Checking...",
-      "enterpriseNote": "The security check runs automatically in the background when you continue.",
-      "finePrint": "We only remember this check in this browser for 30 days. No analytics or marketing cookies are used.",
-      "recaptchaError": "Google reCAPTCHA could not load. Check the connection and try again.",
-      "error": "The check could not be completed. Please try again."
-    },
     "form": {
       "selectPlaceholder": "Choose",
       "chooseFile": "Choose file",
