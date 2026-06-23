@@ -129,6 +129,17 @@ function defaultRobotsString(): string {
   });
 }
 
+function googleSiteVerificationToken(): string {
+  const token =
+    (import.meta as { env?: { VITE_GOOGLE_SITE_VERIFICATION?: string } })?.env
+      ?.VITE_GOOGLE_SITE_VERIFICATION ||
+    (typeof process !== "undefined"
+      ? process.env.VITE_GOOGLE_SITE_VERIFICATION
+      : "");
+
+  return String(token || "").trim();
+}
+
 function robotsToString(r: RobotsOptions): string {
   const parts: string[] = [];
   parts.push(r.index === false ? "noindex" : "index");
@@ -196,6 +207,10 @@ export default function Head({
     upsertMeta({ name: "robots" }, robotsStr);
     upsertMeta({ name: "googlebot" }, robotsStr);
     upsertMeta({ name: "bingbot" }, robotsStr);
+    upsertMeta(
+      { name: "google-site-verification" },
+      googleSiteVerificationToken() || undefined
+    );
 
     // Keywords (fjern hvis tom/ikke angivet)
     upsertMeta(
