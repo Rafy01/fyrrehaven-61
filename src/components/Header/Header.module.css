@@ -348,6 +348,10 @@
 }
 
 .menuBtn:focus-visible {
+  outline: none;
+}
+
+:global(html[data-input-modality="keyboard"]) .menuBtn:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }

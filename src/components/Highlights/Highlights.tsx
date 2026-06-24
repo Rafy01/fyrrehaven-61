@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Heading, Text } from "@radix-ui/themes";
 import styles from "./Highlights.module.css";
 import Buttons from "../Buttons";
+import LazyImage from "../LazyImage";
 
 /** Navigation-union pr. kort */
 type LinkLike =
@@ -126,7 +127,7 @@ export default function Highlights({
                       </div>
                     ) : (
                       <div className={styles.imgFrame}>
-                        <img
+                        <LazyImage
                           src={it.media.src}
                           alt={it.media.alt ?? ""}
                           className={styles.img}
