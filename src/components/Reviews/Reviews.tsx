@@ -59,7 +59,7 @@ export default function Reviews({
   subtitle,
   maxCards,
   average,
-  showSchema = true,
+  showSchema = false,
 }: ReviewsProps) {
   const { t } = useTranslation("reviews");
   const [expandedReviews, setExpandedReviews] = useState<Set<string>>(
@@ -117,23 +117,24 @@ export default function Reviews({
     el.scrollBy({ left: dx, behavior: "smooth" });
   };
 
-  // JSON-LD (valgfrí) – bruger dit manuelle gennemsnit hvis sat
   const jsonLd = showSchema
     ? {
         "@context": "https://schema.org",
-        "@type": "VacationRental",
-        name: "Fyrrehaven 61",
-        url: "https://fyrrehaven-61.dk",
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: Number(avgToShow.toFixed(1)),
-          reviewCount: reviews.length, // tælles stadig i schema, men ikke vist i UI
-        },
-        review: reviews.map((r) => ({
+        "@graph": reviews.map((r) => ({
           "@type": "Review",
+          itemReviewed: {
+            "@type": "VacationRental",
+            "@id": "https://fyrrehaven-61.dk#vacation-rental",
+            name: "Fyrrehaven 61",
+          },
           reviewBody: getReviewText(r),
           datePublished: r.date,
-          reviewRating: { "@type": "Rating", ratingValue: r.rating },
+          reviewRating: {
+            "@type": "Rating",
+            ratingValue: r.rating,
+            bestRating: 5,
+            worstRating: 1,
+          },
           author: { "@type": "Person", name: r.author },
         })),
       }

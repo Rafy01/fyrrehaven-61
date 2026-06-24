@@ -279,6 +279,7 @@ export default function Home({ lang }: { lang: Lang }) {
       <Reviews
         lang={lang}
         average={4.8}
+        showSchema={false}
       />
       <PracticalInfo
         lang={lang}

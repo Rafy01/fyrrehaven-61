@@ -27,7 +27,6 @@ export default function House({ lang }: { lang: Lang }) {
   const jsonLd = buildVacationRentalSchema({
     url: `https://fyrrehaven-61.dk${pathOf(lang, "house")}`,
     description: Meta.description,
-    name: "Fyrrehaven 61 – House",
     amenities: [
       { name: t("jsonLd.outdoorPool"), description: t("jsonLd.poolSeason") },
       { name: t("jsonLd.hotTub") },
