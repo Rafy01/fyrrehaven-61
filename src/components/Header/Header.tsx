@@ -63,6 +63,7 @@ export default function Header({
   const [isDraggingMenu, setIsDraggingMenu] = useState(false);
   const [isMenuAnimationSettled, setIsMenuAnimationSettled] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuDrag = useRef({
     active: false,
     pointerId: -1,
@@ -126,6 +127,36 @@ useEffect(() => {
       menuDrag.current.moved = false;
     }
   }, [open]);
+
+  useEffect(() => {
+    const resetTransientMenuState = () => {
+      setOpen(false);
+      setLangOpen(false);
+      setDragOffset(0);
+      setIsTrackingMenuDrag(false);
+      setIsDraggingMenu(false);
+      setIsMenuAnimationSettled(false);
+      menuDrag.current.active = false;
+      menuDrag.current.offset = 0;
+      menuDrag.current.moved = false;
+
+      const activeElement = document.activeElement;
+      if (
+        activeElement instanceof HTMLElement &&
+        (activeElement === menuButtonRef.current ||
+          activeElement === panelRef.current)
+      ) {
+        activeElement.blur();
+      }
+    };
+
+    const onPageShow = () => {
+      resetTransientMenuState();
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -505,6 +536,7 @@ useEffect(() => {
             aria-expanded={open}
             aria-controls="mobile-menu-panel"
             data-open={open}
+            ref={menuButtonRef}
             onClick={() => setOpen((v) => !v)}
           >
             <span className={styles.burger} aria-hidden="true" />

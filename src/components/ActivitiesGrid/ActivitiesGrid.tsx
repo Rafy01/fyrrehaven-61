@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import styles from "./ActivitiesGrid.module.css";
 import { chooseLang, type Lang } from "../../lib/lang";
 import type { TagId } from "../../lib/tags";
+import LazyImage from "../LazyImage";
 
 export type Activity = {
   id: string;
@@ -65,7 +66,7 @@ export default function ActivitiesGrid({
         const CardInner = (
           <>
             <figure className={styles.media} aria-hidden="true">
-              <img
+              <LazyImage
                 src={it.image}
                 alt=""
                 loading="lazy"
