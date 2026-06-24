@@ -5,6 +5,12 @@ const IMAGE_SET = [
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3724.jpg",
   "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3807.webp",
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3736.webp",
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3720.webp",
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3731.webp",
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3692.webp",
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3696.webp",
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3709.webp",
 ];
 
 const SOCIAL_LINKS = [
@@ -34,6 +40,51 @@ const aggregateRating = {
   bestRating: 5,
   worstRating: 1,
 };
+
+const reviewSchema = reviews
+  .filter((review) => review.textEn.replace(/[.\s]/g, "").length > 0)
+  .slice(0, 8)
+  .map((review) => ({
+    "@type": "Review",
+    reviewBody: review.textEn,
+    datePublished: review.date,
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: review.rating,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    author: {
+      "@type": "Person",
+      name: review.author,
+    },
+  }));
+
+const containsPlace = [
+  {
+    "@type": "Accommodation",
+    name: "Main house",
+    occupancy: {
+      "@type": "QuantitativeValue",
+      maxValue: 10,
+    },
+  },
+  {
+    "@type": "Accommodation",
+    name: "4 bedrooms",
+    numberOfRooms: 4,
+  },
+  {
+    "@type": "Accommodation",
+    name: "2 bathrooms",
+    numberOfBathroomsTotal: 2,
+  },
+  {
+    "@type": "Place",
+    name: "Pool and wellness area",
+    description: "Heated outdoor pool, electric hot tub, and electric sauna.",
+  },
+];
 
 function baseAmenity(name: string, description?: string) {
   return {
@@ -72,6 +123,13 @@ export function buildVacationRentalSchema({
   return {
     "@context": "https://schema.org",
     "@type": "VacationRental",
+    "@id": `${site.baseUrl}#vacation-rental`,
+    identifier: {
+      "@type": "PropertyValue",
+      propertyID: "fyrrehaven-61",
+      value: "fyrrehaven-61",
+    },
+    additionalType: "https://schema.org/House",
     name,
     description,
     url,
@@ -84,6 +142,7 @@ export function buildVacationRentalSchema({
     },
     sameAs: SOCIAL_LINKS,
     aggregateRating,
+    review: reviewSchema,
     checkinTime: "16:00",
     checkoutTime: "10:00",
     occupancy: {
@@ -92,6 +151,7 @@ export function buildVacationRentalSchema({
     },
     numberOfBedrooms: 4,
     numberOfBathroomsTotal: 2,
+    containsPlace,
     amenityFeature: amenities.map((amenity) =>
       baseAmenity(amenity.name, amenity.description),
     ),
