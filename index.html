@@ -9,6 +9,50 @@
   <meta name="author" content="Fyrrehaven 61 | Rafy Marbin" />
   <meta name="publisher" content="Fyrrehaven 61 | www.rafy.marbin.dk | www.web365.dk" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    html,
+    body,
+    #root {
+      min-height: 100%;
+    }
+
+    html[data-theme="light"],
+    html[data-theme="light"] body {
+      background: #fafaf7;
+      color: #1b1b1b;
+    }
+
+    html[data-theme="dark"],
+    html[data-theme="dark"] body {
+      background: #08090b;
+      color: #f7f4ea;
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var storageKey = "fyrrehaven-appearance";
+        var stored = window.localStorage.getItem(storageKey);
+        var prefersDark =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var appearance =
+          stored === "light" || stored === "dark"
+            ? stored
+            : prefersDark
+              ? "dark"
+              : "light";
+        var html = document.documentElement;
+        html.dataset.theme = appearance;
+        html.dataset.appearancePreference = appearance;
+        html.style.colorScheme = appearance;
+      } catch (_error) {
+        document.documentElement.dataset.theme = "light";
+        document.documentElement.style.colorScheme = "light";
+      }
+    })();
+  </script>
 
 </head>
 
