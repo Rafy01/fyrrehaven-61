@@ -237,7 +237,7 @@ export default async function handler(req, res) {
       // bookingfelter
       guests, // { adults, children, babies }
       stayPurpose,
-      selection, // { start, endExclusive, nights, baseNightsTotalDKK, cleaningFeeDKK, totalWithCleaningDKK, totalWithCleaningAndExtrasDKK, breakdown[] }
+      selection, // { start, endExclusive, nights, baseNightsTotalDKK, cleaningFeeDKK, totalWithCleaningDKK, airbnbServiceFeeSavingsDKK, totalAfterAirbnbDiscountDKK, breakdown[] }
 
       // NEW: ekstra services
       extras, // { stayDate, items: [{id, qty, unitPriceDKK, label:{da,en}}], totalDKK }
@@ -353,7 +353,7 @@ export default async function handler(req, res) {
               typeof selection?.nights === "number" ? selection.nights : "—"
             } ${esc(t(uiLang, "contact.nights"))})<br/>
              ${esc(t(uiLang, "contact.estimatedTotal"))}: ${fmtMoney(
-               selection?.totalWithCleaningDKK,
+               selection?.totalAfterAirbnbDiscountDKK ?? selection?.totalWithCleaningDKK,
                uiLang
              )}</p>`
           : ""
@@ -387,7 +387,10 @@ export default async function handler(req, res) {
           } ${t(uiLang, "contact.nights")})\n${t(
             uiLang,
             "contact.estimatedTotal"
-          )}: ${fmtMoney(selection?.totalWithCleaningDKK, uiLang)}\n\n`
+          )}: ${fmtMoney(
+            selection?.totalAfterAirbnbDiscountDKK ?? selection?.totalWithCleaningDKK,
+            uiLang
+          )}\n\n`
         : "") +
       `${t(uiLang, "contact.replyText")}\n\n${siteName}\nhttps://fyrrehaven-61.dk`;
 
@@ -422,7 +425,14 @@ export default async function handler(req, res) {
       typeof selection?.nights === "number" ? String(selection.nights) : "—";
     const nightsPriceStr = fmtMoney(selection?.baseNightsTotalDKK, adminLang);
     const cleaningStr = fmtMoney(selection?.cleaningFeeDKK, adminLang);
-    const totalStr = fmtMoney(selection?.totalWithCleaningDKK, adminLang);
+    const airbnbSavingsStr =
+      selection?.airbnbServiceFeeSavingsDKK != null
+        ? `- ${fmtMoney(selection.airbnbServiceFeeSavingsDKK, adminLang)}`
+        : "—";
+    const totalStr = fmtMoney(
+      selection?.totalAfterAirbnbDiscountDKK ?? selection?.totalWithCleaningDKK,
+      adminLang
+    );
 
     // Extras
     const extrasItems = extrasItemsRaw;
@@ -434,10 +444,10 @@ export default async function handler(req, res) {
 
     const grandInclExtras =
       selection &&
-      typeof selection.totalWithCleaningDKK === "number" &&
+      typeof (selection.totalAfterAirbnbDiscountDKK ?? selection.totalWithCleaningDKK) === "number" &&
       extras &&
       typeof extras.totalDKK === "number"
-        ? selection.totalWithCleaningDKK + extras.totalDKK
+        ? (selection.totalAfterAirbnbDiscountDKK ?? selection.totalWithCleaningDKK) + extras.totalDKK
         : null;
 
     const extrasHtml =
@@ -514,7 +524,13 @@ export default async function handler(req, res) {
         </tr>
         <tr>
           <td style="padding:4px 8px"><b>${
-            esc(adminT("contact.estimatedTotal"))
+            esc(adminT("contact.airbnbServiceFeeSavings"))
+          }</b></td>
+          <td style="padding:4px 8px">${airbnbSavingsStr}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            esc(adminT("contact.totalAfterDiscount"))
           }</b></td>
           <td style="padding:4px 8px">${totalStr}</td>
         </tr>

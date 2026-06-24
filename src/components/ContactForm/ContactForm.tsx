@@ -222,6 +222,8 @@ export default function ContactForm({
     ? baseNightsTotal + cleaningFeeDKK
     : baseNightsTotal;
   const canShowStayPrice = selPrice.isMinNightsSatisfied !== false;
+  const airbnbServiceFeeSavingsDKK = Math.round(totalWithCleaning * 0.142);
+  const totalAfterAirbnbDiscount = totalWithCleaning - airbnbServiceFeeSavingsDKK;
 
   /* ─────────────── GUEST CAP (max 10 personer) ─────────────── */
   const nAdults = toInt(state.adults);
@@ -252,7 +254,7 @@ export default function ContactForm({
   }
 
   // Total uden extras
-  const grandTotal = totalWithCleaning;
+  const grandTotal = totalAfterAirbnbDiscount;
 
   // === Min.-nætter: afledte værdier til UI og submit-validering ===
   const minReq = selPrice.minNightsRequired ?? 2;
@@ -408,6 +410,14 @@ export default function ContactForm({
             totalWithCleaningDKK: includeCleaning
               ? (selPrice.total ?? 0) + cleaningFeeDKK
               : selPrice.total ?? null,
+            airbnbServiceFeeSavingsDKK:
+              canShowStayPrice && (includeCleaning || selPrice.total != null)
+                ? airbnbServiceFeeSavingsDKK
+                : null,
+            totalAfterAirbnbDiscountDKK:
+              canShowStayPrice && (includeCleaning || selPrice.total != null)
+                ? totalAfterAirbnbDiscount
+                : null,
             // min.-nætter metadata til server-side validering/logning
             minNightsRequired: selPrice.minNightsRequired ?? 2,
             isMinNightsSatisfied:
@@ -777,6 +787,30 @@ export default function ContactForm({
               </span>
               <output className={styles.tValue} aria-live="polite">
                 {includeCleaning ? fmtMoney.format(cleaningFeeDKK) : "—"}
+              </output>
+            </div>
+
+            <div className={styles.totalItem}>
+              <span className={styles.tLabel}>
+                <span className={styles.tTop}>
+                  {t(
+                    "Direkte booking-rabat (-14,2 %)",
+                    "Direct booking discount (-14.2%)",
+                    "Direktbucher-Rabatt (-14,2 %)"
+                  )}
+                </span>
+                <span className={styles.tSub}>
+                  {t(
+                    "Svarende til Airbnb servicegebyr",
+                    "Equivalent to Airbnb's service fee",
+                    "Entspricht der Airbnb-Servicegebühr"
+                  )}
+                </span>
+              </span>
+              <output className={styles.tValue} aria-live="polite">
+                {canShowStayPrice && (includeCleaning || selPrice.total != null)
+                  ? `- ${fmtMoney.format(airbnbServiceFeeSavingsDKK)}`
+                  : "—"}
               </output>
             </div>
 
