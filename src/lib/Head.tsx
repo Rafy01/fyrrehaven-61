@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { site } from "./siteMeta";
 import { buildOrganizationSchema } from "./structuredData";
+import { parsePath } from "./routes";
 
 import type { Lang } from "./lang";
 
@@ -154,6 +155,119 @@ function robotsToString(r: RobotsOptions): string {
   return parts.join(", ");
 }
 
+const breadcrumbNames: Record<
+  Lang,
+  Record<
+    | "home"
+    | "house"
+    | "area"
+    | "gallery"
+    | "faq"
+    | "contact"
+    | "book"
+    | "fees"
+    | "chat"
+    | "privacy"
+    | "sitemap",
+    string
+  >
+> = {
+  da: {
+    home: "Forside",
+    house: "Sommerhuset",
+    area: "Området",
+    gallery: "Galleri",
+    faq: "Ofte stillede spørgsmål",
+    contact: "Kontakt",
+    book: "Booking",
+    fees: "Gebyrer",
+    chat: "Chat",
+    privacy: "Privatlivspolitik",
+    sitemap: "Sitemap",
+  },
+  en: {
+    home: "Home",
+    house: "The House",
+    area: "Area",
+    gallery: "Gallery",
+    faq: "Frequently Asked Questions",
+    contact: "Contact",
+    book: "Book",
+    fees: "Fees",
+    chat: "Chat",
+    privacy: "Privacy Policy",
+    sitemap: "Sitemap",
+  },
+  de: {
+    home: "Startseite",
+    house: "Das Haus",
+    area: "Umgebung",
+    gallery: "Galerie",
+    faq: "Häufig gestellte Fragen",
+    contact: "Kontakt",
+    book: "Buchung",
+    fees: "Gebühren",
+    chat: "Chat",
+    privacy: "Datenschutzrichtlinie",
+    sitemap: "Sitemap",
+  },
+};
+
+function buildBreadcrumbJsonLd(lang: Lang, path: string, canonicalHref: string, title: string) {
+  const parsed = parsePath(path);
+  const labels = breadcrumbNames[lang];
+
+  if (!parsed) {
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: labels.home,
+          item: `${site.baseUrl}/${lang}`,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: title,
+          item: canonicalHref,
+        },
+      ],
+    };
+  }
+
+  const rootItem = {
+    "@type": "ListItem",
+    position: 1,
+    name: labels.home,
+    item: `${site.baseUrl}/${lang}`,
+  };
+
+  if (parsed.key === "home") {
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [rootItem],
+    };
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      rootItem,
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: labels[parsed.key] ?? title,
+        item: canonicalHref,
+      },
+    ],
+  };
+}
+
 export default function Head({
   lang,
   path,
@@ -265,24 +379,7 @@ export default function Head({
         description,
         url: canonicalHref,
       },
-      {
-        "@context": "https://schema.org",
-        "@type": "BreadcrumbList",
-        itemListElement: [
-          {
-            "@type": "ListItem",
-            position: 1,
-            name: site.name,
-            item: `${base}/${lang}`,
-          },
-          {
-            "@type": "ListItem",
-            position: 2,
-            name: title,
-            item: canonicalHref,
-          },
-        ],
-      },
+      buildBreadcrumbJsonLd(lang, path, canonicalHref, title),
     ];
 
     const jsonLdItems = [
