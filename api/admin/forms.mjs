@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     adminEmail = adminCheck.email;
   }
 
-  const db = getFirestoreDb();
+  const db = await getFirestoreDb();
   if (!db) {
     sendJson(res, 503, {
       ok: false,

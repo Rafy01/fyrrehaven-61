@@ -284,7 +284,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const db = getFirestoreDb();
+    const db = await getFirestoreDb();
     const submissionRecord = {
       intent,
       lang: uiLang,

@@ -290,7 +290,7 @@ export default async function handler(req, res) {
           name,
         });
         const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
-        const db = getFirestoreDb();
+        const db = await getFirestoreDb();
         const submissionRecord = {
           intent: "guest-checkin",
           lang: uiLang,
