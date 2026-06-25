@@ -1,0 +1,325 @@
+.page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent-4) 18%, transparent), transparent 36%),
+    var(--color-page-background, var(--gray-1));
+  color: var(--gray-12);
+}
+
+.shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent-11);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hero h1 {
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.05;
+}
+
+.hero p {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--gray-11);
+  font-size: 1rem;
+}
+
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.button,
+.ghostButton {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  padding: 0 18px;
+  height: 44px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, opacity 160ms ease, background-color 160ms ease;
+}
+
+.button {
+  background: var(--accent-9);
+  color: white;
+}
+
+.button:hover,
+.ghostButton:hover {
+  transform: translateY(-1px);
+}
+
+.ghostButton {
+  background: color-mix(in srgb, var(--gray-12) 8%, transparent);
+  color: var(--gray-12);
+  border: 1px solid var(--gray-6);
+}
+
+.button:disabled,
+.ghostButton:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.card,
+.panel,
+.detailCard,
+.emptyState,
+.authCard,
+.configCard {
+  background: color-mix(in srgb, var(--gray-1) 84%, transparent);
+  border: 1px solid var(--gray-5);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.card {
+  padding: 18px;
+}
+
+.cardLabel {
+  margin: 0 0 8px;
+  color: var(--gray-10);
+  font-size: 0.9rem;
+}
+
+.cardValue {
+  margin: 0;
+  font-size: 1.9rem;
+  font-weight: 800;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 18px;
+}
+
+.panel {
+  overflow: hidden;
+}
+
+.panelHeader {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--gray-5);
+}
+
+.panelHeader h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+
+.panelHeader p {
+  margin: 0;
+  color: var(--gray-10);
+}
+
+.list {
+  display: grid;
+}
+
+.rowButton {
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--gray-4);
+  padding: 16px 20px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.rowButton:hover {
+  background: color-mix(in srgb, var(--accent-3) 40%, transparent);
+}
+
+.rowButton[data-active="true"] {
+  background: color-mix(in srgb, var(--accent-3) 55%, transparent);
+}
+
+.rowTop,
+.rowMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rowTop {
+  margin-bottom: 8px;
+}
+
+.rowName {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.rowEmail,
+.rowMeta,
+.detailMuted {
+  color: var(--gray-10);
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid var(--gray-6);
+  background: color-mix(in srgb, var(--gray-12) 6%, transparent);
+}
+
+.statusSent {
+  background: color-mix(in srgb, #1f9d57 22%, transparent);
+  border-color: color-mix(in srgb, #1f9d57 50%, var(--gray-6));
+}
+
+.statusFailed {
+  background: color-mix(in srgb, #d9485f 20%, transparent);
+  border-color: color-mix(in srgb, #d9485f 42%, var(--gray-6));
+}
+
+.statusPending {
+  background: color-mix(in srgb, #d08c00 18%, transparent);
+  border-color: color-mix(in srgb, #d08c00 42%, var(--gray-6));
+}
+
+.detailCard {
+  padding: 20px;
+}
+
+.detailSection + .detailSection {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--gray-4);
+}
+
+.detailSection h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.detailItem {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--gray-12) 5%, transparent);
+  border: 1px solid var(--gray-4);
+}
+
+.detailLabel {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.82rem;
+  color: var(--gray-10);
+}
+
+.detailValue {
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.detailMessage {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  color: var(--gray-11);
+}
+
+.authCard,
+.configCard,
+.emptyState {
+  padding: 28px;
+}
+
+.authCard h1,
+.configCard h1 {
+  margin: 0 0 10px;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+}
+
+.authCard p,
+.configCard p,
+.emptyState p {
+  margin: 0 0 18px;
+  color: var(--gray-10);
+  max-width: 64ch;
+}
+
+.hintList {
+  margin: 18px 0 0;
+  padding-left: 20px;
+  color: var(--gray-10);
+}
+
+.hintList li + li {
+  margin-top: 8px;
+}
+
+@media (max-width: 980px) {
+  .cards,
+  .layout,
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    flex-direction: column;
+  }
+
+  .heroActions {
+    justify-content: flex-start;
+  }
+}
