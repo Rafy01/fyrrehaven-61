@@ -74,6 +74,10 @@ type ApiResponse = {
 type Appearance = "light" | "dark";
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
+const LOCAL_DASHBOARD_BYPASS =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
 
 function readAppearance(): Appearance {
   if (typeof window === "undefined") return "light";
@@ -138,7 +142,7 @@ function statusClassName(status?: SubmissionStatus) {
 
 export default function AdminForms() {
   const [appearance] = React.useState<Appearance>(() => readAppearance());
-  const [user, setUser] = React.useState<User | null>(null);
+  const [user, setUser] = React.useState<User | null>(LOCAL_DASHBOARD_BYPASS ? ({} as User) : null);
   const [authReady, setAuthReady] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -154,6 +158,12 @@ export default function AdminForms() {
   }, [appearance]);
 
   React.useEffect(() => {
+    if (LOCAL_DASHBOARD_BYPASS) {
+      setAuthReady(true);
+      setAdminEmail("local-dev@fyrrehaven-61.dk");
+      return;
+    }
+
     const auth = getFirebaseAuth();
     if (!auth) {
       setAuthReady(true);
@@ -167,17 +177,21 @@ export default function AdminForms() {
   }, []);
 
   const fetchSubmissions = React.useCallback(async () => {
-    const auth = getFirebaseAuth();
-    if (!auth?.currentUser) return;
-
     setLoading(true);
     setError(null);
 
     try {
-      const token = await auth.currentUser.getIdToken(true);
+      const auth = getFirebaseAuth();
+      const token =
+        LOCAL_DASHBOARD_BYPASS || !auth?.currentUser
+          ? null
+          : await auth.currentUser.getIdToken(true);
       const res = await fetch("/api/admin/forms", {
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(LOCAL_DASHBOARD_BYPASS
+            ? { "x-fh61-admin-bypass": "local-dev" }
+            : {}),
         },
       });
       const data = (await res.json()) as ApiResponse;
@@ -187,7 +201,11 @@ export default function AdminForms() {
       const nextSubmissions = data.submissions || [];
       setSubmissions(nextSubmissions);
       setSelectedId((current) => current ?? nextSubmissions[0]?.id ?? null);
-      setAdminEmail(data.admin?.email || auth.currentUser.email || "");
+      setAdminEmail(
+        data.admin?.email ||
+          auth?.currentUser?.email ||
+          (LOCAL_DASHBOARD_BYPASS ? "local-dev@fyrrehaven-61.dk" : "")
+      );
     } catch (nextError) {
       setError(String(nextError instanceof Error ? nextError.message : nextError));
     } finally {
@@ -196,7 +214,7 @@ export default function AdminForms() {
   }, []);
 
   React.useEffect(() => {
-    if (!user) return;
+    if (!user && !LOCAL_DASHBOARD_BYPASS) return;
     void fetchSubmissions();
   }, [user, fetchSubmissions]);
 
@@ -245,7 +263,7 @@ export default function AdminForms() {
     setAdminEmail("");
   }
 
-  if (!isFirebaseClientConfigured()) {
+  if (!LOCAL_DASHBOARD_BYPASS && !isFirebaseClientConfigured()) {
     return (
       <Theme appearance={appearance} accentColor="gray" radius="large">
         <Helmet>
@@ -291,7 +309,7 @@ export default function AdminForms() {
     );
   }
 
-  if (!user) {
+  if (!LOCAL_DASHBOARD_BYPASS && !user) {
     return (
       <Theme appearance={appearance} accentColor="gray" radius="large">
         <Helmet>
@@ -336,7 +354,9 @@ export default function AdminForms() {
               </p>
             </div>
             <div className={styles.heroActions}>
-              <div className={styles.detailMuted}>{adminEmail || user.email}</div>
+              <div className={styles.detailMuted}>
+                {adminEmail || user?.email || "local-dev@fyrrehaven-61.dk"}
+              </div>
               <button
                 className={styles.ghostButton}
                 onClick={() => void fetchSubmissions()}
@@ -344,9 +364,11 @@ export default function AdminForms() {
               >
                 {loading ? "Opdaterer..." : "Opdater"}
               </button>
-              <button className={styles.button} onClick={() => void handleSignOut()}>
-                Log ud
-              </button>
+              {!LOCAL_DASHBOARD_BYPASS ? (
+                <button className={styles.button} onClick={() => void handleSignOut()}>
+                  Log ud
+                </button>
+              ) : null}
             </div>
           </div>
 
