@@ -48,6 +48,31 @@ type Submission = {
     airbnbServiceFeeSavingsDKK?: number | null;
     totalAfterAirbnbDiscountDKK?: number | null;
   } | null;
+  extras?: {
+    stayDate?: string | null;
+    totalDKK?: number | null;
+    items?: Array<{
+      id?: string;
+      qty?: number;
+      unitPriceDKK?: number | null;
+      label?: { da?: string; en?: string; de?: string } | null;
+    }>;
+  } | null;
+  checkin?: {
+    type?: string;
+    typeLabel?: string;
+    keycode?: string | null;
+    meterReadings?: {
+      electricity?: string | null;
+      waterHouse?: string | null;
+      waterPool?: string | null;
+    } | null;
+    attachments?: Array<{
+      filename?: string;
+      contentType?: string;
+      sizeBytes?: number;
+    }> | null;
+  } | null;
   status?: SubmissionStatus;
   mailStatus?: "pending" | "sent" | "failed";
   mailError?: string | null;
@@ -117,6 +142,8 @@ function submissionLabel(submission: Submission) {
   switch (submission.intent) {
     case "booking":
       return "Booking";
+    case "guest-checkin":
+      return submission.checkin?.type === "checkout" ? "Tjek-ud" : "Tjek-ind";
     case "extra-services":
       return "Ekstra services";
     case "other":
@@ -124,6 +151,19 @@ function submissionLabel(submission: Submission) {
     default:
       return "Kontakt";
   }
+}
+
+function submissionValue(submission: Submission) {
+  if (submission.selection?.totalAfterAirbnbDiscountDKK != null) {
+    return formatMoney(submission.selection.totalAfterAirbnbDiscountDKK);
+  }
+  if (submission.selection?.totalWithCleaningDKK != null) {
+    return formatMoney(submission.selection.totalWithCleaningDKK);
+  }
+  if (submission.extras?.totalDKK != null) {
+    return formatMoney(submission.extras.totalDKK);
+  }
+  return null;
 }
 
 function statusClassName(status?: SubmissionStatus) {
@@ -401,7 +441,7 @@ export default function AdminForms() {
               <section className={styles.panel}>
                 <div className={styles.panelHeader}>
                   <h2>Indsendelser</h2>
-                  <p>Booking, kontakt og direkte foresporgsler gemt fra websitet.</p>
+                  <p>Booking, kontakt, ekstra services og tjek-ind/ud gemt fra websitet.</p>
                 </div>
                 <div className={styles.list}>
                   {submissions.length === 0 ? (
@@ -440,13 +480,13 @@ export default function AdminForms() {
                           <span className={styles.badge}>
                             {submission.selection?.nights
                               ? `${submission.selection.nights} natter`
-                              : "Ingen opholdsdata"}
+                              : submission.extras?.stayDate
+                              ? `Ophold: ${submission.extras.stayDate}`
+                              : submission.checkin?.typeLabel || "Ingen opholdsdata"}
                           </span>
-                          {submission.selection?.totalAfterAirbnbDiscountDKK != null ? (
+                          {submissionValue(submission) ? (
                             <span className={styles.badge}>
-                              {formatMoney(
-                                submission.selection.totalAfterAirbnbDiscountDKK
-                              )}
+                              {submissionValue(submission)}
                             </span>
                           ) : null}
                         </div>
@@ -507,50 +547,132 @@ export default function AdminForms() {
                       </div>
                     </section>
 
-                    <section className={styles.detailSection}>
-                      <h3>Ophold</h3>
-                      <div className={styles.detailGrid}>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Ankomst</span>
-                          <div className={styles.detailValue}>
-                            {selectedSubmission.selection?.start || "—"}
+                    {selectedSubmission.selection || selectedSubmission.guests || selectedSubmission.stayPurpose ? (
+                      <section className={styles.detailSection}>
+                        <h3>Ophold</h3>
+                        <div className={styles.detailGrid}>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Ankomst</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.selection?.start || "—"}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Afrejse</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.selection?.endExclusive || "—"}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Natter</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.selection?.nights ?? "—"}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Total</span>
+                            <div className={styles.detailValue}>
+                              {formatMoney(
+                                selectedSubmission.selection?.totalAfterAirbnbDiscountDKK ??
+                                  selectedSubmission.selection?.totalWithCleaningDKK
+                              )}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Gaester</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.guests?.total ?? "—"}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Formael</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.stayPurpose || "—"}
+                            </div>
                           </div>
                         </div>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Afrejse</span>
-                          <div className={styles.detailValue}>
-                            {selectedSubmission.selection?.endExclusive || "—"}
+                      </section>
+                    ) : null}
+
+                    {selectedSubmission.extras ? (
+                      <section className={styles.detailSection}>
+                        <h3>Ekstra services</h3>
+                        <div className={styles.detailGrid}>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Opholdsdato</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.extras.stayDate || "—"}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Total</span>
+                            <div className={styles.detailValue}>
+                              {formatMoney(selectedSubmission.extras.totalDKK)}
+                            </div>
                           </div>
                         </div>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Natter</span>
-                          <div className={styles.detailValue}>
-                            {selectedSubmission.selection?.nights ?? "—"}
+                        {selectedSubmission.extras.items?.length ? (
+                          <div className={styles.detailList}>
+                            {selectedSubmission.extras.items.map((item, index) => (
+                              <div className={styles.detailListRow} key={`${item.id || "extra"}-${index}`}>
+                                <span>{item.label?.da || item.label?.en || item.id || "Ekstra"}</span>
+                                <span>
+                                  {item.qty || 0} × {formatMoney(item.unitPriceDKK ?? null)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </section>
+                    ) : null}
+
+                    {selectedSubmission.checkin ? (
+                      <section className={styles.detailSection}>
+                        <h3>{selectedSubmission.checkin.type === "checkout" ? "Tjek-ud" : "Tjek-ind"}</h3>
+                        <div className={styles.detailGrid}>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Type</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.checkin.typeLabel || "—"}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Noeglekode</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.checkin.keycode || "—"}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>EL</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.checkin.meterReadings?.electricity || "—"}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Vand (hus)</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.checkin.meterReadings?.waterHouse || "—"}
+                            </div>
+                          </div>
+                          <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Vand (pool)</span>
+                            <div className={styles.detailValue}>
+                              {selectedSubmission.checkin.meterReadings?.waterPool || "—"}
+                            </div>
                           </div>
                         </div>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Total</span>
-                          <div className={styles.detailValue}>
-                            {formatMoney(
-                              selectedSubmission.selection?.totalAfterAirbnbDiscountDKK ??
-                                selectedSubmission.selection?.totalWithCleaningDKK
-                            )}
+                        {selectedSubmission.checkin.attachments?.length ? (
+                          <div className={styles.detailList}>
+                            {selectedSubmission.checkin.attachments.map((file, index) => (
+                              <div className={styles.detailListRow} key={`${file.filename || "file"}-${index}`}>
+                                <span>{file.filename || "Vedhaeftning"}</span>
+                                <span>{file.sizeBytes ? `${Math.round(file.sizeBytes / 1024)} KB` : "—"}</span>
+                              </div>
+                            ))}
                           </div>
-                        </div>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Gaester</span>
-                          <div className={styles.detailValue}>
-                            {selectedSubmission.guests?.total ?? "—"}
-                          </div>
-                        </div>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Formael</span>
-                          <div className={styles.detailValue}>
-                            {selectedSubmission.stayPurpose || "—"}
-                          </div>
-                        </div>
-                      </div>
-                    </section>
+                        ) : null}
+                      </section>
+                    ) : null}
 
                     <section className={styles.detailSection}>
                       <h3>Besked</h3>

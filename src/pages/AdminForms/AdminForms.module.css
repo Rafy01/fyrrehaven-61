@@ -278,6 +278,29 @@
   color: var(--gray-11);
 }
 
+.detailList {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.detailListRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--gray-4);
+  background: color-mix(in srgb, var(--gray-12) 4%, transparent);
+  color: var(--gray-11);
+}
+
+.detailListRow span:last-child {
+  text-align: right;
+  color: var(--gray-10);
+}
+
 .authCard,
 .configCard,
 .emptyState {

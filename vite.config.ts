@@ -13,6 +13,7 @@ async function readRequestBody(request: import("node:http").IncomingMessage) {
 function createDevApiPlugin() {
   const routeModules = new Map([
     ["/api/contact", "/api/contact.mjs"],
+    ["/api/checkin", "/api/checkin.mjs"],
     ["/api/admin/forms", "/api/admin/forms.mjs"],
   ]);
 

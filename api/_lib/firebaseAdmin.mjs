@@ -2,9 +2,24 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 
+let firebaseAdminInitError = null;
+
+const stripWrappingQuotes = (value) => {
+  const trimmed = String(value || "").trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+};
+
 const readEnv = (key) => {
   const value = process.env[key];
-  return typeof value === "string" && value.trim() ? value.trim() : "";
+  return typeof value === "string" && value.trim()
+    ? stripWrappingQuotes(value)
+    : "";
 };
 
 export function isFirebaseAdminConfigured() {
@@ -16,20 +31,29 @@ export function isFirebaseAdminConfigured() {
 }
 
 function getPrivateKey() {
-  return readEnv("FIREBASE_PRIVATE_KEY").replace(/\\n/g, "\n");
+  return readEnv("FIREBASE_PRIVATE_KEY")
+    .replace(/\\n/g, "\n")
+    .trim();
 }
 
 function getAdminApp() {
   if (!isFirebaseAdminConfigured()) return null;
   if (getApps().length > 0) return getApps()[0];
 
-  return initializeApp({
-    credential: cert({
-      projectId: readEnv("FIREBASE_PROJECT_ID"),
-      clientEmail: readEnv("FIREBASE_CLIENT_EMAIL"),
-      privateKey: getPrivateKey(),
-    }),
-  });
+  try {
+    firebaseAdminInitError = null;
+    return initializeApp({
+      credential: cert({
+        projectId: readEnv("FIREBASE_PROJECT_ID"),
+        clientEmail: readEnv("FIREBASE_CLIENT_EMAIL"),
+        privateKey: getPrivateKey(),
+      }),
+    });
+  } catch (error) {
+    firebaseAdminInitError = String(error?.message || error);
+    console.error("FIREBASE_ADMIN_INIT_FAILED", error);
+    return null;
+  }
 }
 
 export function getFirestoreDb() {
@@ -39,6 +63,10 @@ export function getFirestoreDb() {
 
 export function getServerTimestamp() {
   return FieldValue.serverTimestamp();
+}
+
+export function getFirebaseAdminInitError() {
+  return firebaseAdminInitError;
 }
 
 export function getAllowedAdminEmails() {

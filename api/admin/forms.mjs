@@ -1,4 +1,9 @@
-import { getFirestoreDb, verifyAdminRequest } from "../_lib/firebaseAdmin.mjs";
+import {
+  getFirestoreDb,
+  getFirebaseAdminInitError,
+  verifyAdminRequest,
+} from "../_lib/firebaseAdmin.mjs";
+import { listFormSubmissions } from "../_lib/formSubmissions.mjs";
 import { applySecurityHeaders, sendJson } from "../_lib/httpSecurity.mjs";
 
 const DASHBOARD_AUTH_DISABLED = true;
@@ -31,24 +36,15 @@ export default async function handler(req, res) {
     sendJson(res, 503, {
       ok: false,
       error: "FIREBASE_ADMIN_NOT_CONFIGURED",
+      detail:
+        getFirebaseAdminInitError() ||
+        "Firebase server credentials are missing or invalid.",
     });
     return;
   }
 
   try {
-    const snapshot = await db
-      .collection("contactSubmissions")
-      .orderBy("createdAtMs", "desc")
-      .limit(250)
-      .get();
-
-    const submissions = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-      };
-    });
+    const submissions = await listFormSubmissions(db, 250);
 
     sendJson(res, 200, {
       ok: true,
