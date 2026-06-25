@@ -218,15 +218,20 @@ export default function AdminForms() {
     try {
       await signInWithPopup(auth, provider);
     } catch (popupError) {
+      console.error("Firebase admin sign-in failed", popupError);
       const code = String((popupError as { code?: string })?.code || "");
       if (code.includes("popup")) {
         await signInWithRedirect(auth, provider);
         return;
       }
-      setError(
-        popupError instanceof Error
+      const authMessage =
+        code === "auth/internal-error"
+          ? "Firebase login could not start. Check Google sign-in, authorized domains, and CSP for Firebase Auth."
+          : popupError instanceof Error
           ? popupError.message
-          : "Log ind mislykkedes. Prøv igen."
+          : "Log ind mislykkedes. Proev igen.";
+      setError(
+        `Firebase: ${authMessage}${code ? ` (${code})` : ""}`
       );
     }
   }
