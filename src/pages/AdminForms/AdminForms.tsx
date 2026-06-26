@@ -199,6 +199,10 @@ function submissionContextTag(submission: Submission) {
   return null;
 }
 
+function isActivationKey(event: React.KeyboardEvent) {
+  return event.key === "Enter" || event.key === " ";
+}
+
 export default function AdminForms() {
   const [appearance, setAppearance] = React.useState<Appearance>(() =>
     readAppearance()
@@ -617,10 +621,16 @@ export default function AdminForms() {
                         data-active={submission.id === selectedId}
                       >
                         <div className={styles.rowCardHeader}>
-                          <button
-                            type="button"
+                          <div
                             className={styles.rowButton}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => setSelectedId(submission.id)}
+                            onKeyDown={(event) => {
+                              if (!isActivationKey(event)) return;
+                              event.preventDefault();
+                              setSelectedId(submission.id);
+                            }}
                           >
                             <div className={styles.rowTop}>
                               <div>
@@ -635,19 +645,6 @@ export default function AdminForms() {
                                 <span className={`${styles.badge} ${statusClassName(submission.status)}`}>
                                   {statusLabel(submission.status)}
                                 </span>
-                                <button
-                                  type="button"
-                                  className={styles.iconButton}
-                                  aria-label={`Delete submission from ${submission.name || submission.email || "unknown sender"}`}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    setDeleteError(null);
-                                    setDeleteConfirmation("");
-                                    setDeleteTarget(submission);
-                                  }}
-                                >
-                                  <FiTrash2 aria-hidden="true" />
-                                </button>
                               </div>
                             </div>
                             <div className={styles.rowMeta}>
@@ -669,6 +666,19 @@ export default function AdminForms() {
                                 ) : null}
                               </div>
                             ) : null}
+                          </div>
+                          <button
+                            type="button"
+                            className={styles.iconButton}
+                            aria-label={`Delete submission from ${submission.name || submission.email || "unknown sender"}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleteError(null);
+                              setDeleteConfirmation("");
+                              setDeleteTarget(submission);
+                            }}
+                          >
+                            <FiTrash2 aria-hidden="true" />
                           </button>
                         </div>
                       </article>

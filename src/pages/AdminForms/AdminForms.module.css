@@ -244,19 +244,26 @@
 }
 
 .rowCardHeader {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
 }
 
 .rowButton {
-  appearance: none;
   width: 100%;
   background: transparent;
-  border: none;
   padding: 16px 20px;
   color: inherit;
   text-align: left;
   cursor: pointer;
   transition: background-color 160ms ease;
+  min-width: 0;
+}
+
+.rowButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-9) 35%, transparent);
+  outline-offset: -3px;
 }
 
 .rowTop,
@@ -417,8 +424,8 @@
 
 .iconButton {
   appearance: none;
-  width: auto;
-  height: auto;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: none;
   background: transparent;
@@ -430,6 +437,8 @@
   transition: transform 160ms ease, color 160ms ease, opacity 160ms ease;
   font-size: 18px;
   opacity: 0.92;
+  align-self: flex-start;
+  margin: 18px 20px 0 0;
 }
 
 .iconButton:hover {
@@ -447,6 +456,8 @@
 
 .deleteInput {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   min-height: 44px;
   border-radius: 14px;
   border: 1px solid var(--gray-6);
@@ -600,10 +611,6 @@
     padding: 14px 16px;
   }
 
-  .rowCardHeader {
-    display: block;
-  }
-
   .rowTop,
   .rowMeta {
     gap: 10px;
@@ -613,6 +620,10 @@
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
+  }
+
+  .iconButton {
+    margin: 16px 16px 0 0;
   }
 
   .modalOverlay {
@@ -682,6 +693,14 @@
   .rowTopActions {
     align-items: center;
     justify-content: flex-start;
+  }
+
+  .rowCardHeader {
+    gap: 8px;
+  }
+
+  .iconButton {
+    margin: 14px 14px 0 0;
   }
 
   .detailGrid {
