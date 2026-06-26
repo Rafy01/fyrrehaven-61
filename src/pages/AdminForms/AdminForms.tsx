@@ -265,7 +265,9 @@ export default function AdminForms() {
       if (!res.ok || !data.ok) {
         throw new Error(data.detail || data.error || `HTTP ${res.status}`);
       }
-      const nextSubmissions = data.submissions || [];
+      const nextSubmissions = [...(data.submissions || [])].sort(
+        (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
+      );
       setSubmissions(nextSubmissions);
       setSelectedId((current) => current ?? nextSubmissions[0]?.id ?? null);
       setAdminEmail(
@@ -294,9 +296,8 @@ export default function AdminForms() {
     submissions.find((submission) => submission.id === selectedId) || null;
 
   const visibleSubmissions = React.useMemo(() => {
-    if (submissionFilter === "all") return submissions;
-
-    return submissions.filter((submission) => {
+    const filtered = submissions.filter((submission) => {
+      if (submissionFilter === "all") return true;
       if (submissionFilter === "booking") return submission.intent === "booking";
       if (submissionFilter === "extra-services") {
         return submission.intent === "extra-services";
@@ -306,6 +307,8 @@ export default function AdminForms() {
       }
       return !submission.intent || submission.intent === "inquiry";
     });
+
+    return filtered.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0));
   }, [submissionFilter, submissions]);
 
   const sentCount = submissions.filter((submission) => submission.status === "sent").length;
@@ -632,6 +635,19 @@ export default function AdminForms() {
                                 <span className={`${styles.badge} ${statusClassName(submission.status)}`}>
                                   {statusLabel(submission.status)}
                                 </span>
+                                <button
+                                  type="button"
+                                  className={styles.iconButton}
+                                  aria-label={`Delete submission from ${submission.name || submission.email || "unknown sender"}`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    setDeleteError(null);
+                                    setDeleteConfirmation("");
+                                    setDeleteTarget(submission);
+                                  }}
+                                >
+                                  <FiTrash2 aria-hidden="true" />
+                                </button>
                               </div>
                             </div>
                             <div className={styles.rowMeta}>
@@ -653,18 +669,6 @@ export default function AdminForms() {
                                 ) : null}
                               </div>
                             ) : null}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.iconButton}
-                            aria-label={`Delete submission from ${submission.name || submission.email || "unknown sender"}`}
-                            onClick={() => {
-                              setDeleteError(null);
-                              setDeleteConfirmation("");
-                              setDeleteTarget(submission);
-                            }}
-                          >
-                            <FiTrash2 aria-hidden="true" />
                           </button>
                         </div>
                       </article>
