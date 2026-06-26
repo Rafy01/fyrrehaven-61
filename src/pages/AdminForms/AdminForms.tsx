@@ -1,6 +1,13 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
-import { FiMoon, FiSun, FiTrash2 } from "react-icons/fi";
+import {
+  FiAlertCircle,
+  FiCheckCircle,
+  FiInbox,
+  FiMoon,
+  FiSun,
+  FiTrash2,
+} from "react-icons/fi";
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -311,6 +318,22 @@ export default function AdminForms() {
   const selectedSubmission =
     submissions.find((submission) => submission.id === selectedId) || null;
 
+  React.useEffect(() => {
+    if (!isMobileLayout || !selectedSubmission || deleteTarget) return;
+
+    const { body, documentElement } = document;
+    const previousBodyOverflow = body.style.overflow;
+    const previousHtmlOverflow = documentElement.style.overflow;
+
+    body.style.overflow = "hidden";
+    documentElement.style.overflow = "hidden";
+
+    return () => {
+      body.style.overflow = previousBodyOverflow;
+      documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [deleteTarget, isMobileLayout, selectedSubmission]);
+
   const visibleSubmissions = React.useMemo(() => {
     const filtered = submissions.filter((submission) => {
       if (submissionFilter === "all") return true;
@@ -567,19 +590,43 @@ export default function AdminForms() {
 
           <div className={styles.cards}>
             <div className={styles.card}>
-              <p className={styles.cardLabel}>Total submissions</p>
+              <div className={styles.cardLabelRow}>
+                <FiInbox
+                  aria-hidden="true"
+                  className={`${styles.cardIcon} ${styles.cardIconTotal}`}
+                />
+                <p className={styles.cardLabel}>Total submissions</p>
+              </div>
               <p className={styles.cardValue}>{submissions.length}</p>
             </div>
             <div className={styles.card}>
-              <p className={styles.cardLabel}>Email sent</p>
+              <div className={styles.cardLabelRow}>
+                <FiCheckCircle
+                  aria-hidden="true"
+                  className={`${styles.cardIcon} ${styles.cardIconSent}`}
+                />
+                <p className={styles.cardLabel}>Email sent</p>
+              </div>
               <p className={styles.cardValue}>{sentCount}</p>
             </div>
             <div className={styles.card}>
-              <p className={styles.cardLabel}>Email failed</p>
+              <div className={styles.cardLabelRow}>
+                <FiAlertCircle
+                  aria-hidden="true"
+                  className={`${styles.cardIcon} ${styles.cardIconFailed}`}
+                />
+                <p className={styles.cardLabel}>Email failed</p>
+              </div>
               <p className={styles.cardValue}>{failedCount}</p>
             </div>
             <div className={styles.card}>
-              <p className={styles.cardLabel}>Latest submission</p>
+              <div className={styles.cardLabelRow}>
+                <FiInbox
+                  aria-hidden="true"
+                  className={`${styles.cardIcon} ${styles.cardIconLatest}`}
+                />
+                <p className={styles.cardLabel}>Latest submission</p>
+              </div>
               <p className={styles.cardValue}>
                 {formatDateTime(submissions[0]?.createdAtMs)}
               </p>
