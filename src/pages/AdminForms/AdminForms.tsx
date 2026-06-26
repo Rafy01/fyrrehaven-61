@@ -222,6 +222,7 @@ export default function AdminForms() {
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<Submission | null>(null);
+  const [isMobileLayout, setIsMobileLayout] = React.useState(false);
 
   React.useLayoutEffect(() => {
     const html = document.documentElement;
@@ -248,6 +249,17 @@ export default function AdminForms() {
       setUser(nextUser);
       setAuthReady(true);
     });
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 980px)");
+    const apply = () => setIsMobileLayout(mediaQuery.matches);
+
+    apply();
+    mediaQuery.addEventListener("change", apply);
+    return () => mediaQuery.removeEventListener("change", apply);
   }, []);
 
   const fetchSubmissions = React.useCallback(async () => {
@@ -319,6 +331,10 @@ export default function AdminForms() {
   const failedCount = submissions.filter(
     (submission) => submission.status === "mail_failed"
   ).length;
+
+  function closeMobileDetail() {
+    setSelectedId(null);
+  }
 
   async function handleSignIn() {
     const auth = getFirebaseAuth();
@@ -687,211 +703,436 @@ export default function AdminForms() {
                 </div>
               </section>
 
-              <aside className={styles.detailCard}>
-                {selectedSubmission ? (
-                  <div className={styles.detailScroll}>
-                    <section className={styles.detailSection}>
-                      <h3>{selectedSubmission.name || "Submission"}</h3>
-                      <div className={styles.badgeRow}>
-                        <span
-                          className={`${styles.badge} ${statusClassName(
-                            selectedSubmission.status
-                          )}`}
-                        >
-                          {statusLabel(selectedSubmission.status)}
-                        </span>
-                        <span className={styles.badge}>
-                          {submissionLabel(selectedSubmission)}
-                        </span>
-                      </div>
-                    </section>
-
-                    <section className={styles.detailSection}>
-                      <h3>Contact</h3>
-                      <div className={styles.detailGrid}>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Email</span>
-                          <div className={styles.detailValue}>
-                            {selectedSubmission.email || "—"}
-                          </div>
-                        </div>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Phone</span>
-                          <div className={styles.detailValue}>
-                            {selectedSubmission.phone || "—"}
-                          </div>
-                        </div>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Country</span>
-                          <div className={styles.detailValue}>
-                            {selectedSubmission.country ||
-                              selectedSubmission.countryIso ||
-                              "—"}
-                          </div>
-                        </div>
-                        <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Submitted</span>
-                          <div className={styles.detailValue}>
-                            {formatDateTime(selectedSubmission.createdAtMs)}
-                          </div>
-                        </div>
-                      </div>
-                    </section>
-
-                    {selectedSubmission.selection || selectedSubmission.guests || selectedSubmission.stayPurpose ? (
+              {!isMobileLayout ? (
+                <aside className={styles.detailCard}>
+                  {selectedSubmission ? (
+                    <div className={styles.detailScroll}>
                       <section className={styles.detailSection}>
-                        <h3>Stay</h3>
+                        <h3>{selectedSubmission.name || "Submission"}</h3>
+                        <div className={styles.badgeRow}>
+                          <span
+                            className={`${styles.badge} ${statusClassName(
+                              selectedSubmission.status
+                            )}`}
+                          >
+                            {statusLabel(selectedSubmission.status)}
+                          </span>
+                          <span className={styles.badge}>
+                            {submissionLabel(selectedSubmission)}
+                          </span>
+                        </div>
+                      </section>
+
+                      <section className={styles.detailSection}>
+                        <h3>Contact</h3>
                         <div className={styles.detailGrid}>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Check-in</span>
+                            <span className={styles.detailLabel}>Email</span>
                             <div className={styles.detailValue}>
-                              {selectedSubmission.selection?.start || "—"}
+                              {selectedSubmission.email || "—"}
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Check-out</span>
+                            <span className={styles.detailLabel}>Phone</span>
                             <div className={styles.detailValue}>
-                              {selectedSubmission.selection?.endExclusive || "—"}
+                              {selectedSubmission.phone || "—"}
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Nights</span>
+                            <span className={styles.detailLabel}>Country</span>
                             <div className={styles.detailValue}>
-                              {selectedSubmission.selection?.nights ?? "—"}
+                              {selectedSubmission.country ||
+                                selectedSubmission.countryIso ||
+                                "—"}
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Total</span>
+                            <span className={styles.detailLabel}>Submitted</span>
                             <div className={styles.detailValue}>
-                              {formatMoney(
-                                selectedSubmission.selection?.totalAfterAirbnbDiscountDKK ??
-                                  selectedSubmission.selection?.totalWithCleaningDKK
-                              )}
-                            </div>
-                          </div>
-                          <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Guests</span>
-                            <div className={styles.detailValue}>
-                              {selectedSubmission.guests?.total ?? "—"}
-                            </div>
-                          </div>
-                          <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Purpose</span>
-                            <div className={styles.detailValue}>
-                              {selectedSubmission.stayPurpose || "—"}
+                              {formatDateTime(selectedSubmission.createdAtMs)}
                             </div>
                           </div>
                         </div>
                       </section>
-                    ) : null}
 
-                    {selectedSubmission.extras ? (
-                      <section className={styles.detailSection}>
-                        <h3>Extra services</h3>
-                        <div className={styles.detailGrid}>
-                          <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Stay date</span>
-                            <div className={styles.detailValue}>
-                              {selectedSubmission.extras.stayDate || "—"}
-                            </div>
-                          </div>
-                          <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Total</span>
-                            <div className={styles.detailValue}>
-                              {formatMoney(selectedSubmission.extras.totalDKK)}
-                            </div>
-                          </div>
-                        </div>
-                        {selectedSubmission.extras.items?.length ? (
-                          <div className={styles.detailList}>
-                            {selectedSubmission.extras.items.map((item, index) => (
-                              <div className={styles.detailListRow} key={`${item.id || "extra"}-${index}`}>
-                                <span>{item.label?.en || item.label?.da || item.id || "Extra"}</span>
-                                <span>
-                                  {item.qty || 0} × {formatMoney(item.unitPriceDKK ?? null)}
-                                </span>
+                      {selectedSubmission.selection || selectedSubmission.guests || selectedSubmission.stayPurpose ? (
+                        <section className={styles.detailSection}>
+                          <h3>Stay</h3>
+                          <div className={styles.detailGrid}>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Check-in</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.selection?.start || "—"}
                               </div>
-                            ))}
-                          </div>
-                        ) : null}
-                      </section>
-                    ) : null}
-
-                    {selectedSubmission.checkin ? (
-                      <section className={styles.detailSection}>
-                        <h3>{selectedSubmission.checkin.type === "checkout" ? "Check-out" : "Check-in"}</h3>
-                        <div className={styles.detailGrid}>
-                          <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Type</span>
-                            <div className={styles.detailValue}>
-                              {selectedSubmission.checkin.typeLabel || "—"}
                             </div>
-                          </div>
-                          <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Key code</span>
-                            <div className={styles.detailValue}>
-                              {selectedSubmission.checkin.keycode || "—"}
-                            </div>
-                          </div>
-                          <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Electricity</span>
-                            <div className={styles.detailValue}>
-                              {selectedSubmission.checkin.meterReadings?.electricity || "—"}
-                            </div>
-                          </div>
-                          <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Water (house)</span>
-                            <div className={styles.detailValue}>
-                              {selectedSubmission.checkin.meterReadings?.waterHouse || "—"}
-                            </div>
-                          </div>
-                          <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Water (pool)</span>
-                            <div className={styles.detailValue}>
-                              {selectedSubmission.checkin.meterReadings?.waterPool || "—"}
-                            </div>
-                          </div>
-                        </div>
-                        {selectedSubmission.checkin.attachments?.length ? (
-                          <div className={styles.detailList}>
-                            {selectedSubmission.checkin.attachments.map((file, index) => (
-                              <div className={styles.detailListRow} key={`${file.filename || "file"}-${index}`}>
-                                <span>{file.filename || "Attachment"}</span>
-                                <span>{file.sizeBytes ? `${Math.round(file.sizeBytes / 1024)} KB` : "—"}</span>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Check-out</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.selection?.endExclusive || "—"}
                               </div>
-                            ))}
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Nights</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.selection?.nights ?? "—"}
+                              </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Total</span>
+                              <div className={styles.detailValue}>
+                                {formatMoney(
+                                  selectedSubmission.selection?.totalAfterAirbnbDiscountDKK ??
+                                    selectedSubmission.selection?.totalWithCleaningDKK
+                                )}
+                              </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Guests</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.guests?.total ?? "—"}
+                              </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Purpose</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.stayPurpose || "—"}
+                              </div>
+                            </div>
                           </div>
-                        ) : null}
-                      </section>
-                    ) : null}
+                        </section>
+                      ) : null}
 
-                    <section className={styles.detailSection}>
-                      <h3>Message</h3>
-                      <p className={styles.detailMessage}>
-                        {selectedSubmission.message || "No message"}
-                      </p>
-                    </section>
+                      {selectedSubmission.extras ? (
+                        <section className={styles.detailSection}>
+                          <h3>Extra services</h3>
+                          <div className={styles.detailGrid}>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Stay date</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.extras.stayDate || "—"}
+                              </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Total</span>
+                              <div className={styles.detailValue}>
+                                {formatMoney(selectedSubmission.extras.totalDKK)}
+                              </div>
+                            </div>
+                          </div>
+                          {selectedSubmission.extras.items?.length ? (
+                            <div className={styles.detailList}>
+                              {selectedSubmission.extras.items.map((item, index) => (
+                                <div className={styles.detailListRow} key={`${item.id || "extra"}-${index}`}>
+                                  <span>{item.label?.en || item.label?.da || item.id || "Extra"}</span>
+                                  <span>
+                                    {item.qty || 0} × {formatMoney(item.unitPriceDKK ?? null)}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </section>
+                      ) : null}
 
-                    {selectedSubmission.mailError ? (
+                      {selectedSubmission.checkin ? (
+                        <section className={styles.detailSection}>
+                          <h3>{selectedSubmission.checkin.type === "checkout" ? "Check-out" : "Check-in"}</h3>
+                          <div className={styles.detailGrid}>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Type</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.checkin.typeLabel || "—"}
+                              </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Key code</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.checkin.keycode || "—"}
+                              </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Electricity</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.checkin.meterReadings?.electricity || "—"}
+                              </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Water (house)</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.checkin.meterReadings?.waterHouse || "—"}
+                              </div>
+                            </div>
+                            <div className={styles.detailItem}>
+                              <span className={styles.detailLabel}>Water (pool)</span>
+                              <div className={styles.detailValue}>
+                                {selectedSubmission.checkin.meterReadings?.waterPool || "—"}
+                              </div>
+                            </div>
+                          </div>
+                          {selectedSubmission.checkin.attachments?.length ? (
+                            <div className={styles.detailList}>
+                              {selectedSubmission.checkin.attachments.map((file, index) => (
+                                <div className={styles.detailListRow} key={`${file.filename || "file"}-${index}`}>
+                                  <span>{file.filename || "Attachment"}</span>
+                                  <span>{file.sizeBytes ? `${Math.round(file.sizeBytes / 1024)} KB` : "—"}</span>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </section>
+                      ) : null}
+
                       <section className={styles.detailSection}>
-                        <h3>Email error</h3>
+                        <h3>Message</h3>
                         <p className={styles.detailMessage}>
-                          {selectedSubmission.mailError}
+                          {selectedSubmission.message || "No message"}
                         </p>
                       </section>
-                    ) : null}
-                  </div>
-                ) : (
-                  <div className={styles.emptyState}>
-                    <h2>Select a submission</h2>
-                    <p>Details will appear here as soon as you choose a row from the list.</p>
-                  </div>
-                )}
-              </aside>
+
+                      {selectedSubmission.mailError ? (
+                        <section className={styles.detailSection}>
+                          <h3>Email error</h3>
+                          <p className={styles.detailMessage}>
+                            {selectedSubmission.mailError}
+                          </p>
+                        </section>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className={styles.emptyState}>
+                      <h2>Select a submission</h2>
+                      <p>Details will appear here as soon as you choose a row from the list.</p>
+                    </div>
+                  )}
+                </aside>
+              ) : null}
             </div>
           ) : null}
         </div>
       </div>
+
+      {isMobileLayout && selectedSubmission && !deleteTarget ? (
+        <div
+          className={styles.mobileDetailOverlay}
+          role="presentation"
+          onClick={closeMobileDetail}
+        >
+          <div
+            className={styles.mobileDetailCard}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="mobile-submission-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.mobileDetailHeader}>
+              <div>
+                <p className={styles.eyebrow}>Submission details</p>
+                <h2 id="mobile-submission-title">
+                  {selectedSubmission.name || "Submission"}
+                </h2>
+              </div>
+              <button
+                type="button"
+                className={styles.ghostButton}
+                onClick={closeMobileDetail}
+              >
+                Close
+              </button>
+            </div>
+            <div className={styles.mobileDetailScroll}>
+              <section className={styles.detailSection}>
+                <div className={styles.badgeRow}>
+                  <span
+                    className={`${styles.badge} ${statusClassName(
+                      selectedSubmission.status
+                    )}`}
+                  >
+                    {statusLabel(selectedSubmission.status)}
+                  </span>
+                  <span className={styles.badge}>
+                    {submissionLabel(selectedSubmission)}
+                  </span>
+                </div>
+              </section>
+
+              <section className={styles.detailSection}>
+                <h3>Contact</h3>
+                <div className={styles.detailGrid}>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Email</span>
+                    <div className={styles.detailValue}>
+                      {selectedSubmission.email || "—"}
+                    </div>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Phone</span>
+                    <div className={styles.detailValue}>
+                      {selectedSubmission.phone || "—"}
+                    </div>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Country</span>
+                    <div className={styles.detailValue}>
+                      {selectedSubmission.country ||
+                        selectedSubmission.countryIso ||
+                        "—"}
+                    </div>
+                  </div>
+                  <div className={styles.detailItem}>
+                    <span className={styles.detailLabel}>Submitted</span>
+                    <div className={styles.detailValue}>
+                      {formatDateTime(selectedSubmission.createdAtMs)}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {selectedSubmission.selection || selectedSubmission.guests || selectedSubmission.stayPurpose ? (
+                <section className={styles.detailSection}>
+                  <h3>Stay</h3>
+                  <div className={styles.detailGrid}>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Check-in</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.selection?.start || "—"}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Check-out</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.selection?.endExclusive || "—"}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Nights</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.selection?.nights ?? "—"}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Total</span>
+                      <div className={styles.detailValue}>
+                        {formatMoney(
+                          selectedSubmission.selection?.totalAfterAirbnbDiscountDKK ??
+                            selectedSubmission.selection?.totalWithCleaningDKK
+                        )}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Guests</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.guests?.total ?? "—"}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Purpose</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.stayPurpose || "—"}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
+              {selectedSubmission.extras ? (
+                <section className={styles.detailSection}>
+                  <h3>Extra services</h3>
+                  <div className={styles.detailGrid}>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Stay date</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.extras.stayDate || "—"}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Total</span>
+                      <div className={styles.detailValue}>
+                        {formatMoney(selectedSubmission.extras.totalDKK)}
+                      </div>
+                    </div>
+                  </div>
+                  {selectedSubmission.extras.items?.length ? (
+                    <div className={styles.detailList}>
+                      {selectedSubmission.extras.items.map((item, index) => (
+                        <div className={styles.detailListRow} key={`${item.id || "extra"}-${index}`}>
+                          <span>{item.label?.en || item.label?.da || item.id || "Extra"}</span>
+                          <span>
+                            {item.qty || 0} × {formatMoney(item.unitPriceDKK ?? null)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
+              ) : null}
+
+              {selectedSubmission.checkin ? (
+                <section className={styles.detailSection}>
+                  <h3>{selectedSubmission.checkin.type === "checkout" ? "Check-out" : "Check-in"}</h3>
+                  <div className={styles.detailGrid}>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Type</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.checkin.typeLabel || "—"}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Key code</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.checkin.keycode || "—"}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Electricity</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.checkin.meterReadings?.electricity || "—"}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Water (house)</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.checkin.meterReadings?.waterHouse || "—"}
+                      </div>
+                    </div>
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Water (pool)</span>
+                      <div className={styles.detailValue}>
+                        {selectedSubmission.checkin.meterReadings?.waterPool || "—"}
+                      </div>
+                    </div>
+                  </div>
+                  {selectedSubmission.checkin.attachments?.length ? (
+                    <div className={styles.detailList}>
+                      {selectedSubmission.checkin.attachments.map((file, index) => (
+                        <div className={styles.detailListRow} key={`${file.filename || "file"}-${index}`}>
+                          <span>{file.filename || "Attachment"}</span>
+                          <span>{file.sizeBytes ? `${Math.round(file.sizeBytes / 1024)} KB` : "—"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </section>
+              ) : null}
+
+              <section className={styles.detailSection}>
+                <h3>Message</h3>
+                <p className={styles.detailMessage}>
+                  {selectedSubmission.message || "No message"}
+                </p>
+              </section>
+
+              {selectedSubmission.mailError ? (
+                <section className={styles.detailSection}>
+                  <h3>Email error</h3>
+                  <p className={styles.detailMessage}>
+                    {selectedSubmission.mailError}
+                  </p>
+                </section>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {deleteTarget ? (
         <div
