@@ -792,13 +792,17 @@ export default function AdminForms() {
                                 {selectedSubmission.guests?.total ?? "—"}
                               </div>
                             </div>
-                            <div className={styles.detailItem}>
-                              <span className={styles.detailLabel}>Purpose</span>
-                              <div className={styles.detailValue}>
-                                {selectedSubmission.stayPurpose || "—"}
+                          </div>
+                          {selectedSubmission.stayPurpose ? (
+                            <div className={styles.detailList}>
+                              <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Purpose</span>
+                                <p className={styles.detailMessage}>
+                                  {selectedSubmission.stayPurpose}
+                                </p>
                               </div>
                             </div>
-                          </div>
+                          ) : null}
                         </section>
                       ) : null}
 
@@ -1024,13 +1028,17 @@ export default function AdminForms() {
                         {selectedSubmission.guests?.total ?? "—"}
                       </div>
                     </div>
-                    <div className={styles.detailItem}>
-                      <span className={styles.detailLabel}>Purpose</span>
-                      <div className={styles.detailValue}>
-                        {selectedSubmission.stayPurpose || "—"}
+                  </div>
+                  {selectedSubmission.stayPurpose ? (
+                    <div className={styles.detailList}>
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>Purpose</span>
+                        <p className={styles.detailMessage}>
+                          {selectedSubmission.stayPurpose}
+                        </p>
                       </div>
                     </div>
-                  </div>
+                  ) : null}
                 </section>
               ) : null}
 
