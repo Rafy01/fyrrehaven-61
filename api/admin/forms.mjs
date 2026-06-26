@@ -3,16 +3,19 @@ import {
   getFirebaseAdminInitError,
   verifyAdminRequest,
 } from "../_lib/firebaseAdmin.mjs";
-import { listFormSubmissions } from "../_lib/formSubmissions.mjs";
+import {
+  deleteFormSubmission,
+  listFormSubmissions,
+} from "../_lib/formSubmissions.mjs";
 import { applySecurityHeaders, sendJson } from "../_lib/httpSecurity.mjs";
 
 const DASHBOARD_AUTH_DISABLED = true;
 
 export default async function handler(req, res) {
   applySecurityHeaders(res);
-  res.setHeader("Allow", "GET");
+  res.setHeader("Allow", "GET, DELETE");
 
-  if (req.method !== "GET") {
+  if (req.method !== "GET" && req.method !== "DELETE") {
     sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });
     return;
   }
@@ -44,6 +47,48 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (req.method === "DELETE") {
+      const submissionId =
+        String(req.query?.id || req.body?.id || "").trim();
+      const confirmation =
+        String(req.body?.confirmation || "").trim().toLowerCase();
+
+      if (!submissionId) {
+        sendJson(res, 400, {
+          ok: false,
+          error: "SUBMISSION_ID_REQUIRED",
+          detail: "Missing submission id.",
+        });
+        return;
+      }
+
+      if (confirmation !== "delete") {
+        sendJson(res, 400, {
+          ok: false,
+          error: "DELETE_CONFIRMATION_REQUIRED",
+          detail: 'Type "delete" to confirm removal.',
+        });
+        return;
+      }
+
+      const deleted = await deleteFormSubmission(db, submissionId);
+      if (!deleted) {
+        sendJson(res, 404, {
+          ok: false,
+          error: "SUBMISSION_NOT_FOUND",
+          detail: "No stored submission matched that id.",
+        });
+        return;
+      }
+
+      sendJson(res, 200, {
+        ok: true,
+        deleted: true,
+        id: submissionId,
+      });
+      return;
+    }
+
     const submissions = await listFormSubmissions(db, 250);
 
     sendJson(res, 200, {

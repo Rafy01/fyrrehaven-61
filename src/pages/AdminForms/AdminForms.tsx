@@ -94,6 +94,8 @@ type ApiResponse = {
   detail?: string | null;
   submissions?: Submission[];
   admin?: { email?: string };
+  deleted?: boolean;
+  id?: string;
 };
 
 type Appearance = "light" | "dark";
@@ -188,6 +190,9 @@ export default function AdminForms() {
   const [submissions, setSubmissions] = React.useState<Submission[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [adminEmail, setAdminEmail] = React.useState<string>("");
+  const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
 
   React.useLayoutEffect(() => {
     const html = document.documentElement;
@@ -250,6 +255,11 @@ export default function AdminForms() {
   }, []);
 
   React.useEffect(() => {
+    setDeleteConfirmation("");
+    setDeleteError(null);
+  }, [selectedId]);
+
+  React.useEffect(() => {
     if (!user && !DASHBOARD_AUTH_DISABLED) return;
     void fetchSubmissions();
   }, [user, fetchSubmissions]);
@@ -297,6 +307,60 @@ export default function AdminForms() {
     setSubmissions([]);
     setSelectedId(null);
     setAdminEmail("");
+  }
+
+  async function handleDeleteSubmission() {
+    if (!selectedSubmission || deleting) return;
+
+    setDeleteError(null);
+
+    if (deleteConfirmation.trim().toLowerCase() !== "delete") {
+      setDeleteError('Skriv "delete" for at bekræfte sletningen.');
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const auth = getFirebaseAuth();
+      const token =
+        DASHBOARD_AUTH_DISABLED || !auth?.currentUser
+          ? null
+          : await auth.currentUser.getIdToken(true);
+
+      const res = await fetch(`/api/admin/forms?id=${encodeURIComponent(selectedSubmission.id)}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          id: selectedSubmission.id,
+          confirmation: deleteConfirmation.trim(),
+        }),
+      });
+
+      const data = (await res.json()) as ApiResponse;
+      if (!res.ok || !data.ok) {
+        throw new Error(
+          data.detail || data.error || `HTTP ${res.status}`
+        );
+      }
+
+      setSubmissions((current) => {
+        const next = current.filter(
+          (submission) => submission.id !== selectedSubmission.id
+        );
+        setSelectedId(next[0]?.id ?? null);
+        return next;
+      });
+      setDeleteConfirmation("");
+    } catch (nextError) {
+      setDeleteError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    } finally {
+      setDeleting(false);
+    }
   }
 
   if (!DASHBOARD_AUTH_DISABLED && !isFirebaseClientConfigured()) {
@@ -689,6 +753,48 @@ export default function AdminForms() {
                         </p>
                       </section>
                     ) : null}
+
+                    <section className={styles.detailSection}>
+                      <h3>Slet indsendelse</h3>
+                      <p className={styles.detailMuted}>
+                        Denne handling sletter indsendelsen fra dashboardet og
+                        databasen. Skriv <strong>delete</strong> for at låse
+                        slet-knappen op.
+                      </p>
+                      <div className={styles.deleteBox}>
+                        <label
+                          className={styles.detailLabel}
+                          htmlFor="admin-delete-confirmation"
+                        >
+                          Bekræft sletning
+                        </label>
+                        <input
+                          id="admin-delete-confirmation"
+                          className={styles.deleteInput}
+                          type="text"
+                          value={deleteConfirmation}
+                          onChange={(event) =>
+                            setDeleteConfirmation(event.target.value)
+                          }
+                          placeholder='Skriv "delete"'
+                          autoComplete="off"
+                          spellCheck={false}
+                        />
+                        <button
+                          className={styles.deleteButton}
+                          onClick={() => void handleDeleteSubmission()}
+                          disabled={
+                            deleting ||
+                            deleteConfirmation.trim().toLowerCase() !== "delete"
+                          }
+                        >
+                          {deleting ? "Sletter..." : "Slet indsendelse"}
+                        </button>
+                        {deleteError ? (
+                          <p className={styles.deleteError}>{deleteError}</p>
+                        ) : null}
+                      </div>
+                    </section>
                   </>
                 ) : (
                   <div className={styles.emptyState}>

@@ -24,6 +24,26 @@ export async function updateFormSubmission(docRef, patch) {
   });
 }
 
+export async function deleteFormSubmission(db, submissionId) {
+  if (!db || !submissionId) return false;
+
+  const collections = [
+    FORM_SUBMISSIONS_COLLECTION,
+    LEGACY_CONTACT_SUBMISSIONS_COLLECTION,
+  ];
+
+  for (const collectionName of collections) {
+    const docRef = db.collection(collectionName).doc(submissionId);
+    const snapshot = await docRef.get();
+    if (snapshot.exists) {
+      await docRef.delete();
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export async function listFormSubmissions(db, limit = 250) {
   if (!db) return [];
 
