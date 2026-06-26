@@ -180,6 +180,14 @@
   border-bottom: 1px solid var(--gray-5);
 }
 
+.panelHeaderTop {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .panelHeader h2 {
   margin: 0 0 4px;
   font-size: 1.15rem;
@@ -188,6 +196,29 @@
 .panelHeader p {
   margin: 0;
   color: var(--gray-10);
+}
+
+.filterLabel {
+  display: grid;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--gray-10);
+}
+
+.filterSelect {
+  min-width: 190px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--gray-6);
+  background: color-mix(in srgb, var(--gray-12) 5%, transparent);
+  color: var(--gray-12);
+  padding: 0 12px;
+  font: inherit;
+}
+
+.filterSelect:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-9) 35%, transparent);
+  outline-offset: 2px;
 }
 
 .list {
@@ -200,6 +231,16 @@
 .rowCard {
   position: relative;
   border-bottom: 1px solid var(--gray-4);
+}
+
+.rowCard:hover .rowButton,
+.rowCard:hover .iconButton {
+  background: color-mix(in srgb, var(--accent-3) 40%, transparent);
+}
+
+.rowCard[data-active="true"] .rowButton,
+.rowCard[data-active="true"] .iconButton {
+  background: color-mix(in srgb, var(--accent-3) 55%, transparent);
 }
 
 .rowCardHeader {
@@ -218,14 +259,6 @@
   text-align: left;
   cursor: pointer;
   transition: background-color 160ms ease;
-}
-
-.rowButton:hover {
-  background: color-mix(in srgb, var(--accent-3) 40%, transparent);
-}
-
-.rowButton[data-active="true"] {
-  background: color-mix(in srgb, var(--accent-3) 55%, transparent);
 }
 
 .rowTop,
@@ -384,29 +417,32 @@
 
 .iconButton {
   appearance: none;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: auto;
   border-radius: 12px;
   border: 1px solid var(--gray-6);
   background: color-mix(in srgb, var(--gray-12) 5%, transparent);
-  color: var(--gray-11);
+  color: #ffb4c0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
   margin: 16px 20px 0 0;
+  font-size: 18px;
 }
 
 .iconButton:hover {
   transform: translateY(-1px);
-  background: color-mix(in srgb, #d9485f 16%, transparent);
+  background: color-mix(in srgb, #d9485f 18%, transparent);
   color: #ffd4da;
 }
 
 .iconButton svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.1;
+  flex: none;
 }
 
 .deleteInput {
@@ -545,6 +581,19 @@
   .heroActions {
     justify-content: flex-start;
     width: 100%;
+  }
+
+  .panelHeaderTop {
+    align-items: stretch;
+  }
+
+  .filterLabel {
+    width: 100%;
+  }
+
+  .filterSelect {
+    width: 100%;
+    min-width: 0;
   }
 
   .rowButton {

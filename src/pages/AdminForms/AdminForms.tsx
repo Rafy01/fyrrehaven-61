@@ -100,6 +100,7 @@ type ApiResponse = {
 };
 
 type Appearance = "light" | "dark";
+type SubmissionFilter = "all" | "booking" | "contact" | "extra-services" | "guest-checkin";
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
 const DASHBOARD_AUTH_DISABLED = true;
@@ -211,6 +212,8 @@ export default function AdminForms() {
   const [submissions, setSubmissions] = React.useState<Submission[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [adminEmail, setAdminEmail] = React.useState<string>("");
+  const [submissionFilter, setSubmissionFilter] =
+    React.useState<SubmissionFilter>("all");
   const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
@@ -289,6 +292,21 @@ export default function AdminForms() {
 
   const selectedSubmission =
     submissions.find((submission) => submission.id === selectedId) || null;
+
+  const visibleSubmissions = React.useMemo(() => {
+    if (submissionFilter === "all") return submissions;
+
+    return submissions.filter((submission) => {
+      if (submissionFilter === "booking") return submission.intent === "booking";
+      if (submissionFilter === "extra-services") {
+        return submission.intent === "extra-services";
+      }
+      if (submissionFilter === "guest-checkin") {
+        return submission.intent === "guest-checkin";
+      }
+      return !submission.intent || submission.intent === "inquiry";
+    });
+  }, [submissionFilter, submissions]);
 
   const sentCount = submissions.filter((submission) => submission.status === "sent").length;
   const failedCount = submissions.filter(
@@ -556,19 +574,40 @@ export default function AdminForms() {
             <div className={styles.layout}>
               <section className={styles.panel}>
                 <div className={styles.panelHeader}>
-                  <h2>Submissions</h2>
-                  <p>Booking, contact, extra services, and check-in / check-out forms stored from the website.</p>
+                  <div className={styles.panelHeaderTop}>
+                    <div>
+                      <h2>Submissions</h2>
+                      <p>All website forms, sorted by newest first.</p>
+                    </div>
+                    <label className={styles.filterLabel} htmlFor="admin-submission-filter">
+                      <span>Filter</span>
+                      <select
+                        id="admin-submission-filter"
+                        className={styles.filterSelect}
+                        value={submissionFilter}
+                        onChange={(event) =>
+                          setSubmissionFilter(event.target.value as SubmissionFilter)
+                        }
+                      >
+                        <option value="all">All</option>
+                        <option value="booking">Bookings</option>
+                        <option value="contact">Contacts</option>
+                        <option value="extra-services">Extra services</option>
+                        <option value="guest-checkin">Check-in / check-out</option>
+                      </select>
+                    </label>
+                  </div>
                 </div>
                 <div className={styles.list}>
-                  {submissions.length === 0 ? (
+                  {visibleSubmissions.length === 0 ? (
                     <div className={styles.emptyState}>
-                      <h2>No submissions yet</h2>
+                      <h2>No submissions found</h2>
                       <p>
-                        As soon as the first form is submitted, it will appear here.
+                        Try a different filter, or wait for the next form submission.
                       </p>
                     </div>
                   ) : (
-                    submissions.map((submission) => (
+                    visibleSubmissions.map((submission) => (
                       <article
                         key={submission.id}
                         className={styles.rowCard}
