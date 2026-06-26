@@ -1,5 +1,6 @@
 import React from "react";
 import { Helmet } from "react-helmet-async";
+import { FiMoon, FiSun, FiTrash2 } from "react-icons/fi";
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -114,7 +115,7 @@ function readAppearance(): Appearance {
 
 function formatDateTime(value?: number) {
   if (!value) return "—";
-  return new Intl.DateTimeFormat("da-DK", {
+  return new Intl.DateTimeFormat("en-GB", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
@@ -122,7 +123,7 @@ function formatDateTime(value?: number) {
 
 function formatMoney(value?: number | null) {
   if (typeof value !== "number") return "—";
-  return new Intl.NumberFormat("da-DK", {
+  return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "DKK",
     maximumFractionDigits: 0,
@@ -132,11 +133,11 @@ function formatMoney(value?: number | null) {
 function statusLabel(status?: SubmissionStatus) {
   switch (status) {
     case "sent":
-      return "Mail sendt";
+      return "Email sent";
     case "mail_failed":
-      return "Mail fejlede";
+      return "Email failed";
     default:
-      return "Afventer";
+      return "Pending";
   }
 }
 
@@ -145,13 +146,13 @@ function submissionLabel(submission: Submission) {
     case "booking":
       return "Booking";
     case "guest-checkin":
-      return submission.checkin?.type === "checkout" ? "Tjek-ud" : "Tjek-ind";
+      return submission.checkin?.type === "checkout" ? "Check-out" : "Check-in";
     case "extra-services":
-      return "Ekstra services";
+      return "Extra services";
     case "other":
-      return "Andet";
+      return "Other";
     default:
-      return "Kontakt";
+      return "Contact";
   }
 }
 
@@ -179,8 +180,28 @@ function statusClassName(status?: SubmissionStatus) {
   }
 }
 
+function submissionContextTag(submission: Submission) {
+  if (submission.selection?.nights) {
+    return `${submission.selection.nights} night${
+      submission.selection.nights === 1 ? "" : "s"
+    }`;
+  }
+
+  if (submission.extras?.stayDate) {
+    return `Stay: ${submission.extras.stayDate}`;
+  }
+
+  if (submission.checkin?.typeLabel) {
+    return submission.checkin.typeLabel;
+  }
+
+  return null;
+}
+
 export default function AdminForms() {
-  const [appearance] = React.useState<Appearance>(() => readAppearance());
+  const [appearance, setAppearance] = React.useState<Appearance>(() =>
+    readAppearance()
+  );
   const [user, setUser] = React.useState<User | null>(
     DASHBOARD_AUTH_DISABLED ? ({} as User) : null
   );
@@ -193,12 +214,14 @@ export default function AdminForms() {
   const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
+  const [deleteTarget, setDeleteTarget] = React.useState<Submission | null>(null);
 
   React.useLayoutEffect(() => {
     const html = document.documentElement;
     html.dataset.theme = appearance;
     html.dataset.appearancePreference = appearance;
     html.style.colorScheme = appearance;
+    window.localStorage.setItem(APPEARANCE_STORAGE_KEY, appearance);
   }, [appearance]);
 
   React.useEffect(() => {
@@ -293,7 +316,7 @@ export default function AdminForms() {
           ? "Firebase login could not start. Check Google sign-in, authorized domains, and CSP for Firebase Auth."
           : popupError instanceof Error
           ? popupError.message
-          : "Log ind mislykkedes. Proev igen.";
+          : "Sign-in failed. Please try again.";
       setError(
         `Firebase: ${authMessage}${code ? ` (${code})` : ""}`
       );
@@ -309,13 +332,18 @@ export default function AdminForms() {
     setAdminEmail("");
   }
 
+  function toggleAppearance() {
+    setAppearance((current) => (current === "dark" ? "light" : "dark"));
+  }
+
   async function handleDeleteSubmission() {
-    if (!selectedSubmission || deleting) return;
+    const target = deleteTarget;
+    if (!target || deleting) return;
 
     setDeleteError(null);
 
     if (deleteConfirmation.trim().toLowerCase() !== "delete") {
-      setDeleteError('Skriv "delete" for at bekræfte sletningen.');
+      setDeleteError('Type "delete" to confirm removal.');
       return;
     }
 
@@ -327,14 +355,14 @@ export default function AdminForms() {
           ? null
           : await auth.currentUser.getIdToken(true);
 
-      const res = await fetch(`/api/admin/forms?id=${encodeURIComponent(selectedSubmission.id)}`, {
+      const res = await fetch(`/api/admin/forms?id=${encodeURIComponent(target.id)}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          id: selectedSubmission.id,
+          id: target.id,
           confirmation: deleteConfirmation.trim(),
         }),
       });
@@ -348,12 +376,15 @@ export default function AdminForms() {
 
       setSubmissions((current) => {
         const next = current.filter(
-          (submission) => submission.id !== selectedSubmission.id
+          (submission) => submission.id !== target.id
         );
-        setSelectedId(next[0]?.id ?? null);
+        setSelectedId((current) =>
+          current === target.id ? next[0]?.id ?? null : current
+        );
         return next;
       });
       setDeleteConfirmation("");
+      setDeleteTarget(null);
     } catch (nextError) {
       setDeleteError(
         String(nextError instanceof Error ? nextError.message : nextError)
@@ -374,10 +405,10 @@ export default function AdminForms() {
           <div className={styles.shell}>
             <div className={styles.configCard}>
               <p className={styles.eyebrow}>Admin dashboard</p>
-              <h1>Firebase mangler stadig i frontenden</h1>
+              <h1>Firebase is still missing in the frontend</h1>
               <p>
-                Vi er klar i koden, men dashboardet kan ikke starte, før de
-                offentlige Firebase-oplysninger ligger i miljøvariablerne.
+                The code is ready, but the dashboard cannot start until the
+                public Firebase values are present in the environment variables.
               </p>
               <ul className={styles.hintList}>
                 <li>VITE_FIREBASE_API_KEY</li>
@@ -401,7 +432,7 @@ export default function AdminForms() {
           <div className={styles.shell}>
             <div className={styles.emptyState}>
               <p className={styles.eyebrow}>Admin dashboard</p>
-              <h1>Starter dashboard...</h1>
+              <h1>Starting dashboard...</h1>
             </div>
           </div>
         </div>
@@ -420,13 +451,13 @@ export default function AdminForms() {
           <div className={styles.shell}>
             <div className={styles.authCard}>
               <p className={styles.eyebrow}>Admin dashboard</p>
-              <h1>Log ind for at se formularerne</h1>
+              <h1>Sign in to view submissions</h1>
               <p>
-                Vi bruger Firebase-login til at beskytte dashboardet. Kun
-                godkendte admin-adresser får adgang til de gemte formularer.
+                We use Firebase login to protect the dashboard. Only approved
+                admin emails can access stored submissions.
               </p>
               <button className={styles.button} onClick={handleSignIn}>
-                Log ind med Google
+                Sign in with Google
               </button>
               {error ? <p className={styles.detailMuted}>{error}</p> : null}
             </div>
@@ -447,10 +478,10 @@ export default function AdminForms() {
           <div className={styles.hero}>
             <div>
               <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
-              <h1>Formular-dashboard</h1>
+              <h1>Forms dashboard</h1>
               <p>
-                Her kan vi følge alle indsendelser, også dem hvor mailen ikke
-                kom igennem. Det bliver vores rolige fallback-indbakke.
+                Review every submission here, including the ones where email
+                did not make it through. This is our reliable fallback inbox.
               </p>
             </div>
             <div className={styles.heroActions}>
@@ -458,15 +489,36 @@ export default function AdminForms() {
                 {adminEmail || user?.email || "dashboard@fyrrehaven-61.dk"}
               </div>
               <button
+                type="button"
+                className={styles.themeButton}
+                onClick={toggleAppearance}
+                aria-label={
+                  appearance === "dark"
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
+                title={
+                  appearance === "dark"
+                    ? "Switch to light mode"
+                    : "Switch to dark mode"
+                }
+              >
+                {appearance === "dark" ? (
+                  <FiSun aria-hidden="true" />
+                ) : (
+                  <FiMoon aria-hidden="true" />
+                )}
+              </button>
+              <button
                 className={styles.ghostButton}
                 onClick={() => void fetchSubmissions()}
                 disabled={loading}
               >
-                {loading ? "Opdaterer..." : "Opdater"}
+                {loading ? "Refreshing..." : "Refresh"}
               </button>
               {!DASHBOARD_AUTH_DISABLED ? (
                 <button className={styles.button} onClick={() => void handleSignOut()}>
-                  Log ud
+                  Sign out
                 </button>
               ) : null}
             </div>
@@ -474,19 +526,19 @@ export default function AdminForms() {
 
           <div className={styles.cards}>
             <div className={styles.card}>
-              <p className={styles.cardLabel}>Samlet antal</p>
+              <p className={styles.cardLabel}>Total submissions</p>
               <p className={styles.cardValue}>{submissions.length}</p>
             </div>
             <div className={styles.card}>
-              <p className={styles.cardLabel}>Mail sendt</p>
+              <p className={styles.cardLabel}>Email sent</p>
               <p className={styles.cardValue}>{sentCount}</p>
             </div>
             <div className={styles.card}>
-              <p className={styles.cardLabel}>Mail fejlet</p>
+              <p className={styles.cardLabel}>Email failed</p>
               <p className={styles.cardValue}>{failedCount}</p>
             </div>
             <div className={styles.card}>
-              <p className={styles.cardLabel}>Seneste indsendelse</p>
+              <p className={styles.cardLabel}>Latest submission</p>
               <p className={styles.cardValue}>
                 {formatDateTime(submissions[0]?.createdAtMs)}
               </p>
@@ -495,7 +547,7 @@ export default function AdminForms() {
 
           {error ? (
             <div className={styles.emptyState}>
-              <h2>Dashboardet kunne ikke hente data</h2>
+              <h2>The dashboard could not load data</h2>
               <p>{error}</p>
             </div>
           ) : null}
@@ -504,57 +556,79 @@ export default function AdminForms() {
             <div className={styles.layout}>
               <section className={styles.panel}>
                 <div className={styles.panelHeader}>
-                  <h2>Indsendelser</h2>
-                  <p>Booking, kontakt, ekstra services og tjek-ind/ud gemt fra websitet.</p>
+                  <h2>Submissions</h2>
+                  <p>Booking, contact, extra services, and check-in / check-out forms stored from the website.</p>
                 </div>
                 <div className={styles.list}>
                   {submissions.length === 0 ? (
                     <div className={styles.emptyState}>
-                      <h2>Ingen indsendelser endnu</h2>
+                      <h2>No submissions yet</h2>
                       <p>
-                        Saa snart den forste formular bliver sendt, lander den her.
+                        As soon as the first form is submitted, it will appear here.
                       </p>
                     </div>
                   ) : (
                     submissions.map((submission) => (
-                      <button
+                      <article
                         key={submission.id}
-                        className={styles.rowButton}
+                        className={styles.rowCard}
                         data-active={submission.id === selectedId}
-                        onClick={() => setSelectedId(submission.id)}
                       >
-                        <div className={styles.rowTop}>
-                          <div>
-                            <p className={styles.rowName}>
-                              {submission.name || "Ukendt navn"}
-                            </p>
-                            <div className={styles.rowEmail}>
-                              {submission.email || "—"}
+                        <div className={styles.rowCardHeader}>
+                          <button
+                            type="button"
+                            className={styles.rowButton}
+                            onClick={() => setSelectedId(submission.id)}
+                          >
+                            <div className={styles.rowTop}>
+                              <div>
+                                <p className={styles.rowName}>
+                                  {submission.name || "Unknown name"}
+                                </p>
+                                <div className={styles.rowEmail}>
+                                  {submission.email || "—"}
+                                </div>
+                              </div>
+                              <div className={styles.rowTopActions}>
+                                <span className={`${styles.badge} ${statusClassName(submission.status)}`}>
+                                  {statusLabel(submission.status)}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                          <span className={`${styles.badge} ${statusClassName(submission.status)}`}>
-                            {statusLabel(submission.status)}
-                          </span>
+                            <div className={styles.rowMeta}>
+                              <span>{submissionLabel(submission)}</span>
+                              <span>{formatDateTime(submission.createdAtMs)}</span>
+                            </div>
+                            {submissionContextTag(submission) ||
+                            submissionValue(submission) ? (
+                              <div className={styles.badgeRow}>
+                                {submissionContextTag(submission) ? (
+                                  <span className={styles.badge}>
+                                    {submissionContextTag(submission)}
+                                  </span>
+                                ) : null}
+                                {submissionValue(submission) ? (
+                                  <span className={styles.badge}>
+                                    {submissionValue(submission)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.iconButton}
+                            aria-label={`Delete submission from ${submission.name || submission.email || "unknown sender"}`}
+                            onClick={() => {
+                              setDeleteError(null);
+                              setDeleteConfirmation("");
+                              setDeleteTarget(submission);
+                            }}
+                          >
+                            <FiTrash2 aria-hidden="true" />
+                          </button>
                         </div>
-                        <div className={styles.rowMeta}>
-                          <span>{submissionLabel(submission)}</span>
-                          <span>{formatDateTime(submission.createdAtMs)}</span>
-                        </div>
-                        <div className={styles.badgeRow}>
-                          <span className={styles.badge}>
-                            {submission.selection?.nights
-                              ? `${submission.selection.nights} natter`
-                              : submission.extras?.stayDate
-                              ? `Ophold: ${submission.extras.stayDate}`
-                              : submission.checkin?.typeLabel || "Ingen opholdsdata"}
-                          </span>
-                          {submissionValue(submission) ? (
-                            <span className={styles.badge}>
-                              {submissionValue(submission)}
-                            </span>
-                          ) : null}
-                        </div>
-                      </button>
+                      </article>
                     ))
                   )}
                 </div>
@@ -562,9 +636,9 @@ export default function AdminForms() {
 
               <aside className={styles.detailCard}>
                 {selectedSubmission ? (
-                  <>
+                  <div className={styles.detailScroll}>
                     <section className={styles.detailSection}>
-                      <h3>{selectedSubmission.name || "Indsendelse"}</h3>
+                      <h3>{selectedSubmission.name || "Submission"}</h3>
                       <div className={styles.badgeRow}>
                         <span
                           className={`${styles.badge} ${statusClassName(
@@ -580,7 +654,7 @@ export default function AdminForms() {
                     </section>
 
                     <section className={styles.detailSection}>
-                      <h3>Kontakt</h3>
+                      <h3>Contact</h3>
                       <div className={styles.detailGrid}>
                         <div className={styles.detailItem}>
                           <span className={styles.detailLabel}>Email</span>
@@ -589,13 +663,13 @@ export default function AdminForms() {
                           </div>
                         </div>
                         <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Telefon</span>
+                          <span className={styles.detailLabel}>Phone</span>
                           <div className={styles.detailValue}>
                             {selectedSubmission.phone || "—"}
                           </div>
                         </div>
                         <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Land</span>
+                          <span className={styles.detailLabel}>Country</span>
                           <div className={styles.detailValue}>
                             {selectedSubmission.country ||
                               selectedSubmission.countryIso ||
@@ -603,7 +677,7 @@ export default function AdminForms() {
                           </div>
                         </div>
                         <div className={styles.detailItem}>
-                          <span className={styles.detailLabel}>Indsendt</span>
+                          <span className={styles.detailLabel}>Submitted</span>
                           <div className={styles.detailValue}>
                             {formatDateTime(selectedSubmission.createdAtMs)}
                           </div>
@@ -613,22 +687,22 @@ export default function AdminForms() {
 
                     {selectedSubmission.selection || selectedSubmission.guests || selectedSubmission.stayPurpose ? (
                       <section className={styles.detailSection}>
-                        <h3>Ophold</h3>
+                        <h3>Stay</h3>
                         <div className={styles.detailGrid}>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Ankomst</span>
+                            <span className={styles.detailLabel}>Check-in</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.selection?.start || "—"}
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Afrejse</span>
+                            <span className={styles.detailLabel}>Check-out</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.selection?.endExclusive || "—"}
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Natter</span>
+                            <span className={styles.detailLabel}>Nights</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.selection?.nights ?? "—"}
                             </div>
@@ -643,13 +717,13 @@ export default function AdminForms() {
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Gaester</span>
+                            <span className={styles.detailLabel}>Guests</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.guests?.total ?? "—"}
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Formael</span>
+                            <span className={styles.detailLabel}>Purpose</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.stayPurpose || "—"}
                             </div>
@@ -660,10 +734,10 @@ export default function AdminForms() {
 
                     {selectedSubmission.extras ? (
                       <section className={styles.detailSection}>
-                        <h3>Ekstra services</h3>
+                        <h3>Extra services</h3>
                         <div className={styles.detailGrid}>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Opholdsdato</span>
+                            <span className={styles.detailLabel}>Stay date</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.extras.stayDate || "—"}
                             </div>
@@ -679,7 +753,7 @@ export default function AdminForms() {
                           <div className={styles.detailList}>
                             {selectedSubmission.extras.items.map((item, index) => (
                               <div className={styles.detailListRow} key={`${item.id || "extra"}-${index}`}>
-                                <span>{item.label?.da || item.label?.en || item.id || "Ekstra"}</span>
+                                <span>{item.label?.en || item.label?.da || item.id || "Extra"}</span>
                                 <span>
                                   {item.qty || 0} × {formatMoney(item.unitPriceDKK ?? null)}
                                 </span>
@@ -692,7 +766,7 @@ export default function AdminForms() {
 
                     {selectedSubmission.checkin ? (
                       <section className={styles.detailSection}>
-                        <h3>{selectedSubmission.checkin.type === "checkout" ? "Tjek-ud" : "Tjek-ind"}</h3>
+                        <h3>{selectedSubmission.checkin.type === "checkout" ? "Check-out" : "Check-in"}</h3>
                         <div className={styles.detailGrid}>
                           <div className={styles.detailItem}>
                             <span className={styles.detailLabel}>Type</span>
@@ -701,25 +775,25 @@ export default function AdminForms() {
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Noeglekode</span>
+                            <span className={styles.detailLabel}>Key code</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.checkin.keycode || "—"}
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>EL</span>
+                            <span className={styles.detailLabel}>Electricity</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.checkin.meterReadings?.electricity || "—"}
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Vand (hus)</span>
+                            <span className={styles.detailLabel}>Water (house)</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.checkin.meterReadings?.waterHouse || "—"}
                             </div>
                           </div>
                           <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Vand (pool)</span>
+                            <span className={styles.detailLabel}>Water (pool)</span>
                             <div className={styles.detailValue}>
                               {selectedSubmission.checkin.meterReadings?.waterPool || "—"}
                             </div>
@@ -729,7 +803,7 @@ export default function AdminForms() {
                           <div className={styles.detailList}>
                             {selectedSubmission.checkin.attachments.map((file, index) => (
                               <div className={styles.detailListRow} key={`${file.filename || "file"}-${index}`}>
-                                <span>{file.filename || "Vedhaeftning"}</span>
+                                <span>{file.filename || "Attachment"}</span>
                                 <span>{file.sizeBytes ? `${Math.round(file.sizeBytes / 1024)} KB` : "—"}</span>
                               </div>
                             ))}
@@ -739,67 +813,25 @@ export default function AdminForms() {
                     ) : null}
 
                     <section className={styles.detailSection}>
-                      <h3>Besked</h3>
+                      <h3>Message</h3>
                       <p className={styles.detailMessage}>
-                        {selectedSubmission.message || "Ingen besked"}
+                        {selectedSubmission.message || "No message"}
                       </p>
                     </section>
 
                     {selectedSubmission.mailError ? (
                       <section className={styles.detailSection}>
-                        <h3>Mailfejl</h3>
+                        <h3>Email error</h3>
                         <p className={styles.detailMessage}>
                           {selectedSubmission.mailError}
                         </p>
                       </section>
                     ) : null}
-
-                    <section className={styles.detailSection}>
-                      <h3>Slet indsendelse</h3>
-                      <p className={styles.detailMuted}>
-                        Denne handling sletter indsendelsen fra dashboardet og
-                        databasen. Skriv <strong>delete</strong> for at låse
-                        slet-knappen op.
-                      </p>
-                      <div className={styles.deleteBox}>
-                        <label
-                          className={styles.detailLabel}
-                          htmlFor="admin-delete-confirmation"
-                        >
-                          Bekræft sletning
-                        </label>
-                        <input
-                          id="admin-delete-confirmation"
-                          className={styles.deleteInput}
-                          type="text"
-                          value={deleteConfirmation}
-                          onChange={(event) =>
-                            setDeleteConfirmation(event.target.value)
-                          }
-                          placeholder='Skriv "delete"'
-                          autoComplete="off"
-                          spellCheck={false}
-                        />
-                        <button
-                          className={styles.deleteButton}
-                          onClick={() => void handleDeleteSubmission()}
-                          disabled={
-                            deleting ||
-                            deleteConfirmation.trim().toLowerCase() !== "delete"
-                          }
-                        >
-                          {deleting ? "Sletter..." : "Slet indsendelse"}
-                        </button>
-                        {deleteError ? (
-                          <p className={styles.deleteError}>{deleteError}</p>
-                        ) : null}
-                      </div>
-                    </section>
-                  </>
+                  </div>
                 ) : (
                   <div className={styles.emptyState}>
-                    <h2>Vaelg en indsendelse</h2>
-                    <p>Vi viser detaljerne her, sa snart du klikker paa en raekke.</p>
+                    <h2>Select a submission</h2>
+                    <p>Details will appear here as soon as you choose a row from the list.</p>
                   </div>
                 )}
               </aside>
@@ -807,6 +839,84 @@ export default function AdminForms() {
           ) : null}
         </div>
       </div>
+
+      {deleteTarget ? (
+        <div
+          className={styles.modalOverlay}
+          role="presentation"
+          onClick={() => {
+            if (deleting) return;
+            setDeleteTarget(null);
+            setDeleteConfirmation("");
+            setDeleteError(null);
+          }}
+        >
+          <div
+            className={styles.modalCard}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-submission-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className={styles.eyebrow}>Delete submission</p>
+            <h2 id="delete-submission-title">Remove this submission?</h2>
+            <p className={styles.detailMuted}>
+              This will delete the submission from both the dashboard and Firestore.
+              Type <strong>delete</strong> to confirm.
+            </p>
+            <div className={styles.modalSummary}>
+              <strong>{deleteTarget.name || "Unknown name"}</strong>
+              <span>{deleteTarget.email || "—"}</span>
+              <span>{submissionLabel(deleteTarget)}</span>
+            </div>
+            <label
+              className={styles.detailLabel}
+              htmlFor="admin-delete-confirmation"
+            >
+              Confirmation
+            </label>
+            <input
+              id="admin-delete-confirmation"
+              className={styles.deleteInput}
+              type="text"
+              value={deleteConfirmation}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              placeholder='Type "delete"'
+              autoComplete="off"
+              spellCheck={false}
+              autoFocus
+            />
+            {deleteError ? (
+              <p className={styles.deleteError}>{deleteError}</p>
+            ) : null}
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.ghostButton}
+                onClick={() => {
+                  if (deleting) return;
+                  setDeleteTarget(null);
+                  setDeleteConfirmation("");
+                  setDeleteError(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.deleteButton}
+                onClick={() => void handleDeleteSubmission()}
+                disabled={
+                  deleting ||
+                  deleteConfirmation.trim().toLowerCase() !== "delete"
+                }
+              >
+                {deleting ? "Deleting..." : "Delete submission"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </Theme>
   );
 }
