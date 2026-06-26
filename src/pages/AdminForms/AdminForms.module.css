@@ -412,6 +412,39 @@
   word-break: break-word;
 }
 
+.detailMeta {
+  margin: 8px 0 0;
+  font-size: 0.77rem;
+  color: var(--gray-9);
+}
+
+.priceBreakdown {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-4);
+}
+
+.priceBreakdownRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 0.92rem;
+  color: var(--gray-11);
+}
+
+.priceBreakdownRow span:last-child {
+  text-align: right;
+  font-weight: 700;
+  color: var(--gray-12);
+}
+
+.priceBreakdownTotal {
+  padding-top: 8px;
+  border-top: 1px dashed var(--gray-5);
+}
+
 .detailMessage {
   margin: 0;
   white-space: pre-wrap;
@@ -440,6 +473,33 @@
 .detailListRow span:last-child {
   text-align: right;
   color: var(--gray-10);
+}
+
+.detailListButton {
+  appearance: none;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.detailListButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-9) 35%, transparent);
+  outline-offset: 3px;
+  border-radius: 16px;
+}
+
+.detailListButton .detailListRow {
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.detailListButton:hover .detailListRow {
+  background: color-mix(in srgb, var(--accent-3) 30%, transparent);
+  border-color: color-mix(in srgb, var(--accent-7) 24%, var(--gray-4));
+  transform: translateY(-1px);
 }
 
 .deleteBox {
@@ -535,6 +595,19 @@
 .modalCard h2 {
   margin: 0;
   font-size: clamp(1.5rem, 2.2vw, 2rem);
+}
+
+.linkedModalCard {
+  width: min(100%, 720px);
+  max-height: min(88vh, 860px);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.linkedModalScroll {
+  overflow-y: auto;
+  min-height: 0;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
 }
 
 .modalSummary {
