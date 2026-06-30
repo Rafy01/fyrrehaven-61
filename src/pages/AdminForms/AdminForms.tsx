@@ -1060,37 +1060,12 @@ export default function AdminForms() {
     return attachment?.viewUrl || attachment?.dataUrl || null;
   }
 
-  function renderMeterReadingSummary(submission: Submission) {
-    const readings = submission.checkin?.meterReadings;
-    const items = [
-      ["Electricity", readings?.electricity],
-      ["Water (house)", readings?.waterHouse],
-      ["Water (pool)", readings?.waterPool],
-    ].filter(([, value]) => hasDisplayValue(value));
-
-    if (!items.length) return null;
-
-    return (
-      <div className={styles.meterVerifyBox}>
-        <span>Compare image with submitted readings</span>
-        <div>
-          {items.map(([label, value]) => (
-            <strong key={label}>
-              {label}: {value}
-            </strong>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   function renderCheckinAttachments(submission: Submission) {
     const attachments = submission.checkin?.attachments || [];
     if (!attachments.length) return null;
 
     return (
       <div className={styles.attachmentSection}>
-        {renderMeterReadingSummary(submission)}
         <div className={styles.attachmentGrid}>
           {attachments.map((file, index) => {
             const src = imageSource(file);
@@ -1953,7 +1928,6 @@ export default function AdminForms() {
                 </div>
               ) : null}
               <div className={styles.imagePreviewMeta}>
-                {renderMeterReadingSummary(imagePreview.submission)}
                 {imagePreview.attachment.sizeBytes ? (
                   <span>
                     File size: {Math.round(imagePreview.attachment.sizeBytes / 1024)} KB

@@ -772,37 +772,6 @@
   white-space: nowrap;
 }
 
-.meterVerifyBox {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 14px;
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--accent-9) 32%, var(--gray-5));
-  background: color-mix(in srgb, var(--accent-9) 8%, transparent);
-  color: var(--gray-11);
-}
-
-.meterVerifyBox > span {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--gray-10);
-}
-
-.meterVerifyBox > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.meterVerifyBox strong {
-  padding: 7px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--gray-12) 7%, transparent);
-  color: var(--gray-12);
-  font-size: 0.88rem;
-}
-
 .attachmentSection {
   margin-top: 14px;
 }
@@ -1163,10 +1132,6 @@
   gap: 12px;
   min-width: 0;
   color: var(--gray-10);
-}
-
-.imagePreviewMeta .meterVerifyBox {
-  margin-bottom: 0;
 }
 
 .mobileDetailOverlay {
