@@ -1253,7 +1253,8 @@ export default function AdminForms() {
   }
 
   function renderSubmissionDetailContent(submission: Submission) {
-    const isOverview = activeGroupDetail === "overview";
+    const isOverview =
+      activeGroupDetail === "overview" && (selectedGroup?.items.length || 0) > 1;
     if (isOverview) {
       return renderOverviewContent(selectedGroup, submission);
     }

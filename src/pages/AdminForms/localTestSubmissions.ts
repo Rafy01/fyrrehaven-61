@@ -1,9 +1,3 @@
-const localCheckinMeterImage =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='900' viewBox='0 0 1200 900'%3E%3Crect width='1200' height='900' fill='%2315171a'/%3E%3Crect x='112' y='108' width='976' height='684' rx='44' fill='%23222529' stroke='%235a5d63' stroke-width='8'/%3E%3Ctext x='170' y='210' fill='%23f7f4ea' font-family='Arial,sans-serif' font-size='58' font-weight='700'%3ECheck-in meter photo%3C/text%3E%3Ctext x='170' y='360' fill='%23d9d3b6' font-family='Arial,sans-serif' font-size='64'%3EElectricity: 19402%3C/text%3E%3Ctext x='170' y='500' fill='%23d9d3b6' font-family='Arial,sans-serif' font-size='64'%3EWater house: 982%3C/text%3E%3Ctext x='170' y='640' fill='%23d9d3b6' font-family='Arial,sans-serif' font-size='64'%3EWater pool: 411%3C/text%3E%3C/svg%3E";
-
-const localCheckoutMeterImage =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='900' viewBox='0 0 1200 900'%3E%3Crect width='1200' height='900' fill='%23f6f4ed'/%3E%3Crect x='112' y='108' width='976' height='684' rx='44' fill='%23ffffff' stroke='%23d8d3be' stroke-width='8'/%3E%3Ctext x='170' y='210' fill='%2318191c' font-family='Arial,sans-serif' font-size='58' font-weight='700'%3ECheck-out meter photo%3C/text%3E%3Ctext x='170' y='360' fill='%233f4127' font-family='Arial,sans-serif' font-size='64'%3EElectricity: 19610%3C/text%3E%3Ctext x='170' y='500' fill='%233f4127' font-family='Arial,sans-serif' font-size='64'%3EWater house: 1013%3C/text%3E%3Ctext x='170' y='640' fill='%233f4127' font-family='Arial,sans-serif' font-size='64'%3EWater pool: 430%3C/text%3E%3C/svg%3E";
-
 export const localTestSubmissions = [
   {
     id: "local-booking-1",
@@ -110,16 +104,31 @@ export const localTestSubmissions = [
       typeLabel: "Check-in",
       keycode: "6142",
       meterReadings: {
-        electricity: "19402",
-        waterHouse: "982",
-        waterPool: "411",
+        electricity: "055540",
+        waterHouse: "0002142",
+        waterPool: "00516263",
       },
       attachments: [
         {
-          filename: "check-in-meter.svg",
-          contentType: "image/svg+xml",
-          sizeBytes: 214000,
-          dataUrl: localCheckinMeterImage,
+          fieldname: "electricity",
+          filename: "electricity-meter.jpeg",
+          contentType: "image/jpeg",
+          sizeBytes: 281000,
+          viewUrl: "/admin-test/electricity-meter.jpeg",
+        },
+        {
+          fieldname: "waterHouse",
+          filename: "water-house-meter.jpeg",
+          contentType: "image/jpeg",
+          sizeBytes: 236000,
+          viewUrl: "/admin-test/water-house-meter.jpeg",
+        },
+        {
+          fieldname: "waterPool",
+          filename: "water-pool-meter.jpeg",
+          contentType: "image/jpeg",
+          sizeBytes: 249000,
+          viewUrl: "/admin-test/water-pool-meter.jpeg",
         },
       ],
     },
@@ -141,10 +150,11 @@ export const localTestSubmissions = [
       },
       attachments: [
         {
-          filename: "check-out-meter.svg",
-          contentType: "image/svg+xml",
+          fieldname: "electricity",
+          filename: "electricity-meter.jpeg",
+          contentType: "image/jpeg",
           sizeBytes: 187000,
-          dataUrl: localCheckoutMeterImage,
+          viewUrl: "/admin-test/electricity-meter.jpeg",
         },
       ],
     },
