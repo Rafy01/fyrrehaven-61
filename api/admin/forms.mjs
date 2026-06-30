@@ -9,7 +9,9 @@ import {
 } from "../_lib/formSubmissions.mjs";
 import { applySecurityHeaders, sendJson } from "../_lib/httpSecurity.mjs";
 
-const DASHBOARD_AUTH_DISABLED = true;
+const DASHBOARD_AUTH_DISABLED =
+  process.env.NODE_ENV !== "production" ||
+  process.env.DASHBOARD_AUTH_DISABLED === "true";
 
 export default async function handler(req, res) {
   applySecurityHeaders(res);

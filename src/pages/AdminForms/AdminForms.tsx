@@ -125,7 +125,7 @@ type SubmissionGroup = {
 };
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
-const DASHBOARD_AUTH_DISABLED = true;
+const DASHBOARD_AUTH_DISABLED = import.meta.env.DEV;
 const CHECKIN_GROUP_DETAIL = "guest-checkin";
 const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
