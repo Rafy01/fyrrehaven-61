@@ -98,7 +98,7 @@ export const extraServices: ExtraService[] = [
       en: "The hot tub can be filled before arrival. Filling takes about 2 hours.",
       de: "Der Badezuber kann vor Ankunft gefüllt werden. Das Befüllen dauert etwa 2 Stunden.",
     },
-      priceLabel: {
+    priceLabel: {
       da: "Gratis",
       en: "Free",
       de: "Kostenlos",
