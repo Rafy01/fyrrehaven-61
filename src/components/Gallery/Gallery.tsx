@@ -8,6 +8,7 @@ import React, {
 import * as Dialog from "@radix-ui/react-dialog";
 import styles from "./Gallery.module.css";
 import Buttons from "../Buttons";
+import LazyImage from "../LazyImage";
 import { chooseLang } from "../../lib/lang";
 
 import type { Lang } from "../../lib/lang";
@@ -234,7 +235,7 @@ export default function Gallery({
               aria-label={`${label} – ${count} ${countWord}`}
             >
               <div className={styles.tile}>
-                <img
+                <LazyImage
                   className={`${styles.img} ${fitClass}`}
                   src={cover.src}
                   alt={getCaption(cover, lang) || ""}
@@ -331,13 +332,14 @@ export default function Gallery({
                 </button>
 
                 <figure className={styles.lbFigure}>
-                  <img
+                  <LazyImage
                     className={styles.lbImg}
                     src={
                       activeFolder.items[index].full ??
                       activeFolder.items[index].src
                     }
                     alt={getCaption(activeFolder.items[index], lang) || ""}
+                    loading="eager"
                   />
                   <div className={styles.lbCounter}>
                     {index + 1} / {total}

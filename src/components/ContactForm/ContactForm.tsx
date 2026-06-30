@@ -134,6 +134,7 @@ export default function ContactForm({
   const [sending, setSending] = React.useState(false);
   const [sent, setSent] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const formStartedAtRef = React.useRef<number>(Date.now());
 
   const selectedCountry = findCountry(state.countryIso);
   const dial = selectedCountry?.dial ?? "";
@@ -220,6 +221,9 @@ export default function ContactForm({
   const totalWithCleaning = includeCleaning
     ? baseNightsTotal + cleaningFeeDKK
     : baseNightsTotal;
+  const canShowStayPrice = selPrice.isMinNightsSatisfied !== false;
+  const airbnbServiceFeeSavingsDKK = Math.round(totalWithCleaning * 0.142);
+  const totalAfterAirbnbDiscount = totalWithCleaning - airbnbServiceFeeSavingsDKK;
 
   /* ─────────────── GUEST CAP (max 10 personer) ─────────────── */
   const nAdults = toInt(state.adults);
@@ -250,7 +254,7 @@ export default function ContactForm({
   }
 
   // Total uden extras
-  const grandTotal = totalWithCleaning;
+  const grandTotal = totalAfterAirbnbDiscount;
 
   // === Min.-nætter: afledte værdier til UI og submit-validering ===
   const minReq = selPrice.minNightsRequired ?? 2;
@@ -406,6 +410,14 @@ export default function ContactForm({
             totalWithCleaningDKK: includeCleaning
               ? (selPrice.total ?? 0) + cleaningFeeDKK
               : selPrice.total ?? null,
+            airbnbServiceFeeSavingsDKK:
+              canShowStayPrice && (includeCleaning || selPrice.total != null)
+                ? airbnbServiceFeeSavingsDKK
+                : null,
+            totalAfterAirbnbDiscountDKK:
+              canShowStayPrice && (includeCleaning || selPrice.total != null)
+                ? totalAfterAirbnbDiscount
+                : null,
             // min.-nætter metadata til server-side validering/logning
             minNightsRequired: selPrice.minNightsRequired ?? 2,
             isMinNightsSatisfied:
@@ -430,6 +442,10 @@ export default function ContactForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lang,
+          website: "",
+          company: "",
+          faxNumber: "",
+          formStartedAt: formStartedAtRef.current,
           purpose: purposeForApi,
           name: state.name.trim(),
           email,
@@ -514,13 +530,15 @@ export default function ContactForm({
         ? String(selPrice.nights)
         : t("—", "—");
     const nightsPriceStr =
-      selPrice.total != null ? fmtMoney.format(selPrice.total) : t("—", "—");
+      canShowStayPrice && selPrice.total != null
+        ? fmtMoney.format(selPrice.total)
+        : t("—", "—");
     const cleaningStr = includeCleaning
       ? fmtMoney.format(cleaningFeeDKK)
       : t("—", "—");
 
     const totalStr =
-      includeCleaning || selPrice.total != null
+      canShowStayPrice && (includeCleaning || selPrice.total != null)
         ? fmtMoney.format(grandTotal)
         : t("—", "—");
 
@@ -667,15 +685,16 @@ export default function ContactForm({
               >
                 {t("Ankomst", "Check-in", "Anreise")}
               </label>
-              <input
+              <output
                 id="cf-checkin"
-                className={styles.input}
-                type="text"
-                readOnly
-                required
-                value={selPrice.start ? fmtDate.format(selPrice.start) : ""}
-                placeholder={t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
-              />
+                className={`${styles.input} ${styles.displayField}`}
+                data-empty={!selPrice.start ? "true" : undefined}
+                aria-live="polite"
+              >
+                {selPrice.start
+                  ? fmtDate.format(selPrice.start)
+                  : t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
+              </output>
             </div>
 
             <div className={styles.row}>
@@ -686,19 +705,16 @@ export default function ContactForm({
               >
                 {t("Afrejse", "Check-out", "Abreise")}
               </label>
-              <input
+              <output
                 id="cf-checkout"
-                className={styles.input}
-                type="text"
-                readOnly
-                required
-                value={
-                  selPrice.endExclusive
-                    ? fmtDate.format(selPrice.endExclusive)
-                    : ""
-                }
-                placeholder={t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
-              />
+                className={`${styles.input} ${styles.displayField}`}
+                data-empty={!selPrice.endExclusive ? "true" : undefined}
+                aria-live="polite"
+              >
+                {selPrice.endExclusive
+                  ? fmtDate.format(selPrice.endExclusive)
+                  : t("Vælg i kalenderen", "Pick in the calendar", "Im Kalender auswählen")}
+              </output>
             </div>
 
             {/* Nætter + min.-nætter inline fejl */}
@@ -754,7 +770,9 @@ export default function ContactForm({
                 </span>
               </span>
               <output className={styles.tValue} aria-live="polite">
-                {selPrice.total != null ? fmtMoney.format(selPrice.total) : "—"}
+                {canShowStayPrice && selPrice.total != null
+                  ? fmtMoney.format(selPrice.total)
+                  : "—"}
               </output>
             </div>
 
@@ -772,6 +790,30 @@ export default function ContactForm({
               </output>
             </div>
 
+            <div className={styles.totalItem}>
+              <span className={styles.tLabel}>
+                <span className={styles.tTop}>
+                  {t(
+                    "Direkte booking-rabat (-14,2 %)",
+                    "Direct booking discount (-14.2%)",
+                    "Direktbucher-Rabatt (-14,2 %)"
+                  )}
+                </span>
+                <span className={styles.tSub}>
+                  {t(
+                    "Svarende til Airbnb servicegebyr",
+                    "Equivalent to Airbnb's service fee",
+                    "Entspricht der Airbnb-Servicegebühr"
+                  )}
+                </span>
+              </span>
+              <output className={styles.tValue} aria-live="polite">
+                {canShowStayPrice && (includeCleaning || selPrice.total != null)
+                  ? `- ${fmtMoney.format(airbnbServiceFeeSavingsDKK)}`
+                  : "—"}
+              </output>
+            </div>
+
             <div className={`${styles.totalItem} ${styles.em}`}>
               <span className={styles.tLabel}>
                 <span className={styles.tTop}>
@@ -780,7 +822,7 @@ export default function ContactForm({
                 <span className={styles.tSub}>{t("total", "total", "gesamt")}</span>
               </span>
               <output className={styles.tValue} aria-live="polite">
-                {includeCleaning || selPrice.total != null
+                {canShowStayPrice && (includeCleaning || selPrice.total != null)
                   ? fmtMoney.format(grandTotal)
                   : "—"}
               </output>

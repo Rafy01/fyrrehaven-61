@@ -13,6 +13,7 @@ import { getSeoMeta } from "../../i18n/seo";
 import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import { HOME_USP_ICONS } from "../../lib/icons";
+import { buildVacationRentalSchema } from "../../lib/structuredData";
 
 export default function Home({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
@@ -33,32 +34,16 @@ export default function Home({ lang }: { lang: Lang }) {
   );
 
   // Structured data for SEO (uses centralized meta without affecting the hero)
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "VacationRental",
-    name: "Fyrrehaven 61",
-    description: meta.description,
+  const jsonLd = buildVacationRentalSchema({
     url: "https://fyrrehaven-61.dk",
-    maximumAttendeeCapacity: 10,
-    amenityFeature: [
-      {
-        "@type": "LocationFeatureSpecification",
-        name: t("Indendørs pool", "Indoor pool", "Hallenbad"),
-        value: true,
-      },
-      {
-        "@type": "LocationFeatureSpecification",
-        name: t("Vildmarksbad", "Hot tub", "Whirlpool"),
-        value: true,
-      },
-      {
-        "@type": "LocationFeatureSpecification",
-        name: t("Tæt på strand", "Near beach", "In Strandnähe"),
-        value: true,
-      },
+    description: meta.description,
+    amenities: [
+      { name: t("Opvarmet udendørs pool", "Heated outdoor pool", "Beheizter Außenpool"), description: t("Åben 1. maj – 1. oktober", "Open May 1 to October 1", "Geöffnet 1. Mai bis 1. Oktober") },
+      { name: t("Elektrisk vildmarksbad", "Electric hot tub", "Elektrischer Whirlpool") },
+      { name: t("Elektrisk sauna", "Electric sauna", "Elektrische Sauna") },
+      { name: t("Tæt på strand og skov", "Close to beach and forest", "Nah an Strand und Wald") },
     ],
-    address: { "@type": "PostalAddress", addressCountry: "DK" },
-  };
+  });
 
   return (
     <>
@@ -294,6 +279,7 @@ export default function Home({ lang }: { lang: Lang }) {
       <Reviews
         lang={lang}
         average={4.8}
+        showSchema={false}
       />
       <PracticalInfo
         lang={lang}

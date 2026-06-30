@@ -52,6 +52,11 @@ export type Field =
       description?: string;
       required?: boolean;
       multiple?: boolean;
+    }
+  | {
+      type: "hidden";
+      name: string;
+      value: string;
     };
 
 export type FormProps = {
@@ -64,12 +69,29 @@ export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
   const { t } = useTranslation("common");
   const [values, setValues] = React.useState<
     Record<string, string | FileList | boolean>
-  >({});
+  >(() =>
+    Object.fromEntries(
+      fields
+        .filter((field) => field.type === "hidden")
+        .map((field) => [field.name, field.value])
+    )
+  );
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [fileNames, setFileNames] = React.useState<Record<string, string[]>>(
     {}
   );
-    
+
+  React.useEffect(() => {
+    setValues((prev) => {
+      const next = { ...prev };
+      for (const field of fields) {
+        if (field.type === "hidden") {
+          next[field.name] = field.value;
+        }
+      }
+      return next;
+    });
+  }, [fields]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -127,6 +149,18 @@ export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
       {fields.map((field) => {
+        if (field.type === "hidden") {
+          return (
+            <input
+              key={field.name}
+              type="hidden"
+              name={field.name}
+              value={field.value}
+              onChange={handleChange}
+            />
+          );
+        }
+
         const error = errors[field.name];
         const description = "description" in field ? field.description : null;
 

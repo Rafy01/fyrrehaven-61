@@ -173,7 +173,7 @@ export const SNIPPETS: Snippet[] = [
       "**Sengelinned**: DKK 50 pr. person\n\n" +
       "**Håndklæder**: DKK 75 pr. person\n\n" +
       "**Pakke: Sengetøj + Sengelinned + Håndklæder**: DKK 150 pr. person\n\n" +
-      "**Påfyldning af vildmarksbad**: DKK 150 (ca. 2 timer for at fylde op)\n\n" +
+      "**Påfyldning af vildmarksbad**: Gratis (ca. 2 timer for at fylde op)\n\n" +
       "**Højstol**: Gratis (bestilles på forhånd)\n\n" +
       "**Babyseng**: Gratis (bestilles på forhånd)\n\n" +
       "**Inkluderet i lejen**: Viskestykke, karklud, shampoo, shower gel, håndsæbe, opvaskemiddel, opvaskepulver, kaffebønner.",
@@ -182,7 +182,7 @@ export const SNIPPETS: Snippet[] = [
       "**Sheets**: DKK 50 per person\n\n" +
       "**Towels**: DKK 75 per person\n\n" +
       "**Bundle: Bed linen + Sheets + Towels**: DKK 150 per person\n\n" +
-      "**Wilderness tub fill-up**: DKK 150 (about 2 hours to fill)\n\n" +
+      "**Wilderness tub fill-up**: Free (about 2 hours to fill)\n\n" +
       "**High chair**: Free (pre-order)\n\n" +
       "**Baby cot**: Free (pre-order)\n\n" +
       "**Included**: Tea towel, cloth, shampoo, shower gel, hand soap, dish soap, dishwasher powder, coffee beans.",

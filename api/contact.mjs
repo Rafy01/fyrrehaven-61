@@ -1,11 +1,18 @@
 import nodemailer from "nodemailer";
+import { getFirestoreDb } from "./_lib/firebaseAdmin.mjs";
+import {
+  createFormSubmission,
+  updateFormSubmission,
+} from "./_lib/formSubmissions.mjs";
 import {
   checkRateLimit,
   getRequesterIp,
   normalizeEmail,
   validateContactHeaders,
+  validateHumanSignals,
   validateContactPayload,
 } from "./_lib/contactSecurity.mjs";
+import { applySecurityHeaders, sendJson } from "./_lib/httpSecurity.mjs";
 import { normalizeLang, t, yesNo } from "./_lib/i18n.mjs";
 
 /** --- Utils ---------------------------------------------------- */
@@ -73,6 +80,15 @@ const esc = (s = "") =>
     .replaceAll('"', "&quot;");
 
 const OR_DASH = (v) => (v === 0 ? "0" : v ? String(v) : "—");
+const SHOULD_EXPOSE_INTERNAL_ERRORS =
+  String(process.env.EXPOSE_INTERNAL_API_ERRORS || "").toLowerCase() ===
+  "true";
+
+const sanitizeErrorMessage = (value) =>
+  String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 500);
 
 /** —— Din faste signatur (uforandret) —— */
 const SIGNATURE_HTML = `
@@ -95,7 +111,7 @@ const SIGNATURE_HTML = `
               <tbody>
                 <tr>
                   <td valign="top" style="margin: 0.1px; padding: 0px 12px 0px 0px; cursor: pointer;">
-                    <a href="fyrrehaven-61.dk" target="_blank">
+                    <a href="https://fyrrehaven-61.dk" target="_blank" rel="noreferrer">
                       <img src="https://media.fyrrehaven-61.dk/logo_trans_white/" width="100" alt="" style="display: block; min-width: 100px; max-width: 100%; height: auto;">
                     </a>
                   </td>
@@ -159,38 +175,54 @@ const SIGNATURE_HTML = `
 /** --- Handler -------------------------------------------------- */
 export default async function handler(req, res) {
   try {
-    if (req.method !== "POST") {
-      res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
-      return;
-    }
+    applySecurityHeaders(res);
+    res.setHeader("Allow", "POST");
 
-    const headerValidation = validateContactHeaders(req);
-    if (!headerValidation.ok) {
-      res
-        .status(headerValidation.status)
-        .json({ ok: false, error: headerValidation.error, detail: headerValidation.detail });
+    if (req.method !== "POST") {
+      sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });
       return;
     }
 
     const requestIp = getRequesterIp(req);
-    const rateLimit = checkRateLimit(requestIp);
+
+    const headerValidation = validateContactHeaders(req);
+    if (!headerValidation.ok) {
+      sendJson(res, headerValidation.status, {
+        ok: false,
+        error: headerValidation.error,
+        detail: headerValidation.detail,
+      });
+      return;
+    }
+
+    const rateLimit = checkRateLimit(requestIp, "contact");
     if (!rateLimit.ok) {
-      res
-        .status(429)
-        .setHeader("Retry-After", String(rateLimit.retryAfter || 60))
-        .json({
-          ok: false,
-          error: "RATE_LIMIT_EXCEEDED",
-          detail: `Too many submissions from this IP. Try again in ${rateLimit.retryAfter || 60} seconds.`,
-        });
+      res.setHeader("Retry-After", String(rateLimit.retryAfter || 60));
+      sendJson(res, 429, {
+        ok: false,
+        error: "RATE_LIMIT_EXCEEDED",
+        detail: `Too many submissions from this IP. Try again in ${rateLimit.retryAfter || 60} seconds.`,
+      });
+      return;
+    }
+
+    const humanValidation = validateHumanSignals(req.body);
+    if (!humanValidation.ok) {
+      sendJson(res, humanValidation.status, {
+        ok: false,
+        error: humanValidation.error,
+        detail: humanValidation.detail,
+      });
       return;
     }
 
     const payloadValidation = validateContactPayload(req.body);
     if (!payloadValidation.ok) {
-      res
-        .status(payloadValidation.status)
-        .json({ ok: false, error: payloadValidation.error, detail: payloadValidation.detail });
+      sendJson(res, payloadValidation.status, {
+        ok: false,
+        error: payloadValidation.error,
+        detail: payloadValidation.detail,
+      });
       return;
     }
 
@@ -217,7 +249,7 @@ export default async function handler(req, res) {
       // bookingfelter
       guests, // { adults, children, babies }
       stayPurpose,
-      selection, // { start, endExclusive, nights, baseNightsTotalDKK, cleaningFeeDKK, totalWithCleaningDKK, totalWithCleaningAndExtrasDKK, breakdown[] }
+      selection, // { start, endExclusive, nights, baseNightsTotalDKK, cleaningFeeDKK, totalWithCleaningDKK, airbnbServiceFeeSavingsDKK, totalAfterAirbnbDiscountDKK, breakdown[] }
 
       // NEW: ekstra services
       extras, // { stayDate, items: [{id, qty, unitPriceDKK, label:{da,en}}], totalDKK }
@@ -226,7 +258,6 @@ export default async function handler(req, res) {
     const replyEmail = normalizeEmail(email);
     const bookingType = t(uiLang, "contact.type.booking");
     const messageType = t(uiLang, "contact.type.message");
-
     const intent = String(purpose || context || "contact");
     const extrasItemsRaw = Array.isArray(extras?.items) ? extras.items : [];
     const isExtraServicesReq =
@@ -237,7 +268,7 @@ export default async function handler(req, res) {
 
     // Validering
     if (!name || !email) {
-      res.status(400).json({
+      sendJson(res, 400, {
         ok: false,
         error: "VALIDATION_ERROR",
         detail: "Missing name or email",
@@ -245,12 +276,59 @@ export default async function handler(req, res) {
       return;
     }
     if (!isBookingReq && !isExtraServicesReq && !message) {
-      res.status(400).json({
+      sendJson(res, 400, {
         ok: false,
         error: "VALIDATION_ERROR",
         detail: "Missing message",
       });
       return;
+    }
+
+    const db = await getFirestoreDb();
+    const submissionRecord = {
+      intent,
+      lang: uiLang,
+      name: name?.trim?.() || "",
+      email: replyEmail,
+      phone: phone || "",
+      country: country || null,
+      countryIso: countryIso || null,
+      message: message || "",
+      consent: Boolean(consent),
+      feesAccepted: Boolean(feesAccepted),
+      stayPurpose: stayPurpose || null,
+      guests: guests || null,
+      selection: selection || null,
+      extras:
+        extras && typeof extras === "object"
+          ? {
+              stayDate: extras.stayDate || null,
+              totalDKK:
+                typeof extras.totalDKK === "number" ? extras.totalDKK : null,
+              items: Array.isArray(extras.items) ? extras.items : [],
+            }
+          : null,
+      source: "website",
+      status: "pending",
+      mailStatus: "pending",
+      createdAtMs: Date.now(),
+      updatedAtMs: Date.now(),
+      requestMeta: {
+        ip: requestIp || null,
+        origin: req.headers.origin || null,
+        referer: req.headers.referer || null,
+        userAgent: req.headers["user-agent"] || null,
+      },
+    };
+
+    let submissionRef = null;
+    if (db) {
+      try {
+        submissionRef = await createFormSubmission(db, submissionRecord);
+      } catch (storageError) {
+        submissionRef = null;
+        console.error("FIRESTORE_WRITE_FAILED", storageError);
+      }
     }
 
     // SMTP setup
@@ -286,13 +364,14 @@ export default async function handler(req, res) {
         : {}),
     });
 
-    await transporter.verify();
+    try {
+      await transporter.verify();
 
-    // -------- 1) AUTO-REPLY TIL BRUGER (sendes med det samme) --------
-    const siteName = process.env.SITE_NAME || "Fyrrehaven 61";
-    const subjectUser = isExtraServicesReq
-      ? t(uiLang, "contact.extraServicesSubjectUser", { siteName })
-      : t(uiLang, "contact.subjectUser", { siteName });
+      // -------- 1) AUTO-REPLY TIL BRUGER (sendes med det samme) --------
+      const siteName = process.env.SITE_NAME || "Fyrrehaven 61";
+      const subjectUser = isExtraServicesReq
+        ? t(uiLang, "contact.extraServicesSubjectUser", { siteName })
+        : t(uiLang, "contact.subjectUser", { siteName });
 
     const extraServicesUserBody = isExtraServicesReq
       ? `
@@ -333,7 +412,7 @@ export default async function handler(req, res) {
               typeof selection?.nights === "number" ? selection.nights : "—"
             } ${esc(t(uiLang, "contact.nights"))})<br/>
              ${esc(t(uiLang, "contact.estimatedTotal"))}: ${fmtMoney(
-               selection?.totalWithCleaningDKK,
+               selection?.totalAfterAirbnbDiscountDKK ?? selection?.totalWithCleaningDKK,
                uiLang
              )}</p>`
           : ""
@@ -367,11 +446,14 @@ export default async function handler(req, res) {
           } ${t(uiLang, "contact.nights")})\n${t(
             uiLang,
             "contact.estimatedTotal"
-          )}: ${fmtMoney(selection?.totalWithCleaningDKK, uiLang)}\n\n`
+          )}: ${fmtMoney(
+            selection?.totalAfterAirbnbDiscountDKK ?? selection?.totalWithCleaningDKK,
+            uiLang
+          )}\n\n`
         : "") +
       `${t(uiLang, "contact.replyText")}\n\n${siteName}\nhttps://fyrrehaven-61.dk`;
 
-    const autoInfo = await transporter.sendMail({
+      const autoInfo = await transporter.sendMail({
       from, // DKIM/SPF på eget domæne
       sender: from,
       envelope: { from, to: replyEmail },
@@ -389,38 +471,45 @@ export default async function handler(req, res) {
     });
 
     // -------- 2) ADMIN-NOTIFIKATION (til jer) --------
-    const adminLang = "en";
-    const adminT = (key, vars) => t(adminLang, key, vars);
-    const introAdmin = adminT("contact.introAdmin");
-    const subjectAdmin = `Fyrrehaven 61 | ${name} (${intent})`;
-    const countryShown = country || countryIso || "—";
+      const adminLang = "en";
+      const adminT = (key, vars) => t(adminLang, key, vars);
+      const introAdmin = adminT("contact.introAdmin");
+      const subjectAdmin = `Fyrrehaven 61 | ${name} (${intent})`;
+      const countryShown = country || countryIso || "—";
 
     // Normaliser bookingfelter
-    const startStr = fmtDate(selection?.start, adminLang);
-    const endStr = fmtDate(selection?.endExclusive, adminLang);
-    const nightsStr =
-      typeof selection?.nights === "number" ? String(selection.nights) : "—";
-    const nightsPriceStr = fmtMoney(selection?.baseNightsTotalDKK, adminLang);
-    const cleaningStr = fmtMoney(selection?.cleaningFeeDKK, adminLang);
-    const totalStr = fmtMoney(selection?.totalWithCleaningDKK, adminLang);
+      const startStr = fmtDate(selection?.start, adminLang);
+      const endStr = fmtDate(selection?.endExclusive, adminLang);
+      const nightsStr =
+        typeof selection?.nights === "number" ? String(selection.nights) : "—";
+      const nightsPriceStr = fmtMoney(selection?.baseNightsTotalDKK, adminLang);
+      const cleaningStr = fmtMoney(selection?.cleaningFeeDKK, adminLang);
+      const airbnbSavingsStr =
+        selection?.airbnbServiceFeeSavingsDKK != null
+          ? `- ${fmtMoney(selection.airbnbServiceFeeSavingsDKK, adminLang)}`
+          : "—";
+      const totalStr = fmtMoney(
+        selection?.totalAfterAirbnbDiscountDKK ?? selection?.totalWithCleaningDKK,
+        adminLang
+      );
 
     // Extras
-    const extrasItems = extrasItemsRaw;
-    const extraServicesArrivalStr = fmtDate(extras?.stayDate, adminLang);
-    const extrasTotalStr =
-      extras && typeof extras.totalDKK === "number"
-        ? fmtMoney(extras.totalDKK, adminLang)
-        : "—";
+      const extrasItems = extrasItemsRaw;
+      const extraServicesArrivalStr = fmtDate(extras?.stayDate, adminLang);
+      const extrasTotalStr =
+        extras && typeof extras.totalDKK === "number"
+          ? fmtMoney(extras.totalDKK, adminLang)
+          : "—";
 
-    const grandInclExtras =
-      selection &&
-      typeof selection.totalWithCleaningDKK === "number" &&
-      extras &&
-      typeof extras.totalDKK === "number"
-        ? selection.totalWithCleaningDKK + extras.totalDKK
-        : null;
+      const grandInclExtras =
+        selection &&
+        typeof (selection.totalAfterAirbnbDiscountDKK ?? selection.totalWithCleaningDKK) === "number" &&
+        extras &&
+        typeof extras.totalDKK === "number"
+          ? (selection.totalAfterAirbnbDiscountDKK ?? selection.totalWithCleaningDKK) + extras.totalDKK
+          : null;
 
-    const extrasHtml =
+      const extrasHtml =
       extrasItems.length > 0
         ? `
       <h3 style="margin:16px 0 8px;font-size:16px;">
@@ -453,7 +542,7 @@ export default async function handler(req, res) {
     `
         : "";
 
-    const grandInclExtrasHtml =
+      const grandInclExtrasHtml =
       grandInclExtras != null
         ? `
       <p style="margin:8px 0 0"><b>${
@@ -462,12 +551,12 @@ export default async function handler(req, res) {
     `
         : "";
 
-    const adultsStr = OR_DASH(guests?.adults);
-    const childrenStr = OR_DASH(guests?.children);
-    const babiesStr = OR_DASH(guests?.babies);
-    const stayPurposeStr = OR_DASH(stayPurpose);
+      const adultsStr = OR_DASH(guests?.adults);
+      const childrenStr = OR_DASH(guests?.children);
+      const babiesStr = OR_DASH(guests?.babies);
+      const stayPurposeStr = OR_DASH(stayPurpose);
 
-    const bookingHtml = `
+      const bookingHtml = `
       <h3 style="margin:16px 0 8px;font-size:16px;">
         ${esc(adminT("contact.bookingDetails"))}
       </h3>
@@ -494,7 +583,13 @@ export default async function handler(req, res) {
         </tr>
         <tr>
           <td style="padding:4px 8px"><b>${
-            esc(adminT("contact.estimatedTotal"))
+            esc(adminT("contact.airbnbServiceFeeSavings"))
+          }</b></td>
+          <td style="padding:4px 8px">${airbnbSavingsStr}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px"><b>${
+            esc(adminT("contact.totalAfterDiscount"))
           }</b></td>
           <td style="padding:4px 8px">${totalStr}</td>
         </tr>
@@ -518,7 +613,7 @@ export default async function handler(req, res) {
     `;
 
     // Godkendelser
-    const approvalsHtml = `
+      const approvalsHtml = `
       <h3 style="margin:16px 0 8px;font-size:16px;">
         ${esc(adminT("contact.approvals"))}
       </h3>
@@ -538,9 +633,9 @@ export default async function handler(req, res) {
       </table>
     `;
 
-    const messageForMail = isBookingReq ? OR_DASH(message) : message;
+      const messageForMail = isBookingReq ? OR_DASH(message) : message;
 
-    const htmlAdmin = `
+      const htmlAdmin = `
       <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.45">
         <p>${introAdmin}</p>
         <table style="border-collapse:collapse">
@@ -590,7 +685,7 @@ export default async function handler(req, res) {
       </div>
     `;
 
-    const textAdmin =
+      const textAdmin =
       `${introAdmin}\n\n` +
       `${adminT("contact.fields.name")}: ${name || "—"}\n` +
       `${adminT("contact.fields.email")}: ${replyEmail || "—"}\n` +
@@ -644,7 +739,7 @@ export default async function handler(req, res) {
       )}\n\n` +
       `— ${adminT("contact.message")} —\n${messageForMail || "—"}\n`;
 
-    const infoAdmin = await transporter.sendMail({
+      const infoAdmin = await transporter.sendMail({
       from,
       sender: from,
       envelope: { from, to },
@@ -656,32 +751,77 @@ export default async function handler(req, res) {
       headers: { "X-Campaign": "website-contact" },
     });
 
-    // -------- 3) Response --------
-    res.status(200).json({
-      ok: true,
-      autoReply: {
-        id: autoInfo?.messageId || null,
-        accepted: autoInfo?.accepted || [],
-        rejected: autoInfo?.rejected || [],
-        response: autoInfo?.response || null,
-      },
-      admin: {
-        id: infoAdmin?.messageId || null,
-        accepted: infoAdmin?.accepted || [],
-        rejected: infoAdmin?.rejected || [],
-        response: infoAdmin?.response || null,
-      },
-    });
+      if (submissionRef) {
+        await updateFormSubmission(submissionRef, {
+          status: "sent",
+          mailStatus: "sent",
+          updatedAtMs: Date.now(),
+          autoReply: {
+            id: autoInfo?.messageId || null,
+            accepted: autoInfo?.accepted || [],
+            rejected: autoInfo?.rejected || [],
+            response: autoInfo?.response || null,
+          },
+          adminMail: {
+            id: infoAdmin?.messageId || null,
+            accepted: infoAdmin?.accepted || [],
+            rejected: infoAdmin?.rejected || [],
+            response: infoAdmin?.response || null,
+          },
+        });
+      }
+
+      sendJson(res, 200, {
+        ok: true,
+        stored: Boolean(submissionRef),
+        submissionId: submissionRef?.id || null,
+        mailStatus: "sent",
+        autoReply: {
+          id: autoInfo?.messageId || null,
+          accepted: autoInfo?.accepted || [],
+          rejected: autoInfo?.rejected || [],
+          response: autoInfo?.response || null,
+        },
+        admin: {
+          id: infoAdmin?.messageId || null,
+          accepted: infoAdmin?.accepted || [],
+          rejected: infoAdmin?.rejected || [],
+          response: infoAdmin?.response || null,
+        },
+      });
+    } catch (mailError) {
+      if (submissionRef) {
+        await updateFormSubmission(submissionRef, {
+          status: "mail_failed",
+          mailStatus: "failed",
+          mailError: sanitizeErrorMessage(mailError?.response || mailError),
+          mailErrorCode: mailError?.code || null,
+          updatedAtMs: Date.now(),
+        });
+
+        sendJson(res, 200, {
+          ok: true,
+          stored: true,
+          submissionId: submissionRef.id,
+          mailStatus: "failed",
+        });
+        return;
+      }
+
+      throw mailError;
+    }
   } catch (err) {
     console.error("MAIL_ERROR", err?.response || err);
     const msg = String(err && err.message ? err.message : err);
     const msgLower = msg.toLowerCase();
 
     if (msg.startsWith("ENV_MISSING:")) {
-      res.status(500).json({
+      sendJson(res, 500, {
         ok: false,
         error: "ENV_MISSING",
-        detail: msg.replace("ENV_MISSING:", "Missing env: "),
+        detail: SHOULD_EXPOSE_INTERNAL_ERRORS
+          ? msg.replace("ENV_MISSING:", "Missing env: ")
+          : "The email service is not configured correctly.",
       });
       return;
     }
@@ -692,7 +832,7 @@ export default async function handler(req, res) {
       msgLower.includes("invalid login") ||
       msgLower.includes("authentication failed")
     ) {
-      res.status(502).json({
+      sendJson(res, 502, {
         ok: false,
         error: "MAIL_AUTH_FAILED",
         detail: "Mail server authentication failed.",
@@ -709,7 +849,7 @@ export default async function handler(req, res) {
       msgLower.includes("rejected") ||
       msgLower.includes("relay")
     ) {
-      res.status(502).json({
+      sendJson(res, 502, {
         ok: false,
         error: "MAIL_AUTOREPLY_FAILED",
         detail: "Mail delivery failed.",
@@ -717,6 +857,12 @@ export default async function handler(req, res) {
       return;
     }
 
-    res.status(500).json({ ok: false, error: "MAIL_ERROR", detail: "Mail delivery failed." });
+    sendJson(res, 500, {
+      ok: false,
+      error: "MAIL_ERROR",
+      detail: SHOULD_EXPOSE_INTERNAL_ERRORS
+        ? msg
+        : "Mail delivery failed.",
+    });
   }
 }

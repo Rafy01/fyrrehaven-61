@@ -1,0 +1,5 @@
+Contact: mailto:kontakt@fyrrehaven-61.dk
+Canonical: https://fyrrehaven-61.dk/.well-known/security.txt
+Preferred-Languages: da, en, de
+Policy: https://fyrrehaven-61.dk/da/privatlivspolitik
+Expires: 2027-06-23T10:03:20Z

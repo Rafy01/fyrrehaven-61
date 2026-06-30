@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import styles from "./GalleryTeaser.module.css";
 import Buttons from "../Buttons";
+import LazyImage from "../LazyImage";
 
 export type GalleryItem = {
   src: string; // thumbnail
@@ -109,7 +110,7 @@ export default function GalleryTeaser({
             onClick={() => openAt(i)}
           >
             <div className={styles.pill}>
-              <img
+              <LazyImage
                 className={styles.img}
                 src={it.src}
                 alt={it.alt ?? ""}
@@ -130,7 +131,7 @@ export default function GalleryTeaser({
         >
           <div className={styles.pill}>
             {fourth ? (
-              <img
+              <LazyImage
                 className={styles.img}
                 src={fourth.src}
                 alt={fourth.alt ?? ""}
@@ -197,10 +198,11 @@ export default function GalleryTeaser({
                 </button>
 
                 <figure className={styles.lbFigure}>
-                  <img
+                  <LazyImage
                     className={styles.lbImg}
                     src={items[index].full ?? items[index].src}
                     alt={items[index].alt ?? ""}
+                    loading="eager"
                   />
                   {items[index].alt ? (
                     <figcaption className={styles.lbCap}>

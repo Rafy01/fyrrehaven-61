@@ -135,7 +135,7 @@ const META: Record<
 };
 
 function isBot(ua: string) {
-  return /(bot|facebookexternalhit|twitterbot|linkedinbot|whatsapp|slackbot|discord|telegram|pinterest|embedly|quora link preview|vkShare|google-InspectionTool|googleweblight|bingbot)/i.test(
+  return /(Googlebot|AdsBot-Google|GoogleOther|bot|facebookexternalhit|twitterbot|linkedinbot|whatsapp|slackbot|discord|telegram|pinterest|embedly|quora link preview|vkShare|google-InspectionTool|googleweblight|bingbot)/i.test(
     ua || ""
   );
 }

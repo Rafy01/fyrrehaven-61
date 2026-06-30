@@ -3,19 +3,6 @@ export const en = {
     "brand": "Fyrrehaven 61",
     "bookNow": "Book on Airbnb",
     "sleepsX": "Sleeps {{count}} guests",
-    "humanCheck": {
-      "eyebrow": "Quick security check",
-      "title": "Confirm you are human",
-      "description": "We protect the website from automated traffic so it stays fast and safe for real guests.",
-      "checkbox": "I am human",
-      "continue": "Continue to the website",
-      "preparing": "Getting ready...",
-      "verifying": "Checking...",
-      "enterpriseNote": "The security check runs automatically in the background when you continue.",
-      "finePrint": "We only remember this check in this browser for 30 days. No analytics or marketing cookies are used.",
-      "recaptchaError": "Google reCAPTCHA could not load. Check the connection and try again.",
-      "error": "The check could not be completed. Please try again."
-    },
     "form": {
       "selectPlaceholder": "Choose",
       "chooseFile": "Choose file",
@@ -1183,11 +1170,17 @@ export const en = {
         "label": "Necessary",
         "description": "Required for the site to function. These cookies cannot be disabled.",
         "tableCaption": "Necessary cookies"
+      },
+      "statistics": {
+        "title": "Statistics cookies",
+        "label": "Statistics",
+        "description": "Optional analytics that help us understand how the site is used. They are only loaded if you allow them.",
+        "tableCaption": "Statistics cookies"
       }
     },
     "preferences": {
       "introTitle": "Cookie settings",
-      "introDescription": "Fyrrehaven 61 currently only uses necessary cookies. These are always active because the website needs them to work."
+      "introDescription": "Necessary cookies are always active because the website needs them to work. If we enable analytics, it only runs after you allow statistics cookies."
     },
     "table": {
       "name": "Name",
@@ -1302,7 +1295,7 @@ export const en = {
       },
       "cookies": {
         "title": "Cookies and similar technologies",
-        "body": "We currently use only technically necessary cookies/storage to deliver the site securely and remember your cookie settings. We do not use analytics, marketing or tracking cookies."
+        "body": "We use technically necessary cookies/storage to deliver the site securely and remember your cookie settings. Optional analytics will only run if you actively allow statistics cookies."
       },
       "rights": {
         "title": "Your rights",

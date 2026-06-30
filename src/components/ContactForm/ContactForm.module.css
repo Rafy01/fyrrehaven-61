@@ -93,6 +93,24 @@
   transition: box-shadow 0.15s ease, border-color 0.15s ease,
     transform 0.05s ease;
 }
+
+.displayField {
+  display: flex;
+  align-items: center;
+  min-height: calc(1.5em + 1.7rem);
+  cursor: default;
+  user-select: text;
+}
+
+.displayField[data-empty="true"] {
+  color: var(--muted);
+}
+
+.displayField:hover {
+  transform: none;
+  border-color: var(--border-subtle);
+  box-shadow: none;
+}
 .inputphone:focus {
   outline: none;
 }
@@ -254,6 +272,12 @@
   transform: translateY(-1px);
   border-color: var(--gold-500);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold-500) 14%, transparent);
+}
+
+.displayField:hover {
+  transform: none;
+  border-color: var(--border-subtle);
+  box-shadow: none;
 }
 }
 

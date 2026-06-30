@@ -2,7 +2,11 @@
 import React from "react";
 import styles from "./AvailabilityCalendar.module.css";
 import { chooseLang, type Lang } from "../../lib/lang";
-import { getPriceForDate, getMinNightsForStart } from "../../data/pricing";
+import {
+  getPriceForDate,
+  getMinNightsForStart,
+  isPoolSeason,
+} from "../../data/pricing";
 
 /* ─── Types ─── */
 type ApiEvent = {
@@ -138,6 +142,66 @@ function eachDay(start: Date, endExclusive: Date): Date[] {
     d = addDays(d, 1);
   }
   return out;
+}
+
+function getShortGapMinNights(
+  start: Date,
+  bookedDays: Set<string>
+): number | null {
+  if (!isPoolSeason(start)) return null;
+
+  let freeNights = 0;
+  let cursor = startOfDay(start);
+
+  while (freeNights < 6) {
+    const ymd = cursor.toISOString().slice(0, 10);
+    if (bookedDays.has(ymd)) break;
+    freeNights += 1;
+    cursor = addDays(cursor, 1);
+  }
+
+  if (freeNights >= 1 && freeNights <= 5) {
+    const nextYmd = cursor.toISOString().slice(0, 10);
+    if (bookedDays.has(nextYmd)) return freeNights;
+  }
+
+  return null;
+}
+
+function getEffectiveMinNightsForStart(
+  start: Date,
+  bookedDays: Set<string>
+): number {
+  const base = getMinNightsForStart(start);
+  if (base !== 6) return base;
+  return getShortGapMinNights(start, bookedDays) ?? base;
+}
+
+function formatMinNightsError(
+  start: Date,
+  required: number,
+  lang: Lang
+): string {
+  const dateStr = start.toLocaleDateString(
+    lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }
+  );
+
+  return lang === "da"
+    ? `Minimum ${required} ${
+        required === 1 ? "nat" : "nætter"
+      } ved ankomst ${dateStr}.`
+    : lang === "de"
+    ? `Mindestens ${required} ${
+        required === 1 ? "Nacht" : "Nächte"
+      } bei Anreise ${dateStr}.`
+    : `Minimum ${required} night${
+        required === 1 ? "" : "s"
+      } required for arrival ${dateStr}.`;
 }
 
 /* ─── API → bookings ─── */
@@ -376,6 +440,32 @@ export default function AvailabilityCalendar({
     return set;
   }, [bookings, gridStart]);
 
+  const checkoutDays = React.useMemo(() => {
+    const set = new Set<string>();
+    if (!bookings) return set;
+
+    const gridEnd = addDays(gridStart, WEEKS * 7);
+    for (const b of bookings) {
+      if (b.endDay >= gridStart && b.endDay < gridEnd) {
+        set.add(b.endDay.toISOString().slice(0, 10));
+      }
+    }
+    return set;
+  }, [bookings, gridStart]);
+
+  const checkinDays = React.useMemo(() => {
+    const set = new Set<string>();
+    if (!bookings) return set;
+
+    const gridEnd = addDays(gridStart, WEEKS * 7);
+    for (const b of bookings) {
+      if (b.startDay >= gridStart && b.startDay < gridEnd) {
+        set.add(b.startDay.toISOString().slice(0, 10));
+      }
+    }
+    return set;
+  }, [bookings, gridStart]);
+
   // selection overlay segments
   const selSegments = React.useMemo(() => {
     if (selectionMode !== "range") return [];
@@ -461,31 +551,11 @@ export default function AvailabilityCalendar({
     const hasMissing = breakdown.some((it) => it.price == null);
 
     // NY: min. nætter for ankomstdagen
-    const required = getMinNightsForStart(start) ?? 1;
+    const required = getEffectiveMinNightsForStart(start, bookedDays) ?? 1;
     const nights = days.length;
     const isOk = nights >= required;
 
-    const dateStr = start.toLocaleDateString(
-      lang === "da" ? "da-DK" : lang === "de" ? "de-DE" : "en-GB",
-      {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }
-    );
-    const errMsg = !isOk
-      ? lang === "da"
-        ? `Minimum ${required} ${
-            required === 1 ? "nat" : "nætter"
-          } ved ankomst ${dateStr}.`
-        : lang === "de"
-        ? `Mindestens ${required} ${
-            required === 1 ? "Nacht" : "Nächte"
-          } bei Anreise ${dateStr}.`
-        : `Minimum ${required} night${
-            required === 1 ? "" : "s"
-          } required for arrival ${dateStr}.`
-      : null;
+    const errMsg = !isOk ? formatMinNightsError(start, required, lang) : null;
 
     setValidationError(errMsg);
 
@@ -501,7 +571,7 @@ export default function AvailabilityCalendar({
       isMinNightsSatisfied: isOk,
       validationError: errMsg ?? undefined,
     });
-  }, [sel, lang]);
+  }, [sel, lang, bookedDays]);
 
   // Klik-håndtering med bookingvalidering
   function handleDayClick(d: Date) {
@@ -516,6 +586,22 @@ export default function AvailabilityCalendar({
       day >= startOfDay(sel.start) &&
       day <= startOfDay(sel.end)
     ) {
+      const start = startOfDay(sel.start);
+      const end = startOfDay(sel.end);
+
+      if (day.getTime() === start.getTime() && day.getTime() === end.getTime()) {
+        emitSelection(null);
+      } else if (day.getTime() === start.getTime()) {
+        emitSelection({ kind: "range", start: end });
+      } else if (day.getTime() === end.getTime()) {
+        emitSelection({ kind: "range", start });
+      } else {
+        emitSelection({ kind: "range", start: day });
+      }
+      return;
+    }
+
+    if (selectionMode === "range" && sel?.kind === "range" && sel.end) {
       emitSelection(null);
       return;
     }
@@ -631,6 +717,9 @@ export default function AvailabilityCalendar({
 
                 const ymd = d.toISOString().slice(0, 10);
                 const isBooked = bookedDays.has(ymd);
+                const isCheckoutDay = checkoutDays.has(ymd);
+                const isCheckinDay = checkinDays.has(ymd);
+                const isTurnoverDay = isCheckoutDay && isCheckinDay;
 
                 const awaitingEnd =
                   selectionMode === "range" &&
@@ -658,12 +747,11 @@ export default function AvailabilityCalendar({
                     const start = startOfDay(sel!.start);
                     const endEx = startOfDay(d);
                     if (
+                      endEx.getTime() !== start.getTime() &&
                       !(endEx > start && rangeIsFree(start, endEx, bookedDays))
                     ) {
                       canClick = false;
                     }
-                    // (Bevidst: Vi begrænser ikke klik baseret på min. nætter her,
-                    //  men viser i stedet en klar fejlbesked under kalenderen.)
                   }
                 }
                 if (inCurrentRange) canClick = true;
@@ -676,7 +764,11 @@ export default function AvailabilityCalendar({
                 const edge = isRangeEdge(d);
 
                 // Vis ikke pris for fortid eller i dag
-                const shouldShowPrice = inMonth && !isBooked && d > today;
+                const shouldShowPrice =
+                  inMonth &&
+                  d > today &&
+                  (!isBooked ||
+                    ((isCheckoutDay || isCheckinDay) && !isTurnoverDay));
 
                 const value = shouldShowPrice ? getPriceForDate(d) : null;
                 const priceMain =
@@ -688,6 +780,7 @@ export default function AvailabilityCalendar({
                     className={styles.cell}
                     data-dim={!inMonth ? "1" : undefined}
                     data-today={isToday ? "1" : undefined}
+                    data-clickable={!disabled ? "1" : undefined}
                     data-selected={selectedSingle ? "1" : undefined}
                     data-edge={edge || undefined}
                   >

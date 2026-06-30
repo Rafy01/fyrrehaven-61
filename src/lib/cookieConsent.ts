@@ -2,6 +2,7 @@ import type { i18n as I18n, TFunction } from "i18next";
 import * as CookieConsent from "vanilla-cookieconsent";
 import { cookieData, type CookieEntry } from "../data/cookies";
 import type { Lang } from "./lang";
+import { isAnalyticsConfigured, syncAnalyticsConsent } from "./analytics";
 
 const LANGS: Lang[] = ["da", "en", "de"];
 const CONSENT_REVISION = 2;
@@ -10,6 +11,7 @@ declare global {
   interface Window {
     fh61Consent?: () => {
       necessary: boolean;
+      statistics?: boolean;
     };
   }
 }
@@ -44,10 +46,16 @@ function cookieTable(
 }
 
 function updateConsentState() {
+  const statistics = isAnalyticsConfigured()
+    ? Boolean(CookieConsent.acceptedCategory("statistics"))
+    : false;
+
   window.fh61Consent = () => ({
     necessary: true,
+    statistics,
   });
 
+  syncAnalyticsConsent();
   window.dispatchEvent(new CustomEvent("fh61:consentchange"));
 }
 
@@ -77,6 +85,16 @@ function translationsFor(lng: Lang, i18n: I18n) {
           linkedCategory: "necessary",
           cookieTable: cookieTable(lng, "necessary", t),
         },
+        ...(isAnalyticsConfigured()
+          ? [
+              {
+                title: t("categories.statistics.title"),
+                description: t("categories.statistics.description"),
+                linkedCategory: "statistics",
+                cookieTable: cookieTable(lng, "statistics", t),
+              },
+            ]
+          : []),
       ],
     },
   };
@@ -119,6 +137,20 @@ export async function setupCookieConsent(lang: Lang, i18n: I18n) {
         enabled: true,
         readOnly: true,
       },
+      ...(isAnalyticsConfigured()
+        ? {
+            statistics: {
+              enabled: false,
+              autoClear: {
+                cookies: [
+                  { name: /^_ga/ },
+                  { name: /^_gid$/ },
+                  { name: /^_gat/ },
+                ],
+              },
+            },
+          }
+        : {}),
     },
     language: {
       default: lang,

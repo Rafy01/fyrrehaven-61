@@ -2,6 +2,7 @@ import React from "react";
 import { Container, Box, Flex, Heading, Text, Badge } from "@radix-ui/themes";
 import styles from "./Hero.module.css";
 import Buttons from "../Buttons";
+import LazyImage from "../LazyImage";
 import { useTranslation } from "react-i18next";
 import { type Lang } from "../../lib/lang";
 
@@ -205,12 +206,13 @@ export default function Hero({
                       aria-label={mediaAlt}
                     />
                   ) : (
-                    <img
+                    <LazyImage
                       className={styles.mediaEl}
                       src={media.src}
                       alt={mediaAlt}
                       title={imageTitle}
                       loading="eager"
+                      decoding="async"
                     />
                   )}
                 </div>

@@ -23,7 +23,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(?i).*(bot|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|Discord|TelegramBot|Pinterest|embedly|quora\\slink\\spreview|vkShare|Google-InspectionTool|googleweblight|bingbot).*"
+          "value": "(?i).*(Googlebot|AdsBot-Google|GoogleOther|bot|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|Discord|TelegramBot|Pinterest|embedly|quora\\slink\\spreview|vkShare|Google-InspectionTool|googleweblight|bingbot).*"
         }
       ],
       "destination": "/api/share-meta"
@@ -51,8 +51,20 @@
           "value": "camera=(), microphone=(), geolocation=()"
         },
         {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "same-site"
+        },
+        {
+          "key": "Origin-Agent-Cluster",
+          "value": "?1"
+        },
+        {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; media-src 'self' https://media.fyrrehaven-61.dk; frame-src https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
+          "value": "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseinstallations.googleapis.com https://firestore.googleapis.com https://www.googleapis.com https://*.googleapis.com; media-src 'self' https://media.fyrrehaven-61.dk; object-src 'none'; frame-src 'self' https://www.google.com https://accounts.google.com https://*.firebaseapp.com https://*.web.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
         }
       ]
     },

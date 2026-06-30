@@ -2,6 +2,7 @@
 import { useTranslation } from "react-i18next";
 import Buttons from "../../../components/Buttons";
 import Hero from "../../../components/Hero";
+import LazyImage from "../../../components/LazyImage";
 import Head from "../../../lib/Head";
 import Typography from "../../../components/Typography";
 import styles from "./Welcome.module.css";
@@ -99,13 +100,17 @@ export default function GuestWelcome({ lang }: Props) {
 
         <Typography variant="h2">{t("welcome.addressTitle")}</Typography>
 
-        <img
+        <LazyImage
           src="https://media.fyrrehaven-61.dk/wp-content/uploads/2025/10/kort_fyrrehaven.webp"
           alt={t("welcome.mapAlt")}
-          style={{
+          loading="lazy"
+          wrapperStyle={{
             maxWidth: "100%",
             borderRadius: 12,
             marginBottom: "1rem",
+          }}
+          style={{
+            borderRadius: 12,
           }}
         />
 

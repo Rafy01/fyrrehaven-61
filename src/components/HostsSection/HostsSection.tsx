@@ -1,6 +1,7 @@
 import styles from "./HostsSection.module.css";
 import { chooseLang, type Lang } from "../../lib/lang";
 import { HOST_ICONS as Ico } from "../../lib/icons";
+import LazyImage from "../LazyImage";
 
 export type Host = {
   id: string;
@@ -137,13 +138,14 @@ export default function HostsSection({
             <div className={styles.headerRow}>
               <div className={styles.avatar} aria-hidden={!!h.photo}>
                 {h.photo ? (
-                  <img
+                  <LazyImage
                     src={h.photo}
                     className={styles.avatarImg}
                     alt={t(h.altDa ?? "", h.altEn ?? "", h.altDe ?? h.altEn ?? "")}
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
+                    loading="lazy"
                   />
                 ) : (
                   <div className={styles.initials}>
