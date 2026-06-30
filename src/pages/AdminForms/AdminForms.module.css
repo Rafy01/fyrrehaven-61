@@ -489,6 +489,45 @@
   flex: 1 1 auto;
 }
 
+.detailValueRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.detailValueRow .detailValue {
+  min-width: 0;
+}
+
+.detailMailButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-top: -3px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--accent-11);
+  background: transparent;
+  text-decoration: none;
+  flex: 0 0 auto;
+  transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.detailMailButton:hover {
+  color: var(--accent-12);
+  background: color-mix(in srgb, var(--accent-9) 12%, transparent);
+  transform: translateY(-1px);
+}
+
+.detailMailButton svg {
+  width: 18px;
+  height: 18px;
+}
+
 .detailSubValues {
   display: flex;
   flex-wrap: wrap;
@@ -532,11 +571,18 @@
 }
 
 .priceBreakdownRow {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) minmax(150px, auto);
+  align-items: center;
   gap: 14px;
   font-size: 0.92rem;
   color: var(--gray-11);
+}
+
+.priceBreakdownRow::before {
+  content: "";
+  width: 22px;
+  height: 1px;
 }
 
 .priceBreakdownRow span:last-child {
@@ -545,13 +591,32 @@
   color: var(--gray-12);
 }
 
+.priceAmount {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: baseline;
+  justify-content: end;
+  column-gap: 5px;
+  width: 100%;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.priceCurrency {
+  text-align: left;
+}
+
+.priceNumber {
+  text-align: right;
+}
+
 .nightlyBreakdownDetails {
   border-radius: 8px;
 }
 
 .nightlyBreakdownSummary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: 22px minmax(0, 1fr) minmax(150px, auto);
   align-items: center;
   gap: 8px;
   min-height: 28px;
@@ -578,13 +643,12 @@
   white-space: nowrap;
 }
 
-.nightlyBreakdownSummary::after {
+.nightlyBreakdownSummary::before {
   content: "+";
   display: grid;
   place-items: center;
   width: 20px;
   height: 20px;
-  margin-left: 2px;
   border-radius: 50%;
   background: color-mix(in srgb, var(--gray-12) 7%, transparent);
   color: var(--gray-12);
@@ -593,7 +657,7 @@
   transition: background-color 160ms ease, transform 160ms ease;
 }
 
-.nightlyBreakdownDetails[open] .nightlyBreakdownSummary::after {
+.nightlyBreakdownDetails[open] .nightlyBreakdownSummary::before {
   content: "−";
 }
 
@@ -601,7 +665,7 @@
   color: var(--gray-12);
 }
 
-.nightlyBreakdownSummary:hover::after {
+.nightlyBreakdownSummary:hover::before {
   background: color-mix(in srgb, var(--accent-9) 18%, transparent);
 }
 

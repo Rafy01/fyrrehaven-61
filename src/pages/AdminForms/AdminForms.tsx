@@ -5,11 +5,14 @@ import {
   FiCheckCircle,
   FiInbox,
   FiLogOut,
+  FiMail,
   FiMoon,
+  FiPhone,
   FiSun,
   FiTrash2,
   FiUser,
 } from "react-icons/fi";
+import { FaWhatsapp } from "react-icons/fa";
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -158,11 +161,27 @@ function formatPlainDate(value?: string | null) {
 
 function formatMoney(value?: number | null) {
   if (typeof value !== "number") return "—";
-  return new Intl.NumberFormat("en-GB", {
+  return new Intl.NumberFormat("da-DK", {
     style: "currency",
     currency: "DKK",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function renderPriceAmount(value?: number | null, options?: { negative?: boolean }) {
+  if (typeof value !== "number") return "—";
+  const amount = new Intl.NumberFormat("da-DK", {
+    maximumFractionDigits: 0,
+  }).format(Math.abs(value));
+
+  return (
+    <span className={styles.priceAmount}>
+      <span className={styles.priceCurrency}>DKK</span>
+      <span className={styles.priceNumber}>
+        {options?.negative ? `-${amount}` : amount}
+      </span>
+    </span>
+  );
 }
 
 function statusLabel(status?: SubmissionStatus) {
@@ -289,13 +308,13 @@ function renderSelectionPriceBreakdown(selection?: Submission["selection"] | nul
               Price ({nightlyBreakdown.length} night
               {nightlyBreakdown.length === 1 ? "" : "s"})
             </span>
-            <span>{formatMoney(selection.baseNightsTotalDKK)}</span>
+            <span>{renderPriceAmount(selection.baseNightsTotalDKK)}</span>
           </summary>
           <div className={styles.nightlyBreakdown} aria-label="Nightly price breakdown">
             {nightlyBreakdown.map((night) => (
               <div className={styles.priceBreakdownRow} key={night.date}>
                 <span>{formatPlainDate(night.date)}</span>
-                <span>{formatMoney(night.price)}</span>
+                <span>{renderPriceAmount(night.price)}</span>
               </div>
             ))}
           </div>
@@ -303,7 +322,7 @@ function renderSelectionPriceBreakdown(selection?: Submission["selection"] | nul
       ) : selection.baseNightsTotalDKK != null ? (
         <div className={styles.priceBreakdownRow}>
           <span>Price (nights)</span>
-          <span>{formatMoney(selection.baseNightsTotalDKK)}</span>
+          <span>{renderPriceAmount(selection.baseNightsTotalDKK)}</span>
         </div>
       ) : nightlyBreakdown.length > 0 ? (
         <details className={styles.nightlyBreakdownDetails}>
@@ -321,7 +340,7 @@ function renderSelectionPriceBreakdown(selection?: Submission["selection"] | nul
             {nightlyBreakdown.map((night) => (
               <div className={styles.priceBreakdownRow} key={night.date}>
                 <span>{formatPlainDate(night.date)}</span>
-                <span>{formatMoney(night.price)}</span>
+                <span>{renderPriceAmount(night.price)}</span>
               </div>
             ))}
           </div>
@@ -330,13 +349,17 @@ function renderSelectionPriceBreakdown(selection?: Submission["selection"] | nul
       {selection.cleaningFeeDKK != null ? (
         <div className={styles.priceBreakdownRow}>
           <span>Cleaning</span>
-          <span>{formatMoney(selection.cleaningFeeDKK)}</span>
+          <span>{renderPriceAmount(selection.cleaningFeeDKK)}</span>
         </div>
       ) : null}
       {selection.airbnbServiceFeeSavingsDKK != null ? (
         <div className={styles.priceBreakdownRow}>
           <span>Direct booking discount</span>
-          <span>- {formatMoney(selection.airbnbServiceFeeSavingsDKK)}</span>
+          <span>
+            {renderPriceAmount(selection.airbnbServiceFeeSavingsDKK, {
+              negative: true,
+            })}
+          </span>
         </div>
       ) : null}
       {selection.totalAfterAirbnbDiscountDKK != null ||
@@ -344,7 +367,7 @@ function renderSelectionPriceBreakdown(selection?: Submission["selection"] | nul
         <div className={`${styles.priceBreakdownRow} ${styles.priceBreakdownTotal}`}>
           <span>Final total</span>
           <span>
-            {formatMoney(
+            {renderPriceAmount(
               selection.totalAfterAirbnbDiscountDKK ??
                 selection.totalWithCleaningDKK ??
                 null
@@ -370,14 +393,14 @@ function renderExtrasPriceBreakdown(extras?: Submission["extras"] | null) {
         return (
           <div className={styles.priceBreakdownRow} key={`${item.id || "extra-total"}-${index}`}>
             <span>{item.label?.en || item.label?.da || item.id || "Extra"}</span>
-            <span>{total != null ? formatMoney(total) : "—"}</span>
+            <span>{total != null ? renderPriceAmount(total) : "—"}</span>
           </div>
         );
       })}
       {extras.totalDKK != null ? (
         <div className={`${styles.priceBreakdownRow} ${styles.priceBreakdownTotal}`}>
           <span>Final total</span>
-          <span>{formatMoney(extras.totalDKK)}</span>
+          <span>{renderPriceAmount(extras.totalDKK)}</span>
         </div>
       ) : null}
     </div>
@@ -823,7 +846,9 @@ export default function AdminForms() {
         return;
       }
       const authMessage =
-        code === "auth/internal-error"
+        code === "auth/unauthorized-domain"
+          ? `This domain is not allowed in Firebase Auth. Add ${window.location.hostname} in Firebase console > Authentication > Settings > Authorized domains.`
+          : code === "auth/internal-error"
           ? "Firebase login could not start. Check Google sign-in, authorized domains, and CSP for Firebase Auth."
           : popupError instanceof Error
           ? popupError.message
@@ -858,6 +883,31 @@ export default function AdminForms() {
     options?: { wide?: boolean; message?: boolean; after?: React.ReactNode }
   ) {
     if (!hasDisplayValue(value) && !options?.after) return null;
+    const textValue = typeof value === "string" ? value.trim().replace(/[\r\n]/g, "") : "";
+    const emailHref =
+      label.toLowerCase() === "email" && textValue ? `mailto:${textValue}` : null;
+    const phoneDigits = textValue.replace(/[^\d+]/g, "");
+    const normalizedPhone = phoneDigits.startsWith("+")
+      ? phoneDigits
+      : phoneDigits
+        ? `+${phoneDigits}`
+        : "";
+    const phoneAction =
+      label.toLowerCase() === "phone" && normalizedPhone
+        ? {
+            href: normalizedPhone.startsWith("+45")
+              ? `tel:${normalizedPhone}`
+              : `https://wa.me/${normalizedPhone.replace("+", "")}`,
+            label: normalizedPhone.startsWith("+45")
+              ? `Call ${textValue}`
+              : `Message ${textValue} on WhatsApp`,
+            icon: normalizedPhone.startsWith("+45") ? (
+              <FiPhone aria-hidden="true" />
+            ) : (
+              <FaWhatsapp aria-hidden="true" />
+            ),
+          }
+        : null;
 
     return (
       <div className={`${styles.detailItem} ${options?.wide ? styles.detailItemWide : ""}`}>
@@ -865,7 +915,31 @@ export default function AdminForms() {
         {options?.message ? (
           <p className={styles.detailMessage}>{value}</p>
         ) : (
-          <div className={styles.detailValue}>{value}</div>
+          <div className={styles.detailValueRow}>
+            <div className={styles.detailValue}>{value}</div>
+            {emailHref ? (
+              <a
+                className={styles.detailMailButton}
+                href={emailHref}
+                aria-label={`Email ${value}`}
+                title={`Email ${value}`}
+              >
+                <FiMail aria-hidden="true" />
+              </a>
+            ) : null}
+            {phoneAction ? (
+              <a
+                className={styles.detailMailButton}
+                href={phoneAction.href}
+                aria-label={phoneAction.label}
+                title={phoneAction.label}
+                target={phoneAction.href.startsWith("https://") ? "_blank" : undefined}
+                rel={phoneAction.href.startsWith("https://") ? "noreferrer" : undefined}
+              >
+                {phoneAction.icon}
+              </a>
+            ) : null}
+          </div>
         )}
         {options?.after}
         {renderLoggedMeta(submission)}

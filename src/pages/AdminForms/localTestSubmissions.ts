@@ -55,6 +55,18 @@ export const localTestSubmissions = [
     createdAtMs: Date.UTC(2026, 5, 26, 8, 47),
   },
   {
+    id: "local-contact-de-1",
+    intent: "inquiry",
+    name: "Lena Schneider",
+    email: "lena.schneider@example.de",
+    phone: "+49 151 23456789",
+    country: "DE",
+    message:
+      "We are visiting from Germany and would like to ask if late check-out is possible.",
+    status: "sent",
+    createdAtMs: Date.UTC(2026, 5, 26, 8, 44),
+  },
+  {
     id: "local-extra-1",
     intent: "extra-services",
     name: "Mikkel Larsen",
