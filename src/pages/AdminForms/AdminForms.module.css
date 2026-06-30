@@ -16,11 +16,14 @@
 }
 
 .hero {
+  margin-bottom: 24px;
+}
+
+.heroTop {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 20px;
-  margin-bottom: 24px;
 }
 
 .eyebrow {
@@ -33,14 +36,13 @@
 }
 
 .hero h1 {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1.05;
 }
 
-.hero p {
-  margin: 0;
-  max-width: 68ch;
+.loggedIn {
+  margin: 14px 0 0;
   color: var(--gray-11);
   font-size: 1rem;
 }
@@ -1009,13 +1011,17 @@
     min-height: 0;
   }
 
-  .hero {
-    flex-direction: column;
+  .heroTop {
+    align-items: flex-start;
   }
 
   .heroActions {
-    justify-content: flex-start;
-    width: 100%;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+  }
+
+  .loggedIn {
+    margin-top: 12px;
   }
 
   .panelHeaderTop {

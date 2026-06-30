@@ -496,7 +496,6 @@ export default function AdminForms() {
     DASHBOARD_AUTH_DISABLED ? ({} as User) : null
   );
   const [authReady, setAuthReady] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [submissions, setSubmissions] = React.useState<Submission[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -563,7 +562,6 @@ export default function AdminForms() {
   }, []);
 
   const fetchSubmissions = React.useCallback(async () => {
-    setLoading(true);
     setError(null);
 
     try {
@@ -591,11 +589,12 @@ export default function AdminForms() {
 
       setSubmissions(nextSubmissions);
       setSelectedId((current) => {
+        if (isMobileLayout) return null;
+
         if (current && nextSubmissions.some((submission) => submission.id === current)) {
           return current;
         }
 
-        if (isMobileLayout) return null;
         return nextSubmissions[0]?.id ?? null;
       });
       setAdminEmail(
@@ -610,8 +609,6 @@ export default function AdminForms() {
       } else {
         setError(String(nextError instanceof Error ? nextError.message : nextError));
       }
-    } finally {
-      setLoading(false);
     }
   }, [isMobileLayout]);
 
@@ -699,11 +696,12 @@ export default function AdminForms() {
     }
 
     setSelectedId((current) => {
+      if (isMobileLayout) return null;
+
       if (current && visibleGroups.some((group) => group.id === current)) {
         return current;
       }
 
-      if (isMobileLayout) return null;
       return visibleGroups[0].id;
     });
   }, [isMobileLayout, visibleGroups]);
@@ -1303,52 +1301,43 @@ export default function AdminForms() {
       <div className={styles.page}>
         <div className={styles.shell}>
           <div className={styles.hero}>
-            <div>
-              <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
-              <h1>Forms dashboard</h1>
-              <p>
-                Review every submission here, including the ones where email
-                did not make it through. This is our reliable fallback inbox.
-              </p>
-            </div>
-            <div className={styles.heroActions}>
-              <div className={styles.detailMuted}>
-                {adminEmail || user?.email || "dashboard@fyrrehaven-61.dk"}
+            <div className={styles.heroTop}>
+              <div>
+                <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
+                <h1>Forms dashboard</h1>
               </div>
-              <button
-                type="button"
-                className={styles.themeButton}
-                onClick={toggleAppearance}
-                aria-label={
-                  appearance === "dark"
-                    ? "Switch to light mode"
-                    : "Switch to dark mode"
-                }
-                title={
-                  appearance === "dark"
-                    ? "Switch to light mode"
-                    : "Switch to dark mode"
-                }
-              >
-                {appearance === "dark" ? (
-                  <FiSun aria-hidden="true" />
-                ) : (
-                  <FiMoon aria-hidden="true" />
-                )}
-              </button>
-              <button
-                className={styles.ghostButton}
-                onClick={() => void fetchSubmissions()}
-                disabled={loading}
-              >
-                {loading ? "Refreshing..." : "Refresh"}
-              </button>
-              {!DASHBOARD_AUTH_DISABLED ? (
-                <button className={styles.button} onClick={() => void handleSignOut()}>
-                  Sign out
+              <div className={styles.heroActions}>
+                <button
+                  type="button"
+                  className={styles.themeButton}
+                  onClick={toggleAppearance}
+                  aria-label={
+                    appearance === "dark"
+                      ? "Switch to light mode"
+                      : "Switch to dark mode"
+                  }
+                  title={
+                    appearance === "dark"
+                      ? "Switch to light mode"
+                      : "Switch to dark mode"
+                  }
+                >
+                  {appearance === "dark" ? (
+                    <FiSun aria-hidden="true" />
+                  ) : (
+                    <FiMoon aria-hidden="true" />
+                  )}
                 </button>
-              ) : null}
+                {!DASHBOARD_AUTH_DISABLED ? (
+                  <button className={styles.button} onClick={() => void handleSignOut()}>
+                    Sign out
+                  </button>
+                ) : null}
+              </div>
             </div>
+            <p className={styles.loggedIn}>
+              Logged in as {adminEmail || user?.email || "dashboard@fyrrehaven-61.dk"}
+            </p>
           </div>
 
           <div className={styles.cards}>
@@ -1526,22 +1515,6 @@ export default function AdminForms() {
                 <aside className={styles.detailCard}>
                   {selectedSubmission && detailSubmission ? (
                     <div className={styles.detailScroll}>
-                      <section className={styles.detailSection}>
-                        <h3>{displayNameWithCountry(selectedSubmission)}</h3>
-                        <div className={styles.badgeRow}>
-                          <span
-                            className={`${styles.badge} ${statusClassName(
-                              selectedSubmission.status
-                            )}`}
-                          >
-                            {statusLabel(selectedSubmission.status)}
-                          </span>
-                          <span className={styles.badge}>
-                            {submissionLabel(detailSubmission)}
-                          </span>
-                        </div>
-                      </section>
-
                       {selectedGroup && selectedGroup.items.length > 1 ? (
                         <section className={styles.detailSection}>
                           <h3>Submission views</h3>
@@ -1573,7 +1546,7 @@ export default function AdminForms() {
             className={styles.mobileDetailCard}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="mobile-submission-title"
+            aria-label={`Submission details for ${displayNameWithCountry(selectedSubmission)}`}
             onClick={(event) => event.stopPropagation()}
             data-dragging={isDraggingMobileDetail ? "true" : undefined}
             style={
@@ -1590,26 +1563,6 @@ export default function AdminForms() {
             >
               <span />
             </button>
-            <div className={styles.mobileDetailHeader}>
-              <div className={styles.mobileDetailHeaderTop}>
-                <p className={styles.eyebrow}>Submission details</p>
-                <h2 id="mobile-submission-title">
-                  {displayNameWithCountry(selectedSubmission)}
-                </h2>
-              </div>
-              <div className={styles.mobileHeaderBadges}>
-                <span
-                  className={`${styles.badge} ${statusClassName(
-                    selectedSubmission.status
-                  )}`}
-                >
-                  {statusLabel(selectedSubmission.status)}
-                </span>
-                <span className={styles.badge}>
-                  {submissionLabel(detailSubmission)}
-                </span>
-              </div>
-            </div>
             <div className={styles.mobileDetailScroll}>
               {selectedGroup && selectedGroup.items.length > 1 ? (
                 <section className={styles.detailSection}>
