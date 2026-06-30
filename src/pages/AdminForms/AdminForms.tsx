@@ -56,6 +56,10 @@ type Submission = {
     totalWithCleaningDKK?: number | null;
     airbnbServiceFeeSavingsDKK?: number | null;
     totalAfterAirbnbDiscountDKK?: number | null;
+    breakdown?: Array<{
+      date?: string | null;
+      price?: number | null;
+    }>;
   } | null;
   extras?: {
     stayDate?: string | null;
@@ -109,6 +113,8 @@ type ApiResponse = {
 
 type Appearance = "light" | "dark";
 type SubmissionFilter = "all" | "booking" | "contact" | "extra-services" | "guest-checkin";
+type GroupDetailSelection = "overview" | string;
+type CheckinDetailSelection = "checkin" | "checkout";
 type SubmissionGroup = {
   id: string;
   primary: Submission;
@@ -118,6 +124,7 @@ type SubmissionGroup = {
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
 const DASHBOARD_AUTH_DISABLED = true;
+const CHECKIN_GROUP_DETAIL = "guest-checkin";
 const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
   typeof window !== "undefined" &&
@@ -138,6 +145,13 @@ function formatDateTime(value?: number) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function formatPlainDate(value?: string | null) {
+  if (!value) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return value;
+  return `${match[3]}. ${match[2]}. ${match[1]}`;
 }
 
 function formatMoney(value?: number | null) {
@@ -165,7 +179,7 @@ function submissionLabel(submission: Submission) {
     case "booking":
       return "Booking";
     case "guest-checkin":
-      return submission.checkin?.type === "checkout" ? "Check-out" : "Check-in";
+      return "Check-in/out";
     case "extra-services":
       return "Extra services";
     case "other":
@@ -173,6 +187,18 @@ function submissionLabel(submission: Submission) {
     default:
       return "Contact";
   }
+}
+
+function submissionTabLabel(submission: Submission) {
+  if (submission.intent === "guest-checkin") {
+    return "Check-in/out";
+  }
+
+  return submissionLabel(submission);
+}
+
+function isCheckinSubmission(submission: Submission) {
+  return submission.intent === "guest-checkin" && Boolean(submission.checkin);
 }
 
 function submissionValue(submission: Submission) {
@@ -207,7 +233,7 @@ function submissionContextTag(submission: Submission) {
   }
 
   if (submission.extras?.stayDate) {
-    return `Stay: ${submission.extras.stayDate}`;
+    return `Stay: ${formatPlainDate(submission.extras.stayDate)}`;
   }
 
   if (submission.checkin?.typeLabel) {
@@ -217,42 +243,113 @@ function submissionContextTag(submission: Submission) {
   return null;
 }
 
+function hasDisplayValue(value: React.ReactNode) {
+  if (value == null || value === false) return false;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed !== "" && trimmed !== "—";
+  }
+  return true;
+}
+
+function countryCode(submission?: Submission | null) {
+  return submission?.countryIso || submission?.country || null;
+}
+
+function displayNameWithCountry(submission?: Submission | null) {
+  const name = submission?.name || "Submission";
+  const country = countryCode(submission);
+  return country ? `${name} (${country})` : name;
+}
+
 function renderSelectionPriceBreakdown(selection?: Submission["selection"] | null) {
   if (!selection) return null;
 
+  const nightlyBreakdown = Array.isArray(selection.breakdown)
+    ? selection.breakdown.filter(
+        (night) => night?.date && typeof night.price === "number"
+      )
+    : [];
   const hasBreakdown =
     selection.baseNightsTotalDKK != null ||
     selection.cleaningFeeDKK != null ||
-    selection.airbnbServiceFeeSavingsDKK != null;
+    selection.airbnbServiceFeeSavingsDKK != null ||
+    nightlyBreakdown.length > 0;
 
   if (!hasBreakdown) return null;
 
   return (
     <div className={styles.priceBreakdown}>
-      <div className={styles.priceBreakdownRow}>
-        <span>Price (nights)</span>
-        <span>{formatMoney(selection.baseNightsTotalDKK ?? null)}</span>
-      </div>
-      <div className={styles.priceBreakdownRow}>
-        <span>Cleaning</span>
-        <span>{formatMoney(selection.cleaningFeeDKK ?? null)}</span>
-      </div>
+      {nightlyBreakdown.length > 0 && selection.baseNightsTotalDKK != null ? (
+        <details className={styles.nightlyBreakdownDetails}>
+          <summary className={styles.nightlyBreakdownSummary}>
+            <span>
+              Price ({nightlyBreakdown.length} night
+              {nightlyBreakdown.length === 1 ? "" : "s"})
+            </span>
+            <span>{formatMoney(selection.baseNightsTotalDKK)}</span>
+          </summary>
+          <div className={styles.nightlyBreakdown} aria-label="Nightly price breakdown">
+            {nightlyBreakdown.map((night) => (
+              <div className={styles.priceBreakdownRow} key={night.date}>
+                <span>{formatPlainDate(night.date)}</span>
+                <span>{formatMoney(night.price)}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : selection.baseNightsTotalDKK != null ? (
+        <div className={styles.priceBreakdownRow}>
+          <span>Price (nights)</span>
+          <span>{formatMoney(selection.baseNightsTotalDKK)}</span>
+        </div>
+      ) : nightlyBreakdown.length > 0 ? (
+        <details className={styles.nightlyBreakdownDetails}>
+          <summary className={styles.nightlyBreakdownSummary}>
+            <span>
+              Price ({nightlyBreakdown.length} night
+              {nightlyBreakdown.length === 1 ? "" : "s"})
+            </span>
+            <span>
+              {nightlyBreakdown.length} night
+              {nightlyBreakdown.length === 1 ? "" : "s"}
+            </span>
+          </summary>
+          <div className={styles.nightlyBreakdown} aria-label="Nightly price breakdown">
+            {nightlyBreakdown.map((night) => (
+              <div className={styles.priceBreakdownRow} key={night.date}>
+                <span>{formatPlainDate(night.date)}</span>
+                <span>{formatMoney(night.price)}</span>
+              </div>
+            ))}
+          </div>
+        </details>
+      ) : null}
+      {selection.cleaningFeeDKK != null ? (
+        <div className={styles.priceBreakdownRow}>
+          <span>Cleaning</span>
+          <span>{formatMoney(selection.cleaningFeeDKK)}</span>
+        </div>
+      ) : null}
       {selection.airbnbServiceFeeSavingsDKK != null ? (
         <div className={styles.priceBreakdownRow}>
           <span>Direct booking discount</span>
           <span>- {formatMoney(selection.airbnbServiceFeeSavingsDKK)}</span>
         </div>
       ) : null}
-      <div className={`${styles.priceBreakdownRow} ${styles.priceBreakdownTotal}`}>
-        <span>Final total</span>
-        <span>
-          {formatMoney(
-            selection.totalAfterAirbnbDiscountDKK ??
-              selection.totalWithCleaningDKK ??
-              null
-          )}
-        </span>
-      </div>
+      {selection.totalAfterAirbnbDiscountDKK != null ||
+      selection.totalWithCleaningDKK != null ? (
+        <div className={`${styles.priceBreakdownRow} ${styles.priceBreakdownTotal}`}>
+          <span>Final total</span>
+          <span>
+            {formatMoney(
+              selection.totalAfterAirbnbDiscountDKK ??
+                selection.totalWithCleaningDKK ??
+                null
+            )}
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -275,11 +372,22 @@ function renderExtrasPriceBreakdown(extras?: Submission["extras"] | null) {
           </div>
         );
       })}
-      <div className={`${styles.priceBreakdownRow} ${styles.priceBreakdownTotal}`}>
-        <span>Final total</span>
-        <span>{formatMoney(extras.totalDKK ?? null)}</span>
-      </div>
+      {extras.totalDKK != null ? (
+        <div className={`${styles.priceBreakdownRow} ${styles.priceBreakdownTotal}`}>
+          <span>Final total</span>
+          <span>{formatMoney(extras.totalDKK)}</span>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function hasGuestBreakdown(guests?: Submission["guests"] | null) {
+  return Boolean(
+    guests &&
+      (typeof guests.adults === "number" ||
+        typeof guests.children === "number" ||
+        typeof guests.babies === "number")
   );
 }
 
@@ -298,8 +406,18 @@ function normalizeEmail(email?: string | null) {
 }
 
 function normalizeArrivalDate(submission: Submission) {
-  const value = submission.selection?.start?.trim();
+  const value =
+    submission.selection?.start?.trim() || submission.extras?.stayDate?.trim();
   return value ? value : null;
+}
+
+function findOverviewStayDate(group: SubmissionGroup | null, fallback?: Submission | null) {
+  const submissions = group?.items?.length ? group.items : fallback ? [fallback] : [];
+  const bookingStart = submissions.find((submission) => submission.selection?.start)
+    ?.selection?.start;
+  const extraStayDate = submissions.find((submission) => submission.extras?.stayDate)
+    ?.extras?.stayDate;
+  return bookingStart || extraStayDate || null;
 }
 
 function buildSubmissionGroups(submissions: Submission[]): SubmissionGroup[] {
@@ -389,9 +507,22 @@ export default function AdminForms() {
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<Submission | null>(null);
-  const [linkedPreviewSubmission, setLinkedPreviewSubmission] =
-    React.useState<Submission | null>(null);
+  const [activeGroupDetail, setActiveGroupDetail] =
+    React.useState<GroupDetailSelection>("overview");
+  const [activeCheckinDetail, setActiveCheckinDetail] =
+    React.useState<CheckinDetailSelection>("checkin");
   const [isMobileLayout, setIsMobileLayout] = React.useState(false);
+  const [mobileDetailDragOffset, setMobileDetailDragOffset] = React.useState(0);
+  const [isDraggingMobileDetail, setIsDraggingMobileDetail] = React.useState(false);
+  const mobileDetailDrag = React.useRef({
+    active: false,
+    pointerId: -1,
+    startY: 0,
+    lastY: 0,
+    lastTime: 0,
+    velocity: 0,
+    offset: 0,
+  });
 
   React.useLayoutEffect(() => {
     const html = document.documentElement;
@@ -459,7 +590,14 @@ export default function AdminForms() {
           : apiSubmissions;
 
       setSubmissions(nextSubmissions);
-      setSelectedId((current) => current ?? nextSubmissions[0]?.id ?? null);
+      setSelectedId((current) => {
+        if (current && nextSubmissions.some((submission) => submission.id === current)) {
+          return current;
+        }
+
+        if (isMobileLayout) return null;
+        return nextSubmissions[0]?.id ?? null;
+      });
       setAdminEmail(
         data.admin?.email ||
           auth?.currentUser?.email ||
@@ -475,11 +613,12 @@ export default function AdminForms() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isMobileLayout]);
 
   React.useEffect(() => {
     setDeleteConfirmation("");
     setDeleteError(null);
+    setActiveGroupDetail("overview");
   }, [selectedId]);
 
   React.useEffect(() => {
@@ -506,6 +645,52 @@ export default function AdminForms() {
   const selectedGroup =
     visibleGroups.find((group) => group.id === selectedId) || null;
   const selectedSubmission = selectedGroup?.primary || null;
+  const checkinSubmissions = React.useMemo(
+    () => selectedGroup?.items.filter(isCheckinSubmission) || [],
+    [selectedGroup]
+  );
+  const detailSubmission =
+    activeGroupDetail === "overview"
+      ? selectedSubmission
+      : activeGroupDetail === CHECKIN_GROUP_DETAIL
+      ? checkinSubmissions.find(
+          (submission) => submission.checkin?.type === activeCheckinDetail
+        ) ||
+        checkinSubmissions[0] ||
+        selectedSubmission
+      : selectedGroup?.items.find((submission) => submission.id === activeGroupDetail) ||
+        selectedSubmission;
+
+  React.useEffect(() => {
+    if (!selectedGroup) return;
+    if (activeGroupDetail === "overview") return;
+    if (
+      activeGroupDetail === CHECKIN_GROUP_DETAIL &&
+      selectedGroup.items.some(isCheckinSubmission)
+    ) {
+      return;
+    }
+    if (selectedGroup.items.some((submission) => submission.id === activeGroupDetail)) return;
+    setActiveGroupDetail("overview");
+  }, [activeGroupDetail, selectedGroup]);
+
+  React.useEffect(() => {
+    if (!selectedGroup) return;
+    if (activeGroupDetail !== CHECKIN_GROUP_DETAIL) return;
+    if (
+      checkinSubmissions.some(
+        (submission) => submission.checkin?.type === activeCheckinDetail
+      )
+    ) {
+      return;
+    }
+    const nextType = checkinSubmissions.find(
+      (submission) => submission.checkin?.type === "checkin"
+    )
+      ? "checkin"
+      : "checkout";
+    setActiveCheckinDetail(nextType);
+  }, [activeCheckinDetail, activeGroupDetail, checkinSubmissions, selectedGroup]);
 
   React.useEffect(() => {
     if (visibleGroups.length === 0) {
@@ -513,17 +698,20 @@ export default function AdminForms() {
       return;
     }
 
-    setSelectedId((current) =>
-      current && visibleGroups.some((group) => group.id === current)
-        ? current
-        : visibleGroups[0].id
-    );
-  }, [visibleGroups]);
+    setSelectedId((current) => {
+      if (current && visibleGroups.some((group) => group.id === current)) {
+        return current;
+      }
+
+      if (isMobileLayout) return null;
+      return visibleGroups[0].id;
+    });
+  }, [isMobileLayout, visibleGroups]);
 
   React.useEffect(() => {
     if (
       !isMobileLayout ||
-      (!selectedGroup && !linkedPreviewSubmission) ||
+      !selectedGroup ||
       deleteTarget
     )
       return;
@@ -539,7 +727,56 @@ export default function AdminForms() {
       body.style.overflow = previousBodyOverflow;
       documentElement.style.overflow = previousHtmlOverflow;
     };
-  }, [deleteTarget, isMobileLayout, linkedPreviewSubmission, selectedGroup]);
+  }, [deleteTarget, isMobileLayout, selectedGroup]);
+
+  React.useEffect(() => {
+    if (!isDraggingMobileDetail) return;
+
+    const onPointerMove = (event: PointerEvent) => {
+      const drag = mobileDetailDrag.current;
+      if (!drag.active) return;
+
+      const now = performance.now();
+      const elapsed = Math.max(1, now - drag.lastTime);
+      const deltaFromLast = event.clientY - drag.lastY;
+      drag.velocity = deltaFromLast / elapsed;
+      drag.lastY = event.clientY;
+      drag.lastTime = now;
+
+      const nextOffset = Math.max(0, event.clientY - drag.startY);
+      drag.offset = nextOffset;
+      setMobileDetailDragOffset(nextOffset);
+    };
+
+    const endDrag = () => {
+      const drag = mobileDetailDrag.current;
+      if (!drag.active) return;
+
+      const shouldClose =
+        drag.offset >= 120 || (drag.velocity >= 0.85 && drag.offset > 56);
+
+      drag.active = false;
+      drag.pointerId = -1;
+      drag.offset = 0;
+      drag.velocity = 0;
+      setIsDraggingMobileDetail(false);
+      setMobileDetailDragOffset(0);
+
+      if (shouldClose) {
+        closeMobileDetail();
+      }
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
+    };
+  }, [isDraggingMobileDetail]);
 
   const sentCount = submissions.filter((submission) => submission.status === "sent").length;
   const failedCount = submissions.filter(
@@ -547,11 +784,26 @@ export default function AdminForms() {
   ).length;
 
   function closeMobileDetail() {
+    mobileDetailDrag.current.active = false;
+    mobileDetailDrag.current.pointerId = -1;
+    mobileDetailDrag.current.offset = 0;
+    mobileDetailDrag.current.velocity = 0;
+    setIsDraggingMobileDetail(false);
+    setMobileDetailDragOffset(0);
     setSelectedId(null);
   }
 
-  function closeLinkedPreview() {
-    setLinkedPreviewSubmission(null);
+  function startMobileDetailDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    const drag = mobileDetailDrag.current;
+    drag.active = true;
+    drag.pointerId = event.pointerId;
+    drag.startY = event.clientY;
+    drag.lastY = event.clientY;
+    drag.lastTime = performance.now();
+    drag.velocity = 0;
+    drag.offset = 0;
+    setIsDraggingMobileDetail(true);
+    setMobileDetailDragOffset(0);
   }
 
   async function handleSignIn() {
@@ -599,181 +851,292 @@ export default function AdminForms() {
     return <p className={styles.detailMeta}>{loggedLabel(submission)}</p>;
   }
 
-  function renderLinkedSubmissionRows(items: Submission[]) {
+  function renderDetailItem(
+    label: string,
+    value: React.ReactNode,
+    submission: Submission,
+    options?: { wide?: boolean; message?: boolean; after?: React.ReactNode }
+  ) {
+    if (!hasDisplayValue(value) && !options?.after) return null;
+
     return (
-      <div className={styles.detailList}>
-        {items.map((submission) => (
+      <div className={`${styles.detailItem} ${options?.wide ? styles.detailItemWide : ""}`}>
+        <span className={styles.detailLabel}>{label}</span>
+        {options?.message ? (
+          <p className={styles.detailMessage}>{value}</p>
+        ) : (
+          <div className={styles.detailValue}>{value}</div>
+        )}
+        {options?.after}
+        {renderLoggedMeta(submission)}
+      </div>
+    );
+  }
+
+  function renderGroupDetailSwitcher(group: SubmissionGroup) {
+    const regularSubmissions = group.items.filter(
+      (submission) => !isCheckinSubmission(submission)
+    );
+    const hasCheckinSubmissions = group.items.some(isCheckinSubmission);
+
+    return (
+      <div className={styles.linkedTabs}>
+        <div className={styles.linkedTabList} role="tablist" aria-label="Submission views">
           <button
             type="button"
-            className={styles.detailListButton}
-            key={submission.id}
-            onClick={() => setLinkedPreviewSubmission(submission)}
+            className={styles.linkedTab}
+            role="tab"
+            aria-selected={activeGroupDetail === "overview"}
+            onClick={() => setActiveGroupDetail("overview")}
           >
-            <div className={styles.detailListRow}>
-              <span>
-                {submissionLabel(submission)}
-                {submission.name ? ` • ${submission.name}` : ""}
-              </span>
-              <span>{formatDateTime(submission.createdAtMs)}</span>
-            </div>
+            <span>Overview</span>
           </button>
-        ))}
+          {regularSubmissions.map((submission) => (
+            <button
+              type="button"
+              key={submission.id}
+              className={styles.linkedTab}
+              role="tab"
+              aria-selected={activeGroupDetail === submission.id}
+              onClick={() => setActiveGroupDetail(submission.id)}
+            >
+              <span>{submissionTabLabel(submission)}</span>
+            </button>
+          ))}
+          {hasCheckinSubmissions ? (
+            <button
+              type="button"
+              className={styles.linkedTab}
+              role="tab"
+              aria-selected={activeGroupDetail === CHECKIN_GROUP_DETAIL}
+              onClick={() => setActiveGroupDetail(CHECKIN_GROUP_DETAIL)}
+            >
+              <span>Check-in/out</span>
+            </button>
+          ) : null}
+        </div>
       </div>
     );
   }
 
   function renderSubmissionDetailContent(submission: Submission) {
+    const isOverview = activeGroupDetail === "overview";
+    const overviewStayDate = isOverview
+      ? findOverviewStayDate(selectedGroup, submission)
+      : null;
+    const hasBookingDates = Boolean(
+      submission.selection?.start || submission.selection?.endExclusive
+    );
+    const contactItems = isOverview
+      ? [
+          renderDetailItem("Email", submission.email, submission),
+          renderDetailItem("Phone", submission.phone, submission),
+        ].filter(Boolean)
+      : [];
+    const stayDateItems = [
+      renderDetailItem(
+        "Check-in",
+        formatPlainDate(submission.selection?.start),
+        submission
+      ),
+      renderDetailItem(
+        "Check-out",
+        formatPlainDate(submission.selection?.endExclusive),
+        submission
+      ),
+      isOverview && !hasBookingDates
+        ? renderDetailItem("Stay date", formatPlainDate(overviewStayDate), submission)
+        : null,
+    ].filter(Boolean);
+    const stayCountItems = [
+      renderDetailItem("Nights", submission.selection?.nights, submission),
+      renderDetailItem(
+        "Guests",
+        submission.guests?.total,
+        submission,
+        hasGuestBreakdown(submission.guests)
+          ? {
+              after: (
+                <div className={styles.detailSubValues}>
+                  {typeof submission.guests?.adults === "number" ? (
+                    <span>Adults: {submission.guests.adults}</span>
+                  ) : null}
+                  {typeof submission.guests?.children === "number" ? (
+                    <span>Kids: {submission.guests.children}</span>
+                  ) : null}
+                  {typeof submission.guests?.babies === "number" ? (
+                    <span>Babies: {submission.guests.babies}</span>
+                  ) : null}
+                </div>
+              ),
+            }
+          : undefined
+      ),
+    ].filter(Boolean);
+    const selectionTotal =
+      submission.selection?.totalAfterAirbnbDiscountDKK ??
+      submission.selection?.totalWithCleaningDKK;
+    const stayTotalItem = renderDetailItem(
+      "Total",
+      selectionTotal != null ? formatMoney(selectionTotal) : null,
+      submission,
+      {
+        wide: true,
+        after: renderSelectionPriceBreakdown(submission.selection),
+      }
+    );
+    const stayPurposeItem = renderDetailItem(
+      "Purpose",
+      submission.stayPurpose,
+      submission,
+      { message: true }
+    );
+    const hasStaySection =
+      stayDateItems.length > 0 ||
+      stayCountItems.length > 0 ||
+      stayTotalItem ||
+      stayPurposeItem;
+
+    const extraTotalItem = renderDetailItem(
+      "Total",
+      submission.extras?.totalDKK != null
+        ? formatMoney(submission.extras.totalDKK)
+        : null,
+      submission,
+      {
+        wide: true,
+        after: renderExtrasPriceBreakdown(submission.extras),
+      }
+    );
+
+    const checkinItems = [
+      renderDetailItem("Key code", submission.checkin?.keycode, submission),
+      renderDetailItem(
+        "Electricity",
+        submission.checkin?.meterReadings?.electricity,
+        submission
+      ),
+      renderDetailItem(
+        "Water (house)",
+        submission.checkin?.meterReadings?.waterHouse,
+        submission
+      ),
+      renderDetailItem(
+        "Water (pool)",
+        submission.checkin?.meterReadings?.waterPool,
+        submission
+      ),
+    ].filter(Boolean);
+    const hasCheckinSection =
+      checkinItems.length > 0 || Boolean(submission.checkin?.attachments?.length);
+    const checkinTypeOptions = Array.from(
+      new Set(
+        checkinSubmissions
+          .map((item) => item.checkin?.type)
+          .filter((type): type is CheckinDetailSelection =>
+            type === "checkin" || type === "checkout"
+          )
+      )
+    );
+
     return (
       <>
-        <section className={styles.detailSection}>
-          <h3>Contact</h3>
-          <div className={styles.detailGrid}>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Email</span>
-              <div className={styles.detailValue}>{submission.email || "—"}</div>
-              {renderLoggedMeta(submission)}
-            </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Phone</span>
-              <div className={styles.detailValue}>{submission.phone || "—"}</div>
-              {renderLoggedMeta(submission)}
-            </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Country</span>
-              <div className={styles.detailValue}>
-                {submission.country || submission.countryIso || "—"}
-              </div>
-              {renderLoggedMeta(submission)}
-            </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Submitted</span>
-              <div className={styles.detailValue}>{formatDateTime(submission.createdAtMs)}</div>
-              {renderLoggedMeta(submission)}
-            </div>
-          </div>
-        </section>
+        {contactItems.length > 0 ? (
+          <section className={styles.detailSection}>
+            <h3>Contact</h3>
+            <div className={styles.detailGrid}>{contactItems}</div>
+          </section>
+        ) : null}
 
-        {submission.selection || submission.guests || submission.stayPurpose ? (
+        {hasStaySection ? (
           <section className={styles.detailSection}>
             <h3>Stay</h3>
-            <div className={styles.detailGrid}>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Check-in</span>
-                <div className={styles.detailValue}>{submission.selection?.start || "—"}</div>
-                {renderLoggedMeta(submission)}
+            {stayDateItems.length > 0 ? (
+              <div className={styles.detailGrid}>{stayDateItems}</div>
+            ) : null}
+            {stayCountItems.length > 0 ? (
+              <div className={`${styles.detailGrid} ${styles.detailGridCompact}`}>
+                {stayCountItems}
               </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Check-out</span>
-                <div className={styles.detailValue}>
-                  {submission.selection?.endExclusive || "—"}
-                </div>
-                {renderLoggedMeta(submission)}
+            ) : null}
+            {stayTotalItem ? (
+              <div className={`${styles.detailGrid} ${styles.detailTotalGrid}`}>
+                {stayTotalItem}
               </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Nights</span>
-                <div className={styles.detailValue}>{submission.selection?.nights ?? "—"}</div>
-                {renderLoggedMeta(submission)}
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Total</span>
-                <div className={styles.detailValue}>
-                  {formatMoney(
-                    submission.selection?.totalAfterAirbnbDiscountDKK ??
-                      submission.selection?.totalWithCleaningDKK
-                  )}
-                </div>
-                {renderLoggedMeta(submission)}
-                {renderSelectionPriceBreakdown(submission.selection)}
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Guests</span>
-                <div className={styles.detailValue}>{submission.guests?.total ?? "—"}</div>
-                {renderLoggedMeta(submission)}
-              </div>
-            </div>
-            {submission.stayPurpose ? (
-              <div className={styles.detailList}>
-                <div className={styles.detailItem}>
-                  <span className={styles.detailLabel}>Purpose</span>
-                  <p className={styles.detailMessage}>{submission.stayPurpose}</p>
-                  {renderLoggedMeta(submission)}
-                </div>
-              </div>
+            ) : null}
+            {stayPurposeItem ? (
+              <div className={styles.detailList}>{stayPurposeItem}</div>
             ) : null}
           </section>
         ) : null}
 
-        {submission.extras ? (
+        {submission.extras && (extraTotalItem || submission.extras.items?.length) ? (
           <section className={styles.detailSection}>
             <h3>Extra services</h3>
-            <div className={styles.detailGrid}>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Stay date</span>
-                <div className={styles.detailValue}>{submission.extras.stayDate || "—"}</div>
-                {renderLoggedMeta(submission)}
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Total</span>
-                <div className={styles.detailValue}>{formatMoney(submission.extras.totalDKK)}</div>
-                {renderLoggedMeta(submission)}
-                {renderExtrasPriceBreakdown(submission.extras)}
-              </div>
-            </div>
             {submission.extras.items?.length ? (
-              <div className={styles.detailList}>
+              <div className={styles.serviceList}>
                 {submission.extras.items.map((item, index) => (
-                  <div className={styles.detailListRow} key={`${item.id || "extra"}-${index}`}>
-                    <span>{item.label?.en || item.label?.da || item.id || "Extra"}</span>
-                    <span>{item.qty || 0} × {formatMoney(item.unitPriceDKK ?? null)}</span>
+                  <div className={styles.serviceItem} key={`${item.id || "extra"}-${index}`}>
+                    <div>
+                      <span className={styles.serviceName}>
+                        {item.label?.en || item.label?.da || item.id || "Extra"}
+                      </span>
+                      {typeof item.unitPriceDKK === "number" ? (
+                        <span className={styles.servicePrice}>
+                          {formatMoney(item.unitPriceDKK)} each
+                        </span>
+                      ) : null}
+                    </div>
+                    {typeof item.qty === "number" ? (
+                      <span className={styles.serviceQty}>x {item.qty}</span>
+                    ) : null}
                   </div>
                 ))}
               </div>
             ) : null}
+            {extraTotalItem ? (
+              <div className={`${styles.detailGrid} ${styles.detailTotalGrid}`}>
+                {extraTotalItem}
+              </div>
+            ) : null}
           </section>
         ) : null}
 
-        {submission.checkin ? (
+        {submission.checkin && hasCheckinSection ? (
           <section className={styles.detailSection}>
             <h3>{submission.checkin.type === "checkout" ? "Check-out" : "Check-in"}</h3>
-            <div className={styles.detailGrid}>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Type</span>
-                <div className={styles.detailValue}>{submission.checkin.typeLabel || "—"}</div>
-                {renderLoggedMeta(submission)}
+            {activeGroupDetail === CHECKIN_GROUP_DETAIL &&
+            checkinTypeOptions.length > 1 ? (
+              <div
+                className={`${styles.linkedTabList} ${styles.inlineTabList}`}
+                role="tablist"
+                aria-label="Check-in and check-out views"
+              >
+                {checkinTypeOptions.map((type) => (
+                  <button
+                    type="button"
+                    key={type}
+                    className={styles.linkedTab}
+                    role="tab"
+                    aria-selected={activeCheckinDetail === type}
+                    onClick={() => setActiveCheckinDetail(type)}
+                  >
+                    <span>{type === "checkout" ? "Check-out" : "Check-in"}</span>
+                  </button>
+                ))}
               </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Key code</span>
-                <div className={styles.detailValue}>{submission.checkin.keycode || "—"}</div>
-                {renderLoggedMeta(submission)}
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Electricity</span>
-                <div className={styles.detailValue}>
-                  {submission.checkin.meterReadings?.electricity || "—"}
-                </div>
-                {renderLoggedMeta(submission)}
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Water (house)</span>
-                <div className={styles.detailValue}>
-                  {submission.checkin.meterReadings?.waterHouse || "—"}
-                </div>
-                {renderLoggedMeta(submission)}
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Water (pool)</span>
-                <div className={styles.detailValue}>
-                  {submission.checkin.meterReadings?.waterPool || "—"}
-                </div>
-                {renderLoggedMeta(submission)}
-              </div>
-            </div>
+            ) : null}
+            {checkinItems.length > 0 ? (
+              <div className={styles.detailGrid}>{checkinItems}</div>
+            ) : null}
             {submission.checkin.attachments?.length ? (
               <div className={styles.detailList}>
                 {submission.checkin.attachments.map((file, index) => (
                   <div className={styles.detailListRow} key={`${file.filename || "file"}-${index}`}>
                     <span>{file.filename || "Attachment"}</span>
-                    <span>{file.sizeBytes ? `${Math.round(file.sizeBytes / 1024)} KB` : "—"}</span>
+                    {file.sizeBytes ? (
+                      <span>{Math.round(file.sizeBytes / 1024)} KB</span>
+                    ) : null}
                   </div>
                 ))}
               </div>
@@ -781,11 +1144,13 @@ export default function AdminForms() {
           </section>
         ) : null}
 
-        <section className={styles.detailSection}>
-          <h3>Message</h3>
-          <p className={styles.detailMessage}>{submission.message || "No message"}</p>
-          {renderLoggedMeta(submission)}
-        </section>
+        {submission.message ? (
+          <section className={styles.detailSection}>
+            <h3>Message</h3>
+            <p className={styles.detailMessage}>{submission.message}</p>
+            {renderLoggedMeta(submission)}
+          </section>
+        ) : null}
 
         {submission.mailError ? (
           <section className={styles.detailSection}>
@@ -1017,7 +1382,7 @@ export default function AdminForms() {
               </div>
               <p className={styles.cardValue}>{failedCount}</p>
             </div>
-            <div className={styles.card}>
+            <div className={`${styles.card} ${styles.cardLatest}`}>
               <div className={styles.cardLabelRow}>
                 <FiInbox
                   aria-hidden="true"
@@ -1025,7 +1390,7 @@ export default function AdminForms() {
                 />
                 <p className={styles.cardLabel}>Latest submission</p>
               </div>
-              <p className={styles.cardValue}>
+              <p className={`${styles.cardValue} ${styles.cardValueLatest}`}>
                 {formatDateTime(submissions[0]?.createdAtMs)}
               </p>
             </div>
@@ -1105,7 +1470,7 @@ export default function AdminForms() {
                             <div className={styles.rowTop}>
                               <div>
                                 <p className={styles.rowName}>
-                                  {submission.name || "Unknown name"}
+                                  {displayNameWithCountry(submission) || "Unknown name"}
                                 </p>
                                 <div className={styles.rowEmail}>
                                   {submission.email || "—"}
@@ -1131,11 +1496,6 @@ export default function AdminForms() {
                                 {groupValue ? (
                                   <span className={styles.badge}>
                                     {groupValue}
-                                  </span>
-                                ) : null}
-                                {group.items.length > 1 ? (
-                                  <span className={styles.badge}>
-                                    {group.items.length} linked submissions
                                   </span>
                                 ) : null}
                               </div>
@@ -1164,10 +1524,10 @@ export default function AdminForms() {
 
               {!isMobileLayout ? (
                 <aside className={styles.detailCard}>
-                  {selectedSubmission ? (
+                  {selectedSubmission && detailSubmission ? (
                     <div className={styles.detailScroll}>
                       <section className={styles.detailSection}>
-                        <h3>{selectedSubmission.name || "Submission"}</h3>
+                        <h3>{displayNameWithCountry(selectedSubmission)}</h3>
                         <div className={styles.badgeRow}>
                           <span
                             className={`${styles.badge} ${statusClassName(
@@ -1177,23 +1537,18 @@ export default function AdminForms() {
                             {statusLabel(selectedSubmission.status)}
                           </span>
                           <span className={styles.badge}>
-                            {submissionLabel(selectedSubmission)}
+                            {submissionLabel(detailSubmission)}
                           </span>
-                          {selectedGroup && selectedGroup.items.length > 1 ? (
-                            <span className={styles.badge}>
-                              {selectedGroup.items.length} linked submissions
-                            </span>
-                          ) : null}
                         </div>
                       </section>
 
                       {selectedGroup && selectedGroup.items.length > 1 ? (
                         <section className={styles.detailSection}>
-                          <h3>Linked submissions</h3>
-                          {renderLinkedSubmissionRows(selectedGroup.items)}
+                          <h3>Submission views</h3>
+                          {renderGroupDetailSwitcher(selectedGroup)}
                         </section>
                       ) : null}
-                      {renderSubmissionDetailContent(selectedSubmission)}
+                      {renderSubmissionDetailContent(detailSubmission)}
                     </div>
                   ) : (
                     <div className={styles.emptyState}>
@@ -1208,7 +1563,7 @@ export default function AdminForms() {
         </div>
       </div>
 
-      {isMobileLayout && selectedSubmission && !deleteTarget ? (
+      {isMobileLayout && selectedSubmission && detailSubmission && !deleteTarget ? (
         <div
           className={styles.mobileDetailOverlay}
           role="presentation"
@@ -1220,100 +1575,49 @@ export default function AdminForms() {
             aria-modal="true"
             aria-labelledby="mobile-submission-title"
             onClick={(event) => event.stopPropagation()}
+            data-dragging={isDraggingMobileDetail ? "true" : undefined}
+            style={
+              {
+                "--mobile-detail-drag-y": `${mobileDetailDragOffset}px`,
+              } as React.CSSProperties
+            }
           >
+            <button
+              type="button"
+              className={styles.modalSheetHandle}
+              aria-label="Drag down to close"
+              onPointerDown={startMobileDetailDrag}
+            >
+              <span />
+            </button>
             <div className={styles.mobileDetailHeader}>
-              <div>
+              <div className={styles.mobileDetailHeaderTop}>
                 <p className={styles.eyebrow}>Submission details</p>
                 <h2 id="mobile-submission-title">
-                  {selectedSubmission.name || "Submission"}
+                  {displayNameWithCountry(selectedSubmission)}
                 </h2>
               </div>
-              <button
-                type="button"
-                className={styles.ghostButton}
-                onClick={closeMobileDetail}
-              >
-                Close
-              </button>
+              <div className={styles.mobileHeaderBadges}>
+                <span
+                  className={`${styles.badge} ${statusClassName(
+                    selectedSubmission.status
+                  )}`}
+                >
+                  {statusLabel(selectedSubmission.status)}
+                </span>
+                <span className={styles.badge}>
+                  {submissionLabel(detailSubmission)}
+                </span>
+              </div>
             </div>
             <div className={styles.mobileDetailScroll}>
-              <section className={styles.detailSection}>
-                <div className={styles.badgeRow}>
-                  <span
-                    className={`${styles.badge} ${statusClassName(
-                      selectedSubmission.status
-                    )}`}
-                  >
-                    {statusLabel(selectedSubmission.status)}
-                  </span>
-                  <span className={styles.badge}>
-                    {submissionLabel(selectedSubmission)}
-                  </span>
-                  {selectedGroup && selectedGroup.items.length > 1 ? (
-                    <span className={styles.badge}>
-                      {selectedGroup.items.length} linked submissions
-                    </span>
-                  ) : null}
-                </div>
-              </section>
-
               {selectedGroup && selectedGroup.items.length > 1 ? (
                 <section className={styles.detailSection}>
-                  <h3>Linked submissions</h3>
-                  {renderLinkedSubmissionRows(selectedGroup.items)}
+                  <h3>Submission views</h3>
+                  {renderGroupDetailSwitcher(selectedGroup)}
                 </section>
               ) : null}
-              {renderSubmissionDetailContent(selectedSubmission)}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {linkedPreviewSubmission ? (
-        <div
-          className={styles.modalOverlay}
-          role="presentation"
-          onClick={closeLinkedPreview}
-        >
-          <div
-            className={`${styles.modalCard} ${styles.linkedModalCard}`}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="linked-submission-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className={styles.mobileDetailHeader}>
-              <div>
-                <p className={styles.eyebrow}>Linked submission</p>
-                <h2 id="linked-submission-title">
-                  {linkedPreviewSubmission.name ||
-                    submissionLabel(linkedPreviewSubmission)}
-                </h2>
-              </div>
-              <button
-                type="button"
-                className={styles.ghostButton}
-                onClick={closeLinkedPreview}
-              >
-                Close
-              </button>
-            </div>
-            <div className={styles.linkedModalScroll}>
-              <section className={styles.detailSection}>
-                <div className={styles.badgeRow}>
-                  <span
-                    className={`${styles.badge} ${statusClassName(
-                      linkedPreviewSubmission.status
-                    )}`}
-                  >
-                    {statusLabel(linkedPreviewSubmission.status)}
-                  </span>
-                  <span className={styles.badge}>
-                    {submissionLabel(linkedPreviewSubmission)}
-                  </span>
-                </div>
-              </section>
-              {renderSubmissionDetailContent(linkedPreviewSubmission)}
+              {renderSubmissionDetailContent(detailSubmission)}
             </div>
           </div>
         </div>
