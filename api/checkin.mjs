@@ -1,5 +1,10 @@
 import nodemailer from "nodemailer";
 import Busboy from "busboy";
+import { getFirestoreDb } from "./_lib/firebaseAdmin.mjs";
+import {
+  createFormSubmission,
+  updateFormSubmission,
+} from "./_lib/formSubmissions.mjs";
 import {
   checkRateLimit,
   getRequesterIp,
@@ -178,6 +183,8 @@ export default async function handler(req, res) {
     });
 
     busboy.on("finish", async () => {
+      let submissionRef = null;
+
       try {
         if (uploadError) {
           sendJson(res, uploadError.status, {
@@ -283,6 +290,54 @@ export default async function handler(req, res) {
           name,
         });
         const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
+        const db = await getFirestoreDb();
+        const submissionRecord = {
+          intent: "guest-checkin",
+          lang: uiLang,
+          name: String(name).trim(),
+          email: emailNormalized,
+          message: String(comment || "").trim(),
+          consent: consentAccepted,
+          checkin: {
+            type: String(checkType || ""),
+            typeLabel,
+            keycode: String(keycode || "").trim(),
+            meterReadings: {
+              electricity: String(elReading || "").trim(),
+              waterHouse: String(waterHouse || "").trim(),
+              waterPool:
+                typeof waterPool !== "undefined" && String(waterPool).trim() !== ""
+                  ? String(waterPool).trim()
+                  : null,
+            },
+            attachments: files.map((file) => ({
+              fieldname: file.fieldname,
+              filename: file.filename,
+              contentType: file.contentType,
+              sizeBytes: file.content.length,
+            })),
+          },
+          source: "guest-form",
+          status: "pending",
+          mailStatus: "pending",
+          createdAtMs: Date.now(),
+          updatedAtMs: Date.now(),
+          requestMeta: {
+            ip: requestIp || null,
+            origin: req.headers.origin || null,
+            referer: req.headers.referer || null,
+            userAgent: req.headers["user-agent"] || null,
+          },
+        };
+
+        if (db) {
+          try {
+            submissionRef = await createFormSubmission(db, submissionRecord);
+          } catch (storageError) {
+            submissionRef = null;
+            console.error("FIRESTORE_WRITE_FAILED", storageError);
+          }
+        }
 
         const html = `
         <div style="font-family:Arial,sans-serif;line-height:1.5">
@@ -335,13 +390,47 @@ ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
           })),
         });
 
-        sendJson(res, 200, { ok: true });
+        if (submissionRef) {
+          await updateFormSubmission(submissionRef, {
+            status: "sent",
+            mailStatus: "sent",
+            updatedAtMs: Date.now(),
+          });
+        }
+
+        sendJson(res, 200, {
+          ok: true,
+          stored: Boolean(submissionRef),
+          submissionId: submissionRef?.id || null,
+          mailStatus: "sent",
+        });
       } catch (err) {
         console.error("MAIL_ERROR", err?.response || err);
         const msg =
           typeof err === "object" && err !== null && "message" in err
             ? String(err.message)
             : String(err);
+
+        if (typeof submissionRef !== "undefined" && submissionRef) {
+          await updateFormSubmission(submissionRef, {
+            status: "mail_failed",
+            mailStatus: "failed",
+            mailError: msg,
+            mailErrorCode:
+              typeof err === "object" && err !== null && "code" in err
+                ? String(err.code || "")
+                : null,
+            updatedAtMs: Date.now(),
+          });
+
+          sendJson(res, 200, {
+            ok: true,
+            stored: true,
+            submissionId: submissionRef.id,
+            mailStatus: "failed",
+          });
+          return;
+        }
 
         if (msg.startsWith("ENV_MISSING:")) {
           sendJson(res, 500, {

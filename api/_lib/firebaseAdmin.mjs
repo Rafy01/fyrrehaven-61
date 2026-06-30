@@ -1,10 +1,23 @@
-import { cert, getApps, initializeApp } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+let firebaseAdminInitError = null;
+let firebaseAdminModulesPromise = null;
+let firebaseAdminAppPromise = null;
+
+const stripWrappingQuotes = (value) => {
+  const trimmed = String(value || "").trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+};
 
 const readEnv = (key) => {
   const value = process.env[key];
-  return typeof value === "string" && value.trim() ? value.trim() : "";
+  return typeof value === "string" && value.trim()
+    ? stripWrappingQuotes(value)
+    : "";
 };
 
 export function isFirebaseAdminConfigured() {
@@ -16,29 +29,80 @@ export function isFirebaseAdminConfigured() {
 }
 
 function getPrivateKey() {
-  return readEnv("FIREBASE_PRIVATE_KEY").replace(/\\n/g, "\n");
+  return readEnv("FIREBASE_PRIVATE_KEY")
+    .replace(/\\n/g, "\n")
+    .trim();
 }
 
-function getAdminApp() {
+async function loadFirebaseAdminModules() {
+  if (!firebaseAdminModulesPromise) {
+    firebaseAdminModulesPromise = Promise.all([
+      import("firebase-admin/app"),
+      import("firebase-admin/auth"),
+      import("firebase-admin/firestore"),
+    ]);
+  }
+
+  const [appModule, authModule, firestoreModule] =
+    await firebaseAdminModulesPromise;
+
+  return {
+    cert: appModule.cert,
+    getApps: appModule.getApps,
+    initializeApp: appModule.initializeApp,
+    getAuth: authModule.getAuth,
+    getFirestore: firestoreModule.getFirestore,
+  };
+}
+
+async function getAdminApp() {
   if (!isFirebaseAdminConfigured()) return null;
-  if (getApps().length > 0) return getApps()[0];
 
-  return initializeApp({
-    credential: cert({
-      projectId: readEnv("FIREBASE_PROJECT_ID"),
-      clientEmail: readEnv("FIREBASE_CLIENT_EMAIL"),
-      privateKey: getPrivateKey(),
-    }),
-  });
+  if (!firebaseAdminAppPromise) {
+    firebaseAdminAppPromise = (async () => {
+      try {
+        const { cert, getApps, initializeApp } =
+          await loadFirebaseAdminModules();
+        const existingApps = getApps();
+        if (existingApps.length > 0) {
+          firebaseAdminInitError = null;
+          return existingApps[0];
+        }
+
+        firebaseAdminInitError = null;
+        return initializeApp({
+          credential: cert({
+            projectId: readEnv("FIREBASE_PROJECT_ID"),
+            clientEmail: readEnv("FIREBASE_CLIENT_EMAIL"),
+            privateKey: getPrivateKey(),
+          }),
+        });
+      } catch (error) {
+        firebaseAdminInitError = String(error?.message || error);
+        firebaseAdminAppPromise = null;
+        console.error("FIREBASE_ADMIN_INIT_FAILED", error);
+        return null;
+      }
+    })();
+  }
+
+  return firebaseAdminAppPromise;
 }
 
-export function getFirestoreDb() {
-  const app = getAdminApp();
-  return app ? getFirestore(app) : null;
+export async function getFirestoreDb() {
+  const app = await getAdminApp();
+  if (!app) return null;
+
+  const { getFirestore } = await loadFirebaseAdminModules();
+  return getFirestore(app);
 }
 
 export function getServerTimestamp() {
-  return FieldValue.serverTimestamp();
+  return new Date();
+}
+
+export function getFirebaseAdminInitError() {
+  return firebaseAdminInitError;
 }
 
 export function getAllowedAdminEmails() {
@@ -54,16 +118,19 @@ export async function verifyAdminRequest(req) {
     return { ok: false, status: 401, error: "MISSING_AUTH_TOKEN" };
   }
 
-  const auth = (() => {
-    const app = getAdminApp();
-    return app ? getAuth(app) : null;
-  })();
-
-  if (!auth) {
-    return { ok: false, status: 503, error: "FIREBASE_ADMIN_NOT_CONFIGURED" };
+  const app = await getAdminApp();
+  if (!app) {
+    return {
+      ok: false,
+      status: 503,
+      error: "FIREBASE_ADMIN_NOT_CONFIGURED",
+      detail: firebaseAdminInitError,
+    };
   }
 
   try {
+    const { getAuth } = await loadFirebaseAdminModules();
+    const auth = getAuth(app);
     const token = authHeader.slice("Bearer ".length).trim();
     const decoded = await auth.verifyIdToken(token);
     const email = String(decoded.email || "").toLowerCase();

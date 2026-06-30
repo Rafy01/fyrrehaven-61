@@ -1,5 +1,9 @@
 import nodemailer from "nodemailer";
-import { getFirestoreDb, getServerTimestamp } from "./_lib/firebaseAdmin.mjs";
+import { getFirestoreDb } from "./_lib/firebaseAdmin.mjs";
+import {
+  createFormSubmission,
+  updateFormSubmission,
+} from "./_lib/formSubmissions.mjs";
 import {
   checkRateLimit,
   getRequesterIp,
@@ -179,6 +183,8 @@ export default async function handler(req, res) {
       return;
     }
 
+    const requestIp = getRequesterIp(req);
+
     const headerValidation = validateContactHeaders(req);
     if (!headerValidation.ok) {
       sendJson(res, headerValidation.status, {
@@ -252,8 +258,6 @@ export default async function handler(req, res) {
     const replyEmail = normalizeEmail(email);
     const bookingType = t(uiLang, "contact.type.booking");
     const messageType = t(uiLang, "contact.type.message");
-    const requestIp = getRequesterIp(req);
-
     const intent = String(purpose || context || "contact");
     const extrasItemsRaw = Array.isArray(extras?.items) ? extras.items : [];
     const isExtraServicesReq =
@@ -280,7 +284,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const db = getFirestoreDb();
+    const db = await getFirestoreDb();
     const submissionRecord = {
       intent,
       lang: uiLang,
@@ -320,13 +324,7 @@ export default async function handler(req, res) {
     let submissionRef = null;
     if (db) {
       try {
-        submissionRef = db.collection("contactSubmissions").doc();
-        await submissionRef.set({
-          ...submissionRecord,
-          id: submissionRef.id,
-          createdAt: getServerTimestamp(),
-          updatedAt: getServerTimestamp(),
-        });
+        submissionRef = await createFormSubmission(db, submissionRecord);
       } catch (storageError) {
         submissionRef = null;
         console.error("FIRESTORE_WRITE_FAILED", storageError);
@@ -754,27 +752,23 @@ export default async function handler(req, res) {
     });
 
       if (submissionRef) {
-        await submissionRef.set(
-          {
-            status: "sent",
-            mailStatus: "sent",
-            updatedAtMs: Date.now(),
-            updatedAt: getServerTimestamp(),
-            autoReply: {
-              id: autoInfo?.messageId || null,
-              accepted: autoInfo?.accepted || [],
-              rejected: autoInfo?.rejected || [],
-              response: autoInfo?.response || null,
-            },
-            adminMail: {
-              id: infoAdmin?.messageId || null,
-              accepted: infoAdmin?.accepted || [],
-              rejected: infoAdmin?.rejected || [],
-              response: infoAdmin?.response || null,
-            },
+        await updateFormSubmission(submissionRef, {
+          status: "sent",
+          mailStatus: "sent",
+          updatedAtMs: Date.now(),
+          autoReply: {
+            id: autoInfo?.messageId || null,
+            accepted: autoInfo?.accepted || [],
+            rejected: autoInfo?.rejected || [],
+            response: autoInfo?.response || null,
           },
-          { merge: true }
-        );
+          adminMail: {
+            id: infoAdmin?.messageId || null,
+            accepted: infoAdmin?.accepted || [],
+            rejected: infoAdmin?.rejected || [],
+            response: infoAdmin?.response || null,
+          },
+        });
       }
 
       sendJson(res, 200, {
@@ -797,17 +791,13 @@ export default async function handler(req, res) {
       });
     } catch (mailError) {
       if (submissionRef) {
-        await submissionRef.set(
-          {
-            status: "mail_failed",
-            mailStatus: "failed",
-            mailError: sanitizeErrorMessage(mailError?.response || mailError),
-            mailErrorCode: mailError?.code || null,
-            updatedAtMs: Date.now(),
-            updatedAt: getServerTimestamp(),
-          },
-          { merge: true }
-        );
+        await updateFormSubmission(submissionRef, {
+          status: "mail_failed",
+          mailStatus: "failed",
+          mailError: sanitizeErrorMessage(mailError?.response || mailError),
+          mailErrorCode: mailError?.code || null,
+          updatedAtMs: Date.now(),
+        });
 
         sendJson(res, 200, {
           ok: true,
