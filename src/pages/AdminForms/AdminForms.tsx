@@ -2,15 +2,22 @@ import React from "react";
 import { Helmet } from "react-helmet-async";
 import {
   FiAlertCircle,
+  FiCheck,
   FiCheckCircle,
+  FiChevronLeft,
+  FiChevronRight,
+  FiDroplet,
+  FiEdit3,
   FiInbox,
   FiLogOut,
   FiMail,
   FiMoon,
   FiPhone,
+  FiSave,
   FiSun,
   FiTrash2,
   FiUser,
+  FiZap,
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import {
@@ -32,6 +39,17 @@ import {
 } from "../../lib/firebase";
 
 type SubmissionStatus = "pending" | "sent" | "mail_failed";
+type MeterKey = "electricity" | "waterHouse" | "waterPool";
+
+type MeterCorrection = {
+  meter?: MeterKey;
+  originalValue?: string | null;
+  previousValue?: string | null;
+  correctedValue?: string | null;
+  difference?: number | null;
+  updatedAtMs?: number;
+  updatedBy?: string | null;
+};
 
 type Submission = {
   id: string;
@@ -85,6 +103,7 @@ type Submission = {
       waterHouse?: string | null;
       waterPool?: string | null;
     } | null;
+    meterCorrections?: Partial<Record<MeterKey, MeterCorrection>> | null;
     attachments?: Array<{
       fieldname?: string;
       filename?: string;
@@ -115,6 +134,7 @@ type ApiResponse = {
   error?: string;
   detail?: string | null;
   submissions?: Submission[];
+  submission?: Submission;
   admin?: { email?: string };
   deleted?: boolean;
   id?: string;
@@ -143,6 +163,15 @@ const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
   typeof window !== "undefined" &&
   ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const METER_OPTIONS: Array<{
+  key: MeterKey;
+  label: string;
+  icon: React.ReactNode;
+}> = [
+  { key: "electricity", label: "Electricity", icon: <FiZap aria-hidden="true" /> },
+  { key: "waterHouse", label: "Water (house)", icon: <FiDroplet aria-hidden="true" /> },
+  { key: "waterPool", label: "Water (pool)", icon: <FiDroplet aria-hidden="true" /> },
+];
 
 function readAppearance(): Appearance {
   if (typeof window === "undefined") return "light";
@@ -191,6 +220,48 @@ function renderPriceAmount(value?: number | null, options?: { negative?: boolean
       </span>
     </span>
   );
+}
+
+function isMeterKey(value?: string | null): value is MeterKey {
+  return value === "electricity" || value === "waterHouse" || value === "waterPool";
+}
+
+function meterLabel(value: MeterKey) {
+  return METER_OPTIONS.find((option) => option.key === value)?.label || value;
+}
+
+function meterIcon(value: MeterKey) {
+  return METER_OPTIONS.find((option) => option.key === value)?.icon || null;
+}
+
+function meterKeyFromAttachment(
+  attachment?: ImagePreview["attachment"] | null
+): MeterKey {
+  return isMeterKey(attachment?.fieldname) ? attachment.fieldname : "electricity";
+}
+
+function parseMeterNumber(value?: string | number | null) {
+  const normalized = String(value ?? "")
+    .trim()
+    .replace(/\./g, "")
+    .replace(",", ".");
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatMeterNumber(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  return new Intl.NumberFormat("da-DK", {
+    maximumFractionDigits: 3,
+  }).format(value);
+}
+
+function formatMeterDifference(value?: number | null) {
+  const formatted = formatMeterNumber(Math.abs(value ?? 0));
+  if (!formatted || value == null) return "—";
+  if (value === 0) return "0";
+  return `${value > 0 ? "+" : "-"}${formatted}`;
 }
 
 function statusLabel(status?: SubmissionStatus) {
@@ -599,6 +670,12 @@ export default function AdminForms() {
   const [mobileDetailDragOffset, setMobileDetailDragOffset] = React.useState(0);
   const [isDraggingMobileDetail, setIsDraggingMobileDetail] = React.useState(false);
   const [imagePreview, setImagePreview] = React.useState<ImagePreview | null>(null);
+  const [meterDraftKey, setMeterDraftKey] = React.useState<MeterKey>("electricity");
+  const [meterDraftValue, setMeterDraftValue] = React.useState("");
+  const [meterSaveState, setMeterSaveState] = React.useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [meterSaveError, setMeterSaveError] = React.useState<string | null>(null);
   const mobileDetailDrag = React.useRef({
     active: false,
     pointerId: -1,
@@ -708,6 +785,17 @@ export default function AdminForms() {
     if (!user && !DASHBOARD_AUTH_DISABLED) return;
     void fetchSubmissions();
   }, [user, fetchSubmissions]);
+
+  React.useEffect(() => {
+    if (!imagePreview) return;
+    const nextMeter = meterKeyFromAttachment(imagePreview.attachment);
+    setMeterDraftKey(nextMeter);
+    setMeterDraftValue(
+      imagePreview.submission.checkin?.meterReadings?.[nextMeter] || ""
+    );
+    setMeterSaveState("idle");
+    setMeterSaveError(null);
+  }, [imagePreview]);
 
   const visibleGroups = React.useMemo(() => {
     const filtered = submissions.filter((submission) => {
@@ -1058,6 +1146,164 @@ export default function AdminForms() {
     attachment: ImagePreview["attachment"] | null | undefined
   ) {
     return attachment?.viewUrl || attachment?.dataUrl || null;
+  }
+
+  function imagePreviewAttachments(preview: ImagePreview | null) {
+    return preview?.submission.checkin?.attachments || [];
+  }
+
+  function switchPreviewImage(direction: -1 | 1) {
+    setImagePreview((current) => {
+      if (!current) return current;
+      const attachments = imagePreviewAttachments(current);
+      if (attachments.length <= 1) return current;
+
+      const nextIndex =
+        (current.index + direction + attachments.length) % attachments.length;
+      return {
+        submission: current.submission,
+        attachment: attachments[nextIndex],
+        index: nextIndex,
+      };
+    });
+  }
+
+  function currentMeterReading(submission: Submission, meter: MeterKey) {
+    return submission.checkin?.meterReadings?.[meter] || "";
+  }
+
+  function meterCorrection(submission: Submission, meter: MeterKey) {
+    return submission.checkin?.meterCorrections?.[meter] || null;
+  }
+
+  function buildCorrectedSubmission(
+    submission: Submission,
+    meter: MeterKey,
+    correctedValue: string,
+    updatedBy: string | null
+  ): Submission {
+    const checkin = submission.checkin || {};
+    const readings = checkin.meterReadings || {};
+    const corrections = checkin.meterCorrections || {};
+    const previousCorrection = corrections[meter] || null;
+    const originalValue =
+      previousCorrection?.originalValue != null
+        ? String(previousCorrection.originalValue)
+        : readings[meter] != null
+          ? String(readings[meter])
+          : "";
+    const previousValue =
+      readings[meter] != null ? String(readings[meter]) : originalValue;
+    const originalNumber = parseMeterNumber(originalValue);
+    const correctedNumber = parseMeterNumber(correctedValue);
+    const difference =
+      originalNumber != null && correctedNumber != null
+        ? correctedNumber - originalNumber
+        : null;
+    const updatedAtMs = Date.now();
+
+    return {
+      ...submission,
+      checkin: {
+        ...checkin,
+        meterReadings: {
+          ...readings,
+          [meter]: correctedValue,
+        },
+        meterCorrections: {
+          ...corrections,
+          [meter]: {
+            meter,
+            originalValue,
+            previousValue,
+            correctedValue,
+            difference,
+            updatedAtMs,
+            updatedBy,
+          },
+        },
+      },
+      updatedAtMs,
+    };
+  }
+
+  function replaceSubmission(nextSubmission: Submission) {
+    setSubmissions((current) =>
+      current.map((submission) =>
+        submission.id === nextSubmission.id ? nextSubmission : submission
+      )
+    );
+    setImagePreview((current) => {
+      if (!current || current.submission.id !== nextSubmission.id) return current;
+      const attachments = nextSubmission.checkin?.attachments || [];
+      return {
+        submission: nextSubmission,
+        attachment: attachments[current.index] || current.attachment,
+        index: current.index,
+      };
+    });
+  }
+
+  async function saveMeterCorrection() {
+    if (!imagePreview || meterSaveState === "saving") return;
+
+    const correctedValue = meterDraftValue.trim();
+    if (!correctedValue) {
+      setMeterSaveState("error");
+      setMeterSaveError("Enter the correct meter amount.");
+      return;
+    }
+
+    if (parseMeterNumber(correctedValue) == null) {
+      setMeterSaveState("error");
+      setMeterSaveError("Use a number, for example 055540 or 1.234,5.");
+      return;
+    }
+
+    setMeterSaveState("saving");
+    setMeterSaveError(null);
+
+    try {
+      if (DASHBOARD_AUTH_DISABLED) {
+        const updatedSubmission = buildCorrectedSubmission(
+          imagePreview.submission,
+          meterDraftKey,
+          correctedValue,
+          adminEmail || "local@fyrrehaven-61.dk"
+        );
+        replaceSubmission(updatedSubmission);
+        setMeterSaveState("saved");
+        return;
+      }
+
+      const auth = getFirebaseAuth();
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken(true) : null;
+      const res = await fetch("/api/admin/forms", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          action: "correct-meter",
+          id: imagePreview.submission.id,
+          meter: meterDraftKey,
+          correctedValue,
+        }),
+      });
+      const data = (await res.json()) as ApiResponse;
+      if (!res.ok || !data.ok || !data.submission) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+
+      replaceSubmission(data.submission);
+      setMeterSaveState("saved");
+    } catch (nextError) {
+      setMeterSaveState("error");
+      setMeterSaveError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    }
   }
 
   function renderCheckinAttachments(submission: Submission) {
@@ -1891,53 +2137,204 @@ export default function AdminForms() {
         </div>
       ) : null}
 
-      {imagePreview ? (
-        <div
-          className={styles.imagePreviewOverlay}
-          role="presentation"
-          onClick={() => setImagePreview(null)}
-        >
-          <div
-            className={styles.imagePreviewCard}
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Meter image ${imagePreview.index + 1}`}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className={styles.imagePreviewHeader}>
-              <div>
-                <p className={styles.eyebrow}>Check-in/out image</p>
-                <h2>{imagePreview.attachment.filename || "Meter image"}</h2>
-              </div>
-              <button
-                type="button"
-                className={styles.ghostButton}
+      {imagePreview
+        ? (() => {
+            const attachments = imagePreviewAttachments(imagePreview);
+            const hasMultipleImages = attachments.length > 1;
+            const currentReading = currentMeterReading(
+              imagePreview.submission,
+              meterDraftKey
+            );
+            const correction = meterCorrection(imagePreview.submission, meterDraftKey);
+            const originalValue = correction?.originalValue || currentReading || "";
+            const originalNumber = parseMeterNumber(originalValue);
+            const draftNumber = parseMeterNumber(meterDraftValue);
+            const difference =
+              originalNumber != null && draftNumber != null
+                ? draftNumber - originalNumber
+                : correction?.difference ?? null;
+            const differenceClass =
+              difference == null || difference === 0
+                ? styles.meterDifferenceNeutral
+                : difference > 0
+                  ? styles.meterDifferencePositive
+                  : styles.meterDifferenceNegative;
+
+            return (
+              <div
+                className={styles.imagePreviewOverlay}
+                role="presentation"
                 onClick={() => setImagePreview(null)}
               >
-                Close
-              </button>
-            </div>
-            <div className={styles.imagePreviewBody}>
-              {imageSource(imagePreview.attachment) ? (
-                <div className={styles.imagePreviewImageWrap}>
-                  <img
-                    className={styles.imagePreviewImage}
-                    src={imageSource(imagePreview.attachment) || ""}
-                    alt={imagePreview.attachment.filename || "Meter image"}
-                  />
+                <div
+                  className={styles.imagePreviewCard}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`Meter image ${imagePreview.index + 1}`}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className={styles.imagePreviewHeader}>
+                    <div>
+                      <p className={styles.eyebrow}>Check-in/out image</p>
+                      <h2>{imagePreview.attachment.filename || "Meter image"}</h2>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.ghostButton}
+                      onClick={() => setImagePreview(null)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className={styles.imagePreviewBody}>
+                    {imageSource(imagePreview.attachment) ? (
+                      <div className={styles.imagePreviewImageWrap}>
+                        {hasMultipleImages ? (
+                          <button
+                            type="button"
+                            className={`${styles.imagePreviewArrow} ${styles.imagePreviewArrowLeft}`}
+                            aria-label="Previous image"
+                            onClick={() => switchPreviewImage(-1)}
+                          >
+                            <FiChevronLeft aria-hidden="true" />
+                          </button>
+                        ) : null}
+                        <img
+                          className={styles.imagePreviewImage}
+                          src={imageSource(imagePreview.attachment) || ""}
+                          alt={imagePreview.attachment.filename || "Meter image"}
+                        />
+                        {hasMultipleImages ? (
+                          <button
+                            type="button"
+                            className={`${styles.imagePreviewArrow} ${styles.imagePreviewArrowRight}`}
+                            aria-label="Next image"
+                            onClick={() => switchPreviewImage(1)}
+                          >
+                            <FiChevronRight aria-hidden="true" />
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <div className={styles.imagePreviewMeta}>
+                      <div className={styles.imageCounter}>
+                        <span>
+                          Image {imagePreview.index + 1} of {attachments.length || 1}
+                        </span>
+                        {imagePreview.attachment.sizeBytes ? (
+                          <span>
+                            {Math.round(imagePreview.attachment.sizeBytes / 1024)} KB
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className={styles.meterCorrectionPanel}>
+                        <div className={styles.meterCorrectionTitle}>
+                          <FiEdit3 aria-hidden="true" />
+                          <div>
+                            <h3>Verify meter reading</h3>
+                            <p>Keep the guest value and save your corrected value.</p>
+                          </div>
+                        </div>
+
+                        <label className={styles.meterField}>
+                          <span>Meter</span>
+                          <select
+                            value={meterDraftKey}
+                            onChange={(event) => {
+                              const nextMeter = event.target.value;
+                              if (!isMeterKey(nextMeter)) return;
+                              setMeterDraftKey(nextMeter);
+                              setMeterDraftValue(
+                                currentMeterReading(imagePreview.submission, nextMeter)
+                              );
+                              setMeterSaveState("idle");
+                              setMeterSaveError(null);
+                            }}
+                          >
+                            {METER_OPTIONS.map((option) => (
+                              <option key={option.key} value={option.key}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className={styles.meterReadingCard}>
+                          <span className={styles.meterReadingIcon}>
+                            {meterIcon(meterDraftKey)}
+                          </span>
+                          <div>
+                            <span>Guest input</span>
+                            <strong>{originalValue || "No guest value"}</strong>
+                          </div>
+                        </div>
+
+                        <label className={styles.meterField}>
+                          <span>Correct amount</span>
+                          <input
+                            value={meterDraftValue}
+                            inputMode="decimal"
+                            placeholder="Enter corrected reading"
+                            onChange={(event) => {
+                              setMeterDraftValue(event.target.value);
+                              setMeterSaveState("idle");
+                              setMeterSaveError(null);
+                            }}
+                          />
+                        </label>
+
+                        <div className={`${styles.meterDifference} ${differenceClass}`}>
+                          <span>Difference</span>
+                          <strong>{formatMeterDifference(difference)}</strong>
+                        </div>
+
+                        {correction ? (
+                          <div className={styles.meterCorrectionLog}>
+                            <FiCheck aria-hidden="true" />
+                            <span>
+                              Admin updated {meterLabel(meterDraftKey)} from{" "}
+                              <strong>{correction.originalValue || "empty"}</strong> to{" "}
+                              <strong>{correction.correctedValue || "empty"}</strong>
+                              {correction.updatedBy ? ` by ${correction.updatedBy}` : ""}.
+                            </span>
+                          </div>
+                        ) : null}
+
+                        {meterSaveError ? (
+                          <div className={styles.meterCorrectionError}>
+                            <FiAlertCircle aria-hidden="true" />
+                            <span>{meterSaveError}</span>
+                          </div>
+                        ) : null}
+
+                        <button
+                          type="button"
+                          className={styles.meterSaveButton}
+                          onClick={saveMeterCorrection}
+                          disabled={meterSaveState === "saving"}
+                        >
+                          {meterSaveState === "saved" ? (
+                            <FiCheck aria-hidden="true" />
+                          ) : (
+                            <FiSave aria-hidden="true" />
+                          )}
+                          <span>
+                            {meterSaveState === "saving"
+                              ? "Saving..."
+                              : meterSaveState === "saved"
+                                ? "Saved"
+                                : "Save correction"}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              ) : null}
-              <div className={styles.imagePreviewMeta}>
-                {imagePreview.attachment.sizeBytes ? (
-                  <span>
-                    File size: {Math.round(imagePreview.attachment.sizeBytes / 1024)} KB
-                  </span>
-                ) : null}
               </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            );
+          })()
+        : null}
 
       {deleteTarget ? (
         <div

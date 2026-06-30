@@ -5,14 +5,18 @@ import {
   verifyAdminRequest,
 } from "../_lib/firebaseAdmin.mjs";
 import {
+  FORM_SUBMISSIONS_COLLECTION,
+  LEGACY_CONTACT_SUBMISSIONS_COLLECTION,
   deleteFormSubmission,
   listFormSubmissions,
+  updateFormSubmission,
 } from "../_lib/formSubmissions.mjs";
 import { applySecurityHeaders, sendJson } from "../_lib/httpSecurity.mjs";
 
 const DASHBOARD_AUTH_DISABLED =
   process.env.NODE_ENV !== "production" ||
   process.env.DASHBOARD_AUTH_DISABLED === "true";
+const METER_FIELDS = new Set(["electricity", "waterHouse", "waterPool"]);
 
 async function addAttachmentViewUrls(submissions) {
   const bucket = await getStorageBucket();
@@ -63,11 +67,38 @@ async function addAttachmentViewUrls(submissions) {
   );
 }
 
+function parseNumber(value) {
+  const normalized = String(value || "")
+    .trim()
+    .replace(/\./g, "")
+    .replace(",", ".");
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+async function findSubmissionDoc(db, submissionId) {
+  const collections = [
+    FORM_SUBMISSIONS_COLLECTION,
+    LEGACY_CONTACT_SUBMISSIONS_COLLECTION,
+  ];
+
+  for (const collectionName of collections) {
+    const docRef = db.collection(collectionName).doc(submissionId);
+    const snapshot = await docRef.get();
+    if (snapshot.exists) {
+      return { docRef, snapshot };
+    }
+  }
+
+  return null;
+}
+
 export default async function handler(req, res) {
   applySecurityHeaders(res);
-  res.setHeader("Allow", "GET, DELETE");
+  res.setHeader("Allow", "GET, PATCH, DELETE");
 
-  if (req.method !== "GET" && req.method !== "DELETE") {
+  if (req.method !== "GET" && req.method !== "PATCH" && req.method !== "DELETE") {
     sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });
     return;
   }
@@ -99,6 +130,135 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (req.method === "PATCH") {
+      const submissionId = String(req.body?.id || "").trim();
+      const action = String(req.body?.action || "").trim();
+      const meter = String(req.body?.meter || "").trim();
+      const correctedValue = String(req.body?.correctedValue || "").trim();
+
+      if (action !== "correct-meter") {
+        sendJson(res, 400, {
+          ok: false,
+          error: "UNKNOWN_PATCH_ACTION",
+          detail: "Unsupported admin patch action.",
+        });
+        return;
+      }
+
+      if (!submissionId) {
+        sendJson(res, 400, {
+          ok: false,
+          error: "SUBMISSION_ID_REQUIRED",
+          detail: "Missing submission id.",
+        });
+        return;
+      }
+
+      if (!METER_FIELDS.has(meter)) {
+        sendJson(res, 400, {
+          ok: false,
+          error: "INVALID_METER_FIELD",
+          detail: "Choose a valid meter field.",
+        });
+        return;
+      }
+
+      if (!correctedValue) {
+        sendJson(res, 400, {
+          ok: false,
+          error: "CORRECTED_VALUE_REQUIRED",
+          detail: "Enter the correct meter value.",
+        });
+        return;
+      }
+
+      const found = await findSubmissionDoc(db, submissionId);
+      if (!found) {
+        sendJson(res, 404, {
+          ok: false,
+          error: "SUBMISSION_NOT_FOUND",
+          detail: "No stored submission matched that id.",
+        });
+        return;
+      }
+
+      const existing = { id: found.snapshot.id, ...found.snapshot.data() };
+      const checkin = existing.checkin || {};
+      const readings = checkin.meterReadings || {};
+      const corrections = checkin.meterCorrections || {};
+      const previousCorrection = corrections[meter] || null;
+      const originalValue =
+        previousCorrection?.originalValue != null
+          ? String(previousCorrection.originalValue)
+          : readings[meter] != null
+          ? String(readings[meter])
+          : "";
+      const previousValue =
+        readings[meter] != null ? String(readings[meter]) : originalValue;
+      const originalNumber = parseNumber(originalValue);
+      const correctedNumber = parseNumber(correctedValue);
+      const difference =
+        originalNumber != null && correctedNumber != null
+          ? correctedNumber - originalNumber
+          : null;
+      const updatedAtMs = Date.now();
+
+      await updateFormSubmission(found.docRef, {
+        checkin: {
+          ...checkin,
+          meterReadings: {
+            ...readings,
+            [meter]: correctedValue,
+          },
+          meterCorrections: {
+            ...corrections,
+            [meter]: {
+              meter,
+              originalValue,
+              previousValue,
+              correctedValue,
+              difference,
+              updatedAtMs,
+              updatedBy: adminEmail,
+            },
+          },
+        },
+        updatedAtMs,
+      });
+
+      const updatedSubmission = {
+        ...existing,
+        checkin: {
+          ...checkin,
+          meterReadings: {
+            ...readings,
+            [meter]: correctedValue,
+          },
+          meterCorrections: {
+            ...corrections,
+            [meter]: {
+              meter,
+              originalValue,
+              previousValue,
+              correctedValue,
+              difference,
+              updatedAtMs,
+              updatedBy: adminEmail,
+            },
+          },
+        },
+        updatedAtMs,
+      };
+
+      const [submissionWithUrls] = await addAttachmentViewUrls([updatedSubmission]);
+
+      sendJson(res, 200, {
+        ok: true,
+        submission: submissionWithUrls,
+      });
+      return;
+    }
+
     if (req.method === "DELETE") {
       const submissionId =
         String(req.query?.id || req.body?.id || "").trim();
