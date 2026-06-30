@@ -41,18 +41,85 @@
   line-height: 1.05;
 }
 
-.loggedIn {
-  margin: 14px 0 0;
-  color: var(--gray-11);
-  font-size: 1rem;
-}
-
 .heroActions {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.accountPill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  max-width: min(520px, 100%);
+  padding: 6px 8px 6px 12px;
+  border: 1px solid var(--gray-6);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gray-12) 6%, transparent);
+  color: var(--gray-12);
+}
+
+.accountIcon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: var(--accent-11);
+}
+
+.accountText {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.accountText span {
+  color: var(--gray-10);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.accountText strong {
+  overflow: hidden;
+  color: var(--gray-12);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountLogout {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-6);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gray-12) 7%, transparent);
+  color: var(--gray-12);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.accountLogout:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--gray-12) 11%, transparent);
+}
+
+.accountLogout svg {
+  width: 14px;
+  height: 14px;
 }
 
 .button,
@@ -1020,8 +1087,14 @@
     flex: 0 0 auto;
   }
 
-  .loggedIn {
-    margin-top: 12px;
+  .accountPill {
+    order: 2;
+    width: 100%;
+    border-radius: 18px;
+  }
+
+  .accountLogout span {
+    display: none;
   }
 
   .panelHeaderTop {

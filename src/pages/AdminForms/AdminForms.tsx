@@ -4,9 +4,11 @@ import {
   FiAlertCircle,
   FiCheckCircle,
   FiInbox,
+  FiLogOut,
   FiMoon,
   FiSun,
   FiTrash2,
+  FiUser,
 } from "react-icons/fi";
 import {
   GoogleAuthProvider,
@@ -1307,6 +1309,25 @@ export default function AdminForms() {
                 <h1>Forms dashboard</h1>
               </div>
               <div className={styles.heroActions}>
+                <div className={styles.accountPill}>
+                  <FiUser aria-hidden="true" className={styles.accountIcon} />
+                  <div className={styles.accountText}>
+                    <span>Logged in</span>
+                    <strong>
+                      {adminEmail || user?.email || "dashboard@fyrrehaven-61.dk"}
+                    </strong>
+                  </div>
+                  {!DASHBOARD_AUTH_DISABLED ? (
+                    <button
+                      type="button"
+                      className={styles.accountLogout}
+                      onClick={() => void handleSignOut()}
+                    >
+                      <FiLogOut aria-hidden="true" />
+                      <span>Log out</span>
+                    </button>
+                  ) : null}
+                </div>
                 <button
                   type="button"
                   className={styles.themeButton}
@@ -1328,16 +1349,8 @@ export default function AdminForms() {
                     <FiMoon aria-hidden="true" />
                   )}
                 </button>
-                {!DASHBOARD_AUTH_DISABLED ? (
-                  <button className={styles.button} onClick={() => void handleSignOut()}>
-                    Sign out
-                  </button>
-                ) : null}
               </div>
             </div>
-            <p className={styles.loggedIn}>
-              Logged in as {adminEmail || user?.email || "dashboard@fyrrehaven-61.dk"}
-            </p>
           </div>
 
           <div className={styles.cards}>
