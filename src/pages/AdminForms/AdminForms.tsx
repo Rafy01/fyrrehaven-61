@@ -222,6 +222,10 @@ function isCheckinSubmission(submission: Submission) {
   return submission.intent === "guest-checkin" && Boolean(submission.checkin);
 }
 
+function isCheckoutSubmission(submission: Submission) {
+  return isCheckinSubmission(submission) && submission.checkin?.type === "checkout";
+}
+
 function submissionValue(submission: Submission) {
   if (submission.selection?.totalAfterAirbnbDiscountDKK != null) {
     return formatMoney(submission.selection.totalAfterAirbnbDiscountDKK);
@@ -448,54 +452,55 @@ function findOverviewStayDate(group: SubmissionGroup | null, fallback?: Submissi
 function buildSubmissionGroups(submissions: Submission[]): SubmissionGroup[] {
   if (submissions.length === 0) return [];
 
-  const parent = submissions.map((_, index) => index);
+  const groups: Submission[][] = [];
+  const chronological = [...submissions].sort(
+    (a, b) => (a.createdAtMs || 0) - (b.createdAtMs || 0)
+  );
 
-  function find(index: number): number {
-    if (parent[index] !== index) {
-      parent[index] = find(parent[index]);
-    }
-    return parent[index];
-  }
-
-  function union(a: number, b: number) {
-    const rootA = find(a);
-    const rootB = find(b);
-    if (rootA !== rootB) parent[rootB] = rootA;
-  }
-
-  const emailMap = new Map<string, number>();
-  const arrivalMap = new Map<string, number>();
-
-  submissions.forEach((submission, index) => {
+  function groupHasMatchingKey(group: Submission[], submission: Submission) {
     const email = normalizeEmail(submission.email);
     const arrival = normalizeArrivalDate(submission);
 
-    if (email) {
-      const existing = emailMap.get(email);
-      if (existing != null) union(index, existing);
-      emailMap.set(email, index);
+    return group.some((item) => {
+      const itemEmail = normalizeEmail(item.email);
+      const itemArrival = normalizeArrivalDate(item);
+      return Boolean(
+        (email && itemEmail === email) || (arrival && itemArrival === arrival)
+      );
+    });
+  }
+
+  function groupClosedBefore(group: Submission[], submission: Submission) {
+    const submittedAt = submission.createdAtMs || 0;
+    return group.some(
+      (item) => isCheckoutSubmission(item) && (item.createdAtMs || 0) < submittedAt
+    );
+  }
+
+  chronological.forEach((submission) => {
+    const matchingIndexes = groups
+      .map((group, index) =>
+        groupHasMatchingKey(group, submission) && !groupClosedBefore(group, submission)
+          ? index
+          : -1
+      )
+      .filter((index) => index >= 0);
+
+    if (matchingIndexes.length === 0) {
+      groups.push([submission]);
+      return;
     }
 
-    if (arrival) {
-      const existing = arrivalMap.get(arrival);
-      if (existing != null) union(index, existing);
-      arrivalMap.set(arrival, index);
+    const targetIndex = matchingIndexes[0];
+    groups[targetIndex].push(submission);
+
+    for (const index of matchingIndexes.slice(1).sort((a, b) => b - a)) {
+      groups[targetIndex].push(...groups[index]);
+      groups.splice(index, 1);
     }
   });
 
-  const groups = new Map<number, Submission[]>();
-
-  submissions.forEach((submission, index) => {
-    const root = find(index);
-    const current = groups.get(root);
-    if (current) {
-      current.push(submission);
-    } else {
-      groups.set(root, [submission]);
-    }
-  });
-
-  return Array.from(groups.values())
+  return groups
     .map((items) => {
       const sorted = [...items].sort(
         (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
