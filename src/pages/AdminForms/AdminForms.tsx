@@ -86,9 +86,13 @@ type Submission = {
       waterPool?: string | null;
     } | null;
     attachments?: Array<{
+      fieldname?: string;
       filename?: string;
       contentType?: string;
       sizeBytes?: number;
+      storagePath?: string;
+      viewUrl?: string;
+      dataUrl?: string;
     }> | null;
   } | null;
   status?: SubmissionStatus;
@@ -120,6 +124,11 @@ type Appearance = "light" | "dark";
 type SubmissionFilter = "all" | "booking" | "contact" | "extra-services" | "guest-checkin";
 type GroupDetailSelection = "overview" | string;
 type CheckinDetailSelection = "checkin" | "checkout";
+type ImagePreview = {
+  submission: Submission;
+  attachment: NonNullable<NonNullable<Submission["checkin"]>["attachments"]>[number];
+  index: number;
+};
 type SubmissionGroup = {
   id: string;
   primary: Submission;
@@ -449,6 +458,52 @@ function findOverviewStayDate(group: SubmissionGroup | null, fallback?: Submissi
   return bookingStart || extraStayDate || null;
 }
 
+function findSubmissionWithValue(
+  submissions: Submission[],
+  getValue: (submission: Submission) => React.ReactNode
+) {
+  return submissions.find((submission) => hasDisplayValue(getValue(submission))) || null;
+}
+
+function getSubmissionTypePriority(submission: Submission) {
+  if (submission.intent === "booking") return 0;
+  if (!submission.intent || submission.intent === "inquiry") return 1;
+  if (submission.intent === "extra-services") return 2;
+  if (submission.intent === "guest-checkin") return 3;
+  return 4;
+}
+
+function findOverviewContactSubmission(
+  submissions: Submission[],
+  key: "email" | "phone"
+) {
+  return [...submissions]
+    .sort(
+      (a, b) =>
+        getSubmissionTypePriority(a) - getSubmissionTypePriority(b) ||
+        (b.createdAtMs || 0) - (a.createdAtMs || 0)
+    )
+    .find((submission) => hasDisplayValue(submission[key])) || null;
+}
+
+function findOverviewBookingSubmission(submissions: Submission[]) {
+  return (
+    submissions.find((submission) => submission.intent === "booking" && submission.selection) ||
+    submissions.find((submission) => submission.selection) ||
+    null
+  );
+}
+
+function findOverviewExtraSubmission(submissions: Submission[]) {
+  return (
+    submissions.find(
+      (submission) => submission.intent === "extra-services" && submission.extras
+    ) ||
+    submissions.find((submission) => submission.extras) ||
+    null
+  );
+}
+
 function buildSubmissionGroups(submissions: Submission[]): SubmissionGroup[] {
   if (submissions.length === 0) return [];
 
@@ -543,6 +598,7 @@ export default function AdminForms() {
   const [isMobileLayout, setIsMobileLayout] = React.useState(false);
   const [mobileDetailDragOffset, setMobileDetailDragOffset] = React.useState(0);
   const [isDraggingMobileDetail, setIsDraggingMobileDetail] = React.useState(false);
+  const [imagePreview, setImagePreview] = React.useState<ImagePreview | null>(null);
   const mobileDetailDrag = React.useRef({
     active: false,
     pointerId: -1,
@@ -564,7 +620,7 @@ export default function AdminForms() {
   React.useEffect(() => {
     if (DASHBOARD_AUTH_DISABLED) {
       setAuthReady(true);
-      setAdminEmail("dashboard@fyrrehaven-61.dk");
+      setAdminEmail("local@fyrrehaven-61.dk");
       return;
     }
 
@@ -630,7 +686,7 @@ export default function AdminForms() {
       setAdminEmail(
         data.admin?.email ||
           auth?.currentUser?.email ||
-          (DASHBOARD_AUTH_DISABLED ? "dashboard@fyrrehaven-61.dk" : "")
+          (DASHBOARD_AUTH_DISABLED ? "local@fyrrehaven-61.dk" : "")
       );
     } catch (nextError) {
       if (LOCAL_DASHBOARD_FALLBACK) {
@@ -998,8 +1054,210 @@ export default function AdminForms() {
     );
   }
 
+  function imageSource(
+    attachment: ImagePreview["attachment"] | null | undefined
+  ) {
+    return attachment?.viewUrl || attachment?.dataUrl || null;
+  }
+
+  function renderMeterReadingSummary(submission: Submission) {
+    const readings = submission.checkin?.meterReadings;
+    const items = [
+      ["Electricity", readings?.electricity],
+      ["Water (house)", readings?.waterHouse],
+      ["Water (pool)", readings?.waterPool],
+    ].filter(([, value]) => hasDisplayValue(value));
+
+    if (!items.length) return null;
+
+    return (
+      <div className={styles.meterVerifyBox}>
+        <span>Compare image with submitted readings</span>
+        <div>
+          {items.map(([label, value]) => (
+            <strong key={label}>
+              {label}: {value}
+            </strong>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function renderCheckinAttachments(submission: Submission) {
+    const attachments = submission.checkin?.attachments || [];
+    if (!attachments.length) return null;
+
+    return (
+      <div className={styles.attachmentSection}>
+        {renderMeterReadingSummary(submission)}
+        <div className={styles.attachmentGrid}>
+          {attachments.map((file, index) => {
+            const src = imageSource(file);
+            const label = file.filename || `Meter image ${index + 1}`;
+
+            return (
+              <button
+                type="button"
+                className={styles.attachmentCard}
+                key={`${label}-${index}`}
+                onClick={() =>
+                  src
+                    ? setImagePreview({ submission, attachment: file, index })
+                    : undefined
+                }
+                disabled={!src}
+              >
+                {src ? (
+                  <img src={src} alt={label} loading="lazy" />
+                ) : (
+                  <span className={styles.attachmentPlaceholder}>No preview</span>
+                )}
+                <span className={styles.attachmentName}>{label}</span>
+                {file.sizeBytes ? (
+                  <span className={styles.attachmentMeta}>
+                    {Math.round(file.sizeBytes / 1024)} KB
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  function renderOverviewContent(group: SubmissionGroup | null, fallback: Submission) {
+    const groupItems = group?.items?.length ? group.items : [fallback];
+    const emailSource = findOverviewContactSubmission(groupItems, "email");
+    const phoneSource = findOverviewContactSubmission(groupItems, "phone");
+    const bookingSource = findOverviewBookingSubmission(groupItems);
+    const extraSource = findOverviewExtraSubmission(groupItems);
+    const staySource =
+      bookingSource ||
+      findSubmissionWithValue(groupItems, (submission) => submission.extras?.stayDate) ||
+      fallback;
+    const overviewStayDate = findOverviewStayDate(group, fallback);
+    const selectionTotal =
+      bookingSource?.selection?.totalAfterAirbnbDiscountDKK ??
+      bookingSource?.selection?.totalWithCleaningDKK;
+
+    const contactItems = [
+      emailSource ? renderDetailItem("Email", emailSource.email, emailSource) : null,
+      phoneSource ? renderDetailItem("Phone", phoneSource.phone, phoneSource) : null,
+    ].filter(Boolean);
+    const stayDateItems = [
+      bookingSource
+        ? renderDetailItem(
+            "Check-in",
+            formatPlainDate(bookingSource.selection?.start),
+            bookingSource
+          )
+        : null,
+      bookingSource
+        ? renderDetailItem(
+            "Check-out",
+            formatPlainDate(bookingSource.selection?.endExclusive),
+            bookingSource
+          )
+        : null,
+      !bookingSource
+        ? renderDetailItem("Stay date", formatPlainDate(overviewStayDate), staySource)
+        : null,
+    ].filter(Boolean);
+    const stayCountItems = [
+      bookingSource
+        ? renderDetailItem("Nights", bookingSource.selection?.nights, bookingSource)
+        : null,
+      bookingSource
+        ? renderDetailItem(
+            "Guests",
+            bookingSource.guests?.total,
+            bookingSource,
+            hasGuestBreakdown(bookingSource.guests)
+              ? {
+                  after: (
+                    <div className={styles.detailSubValues}>
+                      {typeof bookingSource.guests?.adults === "number" ? (
+                        <span>Adults: {bookingSource.guests.adults}</span>
+                      ) : null}
+                      {typeof bookingSource.guests?.children === "number" ? (
+                        <span>Kids: {bookingSource.guests.children}</span>
+                      ) : null}
+                      {typeof bookingSource.guests?.babies === "number" ? (
+                        <span>Babies: {bookingSource.guests.babies}</span>
+                      ) : null}
+                    </div>
+                  ),
+                }
+              : undefined
+          )
+        : null,
+    ].filter(Boolean);
+    const bookingTotalItem = bookingSource
+      ? renderDetailItem(
+          "Booking price",
+          selectionTotal != null ? formatMoney(selectionTotal) : null,
+          bookingSource,
+          {
+            wide: true,
+            after: renderSelectionPriceBreakdown(bookingSource.selection),
+          }
+        )
+      : null;
+    const extraTotalItem =
+      !bookingSource && extraSource?.extras?.totalDKK != null
+        ? renderDetailItem(
+            "Extra services total",
+            formatMoney(extraSource.extras.totalDKK),
+            extraSource,
+            {
+              wide: true,
+              after: renderExtrasPriceBreakdown(extraSource.extras),
+            }
+          )
+        : null;
+
+    return (
+      <>
+        {contactItems.length > 0 ? (
+          <section className={styles.detailSection}>
+            <h3>Contact</h3>
+            <div className={styles.detailGrid}>{contactItems}</div>
+          </section>
+        ) : null}
+
+        {stayDateItems.length > 0 ||
+        stayCountItems.length > 0 ||
+        bookingTotalItem ||
+        extraTotalItem ? (
+          <section className={styles.detailSection}>
+            <h3>Stay</h3>
+            {stayDateItems.length > 0 ? (
+              <div className={styles.detailGrid}>{stayDateItems}</div>
+            ) : null}
+            {stayCountItems.length > 0 ? (
+              <div className={`${styles.detailGrid} ${styles.detailGridCompact}`}>
+                {stayCountItems}
+              </div>
+            ) : null}
+            {bookingTotalItem || extraTotalItem ? (
+              <div className={`${styles.detailGrid} ${styles.detailTotalGrid}`}>
+                {bookingTotalItem || extraTotalItem}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+      </>
+    );
+  }
+
   function renderSubmissionDetailContent(submission: Submission) {
     const isOverview = activeGroupDetail === "overview";
+    if (isOverview) {
+      return renderOverviewContent(selectedGroup, submission);
+    }
+
     const overviewStayDate = isOverview
       ? findOverviewStayDate(selectedGroup, submission)
       : null;
@@ -1208,18 +1466,7 @@ export default function AdminForms() {
             {checkinItems.length > 0 ? (
               <div className={styles.detailGrid}>{checkinItems}</div>
             ) : null}
-            {submission.checkin.attachments?.length ? (
-              <div className={styles.detailList}>
-                {submission.checkin.attachments.map((file, index) => (
-                  <div className={styles.detailListRow} key={`${file.filename || "file"}-${index}`}>
-                    <span>{file.filename || "Attachment"}</span>
-                    {file.sizeBytes ? (
-                      <span>{Math.round(file.sizeBytes / 1024)} KB</span>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            ) : null}
+            {renderCheckinAttachments(submission)}
           </section>
         ) : null}
 
@@ -1393,7 +1640,7 @@ export default function AdminForms() {
                   <div className={styles.accountText}>
                     <span>Logged in</span>
                     <strong>
-                      {adminEmail || user?.email || "dashboard@fyrrehaven-61.dk"}
+                      {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
                     </strong>
                   </div>
                   {!DASHBOARD_AUTH_DISABLED ? (
@@ -1663,6 +1910,55 @@ export default function AdminForms() {
                 </section>
               ) : null}
               {renderSubmissionDetailContent(detailSubmission)}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {imagePreview ? (
+        <div
+          className={styles.imagePreviewOverlay}
+          role="presentation"
+          onClick={() => setImagePreview(null)}
+        >
+          <div
+            className={styles.imagePreviewCard}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Meter image ${imagePreview.index + 1}`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.imagePreviewHeader}>
+              <div>
+                <p className={styles.eyebrow}>Check-in/out image</p>
+                <h2>{imagePreview.attachment.filename || "Meter image"}</h2>
+              </div>
+              <button
+                type="button"
+                className={styles.ghostButton}
+                onClick={() => setImagePreview(null)}
+              >
+                Close
+              </button>
+            </div>
+            <div className={styles.imagePreviewBody}>
+              {imageSource(imagePreview.attachment) ? (
+                <div className={styles.imagePreviewImageWrap}>
+                  <img
+                    className={styles.imagePreviewImage}
+                    src={imageSource(imagePreview.attachment) || ""}
+                    alt={imagePreview.attachment.filename || "Meter image"}
+                  />
+                </div>
+              ) : null}
+              <div className={styles.imagePreviewMeta}>
+                {renderMeterReadingSummary(imagePreview.submission)}
+                {imagePreview.attachment.sizeBytes ? (
+                  <span>
+                    File size: {Math.round(imagePreview.attachment.sizeBytes / 1024)} KB
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>

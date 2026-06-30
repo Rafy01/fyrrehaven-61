@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import Busboy from "busboy";
-import { getFirestoreDb } from "./_lib/firebaseAdmin.mjs";
+import { getFirestoreDb, getStorageBucket } from "./_lib/firebaseAdmin.mjs";
 import {
   createFormSubmission,
   updateFormSubmission,
@@ -60,6 +60,56 @@ const ALLOWED_UPLOAD_MIME_TYPES = new Set([
 ]);
 const ALLOWED_UPLOAD_EXTENSIONS = /\.(jpe?g|png|webp|heic|heif)$/i;
 const READING_RE = /^\d{1,10}(?:[.,]\d{1,3})?$/;
+
+const sanitizeStorageSegment = (value) =>
+  String(value || "file")
+    .trim()
+    .replace(/[^a-z0-9._-]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "file";
+
+async function uploadCheckinFiles(submissionId, files) {
+  const bucket = await getStorageBucket();
+  if (!bucket || !submissionId || !files.length) {
+    return files.map((file) => ({
+      fieldname: file.fieldname,
+      filename: file.filename,
+      contentType: file.contentType,
+      sizeBytes: file.content.length,
+    }));
+  }
+
+  return Promise.all(
+    files.map(async (file, index) => {
+      const storagePath = [
+        "form-submissions",
+        sanitizeStorageSegment(submissionId),
+        "checkin-images",
+        `${String(index + 1).padStart(2, "0")}-${sanitizeStorageSegment(file.filename)}`,
+      ].join("/");
+      const bucketFile = bucket.file(storagePath);
+
+      await bucketFile.save(file.content, {
+        resumable: false,
+        metadata: {
+          contentType: file.contentType,
+          metadata: {
+            originalFilename: file.filename,
+            formField: file.fieldname,
+          },
+        },
+      });
+
+      return {
+        fieldname: file.fieldname,
+        filename: file.filename,
+        contentType: file.contentType,
+        sizeBytes: file.content.length,
+        storagePath,
+      };
+    })
+  );
+}
 
 // Vercel handler
 export default async function handler(req, res) {
@@ -291,6 +341,12 @@ export default async function handler(req, res) {
         });
         const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
         const db = await getFirestoreDb();
+        let storedAttachments = files.map((file) => ({
+          fieldname: file.fieldname,
+          filename: file.filename,
+          contentType: file.contentType,
+          sizeBytes: file.content.length,
+        }));
         const submissionRecord = {
           intent: "guest-checkin",
           lang: uiLang,
@@ -310,12 +366,7 @@ export default async function handler(req, res) {
                   ? String(waterPool).trim()
                   : null,
             },
-            attachments: files.map((file) => ({
-              fieldname: file.fieldname,
-              filename: file.filename,
-              contentType: file.contentType,
-              sizeBytes: file.content.length,
-            })),
+            attachments: storedAttachments,
           },
           source: "guest-form",
           status: "pending",
@@ -333,9 +384,16 @@ export default async function handler(req, res) {
         if (db) {
           try {
             submissionRef = await createFormSubmission(db, submissionRecord);
+            storedAttachments = await uploadCheckinFiles(submissionRef.id, files);
+            await updateFormSubmission(submissionRef, {
+              checkin: {
+                ...submissionRecord.checkin,
+                attachments: storedAttachments,
+              },
+              updatedAtMs: Date.now(),
+            });
           } catch (storageError) {
-            submissionRef = null;
-            console.error("FIRESTORE_WRITE_FAILED", storageError);
+            console.error("FIRESTORE_OR_STORAGE_WRITE_FAILED", storageError);
           }
         }
 

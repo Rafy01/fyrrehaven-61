@@ -772,6 +772,113 @@
   white-space: nowrap;
 }
 
+.meterVerifyBox {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent-9) 32%, var(--gray-5));
+  background: color-mix(in srgb, var(--accent-9) 8%, transparent);
+  color: var(--gray-11);
+}
+
+.meterVerifyBox > span {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gray-10);
+}
+
+.meterVerifyBox > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meterVerifyBox strong {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gray-12) 7%, transparent);
+  color: var(--gray-12);
+  font-size: 0.88rem;
+}
+
+.attachmentSection {
+  margin-top: 14px;
+}
+
+.attachmentGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.attachmentCard {
+  appearance: none;
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid var(--gray-5);
+  background: color-mix(in srgb, var(--gray-12) 4%, transparent);
+  color: var(--gray-12);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, transform 160ms ease, background-color 160ms ease;
+}
+
+.attachmentCard:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent-9) 48%, var(--gray-5));
+  background: color-mix(in srgb, var(--accent-9) 8%, transparent);
+  transform: translateY(-1px);
+}
+
+.attachmentCard:disabled {
+  cursor: default;
+  color: var(--gray-9);
+}
+
+.attachmentCard:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-9) 35%, transparent);
+  outline-offset: 3px;
+}
+
+.attachmentCard img,
+.attachmentPlaceholder {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  border: 1px solid var(--gray-4);
+  background: color-mix(in srgb, var(--gray-12) 5%, transparent);
+}
+
+.attachmentCard img {
+  display: block;
+  object-fit: cover;
+}
+
+.attachmentPlaceholder {
+  display: grid;
+  place-items: center;
+  color: var(--gray-9);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.attachmentName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.attachmentMeta {
+  color: var(--gray-9);
+  font-size: 0.82rem;
+}
+
 .detailListButton {
   appearance: none;
   width: 100%;
@@ -960,6 +1067,106 @@
   justify-content: flex-end;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.imagePreviewOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(7, 10, 14, 0.78);
+  backdrop-filter: blur(12px);
+  animation: overlayIn 0.2s ease both;
+}
+
+.imagePreviewCard {
+  width: min(100%, 1040px);
+  max-height: min(88vh, 860px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-radius: 22px;
+  border: 1px solid var(--gray-5);
+  background: color-mix(in srgb, var(--gray-1) 94%, transparent);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.32);
+  overflow: hidden;
+}
+
+.imagePreviewHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--gray-4);
+}
+
+.imagePreviewHeader h2 {
+  margin: 2px 0 0;
+  font-size: clamp(1.25rem, 2vw, 1.8rem);
+}
+
+.imagePreviewBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 16px;
+  min-height: 0;
+  padding: 16px;
+  overflow: auto;
+}
+
+.imagePreviewImageWrap {
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  border: 1px solid var(--gray-4);
+  background:
+    linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--gray-12) 5%, transparent) 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      -45deg,
+      color-mix(in srgb, var(--gray-12) 5%, transparent) 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      45deg,
+      transparent 75%,
+      color-mix(in srgb, var(--gray-12) 5%, transparent) 75%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 75%,
+      color-mix(in srgb, var(--gray-12) 5%, transparent) 75%
+    );
+  background-size: 22px 22px;
+  background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+  overflow: hidden;
+}
+
+.imagePreviewImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 68vh;
+  object-fit: contain;
+}
+
+.imagePreviewMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  color: var(--gray-10);
+}
+
+.imagePreviewMeta .meterVerifyBox {
+  margin-bottom: 0;
 }
 
 .mobileDetailOverlay {
@@ -1225,6 +1432,29 @@
     padding: 20px;
     border-radius: 20px 20px 14px 14px;
   }
+
+  .imagePreviewOverlay {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .imagePreviewCard {
+    max-height: 86dvh;
+    border-radius: 20px;
+  }
+
+  .imagePreviewHeader {
+    padding: 16px;
+  }
+
+  .imagePreviewBody {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .imagePreviewImage {
+    max-height: 52dvh;
+  }
 }
 
 @media (max-width: 720px) {
@@ -1323,6 +1553,10 @@
 
   .detailGrid {
     gap: 10px;
+  }
+
+  .attachmentGrid {
+    grid-template-columns: 1fr;
   }
 
   .linkedTabList {

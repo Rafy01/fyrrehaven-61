@@ -1,6 +1,7 @@
 import {
   getFirestoreDb,
   getFirebaseAdminInitError,
+  getStorageBucket,
   verifyAdminRequest,
 } from "../_lib/firebaseAdmin.mjs";
 import {
@@ -13,6 +14,55 @@ const DASHBOARD_AUTH_DISABLED =
   process.env.NODE_ENV !== "production" ||
   process.env.DASHBOARD_AUTH_DISABLED === "true";
 
+async function addAttachmentViewUrls(submissions) {
+  const bucket = await getStorageBucket();
+  if (!bucket) return submissions;
+
+  const expiresAt = Date.now() + 15 * 60 * 1000;
+
+  return Promise.all(
+    submissions.map(async (submission) => {
+      const attachments = submission?.checkin?.attachments;
+      if (!Array.isArray(attachments) || attachments.length === 0) {
+        return submission;
+      }
+
+      const nextAttachments = await Promise.all(
+        attachments.map(async (attachment) => {
+          if (!attachment?.storagePath) return attachment;
+
+          try {
+            const [viewUrl] = await bucket.file(attachment.storagePath).getSignedUrl({
+              action: "read",
+              expires: expiresAt,
+            });
+
+            return {
+              ...attachment,
+              viewUrl,
+            };
+          } catch (error) {
+            console.error("CHECKIN_IMAGE_SIGNED_URL_FAILED", {
+              submissionId: submission.id,
+              storagePath: attachment.storagePath,
+              error: String(error?.message || error),
+            });
+            return attachment;
+          }
+        })
+      );
+
+      return {
+        ...submission,
+        checkin: {
+          ...submission.checkin,
+          attachments: nextAttachments,
+        },
+      };
+    })
+  );
+}
+
 export default async function handler(req, res) {
   applySecurityHeaders(res);
   res.setHeader("Allow", "GET, DELETE");
@@ -22,7 +72,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  let adminEmail = "dashboard@fyrrehaven-61.dk";
+  let adminEmail = "local@fyrrehaven-61.dk";
   if (!DASHBOARD_AUTH_DISABLED) {
     const adminCheck = await verifyAdminRequest(req);
     if (!adminCheck.ok) {
@@ -91,7 +141,9 @@ export default async function handler(req, res) {
       return;
     }
 
-    const submissions = await listFormSubmissions(db, 250);
+    const submissions = await addAttachmentViewUrls(
+      await listFormSubmissions(db, 250)
+    );
 
     sendJson(res, 200, {
       ok: true,
