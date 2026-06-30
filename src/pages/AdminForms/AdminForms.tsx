@@ -1096,6 +1096,52 @@ export default function AdminForms() {
     );
   }
 
+  function renderMeterDetailItem(label: string, meter: MeterKey, submission: Submission) {
+    const activeValue = currentMeterReading(submission, meter);
+    const correction = meterCorrection(submission, meter);
+    const originalValue = correction?.originalValue?.trim() || "";
+    const correctedValue = correction?.correctedValue?.trim() || activeValue;
+    const originalNumber = parseMeterNumber(originalValue);
+    const correctedNumber = parseMeterNumber(correctedValue);
+    const difference =
+      correction?.difference ??
+      (originalNumber != null && correctedNumber != null
+        ? correctedNumber - originalNumber
+        : null);
+    const hasCorrectionDifference =
+      Boolean(correction) &&
+      originalValue &&
+      correctedValue &&
+      difference != null &&
+      difference !== 0;
+
+    return renderDetailItem(
+      label,
+      correctedValue,
+      submission,
+      hasCorrectionDifference
+        ? {
+            after: (
+              <div className={styles.meterCorrectionSummary}>
+                <div>
+                  <span>Guest input</span>
+                  <strong>{originalValue}</strong>
+                </div>
+                <div>
+                  <span>Admin saved</span>
+                  <strong>{correctedValue}</strong>
+                </div>
+                <div>
+                  <span>Difference</span>
+                  <strong>{formatMeterDifference(difference)}</strong>
+                </div>
+              </div>
+            ),
+          }
+        : undefined
+    );
+  }
+
   function renderGroupDetailSwitcher(group: SubmissionGroup) {
     const regularSubmissions = group.items.filter(
       (submission) => !isCheckinSubmission(submission)
@@ -1570,21 +1616,9 @@ export default function AdminForms() {
 
     const checkinItems = [
       renderDetailItem("Key code", submission.checkin?.keycode, submission),
-      renderDetailItem(
-        "Electricity",
-        submission.checkin?.meterReadings?.electricity,
-        submission
-      ),
-      renderDetailItem(
-        "Water (house)",
-        submission.checkin?.meterReadings?.waterHouse,
-        submission
-      ),
-      renderDetailItem(
-        "Water (pool)",
-        submission.checkin?.meterReadings?.waterPool,
-        submission
-      ),
+      renderMeterDetailItem("Electricity", "electricity", submission),
+      renderMeterDetailItem("Water (house)", "waterHouse", submission),
+      renderMeterDetailItem("Water (pool)", "waterPool", submission),
     ].filter(Boolean);
     const hasCheckinSection =
       checkinItems.length > 0 || Boolean(submission.checkin?.attachments?.length);
