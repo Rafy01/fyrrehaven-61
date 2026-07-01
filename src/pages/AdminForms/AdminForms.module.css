@@ -557,7 +557,7 @@
 
 .meterValueSummary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
+  grid-template-columns: 34px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding: 0;
@@ -572,11 +572,11 @@
   display: none;
 }
 
-.meterValueSummary::after {
+.meterValueSummary::before {
   content: "+";
   display: grid;
   place-items: center;
-  justify-self: end;
+  justify-self: start;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -588,11 +588,11 @@
   transition: background-color 160ms ease, transform 160ms ease;
 }
 
-.meterValueDetails[open] .meterValueSummary::after {
+.meterValueDetails[open] .meterValueSummary::before {
   content: "−";
 }
 
-.meterValueSummary:hover::after {
+.meterValueSummary:hover::before {
   background: color-mix(in srgb, var(--accent-9) 18%, transparent);
   transform: translateY(-1px);
 }
@@ -606,23 +606,17 @@
   display: grid;
   gap: 6px;
   margin-top: 14px;
-  padding: 8px 0 8px 12px;
+  padding: 8px 0 8px 18px;
   border-left: 2px solid var(--gray-5);
 }
 
 .meterCorrectionRow {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) minmax(120px, auto);
+  grid-template-columns: minmax(96px, 1fr) minmax(0, auto);
   align-items: baseline;
-  gap: 14px;
+  gap: 12px;
   color: var(--gray-11);
   font-size: 0.92rem;
-}
-
-.meterCorrectionRow::before {
-  content: "";
-  width: 22px;
-  height: 1px;
 }
 
 .meterCorrectionRow span {
@@ -638,6 +632,9 @@
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .detailGridCompact {
