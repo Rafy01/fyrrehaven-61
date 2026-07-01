@@ -1171,36 +1171,34 @@ export default function AdminForms() {
       difference != null &&
       difference !== 0;
 
-    return renderDetailItem(
-      label,
-      correctedValue,
-      submission,
-      hasCorrectionDifference
-        ? {
-            after: (
-              <details className={styles.meterCorrectionDetails}>
-                <summary className={styles.meterCorrectionSummary}>
-                  <span>Meter correction</span>
-                  <strong>{formatMeterDifference(difference)}</strong>
-                </summary>
-                <div className={styles.meterCorrectionRows}>
-                  <div className={styles.meterCorrectionRow}>
-                    <span>Guest input</span>
-                    <strong>{originalValue}</strong>
-                  </div>
-                  <div className={styles.meterCorrectionRow}>
-                    <span>Admin saved</span>
-                    <strong>{correctedValue}</strong>
-                  </div>
-                  <div className={styles.meterCorrectionRow}>
-                    <span>Difference</span>
-                    <strong>{formatMeterDifference(difference)}</strong>
-                  </div>
-                </div>
-              </details>
-            ),
-          }
-        : undefined
+    if (!hasCorrectionDifference) {
+      return renderDetailItem(label, correctedValue, submission);
+    }
+
+    return (
+      <div className={styles.detailItem}>
+        <span className={styles.detailLabel}>{label}</span>
+        <details className={styles.meterValueDetails}>
+          <summary className={styles.meterValueSummary}>
+            <span className={styles.detailValue}>{correctedValue}</span>
+          </summary>
+          <div className={styles.meterCorrectionRows}>
+            <div className={styles.meterCorrectionRow}>
+              <span>Guest input</span>
+              <strong>{originalValue}</strong>
+            </div>
+            <div className={styles.meterCorrectionRow}>
+              <span>Admin saved</span>
+              <strong>{correctedValue}</strong>
+            </div>
+            <div className={styles.meterCorrectionRow}>
+              <span>Difference</span>
+              <strong>{formatMeterDifference(difference)}</strong>
+            </div>
+          </div>
+        </details>
+        {renderLoggedMeta(submission)}
+      </div>
     );
   }
 
