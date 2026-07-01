@@ -1182,17 +1182,19 @@ export default function AdminForms() {
                 <summary>
                   <span className={styles.srOnly}>Show meter correction details</span>
                 </summary>
-                <div>
-                  <span>Guest input</span>
-                  <strong>{originalValue}</strong>
-                </div>
-                <div>
-                  <span>Admin saved</span>
-                  <strong>{correctedValue}</strong>
-                </div>
-                <div>
-                  <span>Difference</span>
-                  <strong>{formatMeterDifference(difference)}</strong>
+                <div className={styles.meterCorrectionRows}>
+                  <div className={styles.meterCorrectionRow}>
+                    <span>Guest input</span>
+                    <strong>{originalValue}</strong>
+                  </div>
+                  <div className={styles.meterCorrectionRow}>
+                    <span>Admin saved</span>
+                    <strong>{correctedValue}</strong>
+                  </div>
+                  <div className={styles.meterCorrectionRow}>
+                    <span>Difference</span>
+                    <strong>{formatMeterDifference(difference)}</strong>
+                  </div>
                 </div>
               </details>
             ),

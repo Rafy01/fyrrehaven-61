@@ -590,32 +590,48 @@
   content: "-";
 }
 
-.meterCorrectionSummary > div {
+.meterCorrectionRows {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) minmax(120px, auto);
+  gap: 0;
+  flex: 1 0 100%;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--gray-12) 9%, transparent);
+}
+
+.meterCorrectionRow {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) minmax(96px, auto);
   align-items: baseline;
   gap: 14px;
-  flex: 1 0 100%;
   padding: 8px 0;
-  border-top: 1px solid color-mix(in srgb, var(--gray-12) 9%, transparent);
   color: var(--gray-11);
   font-size: 0.92rem;
 }
 
-.meterCorrectionSummary > div::before {
+.meterCorrectionRow + .meterCorrectionRow {
+  border-top: 1px solid color-mix(in srgb, var(--gray-12) 7%, transparent);
+}
+
+.meterCorrectionRow::before {
   content: "";
   width: 22px;
   height: 1px;
 }
 
-.meterCorrectionSummary > div:first-of-type {
-  margin-top: 12px;
+.meterCorrectionRow span {
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
-.meterCorrectionSummary strong {
+.meterCorrectionRow strong {
   color: var(--gray-12);
   font-size: 0.92rem;
   text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .detailGridCompact {
