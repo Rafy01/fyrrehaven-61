@@ -1177,10 +1177,11 @@ export default function AdminForms() {
       submission,
       hasCorrectionDifference
         ? {
-            valueAction: (
-              <details className={styles.meterCorrectionSummary}>
-                <summary>
-                  <span className={styles.srOnly}>Show meter correction details</span>
+            after: (
+              <details className={styles.meterCorrectionDetails}>
+                <summary className={styles.meterCorrectionSummary}>
+                  <span>Meter correction</span>
+                  <strong>{formatMeterDifference(difference)}</strong>
                 </summary>
                 <div className={styles.meterCorrectionRows}>
                   <div className={styles.meterCorrectionRow}>
