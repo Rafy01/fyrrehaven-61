@@ -950,6 +950,43 @@ export default function AdminForms() {
     };
   }, [isDraggingMobileDetail]);
 
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      if (imagePreview) {
+        setImagePreview(null);
+        return;
+      }
+
+      if (deleteTarget && !deleting) {
+        setDeleteTarget(null);
+        setDeleteConfirmation("");
+        setDeleteError(null);
+        return;
+      }
+
+      if (activeGroupDetail !== "overview") {
+        setActiveGroupDetail("overview");
+        return;
+      }
+
+      if (isMobileLayout && selectedGroup) {
+        closeMobileDetail();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    activeGroupDetail,
+    deleteTarget,
+    deleting,
+    imagePreview,
+    isMobileLayout,
+    selectedGroup,
+  ]);
+
   const sentCount = submissions.filter((submission) => submission.status === "sent").length;
   const failedCount = submissions.filter(
     (submission) => submission.status === "mail_failed"
@@ -976,6 +1013,19 @@ export default function AdminForms() {
     drag.offset = 0;
     setIsDraggingMobileDetail(true);
     setMobileDetailDragOffset(0);
+  }
+
+  function openDeleteDialog(submission: Submission) {
+    setDeleteError(null);
+    setDeleteConfirmation("");
+    setDeleteTarget(submission);
+  }
+
+  function closeDeleteDialog() {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteConfirmation("");
+    setDeleteError(null);
   }
 
   async function handleSignIn() {
@@ -1122,7 +1172,11 @@ export default function AdminForms() {
       hasCorrectionDifference
         ? {
             after: (
-              <div className={styles.meterCorrectionSummary}>
+              <details className={styles.meterCorrectionSummary}>
+                <summary>
+                  <span>Guest input differs</span>
+                  <strong>{formatMeterDifference(difference)}</strong>
+                </summary>
                 <div>
                   <span>Guest input</span>
                   <strong>{originalValue}</strong>
@@ -1135,7 +1189,7 @@ export default function AdminForms() {
                   <span>Difference</span>
                   <strong>{formatMeterDifference(difference)}</strong>
                 </div>
-              </div>
+              </details>
             ),
           }
         : undefined
@@ -1526,18 +1580,14 @@ export default function AdminForms() {
       return renderOverviewContent(selectedGroup, submission);
     }
 
-    const overviewStayDate = isOverview
-      ? findOverviewStayDate(selectedGroup, submission)
-      : null;
+    const overviewStayDate = findOverviewStayDate(selectedGroup, submission);
     const hasBookingDates = Boolean(
       submission.selection?.start || submission.selection?.endExclusive
     );
-    const contactItems = isOverview
-      ? [
-          renderDetailItem("Email", submission.email, submission),
-          renderDetailItem("Phone", submission.phone, submission),
-        ].filter(Boolean)
-      : [];
+    const contactItems = [
+      renderDetailItem("Email", submission.email, submission),
+      renderDetailItem("Phone", submission.phone, submission),
+    ].filter(Boolean);
     const stayDateItems = [
       renderDetailItem(
         "Check-in",
@@ -1549,7 +1599,7 @@ export default function AdminForms() {
         formatPlainDate(submission.selection?.endExclusive),
         submission
       ),
-      isOverview && !hasBookingDates
+      !hasBookingDates
         ? renderDetailItem("Stay date", formatPlainDate(overviewStayDate), submission)
         : null,
     ].filter(Boolean);
@@ -1622,14 +1672,13 @@ export default function AdminForms() {
     ].filter(Boolean);
     const hasCheckinSection =
       checkinItems.length > 0 || Boolean(submission.checkin?.attachments?.length);
-    const checkinTypeOptions = Array.from(
-      new Set(
-        checkinSubmissions
-          .map((item) => item.checkin?.type)
-          .filter((type): type is CheckinDetailSelection =>
-            type === "checkin" || type === "checkout"
-          )
-      )
+    const checkinTypeOptions: CheckinDetailSelection[] = ["checkin", "checkout"];
+    const availableCheckinTypes = new Set(
+      checkinSubmissions
+        .map((item) => item.checkin?.type)
+        .filter((type): type is CheckinDetailSelection =>
+          type === "checkin" || type === "checkout"
+        )
     );
 
     return (
@@ -1698,8 +1747,7 @@ export default function AdminForms() {
         {submission.checkin && hasCheckinSection ? (
           <section className={styles.detailSection}>
             <h3>{submission.checkin.type === "checkout" ? "Check-out" : "Check-in"}</h3>
-            {activeGroupDetail === CHECKIN_GROUP_DETAIL &&
-            checkinTypeOptions.length > 1 ? (
+            {isCheckinSubmission(submission) ? (
               <div
                 className={`${styles.linkedTabList} ${styles.inlineTabList}`}
                 role="tablist"
@@ -1712,6 +1760,8 @@ export default function AdminForms() {
                     className={styles.linkedTab}
                     role="tab"
                     aria-selected={activeCheckinDetail === type}
+                    aria-disabled={!availableCheckinTypes.has(type)}
+                    disabled={!availableCheckinTypes.has(type)}
                     onClick={() => setActiveCheckinDetail(type)}
                   >
                     <span>{type === "checkout" ? "Check-out" : "Check-in"}</span>
@@ -2091,9 +2141,7 @@ export default function AdminForms() {
                             aria-label={`Delete submission from ${submission.name || submission.email || "unknown sender"}`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              setDeleteError(null);
-                              setDeleteConfirmation("");
-                              setDeleteTarget(submission);
+                              openDeleteDialog(submission);
                             }}
                           >
                             <FiTrash2 aria-hidden="true" />
@@ -2375,10 +2423,7 @@ export default function AdminForms() {
           className={styles.modalOverlay}
           role="presentation"
           onClick={() => {
-            if (deleting) return;
-            setDeleteTarget(null);
-            setDeleteConfirmation("");
-            setDeleteError(null);
+            closeDeleteDialog();
           }}
         >
           <div
@@ -2414,7 +2459,6 @@ export default function AdminForms() {
               placeholder='Type "delete"'
               autoComplete="off"
               spellCheck={false}
-              autoFocus
             />
             {deleteError ? (
               <p className={styles.deleteError}>{deleteError}</p>
@@ -2423,12 +2467,7 @@ export default function AdminForms() {
               <button
                 type="button"
                 className={styles.ghostButton}
-                onClick={() => {
-                  if (deleting) return;
-                  setDeleteTarget(null);
-                  setDeleteConfirmation("");
-                  setDeleteError(null);
-                }}
+                onClick={closeDeleteDialog}
               >
                 Cancel
               </button>
