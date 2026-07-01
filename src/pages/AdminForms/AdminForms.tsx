@@ -51,6 +51,8 @@ type MeterCorrection = {
   updatedBy?: string | null;
 };
 
+type ExtraItem = NonNullable<NonNullable<Submission["extras"]>["items"]>[number];
+
 type Submission = {
   id: string;
   intent?: string;
@@ -112,6 +114,10 @@ type Submission = {
       storagePath?: string;
       viewUrl?: string;
       dataUrl?: string;
+      url?: string;
+      downloadUrl?: string;
+      publicUrl?: string;
+      src?: string;
     }> | null;
   } | null;
   status?: SubmissionStatus;
@@ -491,6 +497,25 @@ function renderExtrasPriceBreakdown(extras?: Submission["extras"] | null) {
   );
 }
 
+function extraItemLabel(item: ExtraItem) {
+  return item.label?.en || item.label?.da || item.label?.de || item.id || "Extra";
+}
+
+function isYesNoExtraItem(item: ExtraItem) {
+  const value = `${item.id || ""} ${extraItemLabel(item)}`.toLowerCase();
+  return (
+    value.includes("high chair") ||
+    value.includes("high-chair") ||
+    value.includes("baby cot") ||
+    value.includes("baby-cot") ||
+    value.includes("baby crib") ||
+    value.includes("crib") ||
+    value.includes("hot tub fill") ||
+    value.includes("hot-tub-fill") ||
+    value.includes("vildmarksbad")
+  );
+}
+
 function hasGuestBreakdown(guests?: Submission["guests"] | null) {
   return Boolean(
     guests &&
@@ -529,11 +554,32 @@ function findOverviewStayDate(group: SubmissionGroup | null, fallback?: Submissi
   return bookingStart || extraStayDate || null;
 }
 
+function findOverviewCheckoutDate(group: SubmissionGroup | null, fallback?: Submission | null) {
+  const submissions = group?.items?.length ? group.items : fallback ? [fallback] : [];
+  return (
+    submissions.find((submission) => submission.selection?.endExclusive)?.selection
+      ?.endExclusive || null
+  );
+}
+
 function findSubmissionWithValue(
   submissions: Submission[],
   getValue: (submission: Submission) => React.ReactNode
 ) {
   return submissions.find((submission) => hasDisplayValue(getValue(submission))) || null;
+}
+
+function uniqueSubmissionValues(
+  submissions: Submission[],
+  getValue: (submission: Submission) => string | null | undefined
+) {
+  return Array.from(
+    new Set(
+      submissions
+        .map((submission) => getValue(submission)?.trim())
+        .filter((value): value is string => Boolean(value))
+    )
+  );
 }
 
 function getSubmissionTypePriority(submission: Submission) {
@@ -561,16 +607,6 @@ function findOverviewBookingSubmission(submissions: Submission[]) {
   return (
     submissions.find((submission) => submission.intent === "booking" && submission.selection) ||
     submissions.find((submission) => submission.selection) ||
-    null
-  );
-}
-
-function findOverviewExtraSubmission(submissions: Submission[]) {
-  return (
-    submissions.find(
-      (submission) => submission.intent === "extra-services" && submission.extras
-    ) ||
-    submissions.find((submission) => submission.extras) ||
     null
   );
 }
@@ -1084,12 +1120,15 @@ export default function AdminForms() {
       message?: boolean;
       after?: React.ReactNode;
       valueAction?: React.ReactNode;
+      disableAutoAction?: boolean;
     }
   ) {
     if (!hasDisplayValue(value) && !options?.after) return null;
     const textValue = typeof value === "string" ? value.trim().replace(/[\r\n]/g, "") : "";
     const emailHref =
-      label.toLowerCase() === "email" && textValue ? `mailto:${textValue}` : null;
+      !options?.disableAutoAction && label.toLowerCase() === "email" && textValue
+        ? `mailto:${textValue}`
+        : null;
     const phoneDigits = textValue.replace(/[^\d+]/g, "");
     const normalizedPhone = phoneDigits.startsWith("+")
       ? phoneDigits
@@ -1097,7 +1136,7 @@ export default function AdminForms() {
         ? `+${phoneDigits}`
         : "";
     const phoneAction =
-      label.toLowerCase() === "phone" && normalizedPhone
+      !options?.disableAutoAction && label.toLowerCase() === "phone" && normalizedPhone
         ? {
             href: normalizedPhone.startsWith("+45")
               ? `tel:${normalizedPhone}`
@@ -1251,7 +1290,15 @@ export default function AdminForms() {
   function imageSource(
     attachment: ImagePreview["attachment"] | null | undefined
   ) {
-    return attachment?.viewUrl || attachment?.dataUrl || null;
+    return (
+      attachment?.viewUrl ||
+      attachment?.dataUrl ||
+      attachment?.downloadUrl ||
+      attachment?.publicUrl ||
+      attachment?.url ||
+      attachment?.src ||
+      null
+    );
   }
 
   function imagePreviewAttachments(preview: ImagePreview | null) {
@@ -1415,82 +1462,71 @@ export default function AdminForms() {
   function renderCheckinAttachments(submission: Submission) {
     const attachments = submission.checkin?.attachments || [];
     if (!attachments.length) return null;
+    const firstPreviewIndex = attachments.findIndex((file) => imageSource(file));
+    const firstPreview =
+      firstPreviewIndex >= 0 ? attachments[firstPreviewIndex] : attachments[0];
+    const canPreview = firstPreviewIndex >= 0;
 
     return (
       <div className={styles.attachmentSection}>
-        <div className={styles.attachmentGrid}>
-          {attachments.map((file, index) => {
-            const src = imageSource(file);
-            const label = file.filename || `Meter image ${index + 1}`;
-
-            return (
-              <button
-                type="button"
-                className={styles.attachmentCard}
-                key={`${label}-${index}`}
-                onClick={() =>
-                  src
-                    ? setImagePreview({ submission, attachment: file, index })
-                    : undefined
-                }
-                disabled={!src}
-              >
-                {src ? (
-                  <img src={src} alt={label} loading="lazy" />
-                ) : (
-                  <span className={styles.attachmentPlaceholder}>No preview</span>
-                )}
-                <span className={styles.attachmentName}>{label}</span>
-                {file.sizeBytes ? (
-                  <span className={styles.attachmentMeta}>
-                    {Math.round(file.sizeBytes / 1024)} KB
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
+        <button
+          type="button"
+          className={styles.attachmentOpenButton}
+          onClick={() =>
+            canPreview
+              ? setImagePreview({
+                  submission,
+                  attachment: firstPreview,
+                  index: firstPreviewIndex,
+                })
+              : undefined
+          }
+          disabled={!canPreview}
+        >
+          <span>
+            <strong>Check-in/out images</strong>
+            <small>
+              {attachments.length} image{attachments.length === 1 ? "" : "s"}
+            </small>
+          </span>
+          <FiChevronRight aria-hidden="true" />
+        </button>
       </div>
     );
   }
 
   function renderOverviewContent(group: SubmissionGroup | null, fallback: Submission) {
     const groupItems = group?.items?.length ? group.items : [fallback];
-    const emailSource = findOverviewContactSubmission(groupItems, "email");
-    const phoneSource = findOverviewContactSubmission(groupItems, "phone");
+    const emailSource = findOverviewContactSubmission(groupItems, "email") || fallback;
+    const phoneSource = findOverviewContactSubmission(groupItems, "phone") || fallback;
     const bookingSource = findOverviewBookingSubmission(groupItems);
-    const extraSource = findOverviewExtraSubmission(groupItems);
     const staySource =
       bookingSource ||
       findSubmissionWithValue(groupItems, (submission) => submission.extras?.stayDate) ||
       fallback;
     const overviewStayDate = findOverviewStayDate(group, fallback);
+    const overviewCheckoutDate = findOverviewCheckoutDate(group, fallback);
     const selectionTotal =
       bookingSource?.selection?.totalAfterAirbnbDiscountDKK ??
       bookingSource?.selection?.totalWithCleaningDKK;
+    const emails = uniqueSubmissionValues(groupItems, (submission) => submission.email);
+    const phones = uniqueSubmissionValues(groupItems, (submission) => submission.phone);
 
     const contactItems = [
-      emailSource ? renderDetailItem("Email", emailSource.email, emailSource) : null,
-      phoneSource ? renderDetailItem("Phone", phoneSource.phone, phoneSource) : null,
+      emails.length
+        ? renderDetailItem("Email", emails.join(", "), emailSource, {
+            disableAutoAction: emails.length > 1,
+          })
+        : null,
+      phones.length
+        ? renderDetailItem("Phone", phones.join(", "), phoneSource, {
+            disableAutoAction: phones.length > 1,
+          })
+        : null,
     ].filter(Boolean);
     const stayDateItems = [
-      bookingSource
-        ? renderDetailItem(
-            "Check-in",
-            formatPlainDate(bookingSource.selection?.start),
-            bookingSource
-          )
-        : null,
-      bookingSource
-        ? renderDetailItem(
-            "Check-out",
-            formatPlainDate(bookingSource.selection?.endExclusive),
-            bookingSource
-          )
-        : null,
-      !bookingSource
-        ? renderDetailItem("Stay date", formatPlainDate(overviewStayDate), staySource)
-        : null,
+      renderDetailItem("Check-in", formatPlainDate(overviewStayDate), staySource),
+      renderDetailItem("Check-out", formatPlainDate(overviewCheckoutDate), bookingSource || staySource),
     ].filter(Boolean);
     const stayCountItems = [
       bookingSource
@@ -1532,18 +1568,6 @@ export default function AdminForms() {
           }
         )
       : null;
-    const extraTotalItem =
-      !bookingSource && extraSource?.extras?.totalDKK != null
-        ? renderDetailItem(
-            "Extra services total",
-            formatMoney(extraSource.extras.totalDKK),
-            extraSource,
-            {
-              wide: true,
-              after: renderExtrasPriceBreakdown(extraSource.extras),
-            }
-          )
-        : null;
 
     return (
       <>
@@ -1556,8 +1580,7 @@ export default function AdminForms() {
 
         {stayDateItems.length > 0 ||
         stayCountItems.length > 0 ||
-        bookingTotalItem ||
-        extraTotalItem ? (
+        bookingTotalItem ? (
           <section className={styles.detailSection}>
             <h3>Stay</h3>
             {stayDateItems.length > 0 ? (
@@ -1568,9 +1591,9 @@ export default function AdminForms() {
                 {stayCountItems}
               </div>
             ) : null}
-            {bookingTotalItem || extraTotalItem ? (
+            {bookingTotalItem ? (
               <div className={`${styles.detailGrid} ${styles.detailTotalGrid}`}>
-                {bookingTotalItem || extraTotalItem}
+                {bookingTotalItem}
               </div>
             ) : null}
           </section>
@@ -1585,70 +1608,52 @@ export default function AdminForms() {
       return renderOverviewContent(selectedGroup, submission);
     }
 
-    const overviewStayDate = findOverviewStayDate(selectedGroup, submission);
-    const hasBookingDates = Boolean(
-      submission.selection?.start || submission.selection?.endExclusive
-    );
-    const contactItems = [
-      renderDetailItem("Email", submission.email, submission),
-      renderDetailItem("Phone", submission.phone, submission),
-    ].filter(Boolean);
-    const stayDateItems = [
-      renderDetailItem(
-        "Check-in",
-        formatPlainDate(submission.selection?.start),
-        submission
-      ),
-      renderDetailItem(
-        "Check-out",
-        formatPlainDate(submission.selection?.endExclusive),
-        submission
-      ),
-      !hasBookingDates
+    const isBookingSubmission = submission.intent === "booking";
+    const isContactSubmission = !submission.intent || submission.intent === "inquiry";
+    const stayDateItems: React.ReactNode[] = [];
+    const stayCountItems = [
+      isBookingSubmission
+        ? renderDetailItem("Nights", submission.selection?.nights, submission)
+        : null,
+      isBookingSubmission
         ? renderDetailItem(
-            isCheckinSubmission(submission) ? "Check-in date" : "Stay date",
-            formatPlainDate(overviewStayDate),
-            submission
+            "Guests",
+            submission.guests?.total,
+            submission,
+            hasGuestBreakdown(submission.guests)
+              ? {
+                  after: (
+                    <div className={styles.detailSubValues}>
+                      {typeof submission.guests?.adults === "number" ? (
+                        <span>Adults: {submission.guests.adults}</span>
+                      ) : null}
+                      {typeof submission.guests?.children === "number" ? (
+                        <span>Kids: {submission.guests.children}</span>
+                      ) : null}
+                      {typeof submission.guests?.babies === "number" ? (
+                        <span>Babies: {submission.guests.babies}</span>
+                      ) : null}
+                    </div>
+                  ),
+                }
+              : undefined
           )
         : null,
-    ].filter(Boolean);
-    const stayCountItems = [
-      renderDetailItem("Nights", submission.selection?.nights, submission),
-      renderDetailItem(
-        "Guests",
-        submission.guests?.total,
-        submission,
-        hasGuestBreakdown(submission.guests)
-          ? {
-              after: (
-                <div className={styles.detailSubValues}>
-                  {typeof submission.guests?.adults === "number" ? (
-                    <span>Adults: {submission.guests.adults}</span>
-                  ) : null}
-                  {typeof submission.guests?.children === "number" ? (
-                    <span>Kids: {submission.guests.children}</span>
-                  ) : null}
-                  {typeof submission.guests?.babies === "number" ? (
-                    <span>Babies: {submission.guests.babies}</span>
-                  ) : null}
-                </div>
-              ),
-            }
-          : undefined
-      ),
     ].filter(Boolean);
     const selectionTotal =
       submission.selection?.totalAfterAirbnbDiscountDKK ??
       submission.selection?.totalWithCleaningDKK;
-    const stayTotalItem = renderDetailItem(
-      "Total",
-      selectionTotal != null ? formatMoney(selectionTotal) : null,
-      submission,
-      {
-        wide: true,
-        after: renderSelectionPriceBreakdown(submission.selection),
-      }
-    );
+    const stayTotalItem = isBookingSubmission
+      ? renderDetailItem(
+          "Total",
+          selectionTotal != null ? formatMoney(selectionTotal) : null,
+          submission,
+          {
+            wide: true,
+            after: renderSelectionPriceBreakdown(submission.selection),
+          }
+        )
+      : null;
     const stayPurposeItem = renderDetailItem(
       "Purpose",
       submission.stayPurpose,
@@ -1692,10 +1697,14 @@ export default function AdminForms() {
 
     return (
       <>
-        {contactItems.length > 0 ? (
+        {isContactSubmission && submission.message ? (
           <section className={styles.detailSection}>
-            <h3>Contact</h3>
-            <div className={styles.detailGrid}>{contactItems}</div>
+            <h3>Message</h3>
+            <div className={styles.detailList}>
+              {renderDetailItem("Message", submission.message, submission, {
+                message: true,
+              })}
+            </div>
           </section>
         ) : null}
 
@@ -1730,16 +1739,13 @@ export default function AdminForms() {
                   <div className={styles.serviceItem} key={`${item.id || "extra"}-${index}`}>
                     <div>
                       <span className={styles.serviceName}>
-                        {item.label?.en || item.label?.da || item.id || "Extra"}
+                        {extraItemLabel(item)}
                       </span>
-                      {typeof item.unitPriceDKK === "number" ? (
-                        <span className={styles.servicePrice}>
-                          {formatMoney(item.unitPriceDKK)} each
-                        </span>
-                      ) : null}
                     </div>
                     {typeof item.qty === "number" ? (
-                      <span className={styles.serviceQty}>x {item.qty}</span>
+                      <span className={styles.serviceQty}>
+                        {isYesNoExtraItem(item) ? "Yes" : `x ${item.qty}`}
+                      </span>
                     ) : null}
                   </div>
                 ))}
@@ -2167,7 +2173,7 @@ export default function AdminForms() {
                 <aside className={styles.detailCard}>
                   {selectedSubmission && detailSubmission ? (
                     <div className={styles.detailScroll}>
-                      {selectedGroup && selectedGroup.items.length > 1 ? (
+                      {selectedGroup ? (
                         <section className={styles.detailSection}>
                           <h3>Submission views</h3>
                           {renderGroupDetailSwitcher(selectedGroup)}
@@ -2216,7 +2222,7 @@ export default function AdminForms() {
               <span />
             </button>
             <div className={styles.mobileDetailScroll}>
-              {selectedGroup && selectedGroup.items.length > 1 ? (
+              {selectedGroup ? (
                 <section className={styles.detailSection}>
                   <h3>Submission views</h3>
                   {renderGroupDetailSwitcher(selectedGroup)}
