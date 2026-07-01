@@ -1079,7 +1079,12 @@ export default function AdminForms() {
     label: string,
     value: React.ReactNode,
     submission: Submission,
-    options?: { wide?: boolean; message?: boolean; after?: React.ReactNode }
+    options?: {
+      wide?: boolean;
+      message?: boolean;
+      after?: React.ReactNode;
+      valueAction?: React.ReactNode;
+    }
   ) {
     if (!hasDisplayValue(value) && !options?.after) return null;
     const textValue = typeof value === "string" ? value.trim().replace(/[\r\n]/g, "") : "";
@@ -1116,6 +1121,7 @@ export default function AdminForms() {
         ) : (
           <div className={styles.detailValueRow}>
             <div className={styles.detailValue}>{value}</div>
+            {options?.valueAction}
             {emailHref ? (
               <a
                 className={styles.detailMailButton}
@@ -1171,11 +1177,10 @@ export default function AdminForms() {
       submission,
       hasCorrectionDifference
         ? {
-            after: (
+            valueAction: (
               <details className={styles.meterCorrectionSummary}>
                 <summary>
-                  <span>Guest input differs</span>
-                  <strong>{formatMeterDifference(difference)}</strong>
+                  <span className={styles.srOnly}>Show meter correction details</span>
                 </summary>
                 <div>
                   <span>Guest input</span>
@@ -1574,8 +1579,7 @@ export default function AdminForms() {
   }
 
   function renderSubmissionDetailContent(submission: Submission) {
-    const isOverview =
-      activeGroupDetail === "overview" && (selectedGroup?.items.length || 0) > 1;
+    const isOverview = activeGroupDetail === "overview";
     if (isOverview) {
       return renderOverviewContent(selectedGroup, submission);
     }
@@ -1600,7 +1604,11 @@ export default function AdminForms() {
         submission
       ),
       !hasBookingDates
-        ? renderDetailItem("Stay date", formatPlainDate(overviewStayDate), submission)
+        ? renderDetailItem(
+            isCheckinSubmission(submission) ? "Check-in date" : "Stay date",
+            formatPlainDate(overviewStayDate),
+            submission
+          )
         : null,
     ].filter(Boolean);
     const stayCountItems = [
