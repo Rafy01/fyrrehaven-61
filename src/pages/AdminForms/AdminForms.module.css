@@ -1627,7 +1627,6 @@
   border-color: var(--gray-5);
 }
 
-.meterCorrectionLog,
 .meterCorrectionError {
   display: flex;
   align-items: flex-start;
@@ -1637,19 +1636,12 @@
   line-height: 1.35;
 }
 
-.meterCorrectionLog {
-  border: 1px solid color-mix(in srgb, #22c55e 35%, var(--gray-5));
-  background: color-mix(in srgb, #22c55e 10%, transparent);
-  color: var(--gray-11);
-}
-
 .meterCorrectionError {
   border: 1px solid color-mix(in srgb, #ef4444 42%, var(--gray-5));
   background: color-mix(in srgb, #ef4444 10%, transparent);
   color: #fca5a5;
 }
 
-.meterCorrectionLog svg,
 .meterCorrectionError svg {
   flex: 0 0 auto;
   margin-top: 2px;

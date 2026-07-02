@@ -248,10 +248,6 @@ function isMeterKey(value?: string | null): value is MeterKey {
   return value === "electricity" || value === "waterHouse" || value === "waterPool";
 }
 
-function meterLabel(value: MeterKey) {
-  return METER_OPTIONS.find((option) => option.key === value)?.label || value;
-}
-
 function meterIcon(value: MeterKey) {
   return METER_OPTIONS.find((option) => option.key === value)?.icon || null;
 }
@@ -2804,19 +2800,6 @@ export default function AdminForms() {
                           <span>Difference</span>
                           <strong>{formatMeterDifference(difference)}</strong>
                         </div>
-
-                        {correction ? (
-                          <div className={styles.meterCorrectionLog}>
-                            <FiCheck aria-hidden="true" />
-                            <span>
-                              Admin updated{" "}
-                              {selectedMeter ? meterLabel(selectedMeter) : "meter"} from{" "}
-                              <strong>{correction.originalValue || "empty"}</strong> to{" "}
-                              <strong>{correction.correctedValue || "empty"}</strong>
-                              {correction.updatedBy ? ` by ${correction.updatedBy}` : ""}.
-                            </span>
-                          </div>
-                        ) : null}
 
                         {meterSaveError ? (
                           <div className={styles.meterCorrectionError}>
