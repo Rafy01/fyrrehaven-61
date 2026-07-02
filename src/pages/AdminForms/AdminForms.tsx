@@ -1349,16 +1349,9 @@ export default function AdminForms() {
 
             return (
               <div className={styles.contactValueRow} key={trimmed}>
-                <a
-                  className={styles.contactValueText}
-                  href={href}
-                  aria-label={actionLabel}
-                  title={trimmed}
-                  target={href.startsWith("https://") ? "_blank" : undefined}
-                  rel={href.startsWith("https://") ? "noreferrer" : undefined}
-                >
+                <span className={styles.contactValueText} title={trimmed}>
                   {trimmed}
-                </a>
+                </span>
                 <a
                   className={styles.detailMailButton}
                   href={href}

@@ -573,11 +573,6 @@
   white-space: nowrap;
   color: var(--gray-12);
   font-weight: 700;
-  text-decoration: none;
-}
-
-.contactValueText:hover {
-  color: var(--accent-11);
 }
 
 .contactMessageList {
