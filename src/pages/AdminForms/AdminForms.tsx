@@ -262,6 +262,23 @@ function meterKeyFromAttachment(
   return isMeterKey(attachment?.fieldname) ? attachment.fieldname : "electricity";
 }
 
+function imagePreviewKey(preview: ImagePreview | null) {
+  if (!preview) return "";
+  const attachment = preview.attachment;
+  return [
+    preview.submission.id,
+    attachment.storagePath ||
+      attachment.firestoreFileId ||
+      attachment.fullPath ||
+      attachment.filePath ||
+      attachment.path ||
+      attachment.storageRef ||
+      attachment.filename ||
+      "image",
+    preview.index,
+  ].join(":");
+}
+
 function parseMeterNumber(value?: string | number | null) {
   const normalized = String(value ?? "")
     .trim()
@@ -796,6 +813,9 @@ export default function AdminForms() {
   const [mobileDetailDragOffset, setMobileDetailDragOffset] = React.useState(0);
   const [isDraggingMobileDetail, setIsDraggingMobileDetail] = React.useState(false);
   const [imagePreview, setImagePreview] = React.useState<ImagePreview | null>(null);
+  const [meterDraftByImage, setMeterDraftByImage] = React.useState<
+    Record<string, MeterKey>
+  >({});
   const [meterDraftKey, setMeterDraftKey] = React.useState<MeterKey>("electricity");
   const [meterDraftValue, setMeterDraftValue] = React.useState("");
   const [meterSaveState, setMeterSaveState] = React.useState<
@@ -914,14 +934,17 @@ export default function AdminForms() {
 
   React.useEffect(() => {
     if (!imagePreview) return;
-    const nextMeter = meterKeyFromAttachment(imagePreview.attachment);
+    const previewKey = imagePreviewKey(imagePreview);
+    const nextMeter =
+      (previewKey && meterDraftByImage[previewKey]) ||
+      meterKeyFromAttachment(imagePreview.attachment);
     setMeterDraftKey(nextMeter);
     setMeterDraftValue(
       imagePreview.submission.checkin?.meterReadings?.[nextMeter] || ""
     );
     setMeterSaveState("idle");
     setMeterSaveError(null);
-  }, [imagePreview]);
+  }, [imagePreview, meterDraftByImage]);
 
   const visibleGroups = React.useMemo(() => {
     const filtered = submissions.filter((submission) => {
@@ -2639,6 +2662,13 @@ export default function AdminForms() {
                             onChange={(event) => {
                               const nextMeter = event.target.value;
                               if (!isMeterKey(nextMeter)) return;
+                              const previewKey = imagePreviewKey(imagePreview);
+                              if (previewKey) {
+                                setMeterDraftByImage((current) => ({
+                                  ...current,
+                                  [previewKey]: nextMeter,
+                                }));
+                              }
                               setMeterDraftKey(nextMeter);
                               setMeterDraftValue(
                                 currentMeterReading(imagePreview.submission, nextMeter)
