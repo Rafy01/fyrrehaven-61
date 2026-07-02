@@ -14,7 +14,6 @@ import {
   FiMail,
   FiMoon,
   FiPhone,
-  FiSave,
   FiSun,
   FiTrash2,
   FiUser,
@@ -823,6 +822,9 @@ export default function AdminForms() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [meterSaveError, setMeterSaveError] = React.useState<string | null>(null);
+  const meterAutosaveTimer = React.useRef<number | null>(null);
+  const lastMeterSaveSignature = React.useRef("");
+  const activeImagePreviewKey = React.useRef("");
   const mobileDetailDrag = React.useRef({
     active: false,
     pointerId: -1,
@@ -934,18 +936,31 @@ export default function AdminForms() {
   }, [user, fetchSubmissions]);
 
   React.useEffect(() => {
-    if (!imagePreview) return;
+    if (!imagePreview) {
+      activeImagePreviewKey.current = "";
+      return;
+    }
     const previewKey = imagePreviewKey(imagePreview);
+    const activePreviewKey = `${imagePreview.submission.id}:${previewKey || imagePreview.index}`;
+    const isNewPreview = activeImagePreviewKey.current !== activePreviewKey;
+    activeImagePreviewKey.current = activePreviewKey;
     const nextMeter =
       (previewKey && meterDraftByImage[previewKey]) ||
       meterKeyFromAttachment(imagePreview.attachment);
+    const nextValue = nextMeter
+      ? imagePreview.submission.checkin?.meterReadings?.[nextMeter] || ""
+      : "";
     setMeterDraftKey(nextMeter);
-    setMeterDraftValue(
-      nextMeter ? imagePreview.submission.checkin?.meterReadings?.[nextMeter] || "" : ""
-    );
-    setMeterSaveState("idle");
-    setMeterSaveError(null);
-  }, [imagePreview, meterDraftByImage]);
+    setMeterDraftValue(nextValue);
+    lastMeterSaveSignature.current =
+      imagePreview && nextMeter
+        ? `${imagePreview.submission.id}:${previewKey || imagePreview.index}:${nextMeter}:${nextValue.trim()}`
+        : "";
+    if (isNewPreview) {
+      setMeterSaveState("idle");
+      setMeterSaveError(null);
+    }
+  }, [imagePreview]);
 
   const visibleGroups = React.useMemo(() => {
     const filtered = submissions.filter((submission) => {
@@ -1639,16 +1654,21 @@ export default function AdminForms() {
     });
   }
 
-  async function saveMeterCorrection() {
+  async function saveMeterCorrection(options?: {
+    meter?: MeterDraftKey;
+    value?: string;
+    signature?: string;
+  }) {
     if (!imagePreview || meterSaveState === "saving") return;
+    const selectedMeter = options?.meter ?? meterDraftKey;
+    const correctedValue = (options?.value ?? meterDraftValue).trim();
 
-    if (!meterDraftKey) {
+    if (!selectedMeter) {
       setMeterSaveState("error");
       setMeterSaveError("Select which meter this image belongs to.");
       return;
     }
 
-    const correctedValue = meterDraftValue.trim();
     if (!correctedValue) {
       setMeterSaveState("error");
       setMeterSaveError("Enter the correct meter amount.");
@@ -1668,11 +1688,14 @@ export default function AdminForms() {
       if (DASHBOARD_AUTH_DISABLED) {
         const updatedSubmission = buildCorrectedSubmission(
           imagePreview.submission,
-          meterDraftKey,
+          selectedMeter,
           correctedValue,
           adminEmail || "local@fyrrehaven-61.dk"
         );
         replaceSubmission(updatedSubmission);
+        lastMeterSaveSignature.current =
+          options?.signature ||
+          `${imagePreview.submission.id}:${imagePreviewKey(imagePreview) || imagePreview.index}:${selectedMeter}:${correctedValue}`;
         setMeterSaveState("saved");
         return;
       }
@@ -1688,7 +1711,7 @@ export default function AdminForms() {
         body: JSON.stringify({
           action: "correct-meter",
           id: imagePreview.submission.id,
-          meter: meterDraftKey,
+          meter: selectedMeter,
           correctedValue,
         }),
       });
@@ -1698,6 +1721,9 @@ export default function AdminForms() {
       }
 
       replaceSubmission(data.submission);
+      lastMeterSaveSignature.current =
+        options?.signature ||
+        `${imagePreview.submission.id}:${imagePreviewKey(imagePreview) || imagePreview.index}:${selectedMeter}:${correctedValue}`;
       setMeterSaveState("saved");
     } catch (nextError) {
       setMeterSaveState("error");
@@ -1706,6 +1732,55 @@ export default function AdminForms() {
       );
     }
   }
+
+  React.useEffect(() => {
+    if (meterAutosaveTimer.current) {
+      window.clearTimeout(meterAutosaveTimer.current);
+      meterAutosaveTimer.current = null;
+    }
+
+    if (!imagePreview || !meterDraftKey) return;
+
+    const correctedValue = meterDraftValue.trim();
+    if (!correctedValue) {
+      setMeterSaveState("idle");
+      return;
+    }
+
+    const previewKey = imagePreviewKey(imagePreview) || String(imagePreview.index);
+    const signature = `${imagePreview.submission.id}:${previewKey}:${meterDraftKey}:${correctedValue}`;
+    if (lastMeterSaveSignature.current === signature) return;
+
+    meterAutosaveTimer.current = window.setTimeout(() => {
+      if (parseMeterNumber(correctedValue) == null) {
+        setMeterSaveState("error");
+        setMeterSaveError("Use a number, for example 055540 or 1.234,5.");
+        return;
+      }
+
+      void saveMeterCorrection({
+        meter: meterDraftKey,
+        value: correctedValue,
+        signature,
+      });
+    }, 750);
+
+    return () => {
+      if (meterAutosaveTimer.current) {
+        window.clearTimeout(meterAutosaveTimer.current);
+        meterAutosaveTimer.current = null;
+      }
+    };
+  }, [imagePreview, meterDraftKey, meterDraftValue]);
+
+  React.useEffect(() => {
+    if (meterSaveState !== "saved") return;
+    const timeout = window.setTimeout(() => {
+      setMeterSaveState("idle");
+    }, 1600);
+
+    return () => window.clearTimeout(timeout);
+  }, [meterSaveState]);
 
   function renderCheckinAttachments(submission: Submission) {
     const attachments = submission.checkin?.attachments || [];
@@ -2750,25 +2825,28 @@ export default function AdminForms() {
                           </div>
                         ) : null}
 
-                        <button
-                          type="button"
-                          className={styles.meterSaveButton}
-                          onClick={saveMeterCorrection}
-                          disabled={meterSaveState === "saving" || !meterDraftKey}
+                        <div
+                          className={styles.meterAutosaveStatus}
+                          data-state={meterSaveState}
+                          aria-live="polite"
                         >
                           {meterSaveState === "saved" ? (
                             <FiCheck aria-hidden="true" />
+                          ) : meterSaveState === "error" ? (
+                            <FiAlertCircle aria-hidden="true" />
                           ) : (
-                            <FiSave aria-hidden="true" />
+                            <FiEdit3 aria-hidden="true" />
                           )}
                           <span>
                             {meterSaveState === "saving"
                               ? "Saving..."
                               : meterSaveState === "saved"
-                                ? "Saved"
-                                : "Save correction"}
+                                ? "Updated"
+                                : meterSaveState === "error"
+                                  ? "Not saved"
+                                  : "Saves automatically"}
                           </span>
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </div>
