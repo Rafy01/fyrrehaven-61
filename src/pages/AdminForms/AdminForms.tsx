@@ -115,6 +115,10 @@ type Submission = {
       contentType?: string;
       sizeBytes?: number;
       storagePath?: string;
+      firestoreFileId?: string;
+      firestoreChunkCount?: number;
+      storageFallback?: string;
+      storageUploadError?: string;
       fullPath?: string;
       filePath?: string;
       path?: string;

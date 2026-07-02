@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import Busboy from "busboy";
 import { getFirestoreDb, getStorageBucket } from "./_lib/firebaseAdmin.mjs";
 import {
+  FORM_SUBMISSION_FILES_COLLECTION,
   createFormSubmission,
   updateFormSubmission,
 } from "./_lib/formSubmissions.mjs";
@@ -68,51 +69,141 @@ const sanitizeStorageSegment = (value) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 80) || "file";
 
-async function uploadCheckinFiles(submissionId, files) {
-  const bucket = await getStorageBucket();
-  if (!bucket || !submissionId || !files.length) {
+const FIRESTORE_FILE_CHUNK_SIZE = 650_000;
+
+async function storeCheckinFilesInFirestore(db, submissionId, files, fallbackReason = "") {
+  if (!db || !submissionId || !files.length) {
     return files.map((file) => ({
       fieldname: file.fieldname,
       filename: file.filename,
       contentType: file.contentType,
       sizeBytes: file.content.length,
-      viewError:
-        !bucket && file.content.length
-          ? "Firebase Storage is not configured for this deployment."
-          : undefined,
+      viewError: fallbackReason || "Image storage is not configured.",
     }));
   }
 
   return Promise.all(
     files.map(async (file, index) => {
-      const storagePath = [
-        "form-submissions",
+      const fileId = [
         sanitizeStorageSegment(submissionId),
-        "checkin-images",
-        `${String(index + 1).padStart(2, "0")}-${sanitizeStorageSegment(file.filename)}`,
-      ].join("/");
-      const bucketFile = bucket.file(storagePath);
+        String(index + 1).padStart(2, "0"),
+        sanitizeStorageSegment(file.filename),
+      ].join("-");
+      const fileRef = db.collection(FORM_SUBMISSION_FILES_COLLECTION).doc(fileId);
+      const base64 = file.content.toString("base64");
+      const chunks = [];
 
-      await bucketFile.save(file.content, {
-        resumable: false,
-        metadata: {
-          contentType: file.contentType,
-          metadata: {
-            originalFilename: file.filename,
-            formField: file.fieldname,
-          },
-        },
+      for (let offset = 0; offset < base64.length; offset += FIRESTORE_FILE_CHUNK_SIZE) {
+        chunks.push(base64.slice(offset, offset + FIRESTORE_FILE_CHUNK_SIZE));
+      }
+
+      await fileRef.set({
+        submissionId,
+        index,
+        fieldname: file.fieldname,
+        filename: file.filename,
+        contentType: file.contentType,
+        sizeBytes: file.content.length,
+        encoding: "base64",
+        chunkCount: chunks.length,
+        storageFallback: "firestore",
+        fallbackReason: fallbackReason || null,
+        createdAtMs: Date.now(),
       });
+
+      await Promise.all(
+        chunks.map((chunk, chunkIndex) =>
+          fileRef.collection("chunks").doc(String(chunkIndex).padStart(4, "0")).set({
+            index: chunkIndex,
+            data: chunk,
+          })
+        )
+      );
 
       return {
         fieldname: file.fieldname,
         filename: file.filename,
         contentType: file.contentType,
         sizeBytes: file.content.length,
-        storagePath,
+        firestoreFileId: fileRef.id,
+        firestoreChunkCount: chunks.length,
+        storageFallback: "firestore",
+        storageUploadError: fallbackReason || undefined,
       };
     })
   );
+}
+
+async function uploadCheckinFiles(db, submissionId, files) {
+  const bucket = await getStorageBucket();
+  if (!files.length) {
+    return [];
+  }
+
+  if (!bucket || !submissionId) {
+    return storeCheckinFilesInFirestore(
+      db,
+      submissionId,
+      files,
+      !bucket
+        ? "Firebase Storage is not configured for this deployment."
+        : "Submission id is missing for image storage."
+    );
+  }
+
+  try {
+    return await Promise.all(
+      files.map(async (file, index) => {
+        const storagePath = [
+          "form-submissions",
+          sanitizeStorageSegment(submissionId),
+          "checkin-images",
+          `${String(index + 1).padStart(2, "0")}-${sanitizeStorageSegment(file.filename)}`,
+        ].join("/");
+        const bucketFile = bucket.file(storagePath);
+
+        await bucketFile.save(file.content, {
+          resumable: false,
+          metadata: {
+            contentType: file.contentType,
+            metadata: {
+              originalFilename: file.filename,
+              formField: file.fieldname,
+            },
+          },
+        });
+
+        return {
+          fieldname: file.fieldname,
+          filename: file.filename,
+          contentType: file.contentType,
+          sizeBytes: file.content.length,
+          storagePath,
+        };
+      })
+    );
+  } catch (storageError) {
+    const uploadError = String(storageError?.message || storageError);
+    console.error("CHECKIN_IMAGE_STORAGE_UPLOAD_FAILED_USING_FIRESTORE", {
+      submissionId,
+      error: uploadError,
+    });
+    return storeCheckinFilesInFirestore(
+      db,
+      submissionId,
+      files,
+      `Firebase Storage upload failed: ${uploadError}`
+    );
+  }
+}
+
+function checkinImageUploadStatus(files, attachments) {
+  if (!files.length) return "none";
+  return attachments.some(
+    (attachment) => attachment.storagePath || attachment.firestoreFileId
+  )
+    ? "stored"
+    : "not-configured";
 }
 
 // Vercel handler
@@ -398,18 +489,12 @@ export default async function handler(req, res) {
 
         if (db && submissionRef) {
           try {
-            storedAttachments = await uploadCheckinFiles(submissionRef.id, files);
+            storedAttachments = await uploadCheckinFiles(db, submissionRef.id, files);
             await updateFormSubmission(submissionRef, {
               checkin: {
                 ...submissionRecord.checkin,
                 attachments: storedAttachments,
-                imageUploadStatus: storedAttachments.some(
-                  (attachment) => attachment.storagePath
-                )
-                  ? "stored"
-                  : files.length
-                    ? "not-configured"
-                    : "none",
+                imageUploadStatus: checkinImageUploadStatus(files, storedAttachments),
               },
               updatedAtMs: Date.now(),
             });

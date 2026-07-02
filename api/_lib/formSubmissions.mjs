@@ -2,6 +2,7 @@ import { getServerTimestamp } from "./firebaseAdmin.mjs";
 
 export const FORM_SUBMISSIONS_COLLECTION = "formSubmissions";
 export const LEGACY_CONTACT_SUBMISSIONS_COLLECTION = "contactSubmissions";
+export const FORM_SUBMISSION_FILES_COLLECTION = "formSubmissionFiles";
 
 export async function createFormSubmission(db, record) {
   if (!db) return null;
@@ -26,6 +27,23 @@ export async function updateFormSubmission(docRef, patch) {
 
 export async function deleteFormSubmission(db, submissionId) {
   if (!db || !submissionId) return false;
+
+  const fileSnapshot = await db
+    .collection(FORM_SUBMISSION_FILES_COLLECTION)
+    .where("submissionId", "==", submissionId)
+    .get()
+    .catch(() => ({ docs: [] }));
+
+  await Promise.all(
+    fileSnapshot.docs.map(async (fileDoc) => {
+      const chunkSnapshot = await fileDoc.ref
+        .collection("chunks")
+        .get()
+        .catch(() => ({ docs: [] }));
+      await Promise.all(chunkSnapshot.docs.map((chunkDoc) => chunkDoc.ref.delete()));
+      await fileDoc.ref.delete();
+    })
+  );
 
   const collections = [
     FORM_SUBMISSIONS_COLLECTION,

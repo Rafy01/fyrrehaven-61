@@ -5,6 +5,7 @@ import {
   verifyAdminRequest,
 } from "../_lib/firebaseAdmin.mjs";
 import {
+  FORM_SUBMISSION_FILES_COLLECTION,
   FORM_SUBMISSIONS_COLLECTION,
   LEGACY_CONTACT_SUBMISSIONS_COLLECTION,
   deleteFormSubmission,
@@ -43,31 +44,81 @@ function attachmentHasViewSource(attachment) {
   );
 }
 
-async function addAttachmentViewUrls(submissions) {
+async function attachmentFirestoreDataUrl(db, attachment) {
+  const fileId = String(attachment?.firestoreFileId || "").trim();
+  if (!db || !fileId) return null;
+
+  const fileRef = db.collection(FORM_SUBMISSION_FILES_COLLECTION).doc(fileId);
+  const [fileSnapshot, chunksSnapshot] = await Promise.all([
+    fileRef.get(),
+    fileRef.collection("chunks").orderBy("index", "asc").get(),
+  ]);
+
+  if (!fileSnapshot.exists || chunksSnapshot.empty) {
+    return null;
+  }
+
+  const contentType =
+    attachment?.contentType ||
+    fileSnapshot.data()?.contentType ||
+    "application/octet-stream";
+  const base64 = chunksSnapshot.docs
+    .map((doc) => String(doc.data()?.data || ""))
+    .join("");
+
+  if (!base64) return null;
+  return `data:${contentType};base64,${base64}`;
+}
+
+async function addAttachmentViewUrls(submissions, db) {
   const bucket = await getStorageBucket();
   if (!bucket) {
-    return submissions.map((submission) => {
-      const attachments = submission?.checkin?.attachments;
-      if (!Array.isArray(attachments) || attachments.length === 0) {
-        return submission;
-      }
+    return Promise.all(
+      submissions.map(async (submission) => {
+        const attachments = submission?.checkin?.attachments;
+        if (!Array.isArray(attachments) || attachments.length === 0) {
+          return submission;
+        }
 
-      return {
-        ...submission,
-        checkin: {
-          ...submission.checkin,
-          attachments: attachments.map((attachment) =>
-            attachmentHasViewSource(attachment)
-              ? attachment
-              : {
+        const nextAttachments = await Promise.all(
+          attachments.map(async (attachment) => {
+            if (attachmentHasViewSource(attachment)) return attachment;
+
+            try {
+              const dataUrl = await attachmentFirestoreDataUrl(db, attachment);
+              if (dataUrl) {
+                return {
                   ...attachment,
-                  viewError:
-                    "Firebase Storage is not configured for the admin API.",
-                }
-          ),
-        },
-      };
-    });
+                  dataUrl,
+                };
+              }
+            } catch (error) {
+              console.error("CHECKIN_IMAGE_FIRESTORE_FALLBACK_FAILED", {
+                submissionId: submission.id,
+                firestoreFileId: attachment?.firestoreFileId || null,
+                error: String(error?.message || error),
+              });
+            }
+
+            return {
+              ...attachment,
+              viewError:
+                attachment?.viewError ||
+                attachment?.uploadError ||
+                "Firebase Storage is not configured for the admin API.",
+            };
+          })
+        );
+
+        return {
+          ...submission,
+          checkin: {
+            ...submission.checkin,
+            attachments: nextAttachments,
+          },
+        };
+      })
+    );
   }
 
   const expiresAt = Date.now() + 15 * 60 * 1000;
@@ -82,6 +133,22 @@ async function addAttachmentViewUrls(submissions) {
       const nextAttachments = await Promise.all(
         attachments.map(async (attachment) => {
           if (attachmentHasViewSource(attachment)) return attachment;
+
+          try {
+            const dataUrl = await attachmentFirestoreDataUrl(db, attachment);
+            if (dataUrl) {
+              return {
+                ...attachment,
+                dataUrl,
+              };
+            }
+          } catch (error) {
+            console.error("CHECKIN_IMAGE_FIRESTORE_FALLBACK_FAILED", {
+              submissionId: submission.id,
+              firestoreFileId: attachment?.firestoreFileId || null,
+              error: String(error?.message || error),
+            });
+          }
 
           const storagePath = attachmentStoragePath(attachment);
           if (!storagePath) {
@@ -332,7 +399,7 @@ export default async function handler(req, res) {
         updatedAtMs,
       };
 
-      const [submissionWithUrls] = await addAttachmentViewUrls([updatedSubmission]);
+      const [submissionWithUrls] = await addAttachmentViewUrls([updatedSubmission], db);
 
       sendJson(res, 200, {
         ok: true,
@@ -384,7 +451,8 @@ export default async function handler(req, res) {
     }
 
     const submissions = await addAttachmentViewUrls(
-      await listFormSubmissions(db, 250)
+      await listFormSubmissions(db, 250),
+      db
     );
 
     sendJson(res, 200, {
