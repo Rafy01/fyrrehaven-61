@@ -41,6 +41,7 @@ import {
 
 type SubmissionStatus = "pending" | "sent" | "mail_failed";
 type MeterKey = "electricity" | "waterHouse" | "waterPool";
+type MeterDraftKey = MeterKey | "";
 
 type MeterCorrection = {
   meter?: MeterKey;
@@ -258,8 +259,8 @@ function meterIcon(value: MeterKey) {
 
 function meterKeyFromAttachment(
   attachment?: ImagePreview["attachment"] | null
-): MeterKey {
-  return isMeterKey(attachment?.fieldname) ? attachment.fieldname : "electricity";
+): MeterDraftKey {
+  return isMeterKey(attachment?.fieldname) ? attachment.fieldname : "";
 }
 
 function imagePreviewKey(preview: ImagePreview | null) {
@@ -816,7 +817,7 @@ export default function AdminForms() {
   const [meterDraftByImage, setMeterDraftByImage] = React.useState<
     Record<string, MeterKey>
   >({});
-  const [meterDraftKey, setMeterDraftKey] = React.useState<MeterKey>("electricity");
+  const [meterDraftKey, setMeterDraftKey] = React.useState<MeterDraftKey>("");
   const [meterDraftValue, setMeterDraftValue] = React.useState("");
   const [meterSaveState, setMeterSaveState] = React.useState<
     "idle" | "saving" | "saved" | "error"
@@ -940,7 +941,7 @@ export default function AdminForms() {
       meterKeyFromAttachment(imagePreview.attachment);
     setMeterDraftKey(nextMeter);
     setMeterDraftValue(
-      imagePreview.submission.checkin?.meterReadings?.[nextMeter] || ""
+      nextMeter ? imagePreview.submission.checkin?.meterReadings?.[nextMeter] || "" : ""
     );
     setMeterSaveState("idle");
     setMeterSaveError(null);
@@ -1640,6 +1641,12 @@ export default function AdminForms() {
 
   async function saveMeterCorrection() {
     if (!imagePreview || meterSaveState === "saving") return;
+
+    if (!meterDraftKey) {
+      setMeterSaveState("error");
+      setMeterSaveError("Select which meter this image belongs to.");
+      return;
+    }
 
     const correctedValue = meterDraftValue.trim();
     if (!correctedValue) {
@@ -2544,11 +2551,13 @@ export default function AdminForms() {
         ? (() => {
             const attachments = imagePreviewAttachments(imagePreview);
             const hasMultipleImages = attachments.length > 1;
-            const currentReading = currentMeterReading(
-              imagePreview.submission,
-              meterDraftKey
-            );
-            const correction = meterCorrection(imagePreview.submission, meterDraftKey);
+            const selectedMeter = meterDraftKey || null;
+            const currentReading = selectedMeter
+              ? currentMeterReading(imagePreview.submission, selectedMeter)
+              : "";
+            const correction = selectedMeter
+              ? meterCorrection(imagePreview.submission, selectedMeter)
+              : null;
             const originalValue = correction?.originalValue || currentReading || "";
             const originalNumber = parseMeterNumber(originalValue);
             const draftNumber = parseMeterNumber(meterDraftValue);
@@ -2677,6 +2686,9 @@ export default function AdminForms() {
                               setMeterSaveError(null);
                             }}
                           >
+                            <option value="" disabled>
+                              Select meter
+                            </option>
                             {METER_OPTIONS.map((option) => (
                               <option key={option.key} value={option.key}>
                                 {option.label}
@@ -2687,7 +2699,11 @@ export default function AdminForms() {
 
                         <div className={styles.meterReadingCard}>
                           <span className={styles.meterReadingIcon}>
-                            {meterIcon(meterDraftKey)}
+                            {selectedMeter ? (
+                              meterIcon(selectedMeter)
+                            ) : (
+                              <FiEdit3 aria-hidden="true" />
+                            )}
                           </span>
                           <div>
                             <span>Guest input</span>
@@ -2718,7 +2734,8 @@ export default function AdminForms() {
                           <div className={styles.meterCorrectionLog}>
                             <FiCheck aria-hidden="true" />
                             <span>
-                              Admin updated {meterLabel(meterDraftKey)} from{" "}
+                              Admin updated{" "}
+                              {selectedMeter ? meterLabel(selectedMeter) : "meter"} from{" "}
                               <strong>{correction.originalValue || "empty"}</strong> to{" "}
                               <strong>{correction.correctedValue || "empty"}</strong>
                               {correction.updatedBy ? ` by ${correction.updatedBy}` : ""}.
@@ -2737,7 +2754,7 @@ export default function AdminForms() {
                           type="button"
                           className={styles.meterSaveButton}
                           onClick={saveMeterCorrection}
-                          disabled={meterSaveState === "saving"}
+                          disabled={meterSaveState === "saving" || !meterDraftKey}
                         >
                           {meterSaveState === "saved" ? (
                             <FiCheck aria-hidden="true" />
