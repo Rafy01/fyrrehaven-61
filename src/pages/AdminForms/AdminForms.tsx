@@ -1806,12 +1806,6 @@ export default function AdminForms() {
 
   function renderCombinedContactContent(submissions: Submission[], fallback: Submission) {
     const contactItems = submissions.length ? submissions : [fallback];
-    const emailSource =
-      findOverviewContactSubmission(contactItems, "email") || contactItems[0] || fallback;
-    const phoneSource =
-      findOverviewContactSubmission(contactItems, "phone") || contactItems[0] || fallback;
-    const emails = uniqueSubmissionValues(contactItems, (submission) => submission.email);
-    const phones = uniqueSubmissionValues(contactItems, (submission) => submission.phone);
     const messages = contactItems.filter((submission) =>
       hasDisplayValue(submission.message)
     );
@@ -1821,20 +1815,6 @@ export default function AdminForms() {
 
     return (
       <>
-        {emails.length || phones.length ? (
-          <section className={styles.detailSection}>
-            <h3>Contact</h3>
-            <div className={styles.detailGrid}>
-              {emails.length
-                ? renderContactValueList("Email", emails, emailSource)
-                : null}
-              {phones.length
-                ? renderContactValueList("Phone", phones, phoneSource)
-                : null}
-            </div>
-          </section>
-        ) : null}
-
         {messages.length > 0 ? (
           <section className={styles.detailSection}>
             <h3>{messages.length === 1 ? "Message" : "Messages"}</h3>
