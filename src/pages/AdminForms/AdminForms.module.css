@@ -506,6 +506,7 @@
 }
 
 .detailMailButton {
+  appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -517,6 +518,9 @@
   color: var(--accent-11);
   background: transparent;
   text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
   flex: 0 0 auto;
   transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
 }
@@ -530,6 +534,50 @@
 .detailMailButton svg {
   width: 18px;
   height: 18px;
+}
+
+.contactCopyButton {
+  color: var(--gray-12);
+  background: color-mix(in srgb, var(--gray-12) 8%, transparent);
+}
+
+.contactCopyButton:hover {
+  color: var(--accent-12);
+  background: color-mix(in srgb, var(--accent-9) 18%, transparent);
+}
+
+.contactValueList {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.contactValueRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px 32px;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.contactValueRow .detailMailButton {
+  width: 32px;
+  height: 32px;
+}
+
+.contactValueText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--gray-12);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.contactValueText:hover {
+  color: var(--accent-11);
 }
 
 .detailSubValues {
@@ -692,6 +740,14 @@
   text-align: right;
   font-weight: 700;
   color: var(--gray-12);
+}
+
+.priceBreakdownMeta {
+  display: block;
+  margin-top: 2px;
+  color: var(--gray-9);
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .priceAmount {
@@ -1071,6 +1127,20 @@
 
 .linkedTab:hover {
   transform: translateY(-1px);
+}
+
+.tabStatusIcon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.tabStatusOk {
+  color: #38b76b;
+}
+
+.tabStatusError {
+  color: #ff6b7d;
 }
 
 .linkedTab:disabled,

@@ -6,6 +6,7 @@ import {
   FiCheckCircle,
   FiChevronLeft,
   FiChevronRight,
+  FiCopy,
   FiDroplet,
   FiEdit3,
   FiInbox,
@@ -99,6 +100,8 @@ type Submission = {
   checkin?: {
     type?: string;
     typeLabel?: string;
+    stayDate?: string | null;
+    submittedStayDate?: string | null;
     keycode?: string | null;
     meterReadings?: {
       electricity?: string | null;
@@ -312,6 +315,34 @@ function isCheckoutSubmission(submission: Submission) {
   return isCheckinSubmission(submission) && submission.checkin?.type === "checkout";
 }
 
+function submissionFailed(submission?: Submission | null) {
+  return submission?.status === "mail_failed" || submission?.mailStatus === "failed";
+}
+
+function submissionOk(submission?: Submission | null) {
+  return submission?.status === "sent" || submission?.mailStatus === "sent";
+}
+
+function submissionStatusIcon(submission?: Submission | null) {
+  if (submissionFailed(submission)) {
+    return (
+      <FiAlertCircle
+        aria-hidden="true"
+        className={`${styles.tabStatusIcon} ${styles.tabStatusError}`}
+      />
+    );
+  }
+  if (submissionOk(submission)) {
+    return (
+      <FiCheckCircle
+        aria-hidden="true"
+        className={`${styles.tabStatusIcon} ${styles.tabStatusOk}`}
+      />
+    );
+  }
+  return null;
+}
+
 function submissionValue(submission: Submission) {
   if (submission.selection?.totalAfterAirbnbDiscountDKK != null) {
     return formatMoney(submission.selection.totalAfterAirbnbDiscountDKK);
@@ -479,10 +510,21 @@ function renderExtrasPriceBreakdown(extras?: Submission["extras"] | null) {
           typeof item.qty === "number" && typeof item.unitPriceDKK === "number"
             ? item.qty * item.unitPriceDKK
             : null;
+        const quantity =
+          typeof item.qty === "number"
+            ? isYesNoExtraItem(item)
+              ? "Yes"
+              : `x ${item.qty}`
+            : null;
 
         return (
           <div className={styles.priceBreakdownRow} key={`${item.id || "extra-total"}-${index}`}>
-            <span>{item.label?.en || item.label?.da || item.id || "Extra"}</span>
+            <span>
+              {item.label?.en || item.label?.da || item.id || "Extra"}
+              {quantity ? (
+                <small className={styles.priceBreakdownMeta}>{quantity}</small>
+              ) : null}
+            </span>
             <span>{total != null ? renderPriceAmount(total) : "—"}</span>
           </div>
         );
@@ -541,8 +583,23 @@ function normalizeEmail(email?: string | null) {
 
 function normalizeArrivalDate(submission: Submission) {
   const value =
-    submission.selection?.start?.trim() || submission.extras?.stayDate?.trim();
+    submission.selection?.start?.trim() ||
+    submission.extras?.stayDate?.trim() ||
+    checkinSubmittedStayDate(submission);
   return value ? value : null;
+}
+
+function submissionCreatedPlainDate(submission?: Submission | null) {
+  if (!submission?.createdAtMs) return null;
+  return new Date(submission.createdAtMs).toISOString().slice(0, 10);
+}
+
+function checkinSubmittedStayDate(submission?: Submission | null) {
+  const value =
+    submission?.checkin?.stayDate?.trim() ||
+    submission?.checkin?.submittedStayDate?.trim() ||
+    submissionCreatedPlainDate(submission);
+  return value || null;
 }
 
 function findOverviewStayDate(group: SubmissionGroup | null, fallback?: Submission | null) {
@@ -551,14 +608,24 @@ function findOverviewStayDate(group: SubmissionGroup | null, fallback?: Submissi
     ?.selection?.start;
   const extraStayDate = submissions.find((submission) => submission.extras?.stayDate)
     ?.extras?.stayDate;
-  return bookingStart || extraStayDate || null;
+  const checkinDate = checkinSubmittedStayDate(
+    submissions.find((submission) => submission.checkin?.type === "checkin")
+  );
+  const anyCheckinDate = checkinSubmittedStayDate(
+    submissions.find((submission) => isCheckinSubmission(submission))
+  );
+  return bookingStart || extraStayDate || checkinDate || anyCheckinDate || null;
 }
 
 function findOverviewCheckoutDate(group: SubmissionGroup | null, fallback?: Submission | null) {
   const submissions = group?.items?.length ? group.items : fallback ? [fallback] : [];
   return (
     submissions.find((submission) => submission.selection?.endExclusive)?.selection
-      ?.endExclusive || null
+      ?.endExclusive ||
+    checkinSubmittedStayDate(
+      submissions.find((submission) => submission.checkin?.type === "checkout")
+    ) ||
+    null
   );
 }
 
@@ -1107,6 +1174,12 @@ export default function AdminForms() {
     setAppearance((current) => (current === "dark" ? "light" : "dark"));
   }
 
+  async function copyText(value: string) {
+    const text = value.trim();
+    if (!text || !navigator.clipboard) return;
+    await navigator.clipboard.writeText(text);
+  }
+
   function renderLoggedMeta(submission?: Submission | null) {
     return <p className={styles.detailMeta}>{loggedLabel(submission)}</p>;
   }
@@ -1151,6 +1224,10 @@ export default function AdminForms() {
             ),
           }
         : null;
+    const canCopyContact =
+      Boolean(textValue) &&
+      !options?.disableAutoAction &&
+      (label.toLowerCase() === "email" || label.toLowerCase() === "phone");
 
     return (
       <div className={`${styles.detailItem} ${options?.wide ? styles.detailItemWide : ""}`}>
@@ -1183,9 +1260,98 @@ export default function AdminForms() {
                 {phoneAction.icon}
               </a>
             ) : null}
+            {canCopyContact ? (
+              <button
+                type="button"
+                className={`${styles.detailMailButton} ${styles.contactCopyButton}`}
+                aria-label={`Copy ${label.toLowerCase()}`}
+                title={`Copy ${label.toLowerCase()}`}
+                onClick={() => copyText(textValue)}
+              >
+                <FiCopy aria-hidden="true" />
+              </button>
+            ) : null}
           </div>
         )}
         {options?.after}
+        {renderLoggedMeta(submission)}
+      </div>
+    );
+  }
+
+  function renderContactValueList(
+    label: "Email" | "Phone",
+    values: string[],
+    submission: Submission
+  ) {
+    if (!values.length) return null;
+    const isEmail = label === "Email";
+
+    return (
+      <div className={styles.detailItem}>
+        <span className={styles.detailLabel}>{label}</span>
+        <div className={styles.contactValueList}>
+          {values.map((value) => {
+            const trimmed = value.trim();
+            const phoneDigits = trimmed.replace(/[^\d+]/g, "");
+            const normalizedPhone = phoneDigits.startsWith("+")
+              ? phoneDigits
+              : phoneDigits
+                ? `+${phoneDigits}`
+                : "";
+            const href = isEmail
+              ? `mailto:${trimmed}`
+              : normalizedPhone.startsWith("+45")
+                ? `tel:${normalizedPhone}`
+                : `https://wa.me/${normalizedPhone.replace("+", "")}`;
+            const actionLabel = isEmail
+              ? `Email ${trimmed}`
+              : normalizedPhone.startsWith("+45")
+                ? `Call ${trimmed}`
+                : `Message ${trimmed} on WhatsApp`;
+            const icon = isEmail ? (
+              <FiMail aria-hidden="true" />
+            ) : normalizedPhone.startsWith("+45") ? (
+              <FiPhone aria-hidden="true" />
+            ) : (
+              <FaWhatsapp aria-hidden="true" />
+            );
+
+            return (
+              <div className={styles.contactValueRow} key={trimmed}>
+                <a
+                  className={styles.contactValueText}
+                  href={href}
+                  aria-label={actionLabel}
+                  title={trimmed}
+                  target={href.startsWith("https://") ? "_blank" : undefined}
+                  rel={href.startsWith("https://") ? "noreferrer" : undefined}
+                >
+                  {trimmed}
+                </a>
+                <a
+                  className={styles.detailMailButton}
+                  href={href}
+                  aria-label={actionLabel}
+                  title={actionLabel}
+                  target={href.startsWith("https://") ? "_blank" : undefined}
+                  rel={href.startsWith("https://") ? "noreferrer" : undefined}
+                >
+                  {icon}
+                </a>
+                <button
+                  type="button"
+                  className={`${styles.detailMailButton} ${styles.contactCopyButton}`}
+                  aria-label={`Copy ${label.toLowerCase()}`}
+                  title={`Copy ${label.toLowerCase()}`}
+                  onClick={() => copyText(trimmed)}
+                >
+                  <FiCopy aria-hidden="true" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
         {renderLoggedMeta(submission)}
       </div>
     );
@@ -1269,6 +1435,7 @@ export default function AdminForms() {
               onClick={() => setActiveGroupDetail(submission.id)}
             >
               <span>{submissionTabLabel(submission)}</span>
+              {submissionStatusIcon(submission)}
             </button>
           ))}
           {hasCheckinSubmissions ? (
@@ -1280,6 +1447,7 @@ export default function AdminForms() {
               onClick={() => setActiveGroupDetail(CHECKIN_GROUP_DETAIL)}
             >
               <span>Check-in/out</span>
+              {submissionStatusIcon(checkinSubmissions.find(submissionFailed) || checkinSubmissions.find(submissionOk))}
             </button>
           ) : null}
         </div>
@@ -1465,7 +1633,7 @@ export default function AdminForms() {
     const firstPreviewIndex = attachments.findIndex((file) => imageSource(file));
     const firstPreview =
       firstPreviewIndex >= 0 ? attachments[firstPreviewIndex] : attachments[0];
-    const canPreview = firstPreviewIndex >= 0;
+    const previewIndex = firstPreviewIndex >= 0 ? firstPreviewIndex : 0;
 
     return (
       <div className={styles.attachmentSection}>
@@ -1473,15 +1641,12 @@ export default function AdminForms() {
           type="button"
           className={styles.attachmentOpenButton}
           onClick={() =>
-            canPreview
-              ? setImagePreview({
-                  submission,
-                  attachment: firstPreview,
-                  index: firstPreviewIndex,
-                })
-              : undefined
+            setImagePreview({
+              submission,
+              attachment: firstPreview,
+              index: previewIndex,
+            })
           }
-          disabled={!canPreview}
         >
           <span>
             <strong>Check-in/out images</strong>
@@ -1513,16 +1678,8 @@ export default function AdminForms() {
     const phones = uniqueSubmissionValues(groupItems, (submission) => submission.phone);
 
     const contactItems = [
-      emails.length
-        ? renderDetailItem("Email", emails.join(", "), emailSource, {
-            disableAutoAction: emails.length > 1,
-          })
-        : null,
-      phones.length
-        ? renderDetailItem("Phone", phones.join(", "), phoneSource, {
-            disableAutoAction: phones.length > 1,
-          })
-        : null,
+      emails.length ? renderContactValueList("Email", emails, emailSource) : null,
+      phones.length ? renderContactValueList("Phone", phones, phoneSource) : null,
     ].filter(Boolean);
     const stayDateItems = [
       renderDetailItem("Check-in", formatPlainDate(overviewStayDate), staySource),
@@ -1780,6 +1937,11 @@ export default function AdminForms() {
                     onClick={() => setActiveCheckinDetail(type)}
                   >
                     <span>{type === "checkout" ? "Check-out" : "Check-in"}</span>
+                    {submissionStatusIcon(
+                      checkinSubmissions.find(
+                        (submission) => submission.checkin?.type === type
+                      )
+                    )}
                   </button>
                 ))}
               </div>
@@ -1791,7 +1953,7 @@ export default function AdminForms() {
           </section>
         ) : null}
 
-        {submission.message ? (
+        {!isContactSubmission && submission.message ? (
           <section className={styles.detailSection}>
             <h3>Message</h3>
             <p className={styles.detailMessage}>{submission.message}</p>

@@ -51,7 +51,23 @@ async function addAttachmentViewUrls(submissions) {
               storagePath: attachment.storagePath,
               error: String(error?.message || error),
             });
-            return attachment;
+
+            try {
+              const [buffer] = await bucket.file(attachment.storagePath).download();
+              const contentType = attachment.contentType || "application/octet-stream";
+
+              return {
+                ...attachment,
+                dataUrl: `data:${contentType};base64,${buffer.toString("base64")}`,
+              };
+            } catch (downloadError) {
+              console.error("CHECKIN_IMAGE_DOWNLOAD_FALLBACK_FAILED", {
+                submissionId: submission.id,
+                storagePath: attachment.storagePath,
+                error: String(downloadError?.message || downloadError),
+              });
+              return attachment;
+            }
           }
         })
       );

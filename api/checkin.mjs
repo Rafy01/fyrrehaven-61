@@ -340,6 +340,7 @@ export default async function handler(req, res) {
           name,
         });
         const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
+        const submittedStayDate = new Date().toISOString().slice(0, 10);
         const db = await getFirestoreDb();
         let storedAttachments = files.map((file) => ({
           fieldname: file.fieldname,
@@ -357,6 +358,8 @@ export default async function handler(req, res) {
           checkin: {
             type: String(checkType || ""),
             typeLabel,
+            stayDate: submittedStayDate,
+            submittedStayDate,
             keycode: String(keycode || "").trim(),
             meterReadings: {
               electricity: String(elReading || "").trim(),
