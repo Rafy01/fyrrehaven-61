@@ -580,6 +580,42 @@
   color: var(--accent-11);
 }
 
+.contactMessageList {
+  display: grid;
+  gap: 10px;
+}
+
+.contactMessageCard {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--gray-4);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--gray-12) 5%, transparent);
+}
+
+.contactMessageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.contactMessageHeader > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.contactMessageHeader strong {
+  color: var(--gray-12);
+}
+
+.contactMessageHeader span {
+  color: var(--gray-10);
+  font-size: 0.9rem;
+}
+
 .detailSubValues {
   display: flex;
   flex-wrap: wrap;

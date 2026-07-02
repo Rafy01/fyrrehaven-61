@@ -168,6 +168,7 @@ type SubmissionGroup = {
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
 const DASHBOARD_AUTH_DISABLED = import.meta.env.DEV;
 const CHECKIN_GROUP_DETAIL = "guest-checkin";
+const CONTACT_GROUP_DETAIL = "contact";
 const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
   typeof window !== "undefined" &&
@@ -315,6 +316,10 @@ function isCheckoutSubmission(submission: Submission) {
   return isCheckinSubmission(submission) && submission.checkin?.type === "checkout";
 }
 
+function isContactSubmission(submission: Submission) {
+  return !submission.intent || submission.intent === "inquiry";
+}
+
 function submissionFailed(submission?: Submission | null) {
   return submission?.status === "mail_failed" || submission?.mailStatus === "failed";
 }
@@ -341,6 +346,12 @@ function submissionStatusIcon(submission?: Submission | null) {
     );
   }
   return null;
+}
+
+function submissionGroupStatusIcon(submissions: Submission[]) {
+  return submissionStatusIcon(
+    submissions.find(submissionFailed) || submissions.find(submissionOk)
+  );
 }
 
 function submissionValue(submission: Submission) {
@@ -923,9 +934,15 @@ export default function AdminForms() {
     () => selectedGroup?.items.filter(isCheckinSubmission) || [],
     [selectedGroup]
   );
+  const contactSubmissions = React.useMemo(
+    () => selectedGroup?.items.filter(isContactSubmission) || [],
+    [selectedGroup]
+  );
   const detailSubmission =
     activeGroupDetail === "overview"
       ? selectedSubmission
+      : activeGroupDetail === CONTACT_GROUP_DETAIL
+      ? contactSubmissions[0] || selectedSubmission
       : activeGroupDetail === CHECKIN_GROUP_DETAIL
       ? checkinSubmissions.find(
           (submission) => submission.checkin?.type === activeCheckinDetail
@@ -944,7 +961,20 @@ export default function AdminForms() {
     ) {
       return;
     }
-    if (selectedGroup.items.some((submission) => submission.id === activeGroupDetail)) return;
+    if (
+      activeGroupDetail === CONTACT_GROUP_DETAIL &&
+      selectedGroup.items.some(isContactSubmission)
+    ) {
+      return;
+    }
+    if (
+      selectedGroup.items.some(
+        (submission) =>
+          submission.id === activeGroupDetail && !isContactSubmission(submission)
+      )
+    ) {
+      return;
+    }
     setActiveGroupDetail("overview");
   }, [activeGroupDetail, selectedGroup]);
 
@@ -1408,10 +1438,13 @@ export default function AdminForms() {
   }
 
   function renderGroupDetailSwitcher(group: SubmissionGroup) {
+    const groupContactSubmissions = group.items.filter(isContactSubmission);
+    const groupCheckinSubmissions = group.items.filter(isCheckinSubmission);
     const regularSubmissions = group.items.filter(
-      (submission) => !isCheckinSubmission(submission)
+      (submission) =>
+        !isCheckinSubmission(submission) && !isContactSubmission(submission)
     );
-    const hasCheckinSubmissions = group.items.some(isCheckinSubmission);
+    const hasCheckinSubmissions = groupCheckinSubmissions.length > 0;
 
     return (
       <div className={styles.linkedTabs}>
@@ -1438,6 +1471,18 @@ export default function AdminForms() {
               {submissionStatusIcon(submission)}
             </button>
           ))}
+          {groupContactSubmissions.length > 0 ? (
+            <button
+              type="button"
+              className={styles.linkedTab}
+              role="tab"
+              aria-selected={activeGroupDetail === CONTACT_GROUP_DETAIL}
+              onClick={() => setActiveGroupDetail(CONTACT_GROUP_DETAIL)}
+            >
+              <span>Contact</span>
+              {submissionGroupStatusIcon(groupContactSubmissions)}
+            </button>
+          ) : null}
           {hasCheckinSubmissions ? (
             <button
               type="button"
@@ -1447,7 +1492,7 @@ export default function AdminForms() {
               onClick={() => setActiveGroupDetail(CHECKIN_GROUP_DETAIL)}
             >
               <span>Check-in/out</span>
-              {submissionStatusIcon(checkinSubmissions.find(submissionFailed) || checkinSubmissions.find(submissionOk))}
+              {submissionGroupStatusIcon(groupCheckinSubmissions)}
             </button>
           ) : null}
         </div>
@@ -1759,14 +1804,105 @@ export default function AdminForms() {
     );
   }
 
+  function renderCombinedContactContent(submissions: Submission[], fallback: Submission) {
+    const contactItems = submissions.length ? submissions : [fallback];
+    const emailSource =
+      findOverviewContactSubmission(contactItems, "email") || contactItems[0] || fallback;
+    const phoneSource =
+      findOverviewContactSubmission(contactItems, "phone") || contactItems[0] || fallback;
+    const emails = uniqueSubmissionValues(contactItems, (submission) => submission.email);
+    const phones = uniqueSubmissionValues(contactItems, (submission) => submission.phone);
+    const messages = contactItems.filter((submission) =>
+      hasDisplayValue(submission.message)
+    );
+    const mailErrors = contactItems.filter((submission) =>
+      hasDisplayValue(submission.mailError)
+    );
+
+    return (
+      <>
+        {emails.length || phones.length ? (
+          <section className={styles.detailSection}>
+            <h3>Contact</h3>
+            <div className={styles.detailGrid}>
+              {emails.length
+                ? renderContactValueList("Email", emails, emailSource)
+                : null}
+              {phones.length
+                ? renderContactValueList("Phone", phones, phoneSource)
+                : null}
+            </div>
+          </section>
+        ) : null}
+
+        {messages.length > 0 ? (
+          <section className={styles.detailSection}>
+            <h3>{messages.length === 1 ? "Message" : "Messages"}</h3>
+            <div className={styles.contactMessageList}>
+              {messages.map((messageSubmission) => (
+                <article
+                  className={styles.contactMessageCard}
+                  key={messageSubmission.id}
+                >
+                  <div className={styles.contactMessageHeader}>
+                    <div>
+                      <strong>{displayNameWithCountry(messageSubmission)}</strong>
+                      <span>{formatDateTime(messageSubmission.createdAtMs)}</span>
+                    </div>
+                    <span
+                      className={`${styles.badge} ${statusClassName(
+                        messageSubmission.status
+                      )}`}
+                    >
+                      {statusLabel(messageSubmission.status)}
+                    </span>
+                  </div>
+                  <p className={styles.detailMessage}>{messageSubmission.message}</p>
+                  {renderLoggedMeta(messageSubmission)}
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {mailErrors.length > 0 ? (
+          <section className={styles.detailSection}>
+            <h3>Email errors</h3>
+            <div className={styles.contactMessageList}>
+              {mailErrors.map((errorSubmission) => (
+                <article
+                  className={styles.contactMessageCard}
+                  key={`${errorSubmission.id}-mail-error`}
+                >
+                  <div className={styles.contactMessageHeader}>
+                    <div>
+                      <strong>{displayNameWithCountry(errorSubmission)}</strong>
+                      <span>{formatDateTime(errorSubmission.createdAtMs)}</span>
+                    </div>
+                    {submissionStatusIcon(errorSubmission)}
+                  </div>
+                  <p className={styles.detailMessage}>{errorSubmission.mailError}</p>
+                  {renderLoggedMeta(errorSubmission)}
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </>
+    );
+  }
+
   function renderSubmissionDetailContent(submission: Submission) {
     const isOverview = activeGroupDetail === "overview";
     if (isOverview) {
       return renderOverviewContent(selectedGroup, submission);
     }
+    if (activeGroupDetail === CONTACT_GROUP_DETAIL) {
+      return renderCombinedContactContent(contactSubmissions, submission);
+    }
 
     const isBookingSubmission = submission.intent === "booking";
-    const isContactSubmission = !submission.intent || submission.intent === "inquiry";
+    const isContact = isContactSubmission(submission);
     const stayDateItems: React.ReactNode[] = [];
     const stayCountItems = [
       isBookingSubmission
@@ -1854,7 +1990,7 @@ export default function AdminForms() {
 
     return (
       <>
-        {isContactSubmission && submission.message ? (
+        {isContact && submission.message ? (
           <section className={styles.detailSection}>
             <h3>Message</h3>
             <div className={styles.detailList}>
@@ -1953,7 +2089,7 @@ export default function AdminForms() {
           </section>
         ) : null}
 
-        {!isContactSubmission && submission.message ? (
+        {!isContact && submission.message ? (
           <section className={styles.detailSection}>
             <h3>Message</h3>
             <p className={styles.detailMessage}>{submission.message}</p>
