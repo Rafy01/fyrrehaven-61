@@ -76,6 +76,10 @@ async function uploadCheckinFiles(submissionId, files) {
       filename: file.filename,
       contentType: file.contentType,
       sizeBytes: file.content.length,
+      viewError:
+        !bucket && file.content.length
+          ? "Firebase Storage is not configured for this deployment."
+          : undefined,
     }));
   }
 
@@ -387,16 +391,59 @@ export default async function handler(req, res) {
         if (db) {
           try {
             submissionRef = await createFormSubmission(db, submissionRecord);
+          } catch (firestoreError) {
+            console.error("FIRESTORE_WRITE_FAILED", firestoreError);
+          }
+        }
+
+        if (db && submissionRef) {
+          try {
             storedAttachments = await uploadCheckinFiles(submissionRef.id, files);
             await updateFormSubmission(submissionRef, {
               checkin: {
                 ...submissionRecord.checkin,
                 attachments: storedAttachments,
+                imageUploadStatus: storedAttachments.some(
+                  (attachment) => attachment.storagePath
+                )
+                  ? "stored"
+                  : files.length
+                    ? "not-configured"
+                    : "none",
               },
               updatedAtMs: Date.now(),
             });
           } catch (storageError) {
-            console.error("FIRESTORE_OR_STORAGE_WRITE_FAILED", storageError);
+            const uploadError = String(storageError?.message || storageError);
+            console.error("CHECKIN_IMAGE_UPLOAD_FAILED", {
+              submissionId: submissionRef.id,
+              error: uploadError,
+            });
+
+            storedAttachments = files.map((file) => ({
+              fieldname: file.fieldname,
+              filename: file.filename,
+              contentType: file.contentType,
+              sizeBytes: file.content.length,
+              viewError: `Firebase Storage upload failed: ${uploadError}`,
+            }));
+
+            try {
+              await updateFormSubmission(submissionRef, {
+                checkin: {
+                  ...submissionRecord.checkin,
+                  attachments: storedAttachments,
+                  imageUploadStatus: "failed",
+                  imageUploadError: uploadError,
+                },
+                updatedAtMs: Date.now(),
+              });
+            } catch (updateError) {
+              console.error("CHECKIN_IMAGE_UPLOAD_ERROR_SAVE_FAILED", {
+                submissionId: submissionRef.id,
+                error: String(updateError?.message || updateError),
+              });
+            }
           }
         }
 

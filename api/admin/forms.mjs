@@ -88,6 +88,8 @@ async function addAttachmentViewUrls(submissions) {
             return {
               ...attachment,
               viewError:
+                attachment?.viewError ||
+                attachment?.uploadError ||
                 "This submission has file metadata, but no stored Firebase Storage path.",
             };
           }

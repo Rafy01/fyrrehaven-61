@@ -126,7 +126,10 @@ type Submission = {
       publicUrl?: string;
       src?: string;
       viewError?: string;
+      uploadError?: string;
     }> | null;
+    imageUploadStatus?: "stored" | "failed" | "not-configured" | "none";
+    imageUploadError?: string | null;
   } | null;
   status?: SubmissionStatus;
   mailStatus?: "pending" | "sent" | "failed";
