@@ -1435,6 +1435,40 @@
   object-fit: contain;
 }
 
+.imagePreviewMissing {
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--gray-4);
+  background: color-mix(in srgb, var(--gray-12) 4%, transparent);
+  color: var(--gray-10);
+}
+
+.imagePreviewMissing > svg {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  color: var(--accent-10);
+}
+
+.imagePreviewMissing h3 {
+  margin: 0 0 8px;
+  color: var(--gray-12);
+  font-size: 1.1rem;
+}
+
+.imagePreviewMissing p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.imagePreviewMissing p + p {
+  margin-top: 8px;
+}
+
 .imagePreviewMeta {
   display: flex;
   flex-direction: column;

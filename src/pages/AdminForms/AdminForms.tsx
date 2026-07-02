@@ -115,12 +115,17 @@ type Submission = {
       contentType?: string;
       sizeBytes?: number;
       storagePath?: string;
+      fullPath?: string;
+      filePath?: string;
+      path?: string;
+      storageRef?: string;
       viewUrl?: string;
       dataUrl?: string;
       url?: string;
       downloadUrl?: string;
       publicUrl?: string;
       src?: string;
+      viewError?: string;
     }> | null;
   } | null;
   status?: SubmissionStatus;
@@ -2583,7 +2588,22 @@ export default function AdminForms() {
                           </button>
                         ) : null}
                       </div>
-                    ) : null}
+                    ) : (
+                      <div className={styles.imagePreviewMissing}>
+                        <FiAlertCircle aria-hidden="true" />
+                        <div>
+                          <h3>Image source missing</h3>
+                          <p>
+                            {imagePreview.attachment.viewError ||
+                              "This submission has the filename and file size, but no stored image URL or Firebase Storage path."}
+                          </p>
+                          <p>
+                            Older submissions may need to be submitted again so the
+                            uploaded image can be stored with a retrievable path.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <div className={styles.imagePreviewMeta}>
                       <div className={styles.imageCounter}>
                         <span>

@@ -18,9 +18,57 @@ const DASHBOARD_AUTH_DISABLED =
   process.env.DASHBOARD_AUTH_DISABLED === "true";
 const METER_FIELDS = new Set(["electricity", "waterHouse", "waterPool"]);
 
+function attachmentStoragePath(attachment) {
+  const rawPath =
+    attachment?.storagePath ||
+    attachment?.fullPath ||
+    attachment?.filePath ||
+    attachment?.path ||
+    attachment?.storageRef ||
+    "";
+  const path = String(rawPath || "").trim();
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path) || path.startsWith("data:")) return "";
+  return path.replace(/^\/+/, "");
+}
+
+function attachmentHasViewSource(attachment) {
+  return Boolean(
+    attachment?.viewUrl ||
+      attachment?.dataUrl ||
+      attachment?.downloadUrl ||
+      attachment?.publicUrl ||
+      attachment?.url ||
+      attachment?.src
+  );
+}
+
 async function addAttachmentViewUrls(submissions) {
   const bucket = await getStorageBucket();
-  if (!bucket) return submissions;
+  if (!bucket) {
+    return submissions.map((submission) => {
+      const attachments = submission?.checkin?.attachments;
+      if (!Array.isArray(attachments) || attachments.length === 0) {
+        return submission;
+      }
+
+      return {
+        ...submission,
+        checkin: {
+          ...submission.checkin,
+          attachments: attachments.map((attachment) =>
+            attachmentHasViewSource(attachment)
+              ? attachment
+              : {
+                  ...attachment,
+                  viewError:
+                    "Firebase Storage is not configured for the admin API.",
+                }
+          ),
+        },
+      };
+    });
+  }
 
   const expiresAt = Date.now() + 15 * 60 * 1000;
 
@@ -33,40 +81,56 @@ async function addAttachmentViewUrls(submissions) {
 
       const nextAttachments = await Promise.all(
         attachments.map(async (attachment) => {
-          if (!attachment?.storagePath) return attachment;
+          if (attachmentHasViewSource(attachment)) return attachment;
+
+          const storagePath = attachmentStoragePath(attachment);
+          if (!storagePath) {
+            return {
+              ...attachment,
+              viewError:
+                "This submission has file metadata, but no stored Firebase Storage path.",
+            };
+          }
 
           try {
-            const [viewUrl] = await bucket.file(attachment.storagePath).getSignedUrl({
+            const [viewUrl] = await bucket.file(storagePath).getSignedUrl({
               action: "read",
               expires: expiresAt,
             });
 
             return {
               ...attachment,
+              storagePath,
               viewUrl,
             };
           } catch (error) {
             console.error("CHECKIN_IMAGE_SIGNED_URL_FAILED", {
               submissionId: submission.id,
-              storagePath: attachment.storagePath,
+              storagePath,
               error: String(error?.message || error),
             });
 
             try {
-              const [buffer] = await bucket.file(attachment.storagePath).download();
+              const [buffer] = await bucket.file(storagePath).download();
               const contentType = attachment.contentType || "application/octet-stream";
 
               return {
                 ...attachment,
+                storagePath,
                 dataUrl: `data:${contentType};base64,${buffer.toString("base64")}`,
               };
             } catch (downloadError) {
               console.error("CHECKIN_IMAGE_DOWNLOAD_FALLBACK_FAILED", {
                 submissionId: submission.id,
-                storagePath: attachment.storagePath,
+                storagePath,
                 error: String(downloadError?.message || downloadError),
               });
-              return attachment;
+              return {
+                ...attachment,
+                storagePath,
+                viewError:
+                  "The stored image could not be loaded from Firebase Storage.",
+              };
             }
           }
         })
