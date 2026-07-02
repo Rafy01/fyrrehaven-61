@@ -28,17 +28,10 @@ export function isFirebaseAdminConfigured() {
   );
 }
 
-function getDefaultStorageBucketName() {
-  const projectId = readEnv("FIREBASE_PROJECT_ID");
-  if (!projectId) return "";
-  return `${projectId}.firebasestorage.app`;
-}
-
 function getStorageBucketName() {
   return (
     readEnv("FIREBASE_STORAGE_BUCKET") ||
-    readEnv("VITE_FIREBASE_STORAGE_BUCKET") ||
-    getDefaultStorageBucketName()
+    readEnv("VITE_FIREBASE_STORAGE_BUCKET")
   );
 }
 
