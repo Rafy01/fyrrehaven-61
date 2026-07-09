@@ -57,6 +57,10 @@ type ExtraItem = NonNullable<NonNullable<Submission["extras"]>["items"]>[number]
 
 type Submission = {
   id: string;
+  bookingNumber?: string | number | null;
+  bookingNo?: string | number | null;
+  reservationNumber?: string | number | null;
+  adminNumber?: string | number | null;
   intent?: string;
   lang?: string;
   name?: string;
@@ -176,6 +180,7 @@ type SubmissionGroup = {
   primary: Submission;
   items: Submission[];
   labels: string[];
+  bookingNumber: string;
 };
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
@@ -219,6 +224,38 @@ function formatDateTime(value?: number) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function bookingNumberPrefix(hasBookingInfo: boolean) {
+  return hasBookingInfo ? "9" : "7";
+}
+
+function bookingNumberFallback(value: number | undefined, hasBookingInfo: boolean) {
+  if (!value) return null;
+  const suffix = String(Math.abs(value) % 10000).padStart(4, "0");
+  return `${bookingNumberPrefix(hasBookingInfo)}${suffix}`;
+}
+
+function stringValue(value: unknown) {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return null;
+}
+
+function fiveDigitNumber(value: string | null, hasBookingInfo?: boolean) {
+  if (!value) return null;
+  const digits = value.replace(/\D/g, "");
+  if (digits.length === 5) {
+    if (hasBookingInfo == null || digits.startsWith(bookingNumberPrefix(hasBookingInfo))) {
+      return digits;
+    }
+    return `${bookingNumberPrefix(hasBookingInfo)}${digits.slice(1)}`;
+  }
+  if (digits.length > 5) {
+    const suffix = digits.slice(-4);
+    return `${bookingNumberPrefix(Boolean(hasBookingInfo))}${suffix}`;
+  }
+  return null;
 }
 
 function formatPlainDate(value?: string | null) {
@@ -352,6 +389,48 @@ function isCheckoutSubmission(submission: Submission) {
 
 function isContactSubmission(submission: Submission) {
   return !submission.intent || submission.intent === "inquiry";
+}
+
+function submissionBookingNumber(
+  submission: Submission,
+  hasBookingInfo?: boolean
+) {
+  const selection = submission.selection as
+    | (Submission["selection"] & {
+        bookingNumber?: unknown;
+        bookingNo?: unknown;
+        reservationNumber?: unknown;
+      })
+    | null
+    | undefined;
+
+  return (
+    fiveDigitNumber(stringValue(submission.bookingNumber), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(submission.bookingNo), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(submission.reservationNumber), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(submission.adminNumber), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(selection?.bookingNumber), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(selection?.bookingNo), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(selection?.reservationNumber), hasBookingInfo) ||
+    null
+  );
+}
+
+function groupBookingNumber(items: Submission[]) {
+  const hasBookingInfo = items.some(
+    (submission) => submission.intent === "booking" || Boolean(submission.selection)
+  );
+  const bookingSource =
+    items.find((submission) => submission.intent === "booking") ||
+    items.find((submission) => Boolean(submission.selection)) ||
+    items[0];
+
+  return (
+    (bookingSource && submissionBookingNumber(bookingSource, hasBookingInfo)) ||
+    bookingNumberFallback(bookingSource?.createdAtMs, hasBookingInfo) ||
+    bookingSource?.id ||
+    "unknown"
+  );
 }
 
 function detailSlugForSubmission(submission: Submission) {
@@ -804,14 +883,16 @@ function buildSubmissionGroups(submissions: Submission[]): SubmissionGroup[] {
       const sorted = [...items].sort(
         (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
       );
+      const bookingNumber = groupBookingNumber(sorted);
 
       return {
-        id: sorted[0].id,
+        id: bookingNumber,
         primary: sorted[0],
         items: sorted,
         labels: Array.from(
           new Set(sorted.map((submission) => submissionLabel(submission)))
         ),
+        bookingNumber,
       };
     })
     .sort((a, b) => (b.primary.createdAtMs || 0) - (a.primary.createdAtMs || 0));
@@ -1030,9 +1111,6 @@ export default function AdminForms() {
         group.id === selectedId ||
         group.items.some((submission) => submission.id === selectedId)
     ) || null;
-  const routeMatchedSubmission =
-    selectedGroup?.items.find((submission) => submission.id === routeSelectedId) ||
-    null;
   const selectedSubmission = selectedGroup?.primary || null;
   const checkinSubmissions = React.useMemo(
     () => selectedGroup?.items.filter(isCheckinSubmission) || [],
@@ -1111,11 +1189,7 @@ export default function AdminForms() {
   React.useEffect(() => {
     if (!routeSelectedId || !selectedGroup) return;
 
-    const requestedDetail = routeAdminDetail
-      ? activeRouteDetail
-      : routeMatchedSubmission
-        ? detailSlugForSubmission(routeMatchedSubmission)
-        : "overview";
+    const requestedDetail = routeAdminDetail ? activeRouteDetail : "overview";
     const nextSelection = detailSelectionForSlug(selectedGroup, requestedDetail);
 
     setActiveGroupDetail((current) =>
@@ -1132,7 +1206,6 @@ export default function AdminForms() {
   }, [
     activeRouteDetail,
     routeAdminDetail,
-    routeMatchedSubmission,
     routeSelectedId,
     selectedGroup,
   ]);
@@ -1320,6 +1393,10 @@ export default function AdminForms() {
     detailSlug?: string | null,
     options?: { replace?: boolean }
   ) {
+    if (!detailSlug || detailSlug === "overview") {
+      setActiveGroupDetail("overview");
+      setActiveCheckinDetail("checkin");
+    }
     setSelectedId(submissionId);
     navigate(adminSubmissionPath(submissionId, detailSlug), {
       replace: options?.replace,
@@ -1338,9 +1415,8 @@ export default function AdminForms() {
     }
 
     if (detail === CONTACT_GROUP_DETAIL) {
-      const contactSubmission = group.items.find(isContactSubmission);
       setActiveGroupDetail(CONTACT_GROUP_DETAIL);
-      openSubmissionDetail(contactSubmission?.id || group.id, "contact", options);
+      openSubmissionDetail(group.id, "contact", options);
       return;
     }
 
@@ -1355,7 +1431,7 @@ export default function AdminForms() {
         setActiveCheckinDetail(checkinDetail);
       }
       openSubmissionDetail(
-        checkinSubmission?.id || group.id,
+        group.id,
         checkinDetail || "checkin",
         options
       );
@@ -1365,7 +1441,7 @@ export default function AdminForms() {
     const submission = group.items.find((item) => item.id === detail);
     setActiveGroupDetail(detail);
     openSubmissionDetail(
-      submission?.id || group.id,
+      group.id,
       submission ? detailSlugForSubmission(submission) : detail,
       options
     );
@@ -1377,12 +1453,9 @@ export default function AdminForms() {
       return;
     }
 
-    const checkinSubmission =
-      selectedGroup.items.find((submission) => submission.checkin?.type === type) ||
-      selectedGroup.items.find(isCheckinSubmission);
     setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
     setActiveCheckinDetail(type);
-    openSubmissionDetail(checkinSubmission?.id || selectedGroup.id, type);
+    openSubmissionDetail(selectedGroup.id, type);
   }
 
   function closeMobileDetail() {
@@ -2204,7 +2277,22 @@ export default function AdminForms() {
 
     const isBookingSubmission = submission.intent === "booking";
     const isContact = isContactSubmission(submission);
-    const stayDateItems: React.ReactNode[] = [];
+    const stayDateItems = [
+      isBookingSubmission
+        ? renderDetailItem(
+            "Check-in",
+            formatPlainDate(submission.selection?.start),
+            submission
+          )
+        : null,
+      isBookingSubmission
+        ? renderDetailItem(
+            "Check-out",
+            formatPlainDate(submission.selection?.endExclusive),
+            submission
+          )
+        : null,
+    ].filter(Boolean);
     const stayCountItems = [
       isBookingSubmission
         ? renderDetailItem("Nights", submission.selection?.nights, submission)
@@ -2721,7 +2809,13 @@ export default function AdminForms() {
                             <div className={styles.rowTop}>
                               <div>
                                 <p className={styles.rowName}>
-                                  {displayNameWithCountry(submission) || "Unknown name"}
+                                  <span>
+                                    {displayNameWithCountry(submission) ||
+                                      "Unknown name"}
+                                  </span>
+                                  <span className={styles.rowBookingNumber}>
+                                    #{group.bookingNumber}
+                                  </span>
                                 </p>
                                 <div className={styles.rowEmail}>
                                   {submission.email || "—"}

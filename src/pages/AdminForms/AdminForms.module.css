@@ -394,8 +394,17 @@
 
 .rowName {
   margin: 0 0 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
   font-size: 1rem;
   font-weight: 700;
+}
+
+.rowBookingNumber {
+  color: #16a34a;
+  font-weight: 800;
 }
 
 .rowEmail,

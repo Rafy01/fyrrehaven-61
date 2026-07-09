@@ -37,6 +37,9 @@ const normalizeSmtpUser = (user, from) => {
   return domain ? `${normalized}@${domain}` : normalized;
 };
 
+const randomBookingNumber = (hasBookingInfo) =>
+  `${hasBookingInfo ? "9" : "7"}${String(Math.floor(Math.random() * 10000)).padStart(4, "0")}`;
+
 const fmtMoney = (n, lang = "da") => {
   if (n == null || Number.isNaN(Number(n))) return "—";
   const uiLang = normalizeLang(lang);
@@ -285,8 +288,10 @@ export default async function handler(req, res) {
     }
 
     const db = await getFirestoreDb();
+    const bookingNumber = randomBookingNumber(isBookingReq);
     const submissionRecord = {
       intent,
+      bookingNumber,
       lang: uiLang,
       name: name?.trim?.() || "",
       email: replyEmail,

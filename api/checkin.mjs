@@ -37,6 +37,9 @@ const normalizeSmtpUser = (user, from) => {
   return domain ? `${normalized}@${domain}` : normalized;
 };
 
+const randomBookingNumber = (hasBookingInfo) =>
+  `${hasBookingInfo ? "9" : "7"}${String(Math.floor(Math.random() * 10000)).padStart(4, "0")}`;
+
 const esc = (s = "") =>
   String(s)
     .replaceAll("&", "&amp;")
@@ -473,6 +476,7 @@ export default async function handler(req, res) {
         }));
         const submissionRecord = {
           intent: "guest-checkin",
+          bookingNumber: randomBookingNumber(false),
           lang: uiLang,
           name: String(name).trim(),
           email: emailNormalized,
