@@ -155,6 +155,14 @@ const router = createBrowserRouter([
   { path: "/debug/chat", element: lazyElement(<ChatDebug />, "chat-debug") },
   { path: "/admin", element: lazyElement(<AdminForms />, "admin") },
   { path: "/admin/forms", element: lazyElement(<AdminForms />, "admin-forms") },
+  {
+    path: "/admin/:submissionId",
+    element: lazyElement(<AdminForms />, "admin-submission"),
+  },
+  {
+    path: "/admin/:submissionId/:adminDetail",
+    element: lazyElement(<AdminForms />, "admin-submission-detail"),
+  },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 

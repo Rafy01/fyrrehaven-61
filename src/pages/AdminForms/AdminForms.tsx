@@ -29,6 +29,7 @@ import {
   type User,
 } from "firebase/auth";
 import { Theme } from "@radix-ui/themes";
+import { useNavigate, useParams } from "react-router-dom";
 
 import styles from "./AdminForms.module.css";
 import { localTestSubmissions } from "./localTestSubmissions";
@@ -181,6 +182,14 @@ const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
 const DASHBOARD_AUTH_DISABLED = import.meta.env.DEV;
 const CHECKIN_GROUP_DETAIL = "guest-checkin";
 const CONTACT_GROUP_DETAIL = "contact";
+const ADMIN_DETAIL_SLUGS = new Set([
+  "overview",
+  "booking",
+  "contact",
+  "extra-services",
+  "checkin",
+  "checkout",
+]);
 const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
   typeof window !== "undefined" &&
@@ -343,6 +352,31 @@ function isCheckoutSubmission(submission: Submission) {
 
 function isContactSubmission(submission: Submission) {
   return !submission.intent || submission.intent === "inquiry";
+}
+
+function detailSlugForSubmission(submission: Submission) {
+  if (submission.intent === "booking") return "booking";
+  if (submission.intent === "extra-services") return "extra-services";
+  if (isContactSubmission(submission)) return "contact";
+  if (isCheckinSubmission(submission)) return submission.checkin?.type || "checkin";
+  return submission.id;
+}
+
+function checkinDetailFromValue(value?: string | null): CheckinDetailSelection {
+  return value === "checkout" ? "checkout" : "checkin";
+}
+
+function adminSubmissionPath(submissionId: string, detailSlug?: string | null) {
+  const encodedId = encodeURIComponent(submissionId);
+  const normalizedDetail =
+    detailSlug && detailSlug !== "overview" ? `/${encodeURIComponent(detailSlug)}` : "";
+  return `/admin/${encodedId}${normalizedDetail}`;
+}
+
+function routeDetailSlug(value?: string) {
+  if (!value) return "overview";
+  const decoded = decodeURIComponent(value).trim();
+  return ADMIN_DETAIL_SLUGS.has(decoded) ? decoded : decoded || "overview";
 }
 
 function submissionFailed(submission?: Submission | null) {
@@ -784,6 +818,16 @@ function buildSubmissionGroups(submissions: Submission[]): SubmissionGroup[] {
 }
 
 export default function AdminForms() {
+  const navigate = useNavigate();
+  const { submissionId: routeSubmissionId, adminDetail: routeAdminDetail } =
+    useParams<{
+      submissionId?: string;
+      adminDetail?: string;
+    }>();
+  const routeSelectedId = routeSubmissionId
+    ? decodeURIComponent(routeSubmissionId)
+    : null;
+  const activeRouteDetail = routeDetailSlug(routeAdminDetail);
   const [appearance, setAppearance] = React.useState<Appearance>(() =>
     readAppearance()
   );
@@ -897,6 +941,7 @@ export default function AdminForms() {
 
       setSubmissions(nextSubmissions);
       setSelectedId((current) => {
+        if (routeSelectedId) return routeSelectedId;
         if (isMobileLayout) return null;
 
         if (current && nextSubmissions.some((submission) => submission.id === current)) {
@@ -918,13 +963,18 @@ export default function AdminForms() {
         setError(String(nextError instanceof Error ? nextError.message : nextError));
       }
     }
-  }, [isMobileLayout]);
+  }, [isMobileLayout, routeSelectedId]);
 
   React.useEffect(() => {
     setDeleteConfirmation("");
     setDeleteError(null);
     setActiveGroupDetail("overview");
   }, [selectedId]);
+
+  React.useEffect(() => {
+    if (!routeSelectedId) return;
+    setSelectedId(routeSelectedId);
+  }, [routeSelectedId]);
 
   React.useEffect(() => {
     if (!user && !DASHBOARD_AUTH_DISABLED) return;
@@ -975,7 +1025,14 @@ export default function AdminForms() {
   }, [submissionFilter, submissions]);
 
   const selectedGroup =
-    visibleGroups.find((group) => group.id === selectedId) || null;
+    visibleGroups.find(
+      (group) =>
+        group.id === selectedId ||
+        group.items.some((submission) => submission.id === selectedId)
+    ) || null;
+  const routeMatchedSubmission =
+    selectedGroup?.items.find((submission) => submission.id === routeSelectedId) ||
+    null;
   const selectedSubmission = selectedGroup?.primary || null;
   const checkinSubmissions = React.useMemo(
     () => selectedGroup?.items.filter(isCheckinSubmission) || [],
@@ -998,6 +1055,87 @@ export default function AdminForms() {
         selectedSubmission
       : selectedGroup?.items.find((submission) => submission.id === activeGroupDetail) ||
         selectedSubmission;
+
+  function detailSelectionForSlug(
+    group: SubmissionGroup,
+    slug: string
+  ): {
+    groupDetail: GroupDetailSelection;
+    checkinDetail: CheckinDetailSelection | null;
+  } {
+    if (slug === "overview") {
+      return { groupDetail: "overview", checkinDetail: null };
+    }
+
+    if (slug === "contact" && group.items.some(isContactSubmission)) {
+      return { groupDetail: CONTACT_GROUP_DETAIL, checkinDetail: null };
+    }
+
+    if (slug === "checkin" || slug === "checkout") {
+      const checkinDetail = slug as CheckinDetailSelection;
+      if (
+        group.items.some(
+          (submission) => submission.checkin?.type === checkinDetail
+        )
+      ) {
+        return {
+          groupDetail: CHECKIN_GROUP_DETAIL,
+          checkinDetail,
+        };
+      }
+    }
+
+    const matchingSubmission = group.items.find(
+      (submission) =>
+        submission.id === slug || detailSlugForSubmission(submission) === slug
+    );
+
+    if (matchingSubmission) {
+      if (isCheckinSubmission(matchingSubmission)) {
+        return {
+          groupDetail: CHECKIN_GROUP_DETAIL,
+          checkinDetail: checkinDetailFromValue(matchingSubmission.checkin?.type),
+        };
+      }
+
+      if (isContactSubmission(matchingSubmission)) {
+        return { groupDetail: CONTACT_GROUP_DETAIL, checkinDetail: null };
+      }
+
+      return { groupDetail: matchingSubmission.id, checkinDetail: null };
+    }
+
+    return { groupDetail: "overview", checkinDetail: null };
+  }
+
+  React.useEffect(() => {
+    if (!routeSelectedId || !selectedGroup) return;
+
+    const requestedDetail = routeAdminDetail
+      ? activeRouteDetail
+      : routeMatchedSubmission
+        ? detailSlugForSubmission(routeMatchedSubmission)
+        : "overview";
+    const nextSelection = detailSelectionForSlug(selectedGroup, requestedDetail);
+
+    setActiveGroupDetail((current) =>
+      current === nextSelection.groupDetail ? current : nextSelection.groupDetail
+    );
+    if (nextSelection.checkinDetail) {
+      const nextCheckinDetail = nextSelection.checkinDetail;
+      setActiveCheckinDetail((current) =>
+        current === nextCheckinDetail
+          ? current
+          : nextCheckinDetail
+      );
+    }
+  }, [
+    activeRouteDetail,
+    routeAdminDetail,
+    routeMatchedSubmission,
+    routeSelectedId,
+    selectedGroup,
+  ]);
 
   React.useEffect(() => {
     if (!selectedGroup) return;
@@ -1022,7 +1160,7 @@ export default function AdminForms() {
     ) {
       return;
     }
-    setActiveGroupDetail("overview");
+    openGroupDetail(selectedGroup, "overview", { replace: true });
   }, [activeGroupDetail, selectedGroup]);
 
   React.useEffect(() => {
@@ -1040,7 +1178,7 @@ export default function AdminForms() {
     )
       ? "checkin"
       : "checkout";
-    setActiveCheckinDetail(nextType);
+    openCheckinDetail(nextType);
   }, [activeCheckinDetail, activeGroupDetail, checkinSubmissions, selectedGroup]);
 
   React.useEffect(() => {
@@ -1050,6 +1188,7 @@ export default function AdminForms() {
     }
 
     setSelectedId((current) => {
+      if (routeSelectedId) return routeSelectedId;
       if (isMobileLayout) return null;
 
       if (current && visibleGroups.some((group) => group.id === current)) {
@@ -1058,7 +1197,7 @@ export default function AdminForms() {
 
       return visibleGroups[0].id;
     });
-  }, [isMobileLayout, visibleGroups]);
+  }, [isMobileLayout, routeSelectedId, visibleGroups]);
 
   React.useEffect(() => {
     if (
@@ -1147,7 +1286,11 @@ export default function AdminForms() {
       }
 
       if (activeGroupDetail !== "overview") {
-        setActiveGroupDetail("overview");
+        if (selectedGroup) {
+          openGroupDetail(selectedGroup, "overview");
+        } else {
+          setActiveGroupDetail("overview");
+        }
         return;
       }
 
@@ -1172,6 +1315,76 @@ export default function AdminForms() {
     (submission) => submission.status === "mail_failed"
   ).length;
 
+  function openSubmissionDetail(
+    submissionId: string,
+    detailSlug?: string | null,
+    options?: { replace?: boolean }
+  ) {
+    setSelectedId(submissionId);
+    navigate(adminSubmissionPath(submissionId, detailSlug), {
+      replace: options?.replace,
+    });
+  }
+
+  function openGroupDetail(
+    group: SubmissionGroup,
+    detail: GroupDetailSelection,
+    options?: { replace?: boolean }
+  ) {
+    if (detail === "overview") {
+      setActiveGroupDetail("overview");
+      openSubmissionDetail(group.id, "overview", options);
+      return;
+    }
+
+    if (detail === CONTACT_GROUP_DETAIL) {
+      const contactSubmission = group.items.find(isContactSubmission);
+      setActiveGroupDetail(CONTACT_GROUP_DETAIL);
+      openSubmissionDetail(contactSubmission?.id || group.id, "contact", options);
+      return;
+    }
+
+    if (detail === CHECKIN_GROUP_DETAIL) {
+      const checkinSubmission =
+        group.items.find(
+          (submission) => submission.checkin?.type === activeCheckinDetail
+        ) || group.items.find(isCheckinSubmission);
+      const checkinDetail = checkinSubmission?.checkin?.type || activeCheckinDetail;
+      setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
+      if (checkinDetail === "checkin" || checkinDetail === "checkout") {
+        setActiveCheckinDetail(checkinDetail);
+      }
+      openSubmissionDetail(
+        checkinSubmission?.id || group.id,
+        checkinDetail || "checkin",
+        options
+      );
+      return;
+    }
+
+    const submission = group.items.find((item) => item.id === detail);
+    setActiveGroupDetail(detail);
+    openSubmissionDetail(
+      submission?.id || group.id,
+      submission ? detailSlugForSubmission(submission) : detail,
+      options
+    );
+  }
+
+  function openCheckinDetail(type: CheckinDetailSelection) {
+    if (!selectedGroup) {
+      setActiveCheckinDetail(type);
+      return;
+    }
+
+    const checkinSubmission =
+      selectedGroup.items.find((submission) => submission.checkin?.type === type) ||
+      selectedGroup.items.find(isCheckinSubmission);
+    setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
+    setActiveCheckinDetail(type);
+    openSubmissionDetail(checkinSubmission?.id || selectedGroup.id, type);
+  }
+
   function closeMobileDetail() {
     mobileDetailDrag.current.active = false;
     mobileDetailDrag.current.pointerId = -1;
@@ -1180,6 +1393,7 @@ export default function AdminForms() {
     setIsDraggingMobileDetail(false);
     setMobileDetailDragOffset(0);
     setSelectedId(null);
+    navigate("/admin/forms");
   }
 
   function startMobileDetailDrag(event: React.PointerEvent<HTMLButtonElement>) {
@@ -1245,6 +1459,7 @@ export default function AdminForms() {
     setSubmissions([]);
     setSelectedId(null);
     setAdminEmail("");
+    navigate("/admin/forms");
   }
 
   function toggleAppearance() {
@@ -1494,7 +1709,7 @@ export default function AdminForms() {
             className={styles.linkedTab}
             role="tab"
             aria-selected={activeGroupDetail === "overview"}
-            onClick={() => setActiveGroupDetail("overview")}
+            onClick={() => openGroupDetail(group, "overview")}
           >
             <span>Overview</span>
           </button>
@@ -1505,7 +1720,7 @@ export default function AdminForms() {
               className={styles.linkedTab}
               role="tab"
               aria-selected={activeGroupDetail === submission.id}
-              onClick={() => setActiveGroupDetail(submission.id)}
+              onClick={() => openGroupDetail(group, submission.id)}
             >
               <span>{submissionTabLabel(submission)}</span>
               {submissionStatusIcon(submission)}
@@ -1517,7 +1732,7 @@ export default function AdminForms() {
               className={styles.linkedTab}
               role="tab"
               aria-selected={activeGroupDetail === CONTACT_GROUP_DETAIL}
-              onClick={() => setActiveGroupDetail(CONTACT_GROUP_DETAIL)}
+              onClick={() => openGroupDetail(group, CONTACT_GROUP_DETAIL)}
             >
               <span>Contact</span>
               {submissionGroupStatusIcon(groupContactSubmissions)}
@@ -1529,7 +1744,7 @@ export default function AdminForms() {
               className={styles.linkedTab}
               role="tab"
               aria-selected={activeGroupDetail === CHECKIN_GROUP_DETAIL}
-              onClick={() => setActiveGroupDetail(CHECKIN_GROUP_DETAIL)}
+              onClick={() => openGroupDetail(group, CHECKIN_GROUP_DETAIL)}
             >
               <span>Check-in/out</span>
               {submissionGroupStatusIcon(groupCheckinSubmissions)}
@@ -2156,7 +2371,7 @@ export default function AdminForms() {
                     aria-selected={activeCheckinDetail === type}
                     aria-disabled={!availableCheckinTypes.has(type)}
                     disabled={!availableCheckinTypes.has(type)}
-                    onClick={() => setActiveCheckinDetail(type)}
+                    onClick={() => openCheckinDetail(type)}
                   >
                     <span>{type === "checkout" ? "Check-out" : "Check-in"}</span>
                     {submissionStatusIcon(
@@ -2236,9 +2451,12 @@ export default function AdminForms() {
         const next = current.filter(
           (submission) => submission.id !== target.id
         );
-        setSelectedId((current) =>
-          current === target.id ? next[0]?.id ?? null : current
-        );
+        setSelectedId((current) => {
+          if (current !== target.id) return current;
+          const nextId = next[0]?.id ?? null;
+          navigate(nextId ? adminSubmissionPath(nextId) : "/admin/forms");
+          return nextId;
+        });
         return next;
       });
       setDeleteConfirmation("");
@@ -2486,18 +2704,18 @@ export default function AdminForms() {
                       <article
                         key={group.id}
                         className={styles.rowCard}
-                        data-active={group.id === selectedId}
+                        data-active={selectedGroup?.id === group.id}
                       >
                         <div className={styles.rowCardHeader}>
                           <div
                             className={styles.rowButton}
                             role="button"
                             tabIndex={0}
-                            onClick={() => setSelectedId(group.id)}
+                            onClick={() => openSubmissionDetail(group.id, "overview")}
                             onKeyDown={(event) => {
                               if (!isActivationKey(event)) return;
                               event.preventDefault();
-                              setSelectedId(group.id);
+                              openSubmissionDetail(group.id, "overview");
                             }}
                           >
                             <div className={styles.rowTop}>
