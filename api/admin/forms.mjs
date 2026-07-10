@@ -413,12 +413,20 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "DELETE") {
-      const submissionId =
-        String(req.query?.id || req.body?.id || "").trim();
+      const requestedIds = Array.isArray(req.body?.ids)
+        ? req.body.ids
+        : [req.query?.id || req.body?.id];
+      const submissionIds = Array.from(
+        new Set(
+          requestedIds
+            .map((value) => String(value || "").trim())
+            .filter(Boolean)
+        )
+      );
       const confirmation =
         String(req.body?.confirmation || "").trim().toLowerCase();
 
-      if (!submissionId) {
+      if (submissionIds.length === 0) {
         sendJson(res, 400, {
           ok: false,
           error: "SUBMISSION_ID_REQUIRED",
@@ -436,12 +444,25 @@ export default async function handler(req, res) {
         return;
       }
 
-      const deleted = await deleteFormSubmission(db, submissionId);
-      if (!deleted) {
+      const deleteResults = await Promise.all(
+        submissionIds.map(async (submissionId) => ({
+          id: submissionId,
+          deleted: await deleteFormSubmission(db, submissionId),
+        }))
+      );
+      const deletedIds = deleteResults
+        .filter((result) => result.deleted)
+        .map((result) => result.id);
+      const missingIds = deleteResults
+        .filter((result) => !result.deleted)
+        .map((result) => result.id);
+
+      if (deletedIds.length === 0) {
         sendJson(res, 404, {
           ok: false,
           error: "SUBMISSION_NOT_FOUND",
           detail: "No stored submission matched that id.",
+          missingIds,
         });
         return;
       }
@@ -449,7 +470,9 @@ export default async function handler(req, res) {
       sendJson(res, 200, {
         ok: true,
         deleted: true,
-        id: submissionId,
+        id: deletedIds[0],
+        deletedIds,
+        missingIds,
       });
       return;
     }

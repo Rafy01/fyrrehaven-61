@@ -164,6 +164,8 @@ type ApiResponse = {
   admin?: { email?: string };
   deleted?: boolean;
   id?: string;
+  deletedIds?: string[];
+  missingIds?: string[];
   submissionId?: string | null;
   stored?: boolean;
   mailStatus?: "sent" | "failed" | "pending";
@@ -208,6 +210,13 @@ type SubmissionGroup = {
   items: Submission[];
   labels: string[];
   bookingNumber: string;
+};
+type DeleteTarget = {
+  groupId: string;
+  bookingNumber: string;
+  primary: Submission;
+  items: Submission[];
+  labels: string[];
 };
 type DashboardStats = {
   total: number;
@@ -1039,7 +1048,7 @@ export default function AdminForms() {
   const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
-  const [deleteTarget, setDeleteTarget] = React.useState<Submission | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<DeleteTarget | null>(null);
   const [activeGroupDetail, setActiveGroupDetail] =
     React.useState<GroupDetailSelection>("overview");
   const [activeCheckinDetail, setActiveCheckinDetail] =
@@ -1923,10 +1932,16 @@ export default function AdminForms() {
     setMobileDetailDragOffset(0);
   }
 
-  function openDeleteDialog(submission: Submission) {
+  function openDeleteDialog(group: SubmissionGroup) {
     setDeleteError(null);
     setDeleteConfirmation("");
-    setDeleteTarget(submission);
+    setDeleteTarget({
+      groupId: group.id,
+      bookingNumber: group.bookingNumber,
+      primary: group.primary,
+      items: group.items,
+      labels: group.labels,
+    });
   }
 
   function closeDeleteDialog() {
@@ -2941,6 +2956,7 @@ export default function AdminForms() {
   async function handleDeleteSubmission() {
     const target = deleteTarget;
     if (!target || deleting) return;
+    const targetIds = target.items.map((submission) => submission.id).filter(Boolean);
 
     setDeleteError(null);
 
@@ -2957,14 +2973,14 @@ export default function AdminForms() {
           ? null
           : await auth.currentUser.getIdToken(true);
 
-      const res = await fetch(`/api/admin/forms?id=${encodeURIComponent(target.id)}`, {
+      const res = await fetch("/api/admin/forms", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          id: target.id,
+          ids: targetIds,
           confirmation: deleteConfirmation.trim(),
         }),
       });
@@ -2977,12 +2993,12 @@ export default function AdminForms() {
       }
 
       setSubmissions((current) => {
-        const next = current.filter(
-          (submission) => submission.id !== target.id
-        );
+        const deletedIds = new Set(data.deletedIds?.length ? data.deletedIds : targetIds);
+        const next = current.filter((submission) => !deletedIds.has(submission.id));
         setSelectedId((current) => {
-          if (current !== target.id) return current;
-          const nextId = next[0]?.id ?? null;
+          if (current !== target.groupId) return current;
+          const nextGroup = buildSubmissionGroups(next)[0] ?? null;
+          const nextId = nextGroup?.id ?? null;
           navigate(nextId ? adminSubmissionPath(nextId) : "/admin/forms");
           return nextId;
         });
@@ -3529,10 +3545,12 @@ export default function AdminForms() {
                           <button
                             type="button"
                             className={styles.iconButton}
-                            aria-label={`Delete submission from ${submission.name || submission.email || "unknown sender"}`}
+                            aria-label={`Delete ${group.items.length} submission${
+                              group.items.length === 1 ? "" : "s"
+                            } from ${submission.name || submission.email || "unknown sender"}`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              openDeleteDialog(submission);
+                              openDeleteDialog(group);
                             }}
                           >
                             <FiTrash2 aria-hidden="true" />
@@ -3855,16 +3873,25 @@ export default function AdminForms() {
             aria-labelledby="delete-submission-title"
             onClick={(event) => event.stopPropagation()}
           >
-            <p className={styles.eyebrow}>Delete submission</p>
-            <h2 id="delete-submission-title">Remove this submission?</h2>
+            <p className={styles.eyebrow}>Delete submissions</p>
+            <h2 id="delete-submission-title">
+              Remove this dataset?
+            </h2>
             <p className={styles.detailMuted}>
-              This will delete the submission from both the dashboard and Firestore.
+              This will delete all {deleteTarget.items.length} related submission
+              {deleteTarget.items.length === 1 ? "" : "s"} in this dataset from
+              both the dashboard and Firestore.
               Type <strong>delete</strong> to confirm.
             </p>
             <div className={styles.modalSummary}>
-              <strong>{deleteTarget.name || "Unknown name"}</strong>
-              <span>{deleteTarget.email || "—"}</span>
-              <span>{submissionLabel(deleteTarget)}</span>
+              <strong>{deleteTarget.primary.name || "Unknown name"}</strong>
+              <span>{deleteTarget.primary.email || "—"}</span>
+              <span>#{deleteTarget.bookingNumber}</span>
+              <span>
+                {deleteTarget.labels.length > 1
+                  ? deleteTarget.labels.join(" • ")
+                  : deleteTarget.labels[0] || submissionLabel(deleteTarget.primary)}
+              </span>
             </div>
             <label
               className={styles.detailLabel}
@@ -3902,7 +3929,11 @@ export default function AdminForms() {
                   deleteConfirmation.trim().toLowerCase() !== "delete"
                 }
               >
-                {deleting ? "Deleting..." : "Delete submission"}
+                {deleting
+                  ? "Deleting..."
+                  : `Delete ${deleteTarget.items.length} submission${
+                      deleteTarget.items.length === 1 ? "" : "s"
+                    }`}
               </button>
             </div>
           </div>
