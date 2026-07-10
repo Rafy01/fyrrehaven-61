@@ -168,6 +168,15 @@ type ApiResponse = {
 
 type Appearance = "light" | "dark";
 type SubmissionFilter = "all" | "booking" | "contact" | "extra-services" | "guest-checkin";
+type SubmissionDateFilter =
+  | "all"
+  | "today"
+  | "current-week"
+  | "last-week"
+  | "last-month"
+  | "last-3-months"
+  | "last-6-months"
+  | "year";
 type GroupDetailSelection = "overview" | string;
 type CheckinDetailSelection = "checkin" | "checkout";
 type ImagePreview = {
@@ -182,8 +191,15 @@ type SubmissionGroup = {
   labels: string[];
   bookingNumber: string;
 };
+type DashboardStats = {
+  total: number;
+  sent: number;
+  failed: number;
+  latestAtMs?: number;
+};
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
+const SUBMISSION_BATCH_SIZE = 18;
 const DASHBOARD_AUTH_DISABLED = import.meta.env.DEV;
 const CHECKIN_GROUP_DETAIL = "guest-checkin";
 const CONTACT_GROUP_DETAIL = "contact";
@@ -224,6 +240,58 @@ function formatDateTime(value?: number) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function startOfLocalDay(date = new Date()) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function addLocalDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function addLocalMonths(date: Date, months: number) {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+}
+
+function dateFilterRange(filter: SubmissionDateFilter) {
+  const today = startOfLocalDay();
+  const tomorrow = addLocalDays(today, 1);
+  const currentWeekStart = addLocalDays(today, -((today.getDay() + 6) % 7));
+
+  switch (filter) {
+    case "today":
+      return { from: today.getTime(), to: tomorrow.getTime() };
+    case "current-week":
+      return {
+        from: currentWeekStart.getTime(),
+        to: addLocalDays(currentWeekStart, 7).getTime(),
+      };
+    case "last-week": {
+      const lastWeekStart = addLocalDays(currentWeekStart, -7);
+      return {
+        from: lastWeekStart.getTime(),
+        to: currentWeekStart.getTime(),
+      };
+    }
+    case "last-month":
+      return { from: addLocalMonths(today, -1).getTime(), to: tomorrow.getTime() };
+    case "last-3-months":
+      return { from: addLocalMonths(today, -3).getTime(), to: tomorrow.getTime() };
+    case "last-6-months":
+      return { from: addLocalMonths(today, -6).getTime(), to: tomorrow.getTime() };
+    case "year":
+      return {
+        from: new Date(today.getFullYear(), 0, 1).getTime(),
+        to: new Date(today.getFullYear() + 1, 0, 1).getTime(),
+      };
+    default:
+      return null;
+  }
 }
 
 function bookingNumberPrefix(hasBookingInfo: boolean) {
@@ -900,14 +968,12 @@ function buildSubmissionGroups(submissions: Submission[]): SubmissionGroup[] {
 
 export default function AdminForms() {
   const navigate = useNavigate();
-  const { submissionId: routeSubmissionId, adminDetail: routeAdminDetail } =
-    useParams<{
-      submissionId?: string;
-      adminDetail?: string;
-    }>();
-  const routeSelectedId = routeSubmissionId
-    ? decodeURIComponent(routeSubmissionId)
-    : null;
+  const { "*": adminPath = "" } = useParams<{ "*": string }>();
+  const [routeSubmissionId, routeAdminDetail] = adminPath.split("/");
+  const routeSelectedId =
+    routeSubmissionId && routeSubmissionId !== "forms"
+      ? decodeURIComponent(routeSubmissionId)
+      : null;
   const activeRouteDetail = routeDetailSlug(routeAdminDetail);
   const [appearance, setAppearance] = React.useState<Appearance>(() =>
     readAppearance()
@@ -918,10 +984,15 @@ export default function AdminForms() {
   const [authReady, setAuthReady] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [submissions, setSubmissions] = React.useState<Submission[]>([]);
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = React.useState(false);
+  const [hasLoadedSubmissions, setHasLoadedSubmissions] = React.useState(false);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [adminEmail, setAdminEmail] = React.useState<string>("");
   const [submissionFilter, setSubmissionFilter] =
     React.useState<SubmissionFilter>("all");
+  const [dateFilter, setDateFilter] = React.useState<SubmissionDateFilter>("all");
+  const [renderedGroupCount, setRenderedGroupCount] =
+    React.useState(SUBMISSION_BATCH_SIZE);
   const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
@@ -996,6 +1067,7 @@ export default function AdminForms() {
 
   const fetchSubmissions = React.useCallback(async () => {
     setError(null);
+    setIsLoadingSubmissions(true);
 
     try {
       const auth = getFirebaseAuth();
@@ -1021,16 +1093,6 @@ export default function AdminForms() {
           : apiSubmissions;
 
       setSubmissions(nextSubmissions);
-      setSelectedId((current) => {
-        if (routeSelectedId) return routeSelectedId;
-        if (isMobileLayout) return null;
-
-        if (current && nextSubmissions.some((submission) => submission.id === current)) {
-          return current;
-        }
-
-        return nextSubmissions[0]?.id ?? null;
-      });
       setAdminEmail(
         data.admin?.email ||
           auth?.currentUser?.email ||
@@ -1038,13 +1100,19 @@ export default function AdminForms() {
       );
     } catch (nextError) {
       if (LOCAL_DASHBOARD_FALLBACK) {
-        setSubmissions([...(localTestSubmissions as unknown as Submission[])]);
+        const fallbackSubmissions = [
+          ...(localTestSubmissions as unknown as Submission[]),
+        ];
+        setSubmissions(fallbackSubmissions);
         setError(null);
       } else {
         setError(String(nextError instanceof Error ? nextError.message : nextError));
       }
+    } finally {
+      setHasLoadedSubmissions(true);
+      setIsLoadingSubmissions(false);
     }
-  }, [isMobileLayout, routeSelectedId]);
+  }, []);
 
   React.useEffect(() => {
     setDeleteConfirmation("");
@@ -1089,8 +1157,13 @@ export default function AdminForms() {
     }
   }, [imagePreview]);
 
-  const visibleGroups = React.useMemo(() => {
-    const filtered = submissions.filter((submission) => {
+  const filteredSubmissions = React.useMemo(() => {
+    const range = dateFilterRange(dateFilter);
+    return submissions.filter((submission) => {
+      if (range) {
+        const createdAt = submission.createdAtMs || 0;
+        if (createdAt < range.from || createdAt >= range.to) return false;
+      }
       if (submissionFilter === "all") return true;
       if (submissionFilter === "booking") return submission.intent === "booking";
       if (submissionFilter === "extra-services") {
@@ -1101,9 +1174,34 @@ export default function AdminForms() {
       }
       return !submission.intent || submission.intent === "inquiry";
     });
+  }, [dateFilter, submissionFilter, submissions]);
 
-    return buildSubmissionGroups(filtered);
-  }, [submissionFilter, submissions]);
+  const visibleGroups = React.useMemo(() => {
+    return buildSubmissionGroups(filteredSubmissions);
+  }, [filteredSubmissions]);
+
+  const filteredDashboardStats = React.useMemo<DashboardStats>(() => {
+    return {
+      total: filteredSubmissions.length,
+      sent: filteredSubmissions.filter(
+        (submission) => submission.status === "sent"
+      ).length,
+      failed: filteredSubmissions.filter(
+        (submission) => submission.status === "mail_failed"
+      ).length,
+      latestAtMs: filteredSubmissions[0]?.createdAtMs,
+    };
+  }, [filteredSubmissions]);
+
+  React.useEffect(() => {
+    setRenderedGroupCount(SUBMISSION_BATCH_SIZE);
+  }, [dateFilter, submissionFilter]);
+
+  const renderedGroups = React.useMemo(
+    () => visibleGroups.slice(0, renderedGroupCount),
+    [renderedGroupCount, visibleGroups]
+  );
+  const hasMoreVisibleGroups = renderedGroupCount < visibleGroups.length;
 
   const selectedGroup =
     visibleGroups.find(
@@ -1383,10 +1481,23 @@ export default function AdminForms() {
     selectedGroup,
   ]);
 
-  const sentCount = submissions.filter((submission) => submission.status === "sent").length;
-  const failedCount = submissions.filter(
-    (submission) => submission.status === "mail_failed"
-  ).length;
+  const sentCount = filteredDashboardStats.sent;
+  const failedCount = filteredDashboardStats.failed;
+
+  function showNextSubmissionBatch() {
+    setRenderedGroupCount((current) =>
+      Math.min(current + SUBMISSION_BATCH_SIZE, visibleGroups.length)
+    );
+  }
+
+  function handleSubmissionListScroll(event: React.UIEvent<HTMLDivElement>) {
+    if (!hasMoreVisibleGroups) return;
+    const element = event.currentTarget;
+    const distanceFromBottom =
+      element.scrollHeight - element.scrollTop - element.clientHeight;
+    if (distanceFromBottom > 360) return;
+    showNextSubmissionBatch();
+  }
 
   function openSubmissionDetail(
     submissionId: string,
@@ -2631,6 +2742,29 @@ export default function AdminForms() {
     );
   }
 
+  if (isLoadingSubmissions && !hasLoadedSubmissions) {
+    return (
+      <Theme appearance={appearance} accentColor="gray" radius="large">
+        <Helmet>
+          <title>Admin dashboard | Fyrrehaven 61</title>
+          <meta name="robots" content="noindex,nofollow,noarchive" />
+        </Helmet>
+        <div className={styles.page}>
+          <div className={styles.shell}>
+            <div className={styles.loadingState}>
+              <span className={styles.loader} aria-hidden="true" />
+              <div>
+                <p className={styles.eyebrow}>Admin dashboard</p>
+                <h1>Loading submissions...</h1>
+                <p>Fetching all submissions once so filtering and navigation stay fast.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Theme>
+    );
+  }
+
   return (
     <Theme appearance={appearance} accentColor="gray" radius="large">
       <Helmet>
@@ -2699,7 +2833,7 @@ export default function AdminForms() {
                 />
                 <p className={styles.cardLabel}>Total submissions</p>
               </div>
-              <p className={styles.cardValue}>{submissions.length}</p>
+              <p className={styles.cardValue}>{filteredDashboardStats.total}</p>
             </div>
             <div className={styles.card}>
               <div className={styles.cardLabelRow}>
@@ -2730,7 +2864,7 @@ export default function AdminForms() {
                 <p className={styles.cardLabel}>Latest submission</p>
               </div>
               <p className={`${styles.cardValue} ${styles.cardValueLatest}`}>
-                {formatDateTime(submissions[0]?.createdAtMs)}
+                {formatDateTime(filteredDashboardStats.latestAtMs)}
               </p>
             </div>
           </div>
@@ -2751,26 +2885,48 @@ export default function AdminForms() {
                       <h2>Submissions</h2>
                       <p>All website forms, sorted by newest first.</p>
                     </div>
-                    <label className={styles.filterLabel} htmlFor="admin-submission-filter">
-                      <span>Filter</span>
-                      <select
-                        id="admin-submission-filter"
-                        className={styles.filterSelect}
-                        value={submissionFilter}
-                        onChange={(event) =>
-                          setSubmissionFilter(event.target.value as SubmissionFilter)
-                        }
-                      >
-                        <option value="all">All</option>
-                        <option value="booking">Bookings</option>
-                        <option value="contact">Contacts</option>
-                        <option value="extra-services">Extra services</option>
-                        <option value="guest-checkin">Check-in / check-out</option>
-                      </select>
-                    </label>
+                    <div className={styles.filterGroup}>
+                      <label className={styles.filterLabel} htmlFor="admin-submission-filter">
+                        <span>Filter</span>
+                        <select
+                          id="admin-submission-filter"
+                          className={styles.filterSelect}
+                          value={submissionFilter}
+                          onChange={(event) =>
+                            setSubmissionFilter(event.target.value as SubmissionFilter)
+                          }
+                        >
+                          <option value="all">All</option>
+                          <option value="booking">Bookings</option>
+                          <option value="contact">Contacts</option>
+                          <option value="extra-services">Extra services</option>
+                          <option value="guest-checkin">Check-in / check-out</option>
+                        </select>
+                      </label>
+                      <label className={styles.filterLabel} htmlFor="admin-date-filter">
+                        <span>Date</span>
+                        <select
+                          id="admin-date-filter"
+                          className={styles.filterSelect}
+                          value={dateFilter}
+                          onChange={(event) =>
+                            setDateFilter(event.target.value as SubmissionDateFilter)
+                          }
+                        >
+                          <option value="all">All time</option>
+                          <option value="today">Today</option>
+                          <option value="current-week">Current week</option>
+                          <option value="last-week">Last week</option>
+                          <option value="last-month">Last month</option>
+                          <option value="last-3-months">Last 3 months</option>
+                          <option value="last-6-months">Last 6 months</option>
+                          <option value="year">This year</option>
+                        </select>
+                      </label>
+                    </div>
                   </div>
                 </div>
-                <div className={styles.list}>
+                <div className={styles.list} onScroll={handleSubmissionListScroll}>
                   {visibleGroups.length === 0 ? (
                     <div className={styles.emptyState}>
                       <h2>No submissions found</h2>
@@ -2779,7 +2935,8 @@ export default function AdminForms() {
                       </p>
                     </div>
                   ) : (
-                    visibleGroups.map((group) => {
+                    <>
+                    {renderedGroups.map((group) => {
                       const submission = group.primary;
                       const groupContextTag = submissionContextTag(submission);
                       const groupValue = submissionValue(submission);
@@ -2860,7 +3017,16 @@ export default function AdminForms() {
                         </div>
                       </article>
                       );
-                    })
+                    })}
+                    {hasMoreVisibleGroups ? (
+                      <div className={styles.listLoading}>
+                        <span className={styles.loaderSmall} aria-hidden="true" />
+                        <span>
+                          Loading more submissions in the background...
+                        </span>
+                      </div>
+                    ) : null}
+                    </>
                   )}
                 </div>
               </section>
