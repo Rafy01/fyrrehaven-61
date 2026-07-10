@@ -177,6 +177,13 @@ type SubmissionDateFilter =
   | "last-3-months"
   | "last-6-months"
   | "year";
+type TestSubmissionType =
+  | "all"
+  | "booking"
+  | "contact"
+  | "extra-services"
+  | "checkin"
+  | "checkout";
 type GroupDetailSelection = "overview" | string;
 type CheckinDetailSelection = "checkin" | "checkout";
 type ImagePreview = {
@@ -211,6 +218,7 @@ const ADMIN_DETAIL_SLUGS = new Set([
   "checkin",
   "checkout",
 ]);
+const ADMIN_RESERVED_ROUTES = new Set(["forms", "test-submissions"]);
 const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
   typeof window !== "undefined" &&
@@ -985,8 +993,9 @@ export default function AdminForms() {
   const navigate = useNavigate();
   const { "*": adminPath = "" } = useParams<{ "*": string }>();
   const [routeSubmissionId, routeAdminDetail] = adminPath.split("/");
+  const isTestSubmissionsPage = routeSubmissionId === "test-submissions";
   const routeSelectedId =
-    routeSubmissionId && routeSubmissionId !== "forms"
+    routeSubmissionId && !ADMIN_RESERVED_ROUTES.has(routeSubmissionId)
       ? decodeURIComponent(routeSubmissionId)
       : null;
   const activeRouteDetail = routeDetailSlug(routeAdminDetail);
@@ -1008,6 +1017,13 @@ export default function AdminForms() {
   const [dateFilter, setDateFilter] = React.useState<SubmissionDateFilter>("all");
   const [renderedGroupCount, setRenderedGroupCount] =
     React.useState(SUBMISSION_BATCH_SIZE);
+  const [testSubmissionType, setTestSubmissionType] =
+    React.useState<TestSubmissionType>("all");
+  const [creatingTestSubmission, setCreatingTestSubmission] = React.useState(false);
+  const [testSubmissionMessage, setTestSubmissionMessage] =
+    React.useState<string | null>(null);
+  const [testSubmissionError, setTestSubmissionError] =
+    React.useState<string | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
@@ -1141,9 +1157,10 @@ export default function AdminForms() {
   }, [routeSelectedId]);
 
   React.useEffect(() => {
+    if (isTestSubmissionsPage) return;
     if (!user && !DASHBOARD_AUTH_DISABLED) return;
     void fetchSubmissions();
-  }, [user, fetchSubmissions]);
+  }, [user, fetchSubmissions, isTestSubmissionsPage]);
 
   React.useEffect(() => {
     if (!imagePreview) {
@@ -1585,6 +1602,60 @@ export default function AdminForms() {
     setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
     setActiveCheckinDetail(type);
     openSubmissionDetail(selectedGroup.id, type);
+  }
+
+  async function createTestSubmission(type: TestSubmissionType = testSubmissionType) {
+    if (creatingTestSubmission) return;
+    setCreatingTestSubmission(true);
+    setTestSubmissionError(null);
+    setTestSubmissionMessage(null);
+
+    try {
+      const auth = getFirebaseAuth();
+      const token =
+        DASHBOARD_AUTH_DISABLED || !auth?.currentUser
+          ? null
+          : await auth.currentUser.getIdToken(true);
+      const res = await fetch("/api/admin/forms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          action: "create-test-submission",
+          type,
+        }),
+      });
+      const data = (await res.json()) as ApiResponse;
+      if (!res.ok || !data.ok || !data.submissions?.length) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+
+      const createdSubmissions = data.submissions;
+      addCreatedSubmissions(createdSubmissions);
+      setSubmissionFilter("all");
+      setDateFilter("all");
+      setRenderedGroupCount(SUBMISSION_BATCH_SIZE);
+
+      const createdGroups = buildSubmissionGroups(createdSubmissions);
+      const nextGroupId = createdGroups[0]?.id;
+      if (nextGroupId) {
+        openSubmissionDetail(nextGroupId, "overview");
+      }
+
+      setTestSubmissionMessage(
+        `Created ${createdSubmissions.length} test submission${
+          createdSubmissions.length === 1 ? "" : "s"
+        } for rafy@marbin.dk.`
+      );
+    } catch (nextError) {
+      setTestSubmissionError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    } finally {
+      setCreatingTestSubmission(false);
+    }
   }
 
   function closeMobileDetail() {
@@ -2064,6 +2135,20 @@ export default function AdminForms() {
         attachment: attachments[current.index] || current.attachment,
         index: current.index,
       };
+    });
+  }
+
+  function addCreatedSubmissions(nextSubmissions: Submission[]) {
+    if (!nextSubmissions.length) return;
+    setSubmissions((current) => {
+      const nextById = new Map<string, Submission>();
+      [...nextSubmissions, ...current].forEach((submission) => {
+        if (!submission?.id || nextById.has(submission.id)) return;
+        nextById.set(submission.id, submission);
+      });
+      return Array.from(nextById.values()).sort(
+        (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
+      );
     });
   }
 
@@ -2687,6 +2772,83 @@ export default function AdminForms() {
     }
   }
 
+  const testSubmissionTool = (
+    <section className={styles.testPanel} aria-label="Manual test submissions">
+      <div>
+        <p className={styles.eyebrow}>Manual testing</p>
+        <h2>Create test submissions</h2>
+        <p>
+          Creates prefilled admin test records for guest{" "}
+          <strong>rafy@marbin.dk</strong>. Meter images use the local static
+          files from <code>/admin-test</code>.
+        </p>
+        <details className={styles.testDetails}>
+          <summary>Show test values</summary>
+          <div className={styles.testValueGrid}>
+            <span>Name</span>
+            <strong>Rafy Marbin Test Guest</strong>
+            <span>Stay</span>
+            <strong>12. 08. 2026 - 19. 08. 2026</strong>
+            <span>Guests</span>
+            <strong>3 adults, 2 kids, 1 baby</strong>
+            <span>Meters</span>
+            <strong>Electricity 055540, house water 0002142, pool 00516263</strong>
+            <span>Images</span>
+            <strong>
+              electricity-meter.jpeg, water-house-meter.jpeg, water-pool-meter.jpeg
+            </strong>
+          </div>
+        </details>
+      </div>
+      <div className={styles.testControls}>
+        <label className={styles.filterLabel} htmlFor="admin-test-submission-type">
+          <span>Test form</span>
+          <select
+            id="admin-test-submission-type"
+            className={styles.filterSelect}
+            value={testSubmissionType}
+            onChange={(event) =>
+              setTestSubmissionType(event.target.value as TestSubmissionType)
+            }
+          >
+            <option value="all">Full guest journey</option>
+            <option value="booking">Booking</option>
+            <option value="contact">Contact</option>
+            <option value="extra-services">Extra services</option>
+            <option value="checkin">Check-in</option>
+            <option value="checkout">Check-out</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          className={styles.button}
+          disabled={creatingTestSubmission}
+          onClick={() => void createTestSubmission()}
+        >
+          {creatingTestSubmission ? "Creating..." : "Create test"}
+        </button>
+        <button
+          type="button"
+          className={styles.ghostButton}
+          disabled={creatingTestSubmission}
+          onClick={() => void createTestSubmission("all")}
+        >
+          Create full group
+        </button>
+        {testSubmissionMessage ? (
+          <p className={styles.testStatus} data-state="success">
+            {testSubmissionMessage}
+          </p>
+        ) : null}
+        {testSubmissionError ? (
+          <p className={styles.testStatus} data-state="error">
+            {testSubmissionError}
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+
   if (!DASHBOARD_AUTH_DISABLED && !isFirebaseClientConfigured()) {
     return (
       <Theme appearance={appearance} accentColor="gray" radius="large">
@@ -2760,6 +2922,81 @@ export default function AdminForms() {
     );
   }
 
+  if (isTestSubmissionsPage) {
+    return (
+      <Theme appearance={appearance} accentColor="gray" radius="large">
+        <Helmet>
+          <title>Test submissions | Fyrrehaven 61 admin</title>
+          <meta name="robots" content="noindex,nofollow,noarchive" />
+        </Helmet>
+        <div className={styles.page}>
+          <div className={styles.shell}>
+            <div className={styles.hero}>
+              <div className={styles.heroTop}>
+                <div>
+                  <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
+                  <h1>Test submissions</h1>
+                </div>
+                <div className={styles.heroActions}>
+                  <button
+                    type="button"
+                    className={styles.ghostButton}
+                    onClick={() => navigate("/admin/forms")}
+                  >
+                    <FiChevronLeft aria-hidden="true" />
+                    Back to admin
+                  </button>
+                  <div className={styles.accountPill}>
+                    <FiUser aria-hidden="true" className={styles.accountIcon} />
+                    <div className={styles.accountText}>
+                      <span>Logged in</span>
+                      <strong>
+                        {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
+                      </strong>
+                    </div>
+                    {!DASHBOARD_AUTH_DISABLED ? (
+                      <button
+                        type="button"
+                        className={styles.accountLogout}
+                        onClick={() => void handleSignOut()}
+                      >
+                        <FiLogOut aria-hidden="true" />
+                        <span>Log out</span>
+                      </button>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.themeButton}
+                    onClick={toggleAppearance}
+                    aria-label={
+                      appearance === "dark"
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                    }
+                    title={
+                      appearance === "dark"
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                    }
+                  >
+                    {appearance === "dark" ? (
+                      <FiSun aria-hidden="true" />
+                    ) : (
+                      <FiMoon aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {testSubmissionTool}
+          </div>
+        </div>
+      </Theme>
+    );
+  }
+
   if (isLoadingSubmissions && !hasLoadedSubmissions) {
     return (
       <Theme appearance={appearance} accentColor="gray" radius="large">
@@ -2798,6 +3035,13 @@ export default function AdminForms() {
                 <h1>Forms dashboard</h1>
               </div>
               <div className={styles.heroActions}>
+                <button
+                  type="button"
+                  className={styles.ghostButton}
+                  onClick={() => navigate("/admin/test-submissions")}
+                >
+                  Test submissions
+                </button>
                 <div className={styles.accountPill}>
                   <FiUser aria-hidden="true" className={styles.accountIcon} />
                   <div className={styles.accountText}>

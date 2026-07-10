@@ -8,6 +8,7 @@ import {
   FORM_SUBMISSION_FILES_COLLECTION,
   FORM_SUBMISSIONS_COLLECTION,
   LEGACY_CONTACT_SUBMISSIONS_COLLECTION,
+  createFormSubmission,
   deleteFormSubmission,
   listFormSubmissions,
   updateFormSubmission,
@@ -18,6 +19,17 @@ const DASHBOARD_AUTH_DISABLED =
   process.env.NODE_ENV !== "production" ||
   process.env.DASHBOARD_AUTH_DISABLED === "true";
 const METER_FIELDS = new Set(["electricity", "waterHouse", "waterPool"]);
+const TEST_SUBMISSION_TYPES = new Set([
+  "booking",
+  "contact",
+  "extra-services",
+  "checkin",
+  "checkout",
+  "all",
+]);
+
+const randomBookingNumber = (hasBookingInfo) =>
+  `${hasBookingInfo ? "9" : "7"}${String(Math.floor(Math.random() * 10000)).padStart(4, "0")}`;
 
 function attachmentStoragePath(attachment) {
   const rawPath =
@@ -226,6 +238,188 @@ function parseNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function testSubmissionBase({ bookingNumber, adminEmail, now, offsetMs = 0 }) {
+  return {
+    lang: "en",
+    name: "Rafy Marbin Test Guest",
+    email: "rafy@marbin.dk",
+    phone: "+45 22 33 44 55",
+    country: "DK",
+    countryIso: "DK",
+    consent: true,
+    feesAccepted: true,
+    bookingNumber,
+    source: "admin-test",
+    status: "sent",
+    mailStatus: "sent",
+    createdAtMs: now - offsetMs,
+    updatedAtMs: now - offsetMs,
+    requestMeta: {
+      createdBy: adminEmail,
+      origin: "admin-dashboard",
+      testSubmission: true,
+    },
+  };
+}
+
+function buildTestSubmissionRecords(type, adminEmail) {
+  const now = Date.now();
+  const bookingNumber = randomBookingNumber(true);
+  const looseNumber = randomBookingNumber(false);
+  const stayStart = "2026-08-12";
+  const stayEnd = "2026-08-19";
+  const submittedStayDate = stayStart;
+  const records = {
+    booking: {
+      ...testSubmissionBase({ bookingNumber, adminEmail, now, offsetMs: 0 }),
+      intent: "booking",
+      stayPurpose:
+        "Admin test booking with every field filled for manual dashboard QA.",
+      guests: { adults: 3, children: 2, babies: 1, total: 6 },
+      selection: {
+        start: stayStart,
+        endExclusive: stayEnd,
+        nights: 7,
+        baseNightsTotalDKK: 23054,
+        cleaningFeeDKK: 1250,
+        totalWithCleaningDKK: 24304,
+        airbnbServiceFeeSavingsDKK: 2554,
+        totalAfterAirbnbDiscountDKK: 21750,
+        breakdown: [
+          { date: "2026-08-12", price: 3293 },
+          { date: "2026-08-13", price: 3293 },
+          { date: "2026-08-14", price: 3443 },
+          { date: "2026-08-15", price: 3443 },
+          { date: "2026-08-16", price: 3293 },
+          { date: "2026-08-17", price: 3143 },
+          { date: "2026-08-18", price: 3146 },
+        ],
+      },
+      message:
+        "Admin test: booking message filled with linen, arrival, and family details.",
+    },
+    contact: {
+      ...testSubmissionBase({ bookingNumber, adminEmail, now, offsetMs: 60_000 }),
+      intent: "contact",
+      message:
+        "Admin test: contact form message filled for manual dashboard QA.",
+    },
+    "extra-services": {
+      ...testSubmissionBase({
+        bookingNumber,
+        adminEmail,
+        now,
+        offsetMs: 120_000,
+      }),
+      intent: "extra-services",
+      purpose: "extra-services",
+      context: "extra-services",
+      message: "Admin test: selected extras should be ready before arrival.",
+      extras: {
+        stayDate: stayStart,
+        totalDKK: 1495,
+        items: [
+          {
+            id: "linen-pack",
+            qty: 5,
+            unitPriceDKK: 199,
+            label: { da: "Linnedpakke", en: "Linen package" },
+          },
+          {
+            id: "crib",
+            qty: 1,
+            unitPriceDKK: 500,
+            label: { da: "Babyseng", en: "Baby crib" },
+          },
+        ],
+      },
+    },
+    checkin: {
+      ...testSubmissionBase({ bookingNumber, adminEmail, now, offsetMs: 180_000 }),
+      intent: "guest-checkin",
+      message: "Admin test: check-in completed and meters photographed.",
+      checkin: {
+        type: "checkin",
+        typeLabel: "Check-in",
+        stayDate: submittedStayDate,
+        submittedStayDate,
+        keycode: "6142",
+        meterReadings: {
+          electricity: "055540",
+          waterHouse: "0002142",
+          waterPool: "00516263",
+        },
+        attachments: [
+          {
+            fieldname: "electricity",
+            filename: "electricity-meter.jpeg",
+            contentType: "image/jpeg",
+            sizeBytes: 281000,
+            viewUrl: "/admin-test/electricity-meter.jpeg",
+          },
+          {
+            fieldname: "waterHouse",
+            filename: "water-house-meter.jpeg",
+            contentType: "image/jpeg",
+            sizeBytes: 236000,
+            viewUrl: "/admin-test/water-house-meter.jpeg",
+          },
+          {
+            fieldname: "waterPool",
+            filename: "water-pool-meter.jpeg",
+            contentType: "image/jpeg",
+            sizeBytes: 249000,
+            viewUrl: "/admin-test/water-pool-meter.jpeg",
+          },
+        ],
+      },
+    },
+    checkout: {
+      ...testSubmissionBase({ bookingNumber, adminEmail, now, offsetMs: 240_000 }),
+      intent: "guest-checkin",
+      message: "Admin test: check-out completed and key returned.",
+      checkin: {
+        type: "checkout",
+        typeLabel: "Check-out",
+        stayDate: submittedStayDate,
+        submittedStayDate,
+        keycode: "6142",
+        meterReadings: {
+          electricity: "058120",
+          waterHouse: "0002199",
+          waterPool: "00516430",
+        },
+        attachments: [
+          {
+            fieldname: "electricity",
+            filename: "electricity-meter.jpeg",
+            contentType: "image/jpeg",
+            sizeBytes: 281000,
+            viewUrl: "/admin-test/electricity-meter.jpeg",
+          },
+        ],
+      },
+    },
+  };
+
+  if (type === "all") {
+    return [
+      records.booking,
+      records.contact,
+      records["extra-services"],
+      records.checkin,
+      records.checkout,
+    ];
+  }
+
+  const record = records[type];
+  if (!record) return [];
+  if (type === "contact") {
+    return [{ ...record, bookingNumber: looseNumber }];
+  }
+  return [record];
+}
+
 async function findSubmissionDoc(db, submissionId) {
   const collections = [
     FORM_SUBMISSIONS_COLLECTION,
@@ -245,9 +439,14 @@ async function findSubmissionDoc(db, submissionId) {
 
 export default async function handler(req, res) {
   applySecurityHeaders(res);
-  res.setHeader("Allow", "GET, PATCH, DELETE");
+  res.setHeader("Allow", "GET, POST, PATCH, DELETE");
 
-  if (req.method !== "GET" && req.method !== "PATCH" && req.method !== "DELETE") {
+  if (
+    req.method !== "GET" &&
+    req.method !== "POST" &&
+    req.method !== "PATCH" &&
+    req.method !== "DELETE"
+  ) {
     sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });
     return;
   }
@@ -279,6 +478,51 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (req.method === "POST") {
+      const action = String(req.body?.action || "").trim();
+      const type = String(req.body?.type || "").trim();
+
+      if (action !== "create-test-submission") {
+        sendJson(res, 400, {
+          ok: false,
+          error: "UNKNOWN_POST_ACTION",
+          detail: "Unsupported admin post action.",
+        });
+        return;
+      }
+
+      if (!TEST_SUBMISSION_TYPES.has(type)) {
+        sendJson(res, 400, {
+          ok: false,
+          error: "INVALID_TEST_SUBMISSION_TYPE",
+          detail: "Choose a valid test submission type.",
+        });
+        return;
+      }
+
+      const records = buildTestSubmissionRecords(type, adminEmail);
+      const createdRefs = await Promise.all(
+        records.map((record) => createFormSubmission(db, record))
+      );
+      const createdSubmissions = createdRefs
+        .map((docRef, index) =>
+          docRef
+            ? {
+                id: docRef.id,
+                ...records[index],
+              }
+            : null
+        )
+        .filter(Boolean);
+      const submissionsWithUrls = await addAttachmentViewUrls(createdSubmissions, db);
+
+      sendJson(res, 200, {
+        ok: true,
+        submissions: submissionsWithUrls,
+      });
+      return;
+    }
+
     if (req.method === "PATCH") {
       const submissionId = String(req.body?.id || "").trim();
       const action = String(req.body?.action || "").trim();
