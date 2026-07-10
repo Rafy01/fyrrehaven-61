@@ -294,6 +294,17 @@ function dateFilterRange(filter: SubmissionDateFilter) {
   }
 }
 
+function submissionMatchesTypeFilter(
+  submission: Submission,
+  filter: SubmissionFilter
+) {
+  if (filter === "all") return true;
+  if (filter === "booking") return submission.intent === "booking";
+  if (filter === "extra-services") return submission.intent === "extra-services";
+  if (filter === "guest-checkin") return submission.intent === "guest-checkin";
+  return isContactSubmission(submission);
+}
+
 function bookingNumberPrefix(hasBookingInfo: boolean) {
   return hasBookingInfo ? "9" : "7";
 }
@@ -456,7 +467,11 @@ function isCheckoutSubmission(submission: Submission) {
 }
 
 function isContactSubmission(submission: Submission) {
-  return !submission.intent || submission.intent === "inquiry";
+  return (
+    !submission.intent ||
+    submission.intent === "inquiry" ||
+    submission.intent === "contact"
+  );
 }
 
 function submissionBookingNumber(
@@ -1157,28 +1172,31 @@ export default function AdminForms() {
     }
   }, [imagePreview]);
 
-  const filteredSubmissions = React.useMemo(() => {
+  const dateFilteredSubmissions = React.useMemo(() => {
     const range = dateFilterRange(dateFilter);
     return submissions.filter((submission) => {
       if (range) {
         const createdAt = submission.createdAtMs || 0;
         if (createdAt < range.from || createdAt >= range.to) return false;
       }
-      if (submissionFilter === "all") return true;
-      if (submissionFilter === "booking") return submission.intent === "booking";
-      if (submissionFilter === "extra-services") {
-        return submission.intent === "extra-services";
-      }
-      if (submissionFilter === "guest-checkin") {
-        return submission.intent === "guest-checkin";
-      }
-      return !submission.intent || submission.intent === "inquiry";
+      return true;
     });
-  }, [dateFilter, submissionFilter, submissions]);
+  }, [dateFilter, submissions]);
 
   const visibleGroups = React.useMemo(() => {
-    return buildSubmissionGroups(filteredSubmissions);
-  }, [filteredSubmissions]);
+    const groups = buildSubmissionGroups(dateFilteredSubmissions);
+    if (submissionFilter === "all") return groups;
+    return groups.filter((group) =>
+      group.items.some((submission) =>
+        submissionMatchesTypeFilter(submission, submissionFilter)
+      )
+    );
+  }, [dateFilteredSubmissions, submissionFilter]);
+
+  const filteredSubmissions = React.useMemo(
+    () => visibleGroups.flatMap((group) => group.items),
+    [visibleGroups]
+  );
 
   const filteredDashboardStats = React.useMemo<DashboardStats>(() => {
     return {
