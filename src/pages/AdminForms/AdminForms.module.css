@@ -293,6 +293,45 @@
   text-align: right;
 }
 
+.testResults {
+  flex-basis: 100%;
+  display: grid;
+  gap: 8px;
+}
+
+.testResult {
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--gray-6);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--gray-12) 6%, transparent);
+}
+
+.testResult strong {
+  color: var(--gray-12);
+}
+
+.testResult span {
+  color: var(--gray-11);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.testResult small {
+  color: var(--gray-10);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.testResult[data-state="success"] {
+  border-color: color-mix(in srgb, #16a34a 50%, var(--gray-6));
+}
+
+.testResult[data-state="error"] {
+  border-color: color-mix(in srgb, #d9485f 50%, var(--gray-6));
+}
+
 .testStatus[data-state="success"] {
   color: #16a34a;
 }

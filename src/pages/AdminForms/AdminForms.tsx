@@ -164,6 +164,9 @@ type ApiResponse = {
   admin?: { email?: string };
   deleted?: boolean;
   id?: string;
+  submissionId?: string | null;
+  stored?: boolean;
+  mailStatus?: "sent" | "failed" | "pending";
 };
 
 type Appearance = "light" | "dark";
@@ -184,6 +187,14 @@ type TestSubmissionType =
   | "extra-services"
   | "checkin"
   | "checkout";
+type TestRunResult = {
+  type: Exclude<TestSubmissionType, "all">;
+  label: string;
+  status: "sent" | "failed" | "error";
+  submissionId?: string | null;
+  deleted?: boolean;
+  detail?: string;
+};
 type GroupDetailSelection = "overview" | string;
 type CheckinDetailSelection = "checkin" | "checkout";
 type ImagePreview = {
@@ -1024,6 +1035,7 @@ export default function AdminForms() {
     React.useState<string | null>(null);
   const [testSubmissionError, setTestSubmissionError] =
     React.useState<string | null>(null);
+  const [testRunResults, setTestRunResults] = React.useState<TestRunResult[]>([]);
   const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
@@ -1604,51 +1616,280 @@ export default function AdminForms() {
     openSubmissionDetail(selectedGroup.id, type);
   }
 
+  async function adminAuthHeaders() {
+    const auth = getFirebaseAuth();
+    const token =
+      DASHBOARD_AUTH_DISABLED || !auth?.currentUser
+        ? null
+        : await auth.currentUser.getIdToken(true);
+    return {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }
+
+  function baseTestContactPayload() {
+    return {
+      lang: "en",
+      website: "",
+      company: "",
+      faxNumber: "",
+      formStartedAt: Date.now() - 5000,
+      name: "Rafy Marbin Test Guest",
+      email: "rafy@marbin.dk",
+      phone: "+45 22 33 44 55",
+      country: "Denmark",
+      countryIso: "DK",
+      consent: true,
+      feesAccepted: true,
+    };
+  }
+
+  function testContactPayload(type: Exclude<TestSubmissionType, "all" | "checkin" | "checkout">) {
+    const selection = {
+      start: "2026-08-12",
+      endExclusive: "2026-08-19",
+      nights: 7,
+      baseNightsTotalDKK: 23054,
+      cleaningFeeDKK: 1250,
+      totalWithCleaningDKK: 24304,
+      airbnbServiceFeeSavingsDKK: 2554,
+      totalAfterAirbnbDiscountDKK: 21750,
+      breakdown: [
+        { date: "2026-08-12", price: 3293 },
+        { date: "2026-08-13", price: 3293 },
+        { date: "2026-08-14", price: 3443 },
+        { date: "2026-08-15", price: 3443 },
+        { date: "2026-08-16", price: 3293 },
+        { date: "2026-08-17", price: 3143 },
+        { date: "2026-08-18", price: 3146 },
+      ],
+    };
+    const extras = {
+      stayDate: "2026-08-12",
+      totalDKK: 1495,
+      items: [
+        {
+          id: "linen-pack",
+          qty: 5,
+          unitPriceDKK: 199,
+          label: { da: "Linnedpakke", en: "Linen package" },
+        },
+        {
+          id: "crib",
+          qty: 1,
+          unitPriceDKK: 500,
+          label: { da: "Babyseng", en: "Baby crib" },
+        },
+      ],
+    };
+
+    if (type === "booking") {
+      return {
+        ...baseTestContactPayload(),
+        purpose: "booking",
+        context: "booking",
+        stayPurpose:
+          "Admin mail test booking with every required booking field filled.",
+        guests: { adults: 3, children: 2, babies: 1, total: 6 },
+        selection,
+        message:
+          "Admin mail test: booking form payload with guest details, dates, prices, and approvals.",
+      };
+    }
+
+    if (type === "extra-services") {
+      return {
+        ...baseTestContactPayload(),
+        purpose: "extra-services",
+        context: "extra-services",
+        message:
+          "Admin mail test: extra services form with selected linen package and baby crib.",
+        extras,
+      };
+    }
+
+    return {
+      ...baseTestContactPayload(),
+      purpose: "inquiry",
+      context: "contact",
+      message:
+        "Admin mail test: contact form message with phone, country, consent, and guest email filled.",
+    };
+  }
+
+  async function testImageFile(path: string, filename: string) {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error(`Could not load ${filename}`);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type || "image/jpeg" });
+  }
+
+  async function testCheckinPayload(type: "checkin" | "checkout") {
+    const formData = new FormData();
+    formData.set("website", "");
+    formData.set("company", "");
+    formData.set("faxNumber", "");
+    formData.set("formStartedAt", String(Date.now() - 5000));
+    formData.set("lang", "en");
+    formData.set("name", "Rafy Marbin Test Guest");
+    formData.set("email", "rafy@marbin.dk");
+    formData.set("keycode", "6142");
+    formData.set("checkType", type);
+    formData.set("elReading", type === "checkin" ? "055540" : "058120");
+    formData.set("waterHouse", type === "checkin" ? "0002142" : "0002199");
+    formData.set("waterPool", type === "checkin" ? "00516263" : "00516430");
+    formData.set(
+      "comment",
+      type === "checkin"
+        ? "Admin mail test: check-in form with all meter values and images."
+        : "Admin mail test: check-out form with all meter values and images."
+    );
+    formData.set("consent", "true");
+    formData.append(
+      "electricity",
+      await testImageFile("/admin-test/electricity-meter.jpeg", "electricity-meter.jpeg")
+    );
+    formData.append(
+      "waterHouse",
+      await testImageFile("/admin-test/water-house-meter.jpeg", "water-house-meter.jpeg")
+    );
+    formData.append(
+      "waterPool",
+      await testImageFile("/admin-test/water-pool-meter.jpeg", "water-pool-meter.jpeg")
+    );
+    return formData;
+  }
+
+  async function deleteTemporarySubmission(submissionId?: string | null) {
+    if (!submissionId) return false;
+    const res = await fetch(`/api/admin/forms?id=${encodeURIComponent(submissionId)}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...(await adminAuthHeaders()),
+      },
+      body: JSON.stringify({
+        id: submissionId,
+        confirmation: "delete",
+      }),
+    });
+    const data = (await res.json()) as ApiResponse;
+    if (!res.ok || !data.ok) {
+      throw new Error(data.detail || data.error || `Cleanup failed: HTTP ${res.status}`);
+    }
+    return Boolean(data.deleted);
+  }
+
+  async function runSingleMailTest(type: Exclude<TestSubmissionType, "all">) {
+    const label =
+      type === "extra-services"
+        ? "Extra services"
+        : type === "checkin"
+          ? "Check-in"
+          : type === "checkout"
+            ? "Check-out"
+            : type === "booking"
+              ? "Booking"
+              : "Contact";
+    let submissionId: string | null | undefined = null;
+    let mailStatus: TestRunResult["status"] = "error";
+    let detail = "";
+
+    try {
+      const res =
+        type === "checkin" || type === "checkout"
+          ? await fetch("/api/checkin", {
+              method: "POST",
+              body: await testCheckinPayload(type),
+            })
+          : await fetch("/api/contact", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(testContactPayload(type)),
+            });
+      const data = (await res.json()) as ApiResponse;
+      submissionId = data.submissionId;
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+
+      mailStatus = data.mailStatus === "sent" ? "sent" : "failed";
+      detail =
+        data.mailStatus === "sent"
+          ? "Mail sent successfully."
+          : "Mail failed. Temporary submission was still cleaned up.";
+    } catch (error) {
+      detail = String(error instanceof Error ? error.message : error);
+      mailStatus = "error";
+    }
+
+    let deleted = false;
+    try {
+      deleted = await deleteTemporarySubmission(submissionId);
+    } catch (cleanupError) {
+      detail = `${detail} Cleanup error: ${String(
+        cleanupError instanceof Error ? cleanupError.message : cleanupError
+      )}`;
+    }
+
+    return {
+      type,
+      label,
+      status: mailStatus,
+      submissionId,
+      deleted,
+      detail,
+    };
+  }
+
   async function createTestSubmission(type: TestSubmissionType = testSubmissionType) {
     if (creatingTestSubmission) return;
     setCreatingTestSubmission(true);
     setTestSubmissionError(null);
     setTestSubmissionMessage(null);
+    setTestRunResults([]);
 
     try {
-      const auth = getFirebaseAuth();
-      const token =
-        DASHBOARD_AUTH_DISABLED || !auth?.currentUser
-          ? null
-          : await auth.currentUser.getIdToken(true);
-      const res = await fetch("/api/admin/forms", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          action: "create-test-submission",
-          type,
-        }),
-      });
-      const data = (await res.json()) as ApiResponse;
-      if (!res.ok || !data.ok || !data.submissions?.length) {
-        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      const tests: Array<Exclude<TestSubmissionType, "all">> =
+        type === "all"
+          ? ["booking", "contact", "extra-services", "checkin", "checkout"]
+          : [type];
+      const results: TestRunResult[] = [];
+
+      for (const testType of tests) {
+        const result = await runSingleMailTest(testType);
+        results.push(result);
+        setTestRunResults([...results]);
       }
 
-      const createdSubmissions = data.submissions;
-      addCreatedSubmissions(createdSubmissions);
-      setSubmissionFilter("all");
-      setDateFilter("all");
-      setRenderedGroupCount(SUBMISSION_BATCH_SIZE);
-
-      const createdGroups = buildSubmissionGroups(createdSubmissions);
-      const nextGroupId = createdGroups[0]?.id;
-      if (nextGroupId) {
-        openSubmissionDetail(nextGroupId, "overview");
-      }
-
-      setTestSubmissionMessage(
-        `Created ${createdSubmissions.length} test submission${
-          createdSubmissions.length === 1 ? "" : "s"
-        } for rafy@marbin.dk.`
+      const failures = results.filter((result) => result.status !== "sent");
+      const cleanupFailures = results.filter(
+        (result) => result.submissionId && !result.deleted
       );
+
+      if (failures.length || cleanupFailures.length) {
+        setTestSubmissionError(
+          [
+            failures.length
+              ? `${failures.length} mail test${failures.length === 1 ? "" : "s"} failed.`
+              : "",
+            cleanupFailures.length
+              ? `${cleanupFailures.length} temporary submission${
+                  cleanupFailures.length === 1 ? "" : "s"
+                } could not be deleted.`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")
+        );
+      } else {
+        setTestSubmissionMessage(
+          `${results.length} mail test${
+            results.length === 1 ? "" : "s"
+          } sent successfully and cleaned up.`
+        );
+      }
     } catch (nextError) {
       setTestSubmissionError(
         String(nextError instanceof Error ? nextError.message : nextError)
@@ -2135,20 +2376,6 @@ export default function AdminForms() {
         attachment: attachments[current.index] || current.attachment,
         index: current.index,
       };
-    });
-  }
-
-  function addCreatedSubmissions(nextSubmissions: Submission[]) {
-    if (!nextSubmissions.length) return;
-    setSubmissions((current) => {
-      const nextById = new Map<string, Submission>();
-      [...nextSubmissions, ...current].forEach((submission) => {
-        if (!submission?.id || nextById.has(submission.id)) return;
-        nextById.set(submission.id, submission);
-      });
-      return Array.from(nextById.values()).sort(
-        (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
-      );
     });
   }
 
@@ -2776,21 +3003,29 @@ export default function AdminForms() {
     <section className={styles.testPanel} aria-label="Manual test submissions">
       <div>
         <p className={styles.eyebrow}>Manual testing</p>
-        <h2>Create test submissions</h2>
+        <h2>Send test form emails</h2>
         <p>
-          Creates prefilled admin test records for guest{" "}
-          <strong>rafy@marbin.dk</strong>. Meter images use the local static
-          files from <code>/admin-test</code>.
+          Sends real form emails using prefilled test values for guest{" "}
+          <strong>rafy@marbin.dk</strong>, then deletes the temporary submission
+          data whether the email succeeds or fails.
         </p>
         <details className={styles.testDetails}>
           <summary>Show test values</summary>
           <div className={styles.testValueGrid}>
             <span>Name</span>
             <strong>Rafy Marbin Test Guest</strong>
+            <span>Email</span>
+            <strong>rafy@marbin.dk</strong>
+            <span>Phone</span>
+            <strong>+45 22 33 44 55</strong>
+            <span>Country</span>
+            <strong>Denmark (DK)</strong>
             <span>Stay</span>
             <strong>12. 08. 2026 - 19. 08. 2026</strong>
             <span>Guests</span>
             <strong>3 adults, 2 kids, 1 baby</strong>
+            <span>Extras</span>
+            <strong>5 linen packages and 1 baby crib</strong>
             <span>Meters</span>
             <strong>Electricity 055540, house water 0002142, pool 00516263</strong>
             <span>Images</span>
@@ -2835,6 +3070,32 @@ export default function AdminForms() {
         >
           Create full group
         </button>
+        {testRunResults.length > 0 ? (
+          <div className={styles.testResults}>
+            {testRunResults.map((result) => (
+              <div
+                key={result.type}
+                className={styles.testResult}
+                data-state={result.status === "sent" && result.deleted ? "success" : "error"}
+              >
+                <strong>{result.label}</strong>
+                <span>
+                  {result.status === "sent"
+                    ? "Mail sent"
+                    : result.status === "failed"
+                      ? "Mail failed"
+                      : "Error"}
+                  {result.submissionId
+                    ? result.deleted
+                      ? " · data deleted"
+                      : " · cleanup failed"
+                    : ""}
+                </span>
+                {result.detail ? <small>{result.detail}</small> : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
         {testSubmissionMessage ? (
           <p className={styles.testStatus} data-state="success">
             {testSubmissionMessage}
