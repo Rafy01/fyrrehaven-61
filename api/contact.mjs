@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { getFirestoreDb } from "./_lib/firebaseAdmin.mjs";
+import { getFirestoreDb, verifyAdminRequest } from "./_lib/firebaseAdmin.mjs";
 import {
   createFormSubmission,
   updateFormSubmission,
@@ -257,6 +257,20 @@ export default async function handler(req, res) {
       // NEW: ekstra services
       extras, // { stayDate, items: [{id, qty, unitPriceDKK, label:{da,en}}], totalDKK }
     } = req.body ?? {};
+    const manualGuestOnly =
+      req.body?.adminManualGuestOnly === true ||
+      String(req.body?.adminManualGuestOnly || "").toLowerCase() === "true";
+    if (manualGuestOnly) {
+      const adminCheck = await verifyAdminRequest(req);
+      if (!adminCheck.ok) {
+        sendJson(res, adminCheck.status, {
+          ok: false,
+          error: adminCheck.error,
+          detail: adminCheck.detail || null,
+        });
+        return;
+      }
+    }
     const uiLang = normalizeLang(lang);
     const replyEmail = normalizeEmail(email);
     const bookingType = t(uiLang, "contact.type.booking");
@@ -744,17 +758,20 @@ export default async function handler(req, res) {
       )}\n\n` +
       `— ${adminT("contact.message")} —\n${messageForMail || "—"}\n`;
 
-      const infoAdmin = await transporter.sendMail({
-      from,
-      sender: from,
-      envelope: { from, to },
-      to,
-      subject: subjectAdmin,
-      html: htmlAdmin,
-      text: textAdmin,
-      replyTo: replyEmail,
-      headers: { "X-Campaign": "website-contact" },
-    });
+      let infoAdmin = null;
+      if (!manualGuestOnly) {
+        infoAdmin = await transporter.sendMail({
+          from,
+          sender: from,
+          envelope: { from, to },
+          to,
+          subject: subjectAdmin,
+          html: htmlAdmin,
+          text: textAdmin,
+          replyTo: replyEmail,
+          headers: { "X-Campaign": "website-contact" },
+        });
+      }
 
       if (submissionRef) {
         await updateFormSubmission(submissionRef, {
@@ -767,12 +784,16 @@ export default async function handler(req, res) {
             rejected: autoInfo?.rejected || [],
             response: autoInfo?.response || null,
           },
-          adminMail: {
-            id: infoAdmin?.messageId || null,
-            accepted: infoAdmin?.accepted || [],
-            rejected: infoAdmin?.rejected || [],
-            response: infoAdmin?.response || null,
-          },
+          ...(manualGuestOnly
+            ? { adminMailSkipped: true }
+            : {
+                adminMail: {
+                  id: infoAdmin?.messageId || null,
+                  accepted: infoAdmin?.accepted || [],
+                  rejected: infoAdmin?.rejected || [],
+                  response: infoAdmin?.response || null,
+                },
+              }),
         });
       }
 
@@ -787,12 +808,14 @@ export default async function handler(req, res) {
           rejected: autoInfo?.rejected || [],
           response: autoInfo?.response || null,
         },
-        admin: {
-          id: infoAdmin?.messageId || null,
-          accepted: infoAdmin?.accepted || [],
-          rejected: infoAdmin?.rejected || [],
-          response: infoAdmin?.response || null,
-        },
+        admin: manualGuestOnly
+          ? null
+          : {
+              id: infoAdmin?.messageId || null,
+              accepted: infoAdmin?.accepted || [],
+              rejected: infoAdmin?.rejected || [],
+              response: infoAdmin?.response || null,
+            },
       });
     } catch (mailError) {
       if (submissionRef) {

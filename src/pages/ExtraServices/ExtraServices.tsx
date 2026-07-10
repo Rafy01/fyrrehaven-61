@@ -55,7 +55,15 @@ function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
-export default function ExtraServices({ lang }: { lang: Lang }) {
+export default function ExtraServices({
+  lang,
+  adminManual = false,
+  getRequestHeaders,
+}: {
+  lang: Lang;
+  adminManual?: boolean;
+  getRequestHeaders?: () => Promise<Record<string, string>>;
+}) {
   const { t } = useTranslation("extraServices");
   const path = guestPathOf(lang, "extraServices");
   const seo = getSeoMeta(lang, "extraServices");
@@ -261,9 +269,13 @@ export default function ExtraServices({ lang }: { lang: Lang }) {
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(getRequestHeaders ? await getRequestHeaders() : {}),
+        },
         body: JSON.stringify({
           lang,
+          adminManualGuestOnly: adminManual,
           website: "",
           company: "",
           faxNumber: "",

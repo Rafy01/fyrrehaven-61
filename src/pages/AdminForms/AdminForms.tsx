@@ -33,6 +33,9 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import styles from "./AdminForms.module.css";
 import { localTestSubmissions } from "./localTestSubmissions";
+import ContactForm from "../../components/ContactForm";
+import ExtraServices from "../ExtraServices/ExtraServices";
+import CheckInOut from "../guest/CheckInOut/CheckInOut";
 import {
   createAdminAuthProvider,
   getFirebaseAuth,
@@ -238,7 +241,11 @@ const ADMIN_DETAIL_SLUGS = new Set([
   "checkin",
   "checkout",
 ]);
-const ADMIN_RESERVED_ROUTES = new Set(["forms", "test-submissions"]);
+const ADMIN_RESERVED_ROUTES = new Set([
+  "forms",
+  "test-submissions",
+  "manual-submission",
+]);
 const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
   typeof window !== "undefined" &&
@@ -1014,6 +1021,7 @@ export default function AdminForms() {
   const { "*": adminPath = "" } = useParams<{ "*": string }>();
   const [routeSubmissionId, routeAdminDetail] = adminPath.split("/");
   const isTestSubmissionsPage = routeSubmissionId === "test-submissions";
+  const isManualSubmissionPage = routeSubmissionId === "manual-submission";
   const routeSelectedId =
     routeSubmissionId && !ADMIN_RESERVED_ROUTES.has(routeSubmissionId)
       ? decodeURIComponent(routeSubmissionId)
@@ -1045,6 +1053,8 @@ export default function AdminForms() {
   const [testSubmissionError, setTestSubmissionError] =
     React.useState<string | null>(null);
   const [testRunResults, setTestRunResults] = React.useState<TestRunResult[]>([]);
+  const [manualSubmissionType, setManualSubmissionType] =
+    React.useState<Exclude<TestSubmissionType, "all">>("booking");
   const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
@@ -1178,10 +1188,10 @@ export default function AdminForms() {
   }, [routeSelectedId]);
 
   React.useEffect(() => {
-    if (isTestSubmissionsPage) return;
+    if (isTestSubmissionsPage || isManualSubmissionPage) return;
     if (!user && !DASHBOARD_AUTH_DISABLED) return;
     void fetchSubmissions();
-  }, [user, fetchSubmissions, isTestSubmissionsPage]);
+  }, [user, fetchSubmissions, isManualSubmissionPage, isTestSubmissionsPage]);
 
   React.useEffect(() => {
     if (!imagePreview) {
@@ -3126,6 +3136,74 @@ export default function AdminForms() {
     </section>
   );
 
+  const manualSubmissionForm = (
+    <section className={styles.manualPanel} aria-label="Create manual submission">
+      <div className={styles.manualHeader}>
+        <div>
+          <p className={styles.eyebrow}>Manual entry</p>
+          <h2>Create a submission with the real forms</h2>
+          <p>
+            Use the existing guest forms. Manual admin submissions send the guest
+            email and skip the admin notification.
+          </p>
+        </div>
+      </div>
+      <label className={styles.manualField}>
+        <span>Submission form</span>
+        <select
+          className={styles.filterSelect}
+          value={manualSubmissionType}
+          onChange={(event) =>
+            setManualSubmissionType(
+              event.target.value as Exclude<TestSubmissionType, "all">
+            )
+          }
+        >
+          <option value="booking">Booking</option>
+          <option value="contact">Contact</option>
+          <option value="extra-services">Extra services</option>
+          <option value="checkin">Check-in / check-out</option>
+        </select>
+      </label>
+      <div className={styles.manualEmbeddedForm}>
+        {manualSubmissionType === "booking" ? (
+          <ContactForm
+            key="manual-booking"
+            lang="en"
+            variant="booking"
+            adminManual
+            getRequestHeaders={adminAuthHeaders}
+          />
+        ) : null}
+        {manualSubmissionType === "contact" ? (
+          <ContactForm
+            key="manual-contact"
+            lang="en"
+            variant="contact"
+            adminManual
+            getRequestHeaders={adminAuthHeaders}
+          />
+        ) : null}
+        {manualSubmissionType === "extra-services" ? (
+          <ExtraServices
+            key="manual-extra-services"
+            lang="en"
+            adminManual
+            getRequestHeaders={adminAuthHeaders}
+          />
+        ) : null}
+        {manualSubmissionType === "checkin" || manualSubmissionType === "checkout" ? (
+          <CheckInOut
+            key="manual-checkin"
+            adminManual
+            getRequestHeaders={adminAuthHeaders}
+            forceMobile
+          />
+        ) : null}
+      </div>
+    </section>
+  );
+
   if (!DASHBOARD_AUTH_DISABLED && !isFirebaseClientConfigured()) {
     return (
       <Theme appearance={appearance} accentColor="gray" radius="large">
@@ -3274,6 +3352,81 @@ export default function AdminForms() {
     );
   }
 
+  if (isManualSubmissionPage) {
+    return (
+      <Theme appearance={appearance} accentColor="gray" radius="large">
+        <Helmet>
+          <title>Manual submission | Fyrrehaven 61 admin</title>
+          <meta name="robots" content="noindex,nofollow,noarchive" />
+        </Helmet>
+        <div className={styles.page}>
+          <div className={styles.shell}>
+            <div className={styles.hero}>
+              <div className={styles.heroTop}>
+                <div>
+                  <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
+                  <h1>Manual submission</h1>
+                </div>
+                <div className={styles.heroActions}>
+                  <button
+                    type="button"
+                    className={styles.ghostButton}
+                    onClick={() => navigate("/admin/forms")}
+                  >
+                    <FiChevronLeft aria-hidden="true" />
+                    Back to admin
+                  </button>
+                  <div className={styles.accountPill}>
+                    <FiUser aria-hidden="true" className={styles.accountIcon} />
+                    <div className={styles.accountText}>
+                      <span>Logged in</span>
+                      <strong>
+                        {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
+                      </strong>
+                    </div>
+                    {!DASHBOARD_AUTH_DISABLED ? (
+                      <button
+                        type="button"
+                        className={styles.accountLogout}
+                        onClick={() => void handleSignOut()}
+                      >
+                        <FiLogOut aria-hidden="true" />
+                        <span>Log out</span>
+                      </button>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.themeButton}
+                    onClick={toggleAppearance}
+                    aria-label={
+                      appearance === "dark"
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                    }
+                    title={
+                      appearance === "dark"
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                    }
+                  >
+                    {appearance === "dark" ? (
+                      <FiSun aria-hidden="true" />
+                    ) : (
+                      <FiMoon aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {manualSubmissionForm}
+          </div>
+        </div>
+      </Theme>
+    );
+  }
+
   if (isLoadingSubmissions && !hasLoadedSubmissions) {
     return (
       <Theme appearance={appearance} accentColor="gray" radius="large">
@@ -3312,6 +3465,14 @@ export default function AdminForms() {
                 <h1>Forms dashboard</h1>
               </div>
               <div className={styles.heroActions}>
+                <button
+                  type="button"
+                  className={styles.ghostButton}
+                  onClick={() => navigate("/admin/manual-submission")}
+                >
+                  <FiEdit3 aria-hidden="true" />
+                  Manual submission
+                </button>
                 <button
                   type="button"
                   className={styles.ghostButton}

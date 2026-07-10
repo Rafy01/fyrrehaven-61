@@ -161,35 +161,4 @@ export const localTestSubmissions = [
     status: "sent",
     createdAtMs: Date.UTC(2026, 5, 26, 8, 25),
   },
-  {
-    id: "local-checkout-1",
-    intent: "guest-checkin",
-    lang: "en",
-    name: "Mikkel Larsen",
-    email: "mikkel@example.com",
-    country: "DK",
-    countryIso: "DK",
-    consent: true,
-    checkin: {
-      type: "checkout",
-      typeLabel: "Check-out",
-      meterReadings: {
-        electricity: "19610",
-        waterHouse: "1013",
-        waterPool: "430",
-      },
-      attachments: [
-        {
-          fieldname: "electricity",
-          filename: "electricity-meter.jpeg",
-          contentType: "image/jpeg",
-          sizeBytes: 187000,
-          viewUrl: "/admin-test/electricity-meter.jpeg",
-        },
-      ],
-    },
-    message: "We left the key in the lockbox and started the dishwasher.",
-    status: "pending",
-    createdAtMs: Date.UTC(2026, 5, 26, 7, 50),
-  },
 ] as const;

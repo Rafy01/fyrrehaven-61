@@ -1,6 +1,10 @@
 import nodemailer from "nodemailer";
 import Busboy from "busboy";
-import { getFirestoreDb, getStorageBucket } from "./_lib/firebaseAdmin.mjs";
+import {
+  getFirestoreDb,
+  getStorageBucket,
+  verifyAdminRequest,
+} from "./_lib/firebaseAdmin.mjs";
 import {
   FORM_SUBMISSION_FILES_COLLECTION,
   createFormSubmission,
@@ -392,8 +396,23 @@ export default async function handler(req, res) {
           comment,
           consent,
           lang = "da",
+          adminManualGuestOnly,
         } = fields;
         const uiLang = normalizeLang(lang);
+        const manualGuestOnly =
+          adminManualGuestOnly === true ||
+          String(adminManualGuestOnly || "").toLowerCase() === "true";
+        if (manualGuestOnly) {
+          const adminCheck = await verifyAdminRequest(req);
+          if (!adminCheck.ok) {
+            sendJson(res, adminCheck.status, {
+              ok: false,
+              error: adminCheck.error,
+              detail: adminCheck.detail || null,
+            });
+            return;
+          }
+        }
         const emailNormalized = normalizeEmail(email);
         const consentAccepted =
           consent === true || String(consent || "").toLowerCase() === "true";
@@ -604,10 +623,11 @@ ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
 
         await transporter.sendMail({
           from,
-          to,
+          to: manualGuestOnly ? emailNormalized : to,
           subject,
           html,
           text,
+          replyTo: manualGuestOnly ? to : undefined,
           attachments: files.map((file) => ({
             filename: file.filename,
             content: file.content,

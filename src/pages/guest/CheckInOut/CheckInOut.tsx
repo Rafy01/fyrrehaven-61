@@ -19,7 +19,15 @@ function isPoolOpen(today = new Date()) {
     : (month === 5 && date >= 1) || (month === 10 && date <= 1);
 }
 
-export default function CheckInOut() {
+export default function CheckInOut({
+  adminManual = false,
+  getRequestHeaders,
+  forceMobile = false,
+}: {
+  adminManual?: boolean;
+  getRequestHeaders?: () => Promise<Record<string, string>>;
+  forceMobile?: boolean;
+}) {
   const { i18n, t: tg } = useTranslation("guest");
   const lang: Lang = i18n.language.startsWith("da")
     ? "da"
@@ -49,7 +57,7 @@ export default function CheckInOut() {
     return null;
   }
 
-  if (!isMobile) {
+  if (!isMobile && !forceMobile) {
     return (
       <div style={{ padding: "4rem 1rem", textAlign: "center" }}>
         <h2>{tg("checkInOutPage.desktopTitle")}</h2>
@@ -79,6 +87,9 @@ export default function CheckInOut() {
 
       const res = await fetch("/api/checkin", {
         method: "POST",
+        headers: {
+          ...(getRequestHeaders ? await getRequestHeaders() : {}),
+        },
         body: formData,
       });
 
@@ -130,6 +141,11 @@ export default function CheckInOut() {
       type: "hidden",
       name: "lang",
       value: lang,
+    },
+    {
+      type: "hidden",
+      name: "adminManualGuestOnly",
+      value: adminManual ? "true" : "",
     },
     {
       type: "text",

@@ -34,6 +34,8 @@ type Props = {
   /** 'contact' = ingen kalender; 'booking' = kalender + bookingfelter */
   variant?: "contact" | "booking";
   ctaAnchor?: string;
+  adminManual?: boolean;
+  getRequestHeaders?: () => Promise<Record<string, string>>;
 };
 
 type NumOrEmpty = number | ""; // ← tillad tom input
@@ -85,6 +87,8 @@ export default function ContactForm({
   lang: langProp,
   submitUrl = "/api/contact",
   variant = "contact",
+  adminManual = false,
+  getRequestHeaders,
 }: Props) {
   const { t: i18nT } = useTranslation("contact");
   const ui = useUiLang(langProp);
@@ -439,9 +443,13 @@ export default function ContactForm({
 
       const res = await fetch(submitUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(getRequestHeaders ? await getRequestHeaders() : {}),
+        },
         body: JSON.stringify({
           lang,
+          adminManualGuestOnly: adminManual,
           website: "",
           company: "",
           faxNumber: "",

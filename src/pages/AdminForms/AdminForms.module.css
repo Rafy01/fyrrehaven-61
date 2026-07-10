@@ -210,6 +210,7 @@
 .panel,
 .detailCard,
 .testPanel,
+.manualPanel,
 .emptyState,
 .authCard,
 .configCard {
@@ -338,6 +339,72 @@
 
 .testStatus[data-state="error"] {
   color: #d9485f;
+}
+
+.manualPanel {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+}
+
+.manualHeader h2 {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+}
+
+.manualHeader p {
+  margin: 0;
+  color: var(--gray-10);
+  line-height: 1.45;
+}
+
+.manualForm {
+  display: grid;
+  gap: 16px;
+}
+
+.manualGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.manualField {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  color: var(--gray-10);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.manualField span {
+  overflow-wrap: anywhere;
+}
+
+.manualEmbeddedForm {
+  min-width: 0;
+}
+
+.manualEmbeddedForm > * {
+  max-width: none;
+}
+
+.manualField textarea {
+  min-height: 112px;
+  padding-top: 12px;
+  resize: vertical;
+}
+
+.manualFull {
+  grid-column: 1 / -1;
+}
+
+.manualActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .loadingState {
@@ -2122,6 +2189,14 @@
 
   .testValueGrid {
     grid-template-columns: 1fr;
+  }
+
+  .manualGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .manualActions > button {
+    width: 100%;
   }
 
   .card {
