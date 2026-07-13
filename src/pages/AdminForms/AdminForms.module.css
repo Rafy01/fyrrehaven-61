@@ -148,6 +148,21 @@
   color: white;
 }
 
+.button:focus,
+.ghostButton:focus,
+.themeButton:focus,
+.deleteButton:focus {
+  outline: none;
+}
+
+:global(html[data-input-modality="keyboard"]) .button:focus-visible,
+:global(html[data-input-modality="keyboard"]) .ghostButton:focus-visible,
+:global(html[data-input-modality="keyboard"]) .themeButton:focus-visible,
+:global(html[data-input-modality="keyboard"]) .deleteButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-9) 35%, transparent);
+  outline-offset: 3px;
+}
+
 .themeButton {
   width: 44px;
   min-width: 44px;

@@ -21,6 +21,24 @@ import Home from "./pages/Home";
 import { pickInitialLang, type Lang } from "./lib/lang";
 import { SLUGS, GUEST_PAGES } from "./lib/routes";
 
+if (typeof window !== "undefined") {
+  const setInputModality = (modality: "keyboard" | "pointer") => {
+    document.documentElement.dataset.inputModality = modality;
+  };
+
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      setInputModality("keyboard");
+    },
+    { passive: true }
+  );
+  window.addEventListener("pointerdown", () => setInputModality("pointer"), {
+    passive: true,
+  });
+}
+
 const House = React.lazy(() => import("./pages/House"));
 const Area = React.lazy(() => import("./pages/Area"));
 const Gallery = React.lazy(() => import("./pages/Gallery"));
