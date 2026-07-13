@@ -28,6 +28,13 @@ export function isFirebaseAdminConfigured() {
   );
 }
 
+function getStorageBucketName() {
+  return (
+    readEnv("FIREBASE_STORAGE_BUCKET") ||
+    readEnv("VITE_FIREBASE_STORAGE_BUCKET")
+  );
+}
+
 function getPrivateKey() {
   return readEnv("FIREBASE_PRIVATE_KEY")
     .replace(/\\n/g, "\n")
@@ -40,10 +47,11 @@ async function loadFirebaseAdminModules() {
       import("firebase-admin/app"),
       import("firebase-admin/auth"),
       import("firebase-admin/firestore"),
+      import("firebase-admin/storage"),
     ]);
   }
 
-  const [appModule, authModule, firestoreModule] =
+  const [appModule, authModule, firestoreModule, storageModule] =
     await firebaseAdminModulesPromise;
 
   return {
@@ -52,6 +60,7 @@ async function loadFirebaseAdminModules() {
     initializeApp: appModule.initializeApp,
     getAuth: authModule.getAuth,
     getFirestore: firestoreModule.getFirestore,
+    getStorage: storageModule.getStorage,
   };
 }
 
@@ -76,6 +85,9 @@ async function getAdminApp() {
             clientEmail: readEnv("FIREBASE_CLIENT_EMAIL"),
             privateKey: getPrivateKey(),
           }),
+          storageBucket:
+            getStorageBucketName() ||
+            undefined,
         });
       } catch (error) {
         firebaseAdminInitError = String(error?.message || error);
@@ -95,6 +107,17 @@ export async function getFirestoreDb() {
 
   const { getFirestore } = await loadFirebaseAdminModules();
   return getFirestore(app);
+}
+
+export async function getStorageBucket() {
+  const app = await getAdminApp();
+  if (!app) return null;
+
+  const bucketName = getStorageBucketName();
+  if (!bucketName) return null;
+
+  const { getStorage } = await loadFirebaseAdminModules();
+  return getStorage(app).bucket(bucketName);
 }
 
 export function getServerTimestamp() {

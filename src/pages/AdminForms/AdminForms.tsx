@@ -2,7 +2,13 @@ import React from "react";
 import { Helmet } from "react-helmet-async";
 import {
   FiAlertCircle,
+  FiCheck,
   FiCheckCircle,
+  FiChevronLeft,
+  FiChevronRight,
+  FiCopy,
+  FiDroplet,
+  FiEdit3,
   FiInbox,
   FiLogOut,
   FiMail,
@@ -11,6 +17,7 @@ import {
   FiSun,
   FiTrash2,
   FiUser,
+  FiZap,
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import {
@@ -22,9 +29,13 @@ import {
   type User,
 } from "firebase/auth";
 import { Theme } from "@radix-ui/themes";
+import { useNavigate, useParams } from "react-router-dom";
 
 import styles from "./AdminForms.module.css";
 import { localTestSubmissions } from "./localTestSubmissions";
+import ContactForm from "../../components/ContactForm";
+import ExtraServices from "../ExtraServices/ExtraServices";
+import CheckInOut from "../guest/CheckInOut/CheckInOut";
 import {
   createAdminAuthProvider,
   getFirebaseAuth,
@@ -32,9 +43,27 @@ import {
 } from "../../lib/firebase";
 
 type SubmissionStatus = "pending" | "sent" | "mail_failed";
+type MeterKey = "electricity" | "waterHouse" | "waterPool";
+type MeterDraftKey = MeterKey | "";
+
+type MeterCorrection = {
+  meter?: MeterKey;
+  originalValue?: string | null;
+  previousValue?: string | null;
+  correctedValue?: string | null;
+  difference?: number | null;
+  updatedAtMs?: number;
+  updatedBy?: string | null;
+};
+
+type ExtraItem = NonNullable<NonNullable<Submission["extras"]>["items"]>[number];
 
 type Submission = {
   id: string;
+  bookingNumber?: string | number | null;
+  bookingNo?: string | number | null;
+  reservationNumber?: string | number | null;
+  adminNumber?: string | number | null;
   intent?: string;
   lang?: string;
   name?: string;
@@ -79,17 +108,40 @@ type Submission = {
   checkin?: {
     type?: string;
     typeLabel?: string;
+    stayDate?: string | null;
+    submittedStayDate?: string | null;
     keycode?: string | null;
     meterReadings?: {
       electricity?: string | null;
       waterHouse?: string | null;
       waterPool?: string | null;
     } | null;
+    meterCorrections?: Partial<Record<MeterKey, MeterCorrection>> | null;
     attachments?: Array<{
+      fieldname?: string;
       filename?: string;
       contentType?: string;
       sizeBytes?: number;
+      storagePath?: string;
+      firestoreFileId?: string;
+      firestoreChunkCount?: number;
+      storageFallback?: string;
+      storageUploadError?: string;
+      fullPath?: string;
+      filePath?: string;
+      path?: string;
+      storageRef?: string;
+      viewUrl?: string;
+      dataUrl?: string;
+      url?: string;
+      downloadUrl?: string;
+      publicUrl?: string;
+      src?: string;
+      viewError?: string;
+      uploadError?: string;
     }> | null;
+    imageUploadStatus?: "stored" | "failed" | "not-configured" | "none";
+    imageUploadError?: string | null;
   } | null;
   status?: SubmissionStatus;
   mailStatus?: "pending" | "sent" | "failed";
@@ -111,29 +163,102 @@ type ApiResponse = {
   error?: string;
   detail?: string | null;
   submissions?: Submission[];
+  submission?: Submission;
   admin?: { email?: string };
   deleted?: boolean;
   id?: string;
+  deletedIds?: string[];
+  missingIds?: string[];
+  submissionId?: string | null;
+  stored?: boolean;
+  mailStatus?: "sent" | "failed" | "pending";
 };
 
 type Appearance = "light" | "dark";
 type SubmissionFilter = "all" | "booking" | "contact" | "extra-services" | "guest-checkin";
+type SubmissionDateFilter =
+  | "all"
+  | "today"
+  | "current-week"
+  | "last-week"
+  | "last-month"
+  | "last-3-months"
+  | "last-6-months"
+  | "year";
+type TestSubmissionType =
+  | "all"
+  | "booking"
+  | "contact"
+  | "extra-services"
+  | "checkin"
+  | "checkout";
+type TestRunResult = {
+  type: Exclude<TestSubmissionType, "all">;
+  label: string;
+  status: "sent" | "failed" | "error";
+  submissionId?: string | null;
+  deleted?: boolean;
+  detail?: string;
+};
 type GroupDetailSelection = "overview" | string;
 type CheckinDetailSelection = "checkin" | "checkout";
+type ImagePreview = {
+  submission: Submission;
+  attachment: NonNullable<NonNullable<Submission["checkin"]>["attachments"]>[number];
+  index: number;
+};
 type SubmissionGroup = {
   id: string;
   primary: Submission;
   items: Submission[];
   labels: string[];
+  bookingNumber: string;
+};
+type DeleteTarget = {
+  groupId: string;
+  bookingNumber: string;
+  primary: Submission;
+  items: Submission[];
+  labels: string[];
+};
+type DashboardStats = {
+  total: number;
+  sent: number;
+  failed: number;
+  latestAtMs?: number;
 };
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
+const SUBMISSION_BATCH_SIZE = 18;
 const DASHBOARD_AUTH_DISABLED = import.meta.env.DEV;
 const CHECKIN_GROUP_DETAIL = "guest-checkin";
+const CONTACT_GROUP_DETAIL = "contact";
+const ADMIN_DETAIL_SLUGS = new Set([
+  "overview",
+  "booking",
+  "contact",
+  "extra-services",
+  "checkin",
+  "checkout",
+]);
+const ADMIN_RESERVED_ROUTES = new Set([
+  "forms",
+  "test-submissions",
+  "manual-submission",
+]);
 const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
   typeof window !== "undefined" &&
   ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const METER_OPTIONS: Array<{
+  key: MeterKey;
+  label: string;
+  icon: React.ReactNode;
+}> = [
+  { key: "electricity", label: "Electricity", icon: <FiZap aria-hidden="true" /> },
+  { key: "waterHouse", label: "Water (house)", icon: <FiDroplet aria-hidden="true" /> },
+  { key: "waterPool", label: "Water (pool)", icon: <FiDroplet aria-hidden="true" /> },
+];
 
 function readAppearance(): Appearance {
   if (typeof window === "undefined") return "light";
@@ -150,6 +275,101 @@ function formatDateTime(value?: number) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function startOfLocalDay(date = new Date()) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function addLocalDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function addLocalMonths(date: Date, months: number) {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+}
+
+function dateFilterRange(filter: SubmissionDateFilter) {
+  const today = startOfLocalDay();
+  const tomorrow = addLocalDays(today, 1);
+  const currentWeekStart = addLocalDays(today, -((today.getDay() + 6) % 7));
+
+  switch (filter) {
+    case "today":
+      return { from: today.getTime(), to: tomorrow.getTime() };
+    case "current-week":
+      return {
+        from: currentWeekStart.getTime(),
+        to: addLocalDays(currentWeekStart, 7).getTime(),
+      };
+    case "last-week": {
+      const lastWeekStart = addLocalDays(currentWeekStart, -7);
+      return {
+        from: lastWeekStart.getTime(),
+        to: currentWeekStart.getTime(),
+      };
+    }
+    case "last-month":
+      return { from: addLocalMonths(today, -1).getTime(), to: tomorrow.getTime() };
+    case "last-3-months":
+      return { from: addLocalMonths(today, -3).getTime(), to: tomorrow.getTime() };
+    case "last-6-months":
+      return { from: addLocalMonths(today, -6).getTime(), to: tomorrow.getTime() };
+    case "year":
+      return {
+        from: new Date(today.getFullYear(), 0, 1).getTime(),
+        to: new Date(today.getFullYear() + 1, 0, 1).getTime(),
+      };
+    default:
+      return null;
+  }
+}
+
+function submissionMatchesTypeFilter(
+  submission: Submission,
+  filter: SubmissionFilter
+) {
+  if (filter === "all") return true;
+  if (filter === "booking") return submission.intent === "booking";
+  if (filter === "extra-services") return submission.intent === "extra-services";
+  if (filter === "guest-checkin") return submission.intent === "guest-checkin";
+  return isContactSubmission(submission);
+}
+
+function bookingNumberPrefix(hasBookingInfo: boolean) {
+  return hasBookingInfo ? "9" : "7";
+}
+
+function bookingNumberFallback(value: number | undefined, hasBookingInfo: boolean) {
+  if (!value) return null;
+  const suffix = String(Math.abs(value) % 10000).padStart(4, "0");
+  return `${bookingNumberPrefix(hasBookingInfo)}${suffix}`;
+}
+
+function stringValue(value: unknown) {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return null;
+}
+
+function fiveDigitNumber(value: string | null, hasBookingInfo?: boolean) {
+  if (!value) return null;
+  const digits = value.replace(/\D/g, "");
+  if (digits.length === 5) {
+    if (hasBookingInfo == null || digits.startsWith(bookingNumberPrefix(hasBookingInfo))) {
+      return digits;
+    }
+    return `${bookingNumberPrefix(hasBookingInfo)}${digits.slice(1)}`;
+  }
+  if (digits.length > 5) {
+    const suffix = digits.slice(-4);
+    return `${bookingNumberPrefix(Boolean(hasBookingInfo))}${suffix}`;
+  }
+  return null;
 }
 
 function formatPlainDate(value?: string | null) {
@@ -182,6 +402,61 @@ function renderPriceAmount(value?: number | null, options?: { negative?: boolean
       </span>
     </span>
   );
+}
+
+function isMeterKey(value?: string | null): value is MeterKey {
+  return value === "electricity" || value === "waterHouse" || value === "waterPool";
+}
+
+function meterIcon(value: MeterKey) {
+  return METER_OPTIONS.find((option) => option.key === value)?.icon || null;
+}
+
+function meterKeyFromAttachment(
+  attachment?: ImagePreview["attachment"] | null
+): MeterDraftKey {
+  return isMeterKey(attachment?.fieldname) ? attachment.fieldname : "";
+}
+
+function imagePreviewKey(preview: ImagePreview | null) {
+  if (!preview) return "";
+  const attachment = preview.attachment;
+  return [
+    preview.submission.id,
+    attachment.storagePath ||
+      attachment.firestoreFileId ||
+      attachment.fullPath ||
+      attachment.filePath ||
+      attachment.path ||
+      attachment.storageRef ||
+      attachment.filename ||
+      "image",
+    preview.index,
+  ].join(":");
+}
+
+function parseMeterNumber(value?: string | number | null) {
+  const normalized = String(value ?? "")
+    .trim()
+    .replace(/\./g, "")
+    .replace(",", ".");
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function formatMeterNumber(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  return new Intl.NumberFormat("da-DK", {
+    maximumFractionDigits: 3,
+  }).format(value);
+}
+
+function formatMeterDifference(value?: number | null) {
+  const formatted = formatMeterNumber(Math.abs(value ?? 0));
+  if (!formatted || value == null) return "—";
+  if (value === 0) return "0";
+  return `${value > 0 ? "+" : "-"}${formatted}`;
 }
 
 function statusLabel(status?: SubmissionStatus) {
@@ -224,6 +499,115 @@ function isCheckinSubmission(submission: Submission) {
 
 function isCheckoutSubmission(submission: Submission) {
   return isCheckinSubmission(submission) && submission.checkin?.type === "checkout";
+}
+
+function isContactSubmission(submission: Submission) {
+  return (
+    !submission.intent ||
+    submission.intent === "inquiry" ||
+    submission.intent === "contact"
+  );
+}
+
+function submissionBookingNumber(
+  submission: Submission,
+  hasBookingInfo?: boolean
+) {
+  const selection = submission.selection as
+    | (Submission["selection"] & {
+        bookingNumber?: unknown;
+        bookingNo?: unknown;
+        reservationNumber?: unknown;
+      })
+    | null
+    | undefined;
+
+  return (
+    fiveDigitNumber(stringValue(submission.bookingNumber), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(submission.bookingNo), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(submission.reservationNumber), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(submission.adminNumber), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(selection?.bookingNumber), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(selection?.bookingNo), hasBookingInfo) ||
+    fiveDigitNumber(stringValue(selection?.reservationNumber), hasBookingInfo) ||
+    null
+  );
+}
+
+function groupBookingNumber(items: Submission[]) {
+  const hasBookingInfo = items.some(
+    (submission) => submission.intent === "booking" || Boolean(submission.selection)
+  );
+  const bookingSource =
+    items.find((submission) => submission.intent === "booking") ||
+    items.find((submission) => Boolean(submission.selection)) ||
+    items[0];
+
+  return (
+    (bookingSource && submissionBookingNumber(bookingSource, hasBookingInfo)) ||
+    bookingNumberFallback(bookingSource?.createdAtMs, hasBookingInfo) ||
+    bookingSource?.id ||
+    "unknown"
+  );
+}
+
+function detailSlugForSubmission(submission: Submission) {
+  if (submission.intent === "booking") return "booking";
+  if (submission.intent === "extra-services") return "extra-services";
+  if (isContactSubmission(submission)) return "contact";
+  if (isCheckinSubmission(submission)) return submission.checkin?.type || "checkin";
+  return submission.id;
+}
+
+function checkinDetailFromValue(value?: string | null): CheckinDetailSelection {
+  return value === "checkout" ? "checkout" : "checkin";
+}
+
+function adminSubmissionPath(submissionId: string, detailSlug?: string | null) {
+  const encodedId = encodeURIComponent(submissionId);
+  const normalizedDetail =
+    detailSlug && detailSlug !== "overview" ? `/${encodeURIComponent(detailSlug)}` : "";
+  return `/admin/${encodedId}${normalizedDetail}`;
+}
+
+function routeDetailSlug(value?: string) {
+  if (!value) return "overview";
+  const decoded = decodeURIComponent(value).trim();
+  return ADMIN_DETAIL_SLUGS.has(decoded) ? decoded : decoded || "overview";
+}
+
+function submissionFailed(submission?: Submission | null) {
+  return submission?.status === "mail_failed" || submission?.mailStatus === "failed";
+}
+
+function submissionOk(submission?: Submission | null) {
+  return submission?.status === "sent" || submission?.mailStatus === "sent";
+}
+
+function submissionStatusIcon(submission?: Submission | null) {
+  if (submissionFailed(submission)) {
+    return (
+      <FiAlertCircle
+        aria-hidden="true"
+        className={`${styles.tabStatusIcon} ${styles.tabStatusError}`}
+      />
+    );
+  }
+  if (submissionOk(submission)) {
+    return (
+      <FiCheckCircle
+        aria-hidden="true"
+        className={`${styles.tabStatusIcon} ${styles.tabStatusOk}`}
+      />
+    );
+  }
+  return null;
+}
+
+function submissionGroupStatusIcon(submissions: Submission[]) {
+  return submissionStatusIcon(
+    submissions.find(submissionFailed) || submissions.find(submissionOk)
+  );
 }
 
 function submissionValue(submission: Submission) {
@@ -393,10 +777,21 @@ function renderExtrasPriceBreakdown(extras?: Submission["extras"] | null) {
           typeof item.qty === "number" && typeof item.unitPriceDKK === "number"
             ? item.qty * item.unitPriceDKK
             : null;
+        const quantity =
+          typeof item.qty === "number"
+            ? isYesNoExtraItem(item)
+              ? "Yes"
+              : `x ${item.qty}`
+            : null;
 
         return (
           <div className={styles.priceBreakdownRow} key={`${item.id || "extra-total"}-${index}`}>
-            <span>{item.label?.en || item.label?.da || item.id || "Extra"}</span>
+            <span>
+              {item.label?.en || item.label?.da || item.id || "Extra"}
+              {quantity ? (
+                <small className={styles.priceBreakdownMeta}>{quantity}</small>
+              ) : null}
+            </span>
             <span>{total != null ? renderPriceAmount(total) : "—"}</span>
           </div>
         );
@@ -408,6 +803,25 @@ function renderExtrasPriceBreakdown(extras?: Submission["extras"] | null) {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function extraItemLabel(item: ExtraItem) {
+  return item.label?.en || item.label?.da || item.label?.de || item.id || "Extra";
+}
+
+function isYesNoExtraItem(item: ExtraItem) {
+  const value = `${item.id || ""} ${extraItemLabel(item)}`.toLowerCase();
+  return (
+    value.includes("high chair") ||
+    value.includes("high-chair") ||
+    value.includes("baby cot") ||
+    value.includes("baby-cot") ||
+    value.includes("baby crib") ||
+    value.includes("crib") ||
+    value.includes("hot tub fill") ||
+    value.includes("hot-tub-fill") ||
+    value.includes("vildmarksbad")
   );
 }
 
@@ -436,8 +850,23 @@ function normalizeEmail(email?: string | null) {
 
 function normalizeArrivalDate(submission: Submission) {
   const value =
-    submission.selection?.start?.trim() || submission.extras?.stayDate?.trim();
+    submission.selection?.start?.trim() ||
+    submission.extras?.stayDate?.trim() ||
+    checkinSubmittedStayDate(submission);
   return value ? value : null;
+}
+
+function submissionCreatedPlainDate(submission?: Submission | null) {
+  if (!submission?.createdAtMs) return null;
+  return new Date(submission.createdAtMs).toISOString().slice(0, 10);
+}
+
+function checkinSubmittedStayDate(submission?: Submission | null) {
+  const value =
+    submission?.checkin?.stayDate?.trim() ||
+    submission?.checkin?.submittedStayDate?.trim() ||
+    submissionCreatedPlainDate(submission);
+  return value || null;
 }
 
 function findOverviewStayDate(group: SubmissionGroup | null, fallback?: Submission | null) {
@@ -446,7 +875,74 @@ function findOverviewStayDate(group: SubmissionGroup | null, fallback?: Submissi
     ?.selection?.start;
   const extraStayDate = submissions.find((submission) => submission.extras?.stayDate)
     ?.extras?.stayDate;
-  return bookingStart || extraStayDate || null;
+  const checkinDate = checkinSubmittedStayDate(
+    submissions.find((submission) => submission.checkin?.type === "checkin")
+  );
+  const anyCheckinDate = checkinSubmittedStayDate(
+    submissions.find((submission) => isCheckinSubmission(submission))
+  );
+  return bookingStart || extraStayDate || checkinDate || anyCheckinDate || null;
+}
+
+function findOverviewCheckoutDate(group: SubmissionGroup | null, fallback?: Submission | null) {
+  const submissions = group?.items?.length ? group.items : fallback ? [fallback] : [];
+  return (
+    submissions.find((submission) => submission.selection?.endExclusive)?.selection
+      ?.endExclusive ||
+    checkinSubmittedStayDate(
+      submissions.find((submission) => submission.checkin?.type === "checkout")
+    ) ||
+    null
+  );
+}
+
+function findSubmissionWithValue(
+  submissions: Submission[],
+  getValue: (submission: Submission) => React.ReactNode
+) {
+  return submissions.find((submission) => hasDisplayValue(getValue(submission))) || null;
+}
+
+function uniqueSubmissionValues(
+  submissions: Submission[],
+  getValue: (submission: Submission) => string | null | undefined
+) {
+  return Array.from(
+    new Set(
+      submissions
+        .map((submission) => getValue(submission)?.trim())
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+}
+
+function getSubmissionTypePriority(submission: Submission) {
+  if (submission.intent === "booking") return 0;
+  if (!submission.intent || submission.intent === "inquiry") return 1;
+  if (submission.intent === "extra-services") return 2;
+  if (submission.intent === "guest-checkin") return 3;
+  return 4;
+}
+
+function findOverviewContactSubmission(
+  submissions: Submission[],
+  key: "email" | "phone"
+) {
+  return [...submissions]
+    .sort(
+      (a, b) =>
+        getSubmissionTypePriority(a) - getSubmissionTypePriority(b) ||
+        (b.createdAtMs || 0) - (a.createdAtMs || 0)
+    )
+    .find((submission) => hasDisplayValue(submission[key])) || null;
+}
+
+function findOverviewBookingSubmission(submissions: Submission[]) {
+  return (
+    submissions.find((submission) => submission.intent === "booking" && submission.selection) ||
+    submissions.find((submission) => submission.selection) ||
+    null
+  );
 }
 
 function buildSubmissionGroups(submissions: Submission[]): SubmissionGroup[] {
@@ -505,20 +1001,32 @@ function buildSubmissionGroups(submissions: Submission[]): SubmissionGroup[] {
       const sorted = [...items].sort(
         (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
       );
+      const bookingNumber = groupBookingNumber(sorted);
 
       return {
-        id: sorted[0].id,
+        id: bookingNumber,
         primary: sorted[0],
         items: sorted,
         labels: Array.from(
           new Set(sorted.map((submission) => submissionLabel(submission)))
         ),
+        bookingNumber,
       };
     })
     .sort((a, b) => (b.primary.createdAtMs || 0) - (a.primary.createdAtMs || 0));
 }
 
 export default function AdminForms() {
+  const navigate = useNavigate();
+  const { "*": adminPath = "" } = useParams<{ "*": string }>();
+  const [routeSubmissionId, routeAdminDetail] = adminPath.split("/");
+  const isTestSubmissionsPage = routeSubmissionId === "test-submissions";
+  const isManualSubmissionPage = routeSubmissionId === "manual-submission";
+  const routeSelectedId =
+    routeSubmissionId && !ADMIN_RESERVED_ROUTES.has(routeSubmissionId)
+      ? decodeURIComponent(routeSubmissionId)
+      : null;
+  const activeRouteDetail = routeDetailSlug(routeAdminDetail);
   const [appearance, setAppearance] = React.useState<Appearance>(() =>
     readAppearance()
   );
@@ -528,14 +1036,29 @@ export default function AdminForms() {
   const [authReady, setAuthReady] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [submissions, setSubmissions] = React.useState<Submission[]>([]);
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = React.useState(false);
+  const [hasLoadedSubmissions, setHasLoadedSubmissions] = React.useState(false);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [adminEmail, setAdminEmail] = React.useState<string>("");
   const [submissionFilter, setSubmissionFilter] =
     React.useState<SubmissionFilter>("all");
+  const [dateFilter, setDateFilter] = React.useState<SubmissionDateFilter>("all");
+  const [renderedGroupCount, setRenderedGroupCount] =
+    React.useState(SUBMISSION_BATCH_SIZE);
+  const [testSubmissionType, setTestSubmissionType] =
+    React.useState<TestSubmissionType>("all");
+  const [creatingTestSubmission, setCreatingTestSubmission] = React.useState(false);
+  const [testSubmissionMessage, setTestSubmissionMessage] =
+    React.useState<string | null>(null);
+  const [testSubmissionError, setTestSubmissionError] =
+    React.useState<string | null>(null);
+  const [testRunResults, setTestRunResults] = React.useState<TestRunResult[]>([]);
+  const [manualSubmissionType, setManualSubmissionType] =
+    React.useState<Exclude<TestSubmissionType, "all">>("booking");
   const [deleteConfirmation, setDeleteConfirmation] = React.useState("");
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [deleting, setDeleting] = React.useState(false);
-  const [deleteTarget, setDeleteTarget] = React.useState<Submission | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<DeleteTarget | null>(null);
   const [activeGroupDetail, setActiveGroupDetail] =
     React.useState<GroupDetailSelection>("overview");
   const [activeCheckinDetail, setActiveCheckinDetail] =
@@ -543,6 +1066,19 @@ export default function AdminForms() {
   const [isMobileLayout, setIsMobileLayout] = React.useState(false);
   const [mobileDetailDragOffset, setMobileDetailDragOffset] = React.useState(0);
   const [isDraggingMobileDetail, setIsDraggingMobileDetail] = React.useState(false);
+  const [imagePreview, setImagePreview] = React.useState<ImagePreview | null>(null);
+  const [meterDraftByImage, setMeterDraftByImage] = React.useState<
+    Record<string, MeterKey>
+  >({});
+  const [meterDraftKey, setMeterDraftKey] = React.useState<MeterDraftKey>("");
+  const [meterDraftValue, setMeterDraftValue] = React.useState("");
+  const [meterSaveState, setMeterSaveState] = React.useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [meterSaveError, setMeterSaveError] = React.useState<string | null>(null);
+  const meterAutosaveTimer = React.useRef<number | null>(null);
+  const lastMeterSaveSignature = React.useRef("");
+  const activeImagePreviewKey = React.useRef("");
   const mobileDetailDrag = React.useRef({
     active: false,
     pointerId: -1,
@@ -564,7 +1100,7 @@ export default function AdminForms() {
   React.useEffect(() => {
     if (DASHBOARD_AUTH_DISABLED) {
       setAuthReady(true);
-      setAdminEmail("dashboard@fyrrehaven-61.dk");
+      setAdminEmail("local@fyrrehaven-61.dk");
       return;
     }
 
@@ -593,6 +1129,7 @@ export default function AdminForms() {
 
   const fetchSubmissions = React.useCallback(async () => {
     setError(null);
+    setIsLoadingSubmissions(true);
 
     try {
       const auth = getFirebaseAuth();
@@ -618,29 +1155,26 @@ export default function AdminForms() {
           : apiSubmissions;
 
       setSubmissions(nextSubmissions);
-      setSelectedId((current) => {
-        if (isMobileLayout) return null;
-
-        if (current && nextSubmissions.some((submission) => submission.id === current)) {
-          return current;
-        }
-
-        return nextSubmissions[0]?.id ?? null;
-      });
       setAdminEmail(
         data.admin?.email ||
           auth?.currentUser?.email ||
-          (DASHBOARD_AUTH_DISABLED ? "dashboard@fyrrehaven-61.dk" : "")
+          (DASHBOARD_AUTH_DISABLED ? "local@fyrrehaven-61.dk" : "")
       );
     } catch (nextError) {
       if (LOCAL_DASHBOARD_FALLBACK) {
-        setSubmissions([...(localTestSubmissions as unknown as Submission[])]);
+        const fallbackSubmissions = [
+          ...(localTestSubmissions as unknown as Submission[]),
+        ];
+        setSubmissions(fallbackSubmissions);
         setError(null);
       } else {
         setError(String(nextError instanceof Error ? nextError.message : nextError));
       }
+    } finally {
+      setHasLoadedSubmissions(true);
+      setIsLoadingSubmissions(false);
     }
-  }, [isMobileLayout]);
+  }, []);
 
   React.useEffect(() => {
     setDeleteConfirmation("");
@@ -649,36 +1183,112 @@ export default function AdminForms() {
   }, [selectedId]);
 
   React.useEffect(() => {
+    if (!routeSelectedId) return;
+    setSelectedId(routeSelectedId);
+  }, [routeSelectedId]);
+
+  React.useEffect(() => {
+    if (isTestSubmissionsPage || isManualSubmissionPage) return;
     if (!user && !DASHBOARD_AUTH_DISABLED) return;
     void fetchSubmissions();
-  }, [user, fetchSubmissions]);
+  }, [user, fetchSubmissions, isManualSubmissionPage, isTestSubmissionsPage]);
+
+  React.useEffect(() => {
+    if (!imagePreview) {
+      activeImagePreviewKey.current = "";
+      return;
+    }
+    const previewKey = imagePreviewKey(imagePreview);
+    const activePreviewKey = `${imagePreview.submission.id}:${previewKey || imagePreview.index}`;
+    const isNewPreview = activeImagePreviewKey.current !== activePreviewKey;
+    activeImagePreviewKey.current = activePreviewKey;
+    const nextMeter =
+      (previewKey && meterDraftByImage[previewKey]) ||
+      meterKeyFromAttachment(imagePreview.attachment);
+    const nextValue = nextMeter
+      ? imagePreview.submission.checkin?.meterReadings?.[nextMeter] || ""
+      : "";
+    setMeterDraftKey(nextMeter);
+    setMeterDraftValue(nextValue);
+    lastMeterSaveSignature.current =
+      imagePreview && nextMeter
+        ? `${imagePreview.submission.id}:${previewKey || imagePreview.index}:${nextMeter}:${nextValue.trim()}`
+        : "";
+    if (isNewPreview) {
+      setMeterSaveState("idle");
+      setMeterSaveError(null);
+    }
+  }, [imagePreview]);
+
+  const dateFilteredSubmissions = React.useMemo(() => {
+    const range = dateFilterRange(dateFilter);
+    return submissions.filter((submission) => {
+      if (range) {
+        const createdAt = submission.createdAtMs || 0;
+        if (createdAt < range.from || createdAt >= range.to) return false;
+      }
+      return true;
+    });
+  }, [dateFilter, submissions]);
 
   const visibleGroups = React.useMemo(() => {
-    const filtered = submissions.filter((submission) => {
-      if (submissionFilter === "all") return true;
-      if (submissionFilter === "booking") return submission.intent === "booking";
-      if (submissionFilter === "extra-services") {
-        return submission.intent === "extra-services";
-      }
-      if (submissionFilter === "guest-checkin") {
-        return submission.intent === "guest-checkin";
-      }
-      return !submission.intent || submission.intent === "inquiry";
-    });
+    const groups = buildSubmissionGroups(dateFilteredSubmissions);
+    if (submissionFilter === "all") return groups;
+    return groups.filter((group) =>
+      group.items.some((submission) =>
+        submissionMatchesTypeFilter(submission, submissionFilter)
+      )
+    );
+  }, [dateFilteredSubmissions, submissionFilter]);
 
-    return buildSubmissionGroups(filtered);
-  }, [submissionFilter, submissions]);
+  const filteredSubmissions = React.useMemo(
+    () => visibleGroups.flatMap((group) => group.items),
+    [visibleGroups]
+  );
+
+  const filteredDashboardStats = React.useMemo<DashboardStats>(() => {
+    return {
+      total: filteredSubmissions.length,
+      sent: filteredSubmissions.filter(
+        (submission) => submission.status === "sent"
+      ).length,
+      failed: filteredSubmissions.filter(
+        (submission) => submission.status === "mail_failed"
+      ).length,
+      latestAtMs: filteredSubmissions[0]?.createdAtMs,
+    };
+  }, [filteredSubmissions]);
+
+  React.useEffect(() => {
+    setRenderedGroupCount(SUBMISSION_BATCH_SIZE);
+  }, [dateFilter, submissionFilter]);
+
+  const renderedGroups = React.useMemo(
+    () => visibleGroups.slice(0, renderedGroupCount),
+    [renderedGroupCount, visibleGroups]
+  );
+  const hasMoreVisibleGroups = renderedGroupCount < visibleGroups.length;
 
   const selectedGroup =
-    visibleGroups.find((group) => group.id === selectedId) || null;
+    visibleGroups.find(
+      (group) =>
+        group.id === selectedId ||
+        group.items.some((submission) => submission.id === selectedId)
+    ) || null;
   const selectedSubmission = selectedGroup?.primary || null;
   const checkinSubmissions = React.useMemo(
     () => selectedGroup?.items.filter(isCheckinSubmission) || [],
     [selectedGroup]
   );
+  const contactSubmissions = React.useMemo(
+    () => selectedGroup?.items.filter(isContactSubmission) || [],
+    [selectedGroup]
+  );
   const detailSubmission =
     activeGroupDetail === "overview"
       ? selectedSubmission
+      : activeGroupDetail === CONTACT_GROUP_DETAIL
+      ? contactSubmissions[0] || selectedSubmission
       : activeGroupDetail === CHECKIN_GROUP_DETAIL
       ? checkinSubmissions.find(
           (submission) => submission.checkin?.type === activeCheckinDetail
@@ -687,6 +1297,82 @@ export default function AdminForms() {
         selectedSubmission
       : selectedGroup?.items.find((submission) => submission.id === activeGroupDetail) ||
         selectedSubmission;
+
+  function detailSelectionForSlug(
+    group: SubmissionGroup,
+    slug: string
+  ): {
+    groupDetail: GroupDetailSelection;
+    checkinDetail: CheckinDetailSelection | null;
+  } {
+    if (slug === "overview") {
+      return { groupDetail: "overview", checkinDetail: null };
+    }
+
+    if (slug === "contact" && group.items.some(isContactSubmission)) {
+      return { groupDetail: CONTACT_GROUP_DETAIL, checkinDetail: null };
+    }
+
+    if (slug === "checkin" || slug === "checkout") {
+      const checkinDetail = slug as CheckinDetailSelection;
+      if (
+        group.items.some(
+          (submission) => submission.checkin?.type === checkinDetail
+        )
+      ) {
+        return {
+          groupDetail: CHECKIN_GROUP_DETAIL,
+          checkinDetail,
+        };
+      }
+    }
+
+    const matchingSubmission = group.items.find(
+      (submission) =>
+        submission.id === slug || detailSlugForSubmission(submission) === slug
+    );
+
+    if (matchingSubmission) {
+      if (isCheckinSubmission(matchingSubmission)) {
+        return {
+          groupDetail: CHECKIN_GROUP_DETAIL,
+          checkinDetail: checkinDetailFromValue(matchingSubmission.checkin?.type),
+        };
+      }
+
+      if (isContactSubmission(matchingSubmission)) {
+        return { groupDetail: CONTACT_GROUP_DETAIL, checkinDetail: null };
+      }
+
+      return { groupDetail: matchingSubmission.id, checkinDetail: null };
+    }
+
+    return { groupDetail: "overview", checkinDetail: null };
+  }
+
+  React.useEffect(() => {
+    if (!routeSelectedId || !selectedGroup) return;
+
+    const requestedDetail = routeAdminDetail ? activeRouteDetail : "overview";
+    const nextSelection = detailSelectionForSlug(selectedGroup, requestedDetail);
+
+    setActiveGroupDetail((current) =>
+      current === nextSelection.groupDetail ? current : nextSelection.groupDetail
+    );
+    if (nextSelection.checkinDetail) {
+      const nextCheckinDetail = nextSelection.checkinDetail;
+      setActiveCheckinDetail((current) =>
+        current === nextCheckinDetail
+          ? current
+          : nextCheckinDetail
+      );
+    }
+  }, [
+    activeRouteDetail,
+    routeAdminDetail,
+    routeSelectedId,
+    selectedGroup,
+  ]);
 
   React.useEffect(() => {
     if (!selectedGroup) return;
@@ -697,8 +1383,21 @@ export default function AdminForms() {
     ) {
       return;
     }
-    if (selectedGroup.items.some((submission) => submission.id === activeGroupDetail)) return;
-    setActiveGroupDetail("overview");
+    if (
+      activeGroupDetail === CONTACT_GROUP_DETAIL &&
+      selectedGroup.items.some(isContactSubmission)
+    ) {
+      return;
+    }
+    if (
+      selectedGroup.items.some(
+        (submission) =>
+          submission.id === activeGroupDetail && !isContactSubmission(submission)
+      )
+    ) {
+      return;
+    }
+    openGroupDetail(selectedGroup, "overview", { replace: true });
   }, [activeGroupDetail, selectedGroup]);
 
   React.useEffect(() => {
@@ -716,7 +1415,7 @@ export default function AdminForms() {
     )
       ? "checkin"
       : "checkout";
-    setActiveCheckinDetail(nextType);
+    openCheckinDetail(nextType);
   }, [activeCheckinDetail, activeGroupDetail, checkinSubmissions, selectedGroup]);
 
   React.useEffect(() => {
@@ -726,6 +1425,7 @@ export default function AdminForms() {
     }
 
     setSelectedId((current) => {
+      if (routeSelectedId) return routeSelectedId;
       if (isMobileLayout) return null;
 
       if (current && visibleGroups.some((group) => group.id === current)) {
@@ -734,7 +1434,7 @@ export default function AdminForms() {
 
       return visibleGroups[0].id;
     });
-  }, [isMobileLayout, visibleGroups]);
+  }, [isMobileLayout, routeSelectedId, visibleGroups]);
 
   React.useEffect(() => {
     if (
@@ -806,10 +1506,417 @@ export default function AdminForms() {
     };
   }, [isDraggingMobileDetail]);
 
-  const sentCount = submissions.filter((submission) => submission.status === "sent").length;
-  const failedCount = submissions.filter(
-    (submission) => submission.status === "mail_failed"
-  ).length;
+  React.useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      if (imagePreview) {
+        setImagePreview(null);
+        return;
+      }
+
+      if (deleteTarget && !deleting) {
+        setDeleteTarget(null);
+        setDeleteConfirmation("");
+        setDeleteError(null);
+        return;
+      }
+
+      if (activeGroupDetail !== "overview") {
+        if (selectedGroup) {
+          openGroupDetail(selectedGroup, "overview");
+        } else {
+          setActiveGroupDetail("overview");
+        }
+        return;
+      }
+
+      if (isMobileLayout && selectedGroup) {
+        closeMobileDetail();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    activeGroupDetail,
+    deleteTarget,
+    deleting,
+    imagePreview,
+    isMobileLayout,
+    selectedGroup,
+  ]);
+
+  const sentCount = filteredDashboardStats.sent;
+  const failedCount = filteredDashboardStats.failed;
+
+  function showNextSubmissionBatch() {
+    setRenderedGroupCount((current) =>
+      Math.min(current + SUBMISSION_BATCH_SIZE, visibleGroups.length)
+    );
+  }
+
+  function handleSubmissionListScroll(event: React.UIEvent<HTMLDivElement>) {
+    if (!hasMoreVisibleGroups) return;
+    const element = event.currentTarget;
+    const distanceFromBottom =
+      element.scrollHeight - element.scrollTop - element.clientHeight;
+    if (distanceFromBottom > 360) return;
+    showNextSubmissionBatch();
+  }
+
+  function openSubmissionDetail(
+    submissionId: string,
+    detailSlug?: string | null,
+    options?: { replace?: boolean }
+  ) {
+    if (!detailSlug || detailSlug === "overview") {
+      setActiveGroupDetail("overview");
+      setActiveCheckinDetail("checkin");
+    }
+    setSelectedId(submissionId);
+    navigate(adminSubmissionPath(submissionId, detailSlug), {
+      replace: options?.replace,
+    });
+  }
+
+  function openGroupDetail(
+    group: SubmissionGroup,
+    detail: GroupDetailSelection,
+    options?: { replace?: boolean }
+  ) {
+    if (detail === "overview") {
+      setActiveGroupDetail("overview");
+      openSubmissionDetail(group.id, "overview", options);
+      return;
+    }
+
+    if (detail === CONTACT_GROUP_DETAIL) {
+      setActiveGroupDetail(CONTACT_GROUP_DETAIL);
+      openSubmissionDetail(group.id, "contact", options);
+      return;
+    }
+
+    if (detail === CHECKIN_GROUP_DETAIL) {
+      const checkinSubmission =
+        group.items.find(
+          (submission) => submission.checkin?.type === activeCheckinDetail
+        ) || group.items.find(isCheckinSubmission);
+      const checkinDetail = checkinSubmission?.checkin?.type || activeCheckinDetail;
+      setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
+      if (checkinDetail === "checkin" || checkinDetail === "checkout") {
+        setActiveCheckinDetail(checkinDetail);
+      }
+      openSubmissionDetail(
+        group.id,
+        checkinDetail || "checkin",
+        options
+      );
+      return;
+    }
+
+    const submission = group.items.find((item) => item.id === detail);
+    setActiveGroupDetail(detail);
+    openSubmissionDetail(
+      group.id,
+      submission ? detailSlugForSubmission(submission) : detail,
+      options
+    );
+  }
+
+  function openCheckinDetail(type: CheckinDetailSelection) {
+    if (!selectedGroup) {
+      setActiveCheckinDetail(type);
+      return;
+    }
+
+    setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
+    setActiveCheckinDetail(type);
+    openSubmissionDetail(selectedGroup.id, type);
+  }
+
+  async function adminAuthHeaders() {
+    const auth = getFirebaseAuth();
+    const token =
+      DASHBOARD_AUTH_DISABLED || !auth?.currentUser
+        ? null
+        : await auth.currentUser.getIdToken(true);
+    return {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }
+
+  function baseTestContactPayload() {
+    return {
+      lang: "en",
+      website: "",
+      company: "",
+      faxNumber: "",
+      formStartedAt: Date.now() - 5000,
+      name: "Rafy Marbin Test Guest",
+      email: "rafy@marbin.dk",
+      phone: "+45 22 33 44 55",
+      country: "Denmark",
+      countryIso: "DK",
+      consent: true,
+      feesAccepted: true,
+    };
+  }
+
+  function testContactPayload(type: Exclude<TestSubmissionType, "all" | "checkin" | "checkout">) {
+    const selection = {
+      start: "2026-08-12",
+      endExclusive: "2026-08-19",
+      nights: 7,
+      baseNightsTotalDKK: 23054,
+      cleaningFeeDKK: 1250,
+      totalWithCleaningDKK: 24304,
+      airbnbServiceFeeSavingsDKK: 2554,
+      totalAfterAirbnbDiscountDKK: 21750,
+      breakdown: [
+        { date: "2026-08-12", price: 3293 },
+        { date: "2026-08-13", price: 3293 },
+        { date: "2026-08-14", price: 3443 },
+        { date: "2026-08-15", price: 3443 },
+        { date: "2026-08-16", price: 3293 },
+        { date: "2026-08-17", price: 3143 },
+        { date: "2026-08-18", price: 3146 },
+      ],
+    };
+    const extras = {
+      stayDate: "2026-08-12",
+      totalDKK: 1495,
+      items: [
+        {
+          id: "linen-pack",
+          qty: 5,
+          unitPriceDKK: 199,
+          label: { da: "Linnedpakke", en: "Linen package" },
+        },
+        {
+          id: "crib",
+          qty: 1,
+          unitPriceDKK: 500,
+          label: { da: "Babyseng", en: "Baby crib" },
+        },
+      ],
+    };
+
+    if (type === "booking") {
+      return {
+        ...baseTestContactPayload(),
+        purpose: "booking",
+        context: "booking",
+        stayPurpose:
+          "Admin mail test booking with every required booking field filled.",
+        guests: { adults: 3, children: 2, babies: 1, total: 6 },
+        selection,
+        message:
+          "Admin mail test: booking form payload with guest details, dates, prices, and approvals.",
+      };
+    }
+
+    if (type === "extra-services") {
+      return {
+        ...baseTestContactPayload(),
+        purpose: "extra-services",
+        context: "extra-services",
+        message:
+          "Admin mail test: extra services form with selected linen package and baby crib.",
+        extras,
+      };
+    }
+
+    return {
+      ...baseTestContactPayload(),
+      purpose: "inquiry",
+      context: "contact",
+      message:
+        "Admin mail test: contact form message with phone, country, consent, and guest email filled.",
+    };
+  }
+
+  async function testImageFile(path: string, filename: string) {
+    const res = await fetch(path);
+    if (!res.ok) throw new Error(`Could not load ${filename}`);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: blob.type || "image/jpeg" });
+  }
+
+  async function testCheckinPayload(type: "checkin" | "checkout") {
+    const formData = new FormData();
+    formData.set("website", "");
+    formData.set("company", "");
+    formData.set("faxNumber", "");
+    formData.set("formStartedAt", String(Date.now() - 5000));
+    formData.set("lang", "en");
+    formData.set("name", "Rafy Marbin Test Guest");
+    formData.set("email", "rafy@marbin.dk");
+    formData.set("keycode", "6142");
+    formData.set("checkType", type);
+    formData.set("elReading", type === "checkin" ? "055540" : "058120");
+    formData.set("waterHouse", type === "checkin" ? "0002142" : "0002199");
+    formData.set("waterPool", type === "checkin" ? "00516263" : "00516430");
+    formData.set(
+      "comment",
+      type === "checkin"
+        ? "Admin mail test: check-in form with all meter values and images."
+        : "Admin mail test: check-out form with all meter values and images."
+    );
+    formData.set("consent", "true");
+    formData.append(
+      "electricity",
+      await testImageFile("/admin-test/electricity-meter.jpeg", "electricity-meter.jpeg")
+    );
+    formData.append(
+      "waterHouse",
+      await testImageFile("/admin-test/water-house-meter.jpeg", "water-house-meter.jpeg")
+    );
+    formData.append(
+      "waterPool",
+      await testImageFile("/admin-test/water-pool-meter.jpeg", "water-pool-meter.jpeg")
+    );
+    return formData;
+  }
+
+  async function deleteTemporarySubmission(submissionId?: string | null) {
+    if (!submissionId) return false;
+    const res = await fetch(`/api/admin/forms?id=${encodeURIComponent(submissionId)}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        ...(await adminAuthHeaders()),
+      },
+      body: JSON.stringify({
+        id: submissionId,
+        confirmation: "delete",
+      }),
+    });
+    const data = (await res.json()) as ApiResponse;
+    if (!res.ok || !data.ok) {
+      throw new Error(data.detail || data.error || `Cleanup failed: HTTP ${res.status}`);
+    }
+    return Boolean(data.deleted);
+  }
+
+  async function runSingleMailTest(type: Exclude<TestSubmissionType, "all">) {
+    const label =
+      type === "extra-services"
+        ? "Extra services"
+        : type === "checkin"
+          ? "Check-in"
+          : type === "checkout"
+            ? "Check-out"
+            : type === "booking"
+              ? "Booking"
+              : "Contact";
+    let submissionId: string | null | undefined = null;
+    let mailStatus: TestRunResult["status"] = "error";
+    let detail = "";
+
+    try {
+      const res =
+        type === "checkin" || type === "checkout"
+          ? await fetch("/api/checkin", {
+              method: "POST",
+              body: await testCheckinPayload(type),
+            })
+          : await fetch("/api/contact", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(testContactPayload(type)),
+            });
+      const data = (await res.json()) as ApiResponse;
+      submissionId = data.submissionId;
+
+      if (!res.ok || !data.ok) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+
+      mailStatus = data.mailStatus === "sent" ? "sent" : "failed";
+      detail =
+        data.mailStatus === "sent"
+          ? "Mail sent successfully."
+          : "Mail failed. Temporary submission was still cleaned up.";
+    } catch (error) {
+      detail = String(error instanceof Error ? error.message : error);
+      mailStatus = "error";
+    }
+
+    let deleted = false;
+    try {
+      deleted = await deleteTemporarySubmission(submissionId);
+    } catch (cleanupError) {
+      detail = `${detail} Cleanup error: ${String(
+        cleanupError instanceof Error ? cleanupError.message : cleanupError
+      )}`;
+    }
+
+    return {
+      type,
+      label,
+      status: mailStatus,
+      submissionId,
+      deleted,
+      detail,
+    };
+  }
+
+  async function createTestSubmission(type: TestSubmissionType = testSubmissionType) {
+    if (creatingTestSubmission) return;
+    setCreatingTestSubmission(true);
+    setTestSubmissionError(null);
+    setTestSubmissionMessage(null);
+    setTestRunResults([]);
+
+    try {
+      const tests: Array<Exclude<TestSubmissionType, "all">> =
+        type === "all"
+          ? ["booking", "contact", "extra-services", "checkin", "checkout"]
+          : [type];
+      const results: TestRunResult[] = [];
+
+      for (const testType of tests) {
+        const result = await runSingleMailTest(testType);
+        results.push(result);
+        setTestRunResults([...results]);
+      }
+
+      const failures = results.filter((result) => result.status !== "sent");
+      const cleanupFailures = results.filter(
+        (result) => result.submissionId && !result.deleted
+      );
+
+      if (failures.length || cleanupFailures.length) {
+        setTestSubmissionError(
+          [
+            failures.length
+              ? `${failures.length} mail test${failures.length === 1 ? "" : "s"} failed.`
+              : "",
+            cleanupFailures.length
+              ? `${cleanupFailures.length} temporary submission${
+                  cleanupFailures.length === 1 ? "" : "s"
+                } could not be deleted.`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")
+        );
+      } else {
+        setTestSubmissionMessage(
+          `${results.length} mail test${
+            results.length === 1 ? "" : "s"
+          } sent successfully and cleaned up.`
+        );
+      }
+    } catch (nextError) {
+      setTestSubmissionError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    } finally {
+      setCreatingTestSubmission(false);
+    }
+  }
 
   function closeMobileDetail() {
     mobileDetailDrag.current.active = false;
@@ -819,6 +1926,7 @@ export default function AdminForms() {
     setIsDraggingMobileDetail(false);
     setMobileDetailDragOffset(0);
     setSelectedId(null);
+    navigate("/admin/forms");
   }
 
   function startMobileDetailDrag(event: React.PointerEvent<HTMLButtonElement>) {
@@ -832,6 +1940,25 @@ export default function AdminForms() {
     drag.offset = 0;
     setIsDraggingMobileDetail(true);
     setMobileDetailDragOffset(0);
+  }
+
+  function openDeleteDialog(group: SubmissionGroup) {
+    setDeleteError(null);
+    setDeleteConfirmation("");
+    setDeleteTarget({
+      groupId: group.id,
+      bookingNumber: group.bookingNumber,
+      primary: group.primary,
+      items: group.items,
+      labels: group.labels,
+    });
+  }
+
+  function closeDeleteDialog() {
+    if (deleting) return;
+    setDeleteTarget(null);
+    setDeleteConfirmation("");
+    setDeleteError(null);
   }
 
   async function handleSignIn() {
@@ -871,10 +1998,17 @@ export default function AdminForms() {
     setSubmissions([]);
     setSelectedId(null);
     setAdminEmail("");
+    navigate("/admin/forms");
   }
 
   function toggleAppearance() {
     setAppearance((current) => (current === "dark" ? "light" : "dark"));
+  }
+
+  async function copyText(value: string) {
+    const text = value.trim();
+    if (!text || !navigator.clipboard) return;
+    await navigator.clipboard.writeText(text);
   }
 
   function renderLoggedMeta(submission?: Submission | null) {
@@ -885,12 +2019,20 @@ export default function AdminForms() {
     label: string,
     value: React.ReactNode,
     submission: Submission,
-    options?: { wide?: boolean; message?: boolean; after?: React.ReactNode }
+    options?: {
+      wide?: boolean;
+      message?: boolean;
+      after?: React.ReactNode;
+      valueAction?: React.ReactNode;
+      disableAutoAction?: boolean;
+    }
   ) {
     if (!hasDisplayValue(value) && !options?.after) return null;
     const textValue = typeof value === "string" ? value.trim().replace(/[\r\n]/g, "") : "";
     const emailHref =
-      label.toLowerCase() === "email" && textValue ? `mailto:${textValue}` : null;
+      !options?.disableAutoAction && label.toLowerCase() === "email" && textValue
+        ? `mailto:${textValue}`
+        : null;
     const phoneDigits = textValue.replace(/[^\d+]/g, "");
     const normalizedPhone = phoneDigits.startsWith("+")
       ? phoneDigits
@@ -898,7 +2040,7 @@ export default function AdminForms() {
         ? `+${phoneDigits}`
         : "";
     const phoneAction =
-      label.toLowerCase() === "phone" && normalizedPhone
+      !options?.disableAutoAction && label.toLowerCase() === "phone" && normalizedPhone
         ? {
             href: normalizedPhone.startsWith("+45")
               ? `tel:${normalizedPhone}`
@@ -913,6 +2055,10 @@ export default function AdminForms() {
             ),
           }
         : null;
+    const canCopyContact =
+      Boolean(textValue) &&
+      !options?.disableAutoAction &&
+      (label.toLowerCase() === "email" || label.toLowerCase() === "phone");
 
     return (
       <div className={`${styles.detailItem} ${options?.wide ? styles.detailItemWide : ""}`}>
@@ -922,6 +2068,7 @@ export default function AdminForms() {
         ) : (
           <div className={styles.detailValueRow}>
             <div className={styles.detailValue}>{value}</div>
+            {options?.valueAction}
             {emailHref ? (
               <a
                 className={styles.detailMailButton}
@@ -944,6 +2091,17 @@ export default function AdminForms() {
                 {phoneAction.icon}
               </a>
             ) : null}
+            {canCopyContact ? (
+              <button
+                type="button"
+                className={`${styles.detailMailButton} ${styles.contactCopyButton}`}
+                aria-label={`Copy ${label.toLowerCase()}`}
+                title={`Copy ${label.toLowerCase()}`}
+                onClick={() => copyText(textValue)}
+              >
+                <FiCopy aria-hidden="true" />
+              </button>
+            ) : null}
           </div>
         )}
         {options?.after}
@@ -952,11 +2110,135 @@ export default function AdminForms() {
     );
   }
 
-  function renderGroupDetailSwitcher(group: SubmissionGroup) {
-    const regularSubmissions = group.items.filter(
-      (submission) => !isCheckinSubmission(submission)
+  function renderContactValueList(
+    label: "Email" | "Phone",
+    values: string[],
+    submission: Submission
+  ) {
+    if (!values.length) return null;
+    const isEmail = label === "Email";
+
+    return (
+      <div className={styles.detailItem}>
+        <span className={styles.detailLabel}>{label}</span>
+        <div className={styles.contactValueList}>
+          {values.map((value) => {
+            const trimmed = value.trim();
+            const phoneDigits = trimmed.replace(/[^\d+]/g, "");
+            const normalizedPhone = phoneDigits.startsWith("+")
+              ? phoneDigits
+              : phoneDigits
+                ? `+${phoneDigits}`
+                : "";
+            const href = isEmail
+              ? `mailto:${trimmed}`
+              : normalizedPhone.startsWith("+45")
+                ? `tel:${normalizedPhone}`
+                : `https://wa.me/${normalizedPhone.replace("+", "")}`;
+            const actionLabel = isEmail
+              ? `Email ${trimmed}`
+              : normalizedPhone.startsWith("+45")
+                ? `Call ${trimmed}`
+                : `Message ${trimmed} on WhatsApp`;
+            const icon = isEmail ? (
+              <FiMail aria-hidden="true" />
+            ) : normalizedPhone.startsWith("+45") ? (
+              <FiPhone aria-hidden="true" />
+            ) : (
+              <FaWhatsapp aria-hidden="true" />
+            );
+
+            return (
+              <div className={styles.contactValueRow} key={trimmed}>
+                <span className={styles.contactValueText} title={trimmed}>
+                  {trimmed}
+                </span>
+                <a
+                  className={styles.detailMailButton}
+                  href={href}
+                  aria-label={actionLabel}
+                  title={actionLabel}
+                  target={href.startsWith("https://") ? "_blank" : undefined}
+                  rel={href.startsWith("https://") ? "noreferrer" : undefined}
+                >
+                  {icon}
+                </a>
+                <button
+                  type="button"
+                  className={`${styles.detailMailButton} ${styles.contactCopyButton}`}
+                  aria-label={`Copy ${label.toLowerCase()}`}
+                  title={`Copy ${label.toLowerCase()}`}
+                  onClick={() => copyText(trimmed)}
+                >
+                  <FiCopy aria-hidden="true" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+        {renderLoggedMeta(submission)}
+      </div>
     );
-    const hasCheckinSubmissions = group.items.some(isCheckinSubmission);
+  }
+
+  function renderMeterDetailItem(label: string, meter: MeterKey, submission: Submission) {
+    const activeValue = currentMeterReading(submission, meter);
+    const correction = meterCorrection(submission, meter);
+    const originalValue = correction?.originalValue?.trim() || "";
+    const correctedValue = correction?.correctedValue?.trim() || activeValue;
+    const originalNumber = parseMeterNumber(originalValue);
+    const correctedNumber = parseMeterNumber(correctedValue);
+    const difference =
+      correction?.difference ??
+      (originalNumber != null && correctedNumber != null
+        ? correctedNumber - originalNumber
+        : null);
+    const hasCorrectionDifference =
+      Boolean(correction) &&
+      originalValue &&
+      correctedValue &&
+      difference != null &&
+      difference !== 0;
+
+    if (!hasCorrectionDifference) {
+      return renderDetailItem(label, correctedValue, submission);
+    }
+
+    return (
+      <div className={styles.detailItem}>
+        <span className={styles.detailLabel}>{label}</span>
+        <details className={styles.meterValueDetails}>
+          <summary className={styles.meterValueSummary}>
+            <span className={styles.detailValue}>{correctedValue}</span>
+          </summary>
+          <div className={styles.meterCorrectionRows}>
+            <div className={styles.meterCorrectionRow}>
+              <span>Guest input</span>
+              <strong>{originalValue}</strong>
+            </div>
+            <div className={styles.meterCorrectionRow}>
+              <span>Admin saved</span>
+              <strong>{correctedValue}</strong>
+            </div>
+            <div className={styles.meterCorrectionRow}>
+              <span>Difference</span>
+              <strong>{formatMeterDifference(difference)}</strong>
+            </div>
+          </div>
+        </details>
+        {renderLoggedMeta(submission)}
+      </div>
+    );
+  }
+
+  function renderGroupDetailSwitcher(group: SubmissionGroup) {
+    const groupContactSubmissions = group.items.filter(isContactSubmission);
+    const groupCheckinSubmissions = group.items.filter(isCheckinSubmission);
+    const regularSubmissions = group.items.filter(
+      (submission) =>
+        !isCheckinSubmission(submission) && !isContactSubmission(submission)
+    );
+    const hasCheckinSubmissions = groupCheckinSubmissions.length > 0;
 
     return (
       <div className={styles.linkedTabs}>
@@ -966,7 +2248,7 @@ export default function AdminForms() {
             className={styles.linkedTab}
             role="tab"
             aria-selected={activeGroupDetail === "overview"}
-            onClick={() => setActiveGroupDetail("overview")}
+            onClick={() => openGroupDetail(group, "overview")}
           >
             <span>Overview</span>
           </button>
@@ -977,20 +2259,34 @@ export default function AdminForms() {
               className={styles.linkedTab}
               role="tab"
               aria-selected={activeGroupDetail === submission.id}
-              onClick={() => setActiveGroupDetail(submission.id)}
+              onClick={() => openGroupDetail(group, submission.id)}
             >
               <span>{submissionTabLabel(submission)}</span>
+              {submissionStatusIcon(submission)}
             </button>
           ))}
+          {groupContactSubmissions.length > 0 ? (
+            <button
+              type="button"
+              className={styles.linkedTab}
+              role="tab"
+              aria-selected={activeGroupDetail === CONTACT_GROUP_DETAIL}
+              onClick={() => openGroupDetail(group, CONTACT_GROUP_DETAIL)}
+            >
+              <span>Contact</span>
+              {submissionGroupStatusIcon(groupContactSubmissions)}
+            </button>
+          ) : null}
           {hasCheckinSubmissions ? (
             <button
               type="button"
               className={styles.linkedTab}
               role="tab"
               aria-selected={activeGroupDetail === CHECKIN_GROUP_DETAIL}
-              onClick={() => setActiveGroupDetail(CHECKIN_GROUP_DETAIL)}
+              onClick={() => openGroupDetail(group, CHECKIN_GROUP_DETAIL)}
             >
               <span>Check-in/out</span>
+              {submissionGroupStatusIcon(groupCheckinSubmissions)}
             </button>
           ) : null}
         </div>
@@ -998,72 +2294,514 @@ export default function AdminForms() {
     );
   }
 
+  function imageSource(
+    attachment: ImagePreview["attachment"] | null | undefined
+  ) {
+    return (
+      attachment?.viewUrl ||
+      attachment?.dataUrl ||
+      attachment?.downloadUrl ||
+      attachment?.publicUrl ||
+      attachment?.url ||
+      attachment?.src ||
+      null
+    );
+  }
+
+  function imagePreviewAttachments(preview: ImagePreview | null) {
+    return preview?.submission.checkin?.attachments || [];
+  }
+
+  function switchPreviewImage(direction: -1 | 1) {
+    setImagePreview((current) => {
+      if (!current) return current;
+      const attachments = imagePreviewAttachments(current);
+      if (attachments.length <= 1) return current;
+
+      const nextIndex =
+        (current.index + direction + attachments.length) % attachments.length;
+      return {
+        submission: current.submission,
+        attachment: attachments[nextIndex],
+        index: nextIndex,
+      };
+    });
+  }
+
+  function currentMeterReading(submission: Submission, meter: MeterKey) {
+    return submission.checkin?.meterReadings?.[meter] || "";
+  }
+
+  function meterCorrection(submission: Submission, meter: MeterKey) {
+    return submission.checkin?.meterCorrections?.[meter] || null;
+  }
+
+  function buildCorrectedSubmission(
+    submission: Submission,
+    meter: MeterKey,
+    correctedValue: string,
+    updatedBy: string | null
+  ): Submission {
+    const checkin = submission.checkin || {};
+    const readings = checkin.meterReadings || {};
+    const corrections = checkin.meterCorrections || {};
+    const previousCorrection = corrections[meter] || null;
+    const originalValue =
+      previousCorrection?.originalValue != null
+        ? String(previousCorrection.originalValue)
+        : readings[meter] != null
+          ? String(readings[meter])
+          : "";
+    const previousValue =
+      readings[meter] != null ? String(readings[meter]) : originalValue;
+    const originalNumber = parseMeterNumber(originalValue);
+    const correctedNumber = parseMeterNumber(correctedValue);
+    const difference =
+      originalNumber != null && correctedNumber != null
+        ? correctedNumber - originalNumber
+        : null;
+    const updatedAtMs = Date.now();
+
+    return {
+      ...submission,
+      checkin: {
+        ...checkin,
+        meterReadings: {
+          ...readings,
+          [meter]: correctedValue,
+        },
+        meterCorrections: {
+          ...corrections,
+          [meter]: {
+            meter,
+            originalValue,
+            previousValue,
+            correctedValue,
+            difference,
+            updatedAtMs,
+            updatedBy,
+          },
+        },
+      },
+      updatedAtMs,
+    };
+  }
+
+  function replaceSubmission(nextSubmission: Submission) {
+    setSubmissions((current) =>
+      current.map((submission) =>
+        submission.id === nextSubmission.id ? nextSubmission : submission
+      )
+    );
+    setImagePreview((current) => {
+      if (!current || current.submission.id !== nextSubmission.id) return current;
+      const attachments = nextSubmission.checkin?.attachments || [];
+      return {
+        submission: nextSubmission,
+        attachment: attachments[current.index] || current.attachment,
+        index: current.index,
+      };
+    });
+  }
+
+  async function saveMeterCorrection(options?: {
+    meter?: MeterDraftKey;
+    value?: string;
+    signature?: string;
+  }) {
+    if (!imagePreview || meterSaveState === "saving") return;
+    const selectedMeter = options?.meter ?? meterDraftKey;
+    const correctedValue = (options?.value ?? meterDraftValue).trim();
+
+    if (!selectedMeter) {
+      setMeterSaveState("error");
+      setMeterSaveError("Select which meter this image belongs to.");
+      return;
+    }
+
+    if (!correctedValue) {
+      setMeterSaveState("error");
+      setMeterSaveError("Enter the correct meter amount.");
+      return;
+    }
+
+    if (parseMeterNumber(correctedValue) == null) {
+      setMeterSaveState("error");
+      setMeterSaveError("Use a number, for example 055540 or 1.234,5.");
+      return;
+    }
+
+    setMeterSaveState("saving");
+    setMeterSaveError(null);
+
+    try {
+      if (DASHBOARD_AUTH_DISABLED) {
+        const updatedSubmission = buildCorrectedSubmission(
+          imagePreview.submission,
+          selectedMeter,
+          correctedValue,
+          adminEmail || "local@fyrrehaven-61.dk"
+        );
+        replaceSubmission(updatedSubmission);
+        lastMeterSaveSignature.current =
+          options?.signature ||
+          `${imagePreview.submission.id}:${imagePreviewKey(imagePreview) || imagePreview.index}:${selectedMeter}:${correctedValue}`;
+        setMeterSaveState("saved");
+        return;
+      }
+
+      const auth = getFirebaseAuth();
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken(true) : null;
+      const res = await fetch("/api/admin/forms", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          action: "correct-meter",
+          id: imagePreview.submission.id,
+          meter: selectedMeter,
+          correctedValue,
+        }),
+      });
+      const data = (await res.json()) as ApiResponse;
+      if (!res.ok || !data.ok || !data.submission) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+
+      replaceSubmission(data.submission);
+      lastMeterSaveSignature.current =
+        options?.signature ||
+        `${imagePreview.submission.id}:${imagePreviewKey(imagePreview) || imagePreview.index}:${selectedMeter}:${correctedValue}`;
+      setMeterSaveState("saved");
+    } catch (nextError) {
+      setMeterSaveState("error");
+      setMeterSaveError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    }
+  }
+
+  React.useEffect(() => {
+    if (meterAutosaveTimer.current) {
+      window.clearTimeout(meterAutosaveTimer.current);
+      meterAutosaveTimer.current = null;
+    }
+
+    if (!imagePreview || !meterDraftKey) return;
+
+    const correctedValue = meterDraftValue.trim();
+    if (!correctedValue) {
+      setMeterSaveState("idle");
+      return;
+    }
+
+    const previewKey = imagePreviewKey(imagePreview) || String(imagePreview.index);
+    const signature = `${imagePreview.submission.id}:${previewKey}:${meterDraftKey}:${correctedValue}`;
+    if (lastMeterSaveSignature.current === signature) return;
+
+    meterAutosaveTimer.current = window.setTimeout(() => {
+      if (parseMeterNumber(correctedValue) == null) {
+        setMeterSaveState("error");
+        setMeterSaveError("Use a number, for example 055540 or 1.234,5.");
+        return;
+      }
+
+      void saveMeterCorrection({
+        meter: meterDraftKey,
+        value: correctedValue,
+        signature,
+      });
+    }, 750);
+
+    return () => {
+      if (meterAutosaveTimer.current) {
+        window.clearTimeout(meterAutosaveTimer.current);
+        meterAutosaveTimer.current = null;
+      }
+    };
+  }, [imagePreview, meterDraftKey, meterDraftValue]);
+
+  React.useEffect(() => {
+    if (meterSaveState !== "saved") return;
+    const timeout = window.setTimeout(() => {
+      setMeterSaveState("idle");
+    }, 1600);
+
+    return () => window.clearTimeout(timeout);
+  }, [meterSaveState]);
+
+  function renderCheckinAttachments(submission: Submission) {
+    const attachments = submission.checkin?.attachments || [];
+    if (!attachments.length) return null;
+    const firstPreviewIndex = attachments.findIndex((file) => imageSource(file));
+    const firstPreview =
+      firstPreviewIndex >= 0 ? attachments[firstPreviewIndex] : attachments[0];
+    const previewIndex = firstPreviewIndex >= 0 ? firstPreviewIndex : 0;
+
+    return (
+      <div className={styles.attachmentSection}>
+        <button
+          type="button"
+          className={styles.attachmentOpenButton}
+          onClick={() =>
+            setImagePreview({
+              submission,
+              attachment: firstPreview,
+              index: previewIndex,
+            })
+          }
+        >
+          <span>
+            <strong>Check-in/out images</strong>
+            <small>
+              {attachments.length} image{attachments.length === 1 ? "" : "s"}
+            </small>
+          </span>
+          <FiChevronRight aria-hidden="true" />
+        </button>
+      </div>
+    );
+  }
+
+  function renderOverviewContent(group: SubmissionGroup | null, fallback: Submission) {
+    const groupItems = group?.items?.length ? group.items : [fallback];
+    const emailSource = findOverviewContactSubmission(groupItems, "email") || fallback;
+    const phoneSource = findOverviewContactSubmission(groupItems, "phone") || fallback;
+    const bookingSource = findOverviewBookingSubmission(groupItems);
+    const staySource =
+      bookingSource ||
+      findSubmissionWithValue(groupItems, (submission) => submission.extras?.stayDate) ||
+      fallback;
+    const overviewStayDate = findOverviewStayDate(group, fallback);
+    const overviewCheckoutDate = findOverviewCheckoutDate(group, fallback);
+    const selectionTotal =
+      bookingSource?.selection?.totalAfterAirbnbDiscountDKK ??
+      bookingSource?.selection?.totalWithCleaningDKK;
+    const emails = uniqueSubmissionValues(groupItems, (submission) => submission.email);
+    const phones = uniqueSubmissionValues(groupItems, (submission) => submission.phone);
+
+    const contactItems = [
+      emails.length ? renderContactValueList("Email", emails, emailSource) : null,
+      phones.length ? renderContactValueList("Phone", phones, phoneSource) : null,
+    ].filter(Boolean);
+    const stayDateItems = [
+      renderDetailItem("Check-in", formatPlainDate(overviewStayDate), staySource),
+      renderDetailItem("Check-out", formatPlainDate(overviewCheckoutDate), bookingSource || staySource),
+    ].filter(Boolean);
+    const stayCountItems = [
+      bookingSource
+        ? renderDetailItem("Nights", bookingSource.selection?.nights, bookingSource)
+        : null,
+      bookingSource
+        ? renderDetailItem(
+            "Guests",
+            bookingSource.guests?.total,
+            bookingSource,
+            hasGuestBreakdown(bookingSource.guests)
+              ? {
+                  after: (
+                    <div className={styles.detailSubValues}>
+                      {typeof bookingSource.guests?.adults === "number" ? (
+                        <span>Adults: {bookingSource.guests.adults}</span>
+                      ) : null}
+                      {typeof bookingSource.guests?.children === "number" ? (
+                        <span>Kids: {bookingSource.guests.children}</span>
+                      ) : null}
+                      {typeof bookingSource.guests?.babies === "number" ? (
+                        <span>Babies: {bookingSource.guests.babies}</span>
+                      ) : null}
+                    </div>
+                  ),
+                }
+              : undefined
+          )
+        : null,
+    ].filter(Boolean);
+    const bookingTotalItem = bookingSource
+      ? renderDetailItem(
+          "Booking price",
+          selectionTotal != null ? formatMoney(selectionTotal) : null,
+          bookingSource,
+          {
+            wide: true,
+            after: renderSelectionPriceBreakdown(bookingSource.selection),
+          }
+        )
+      : null;
+
+    return (
+      <>
+        {contactItems.length > 0 ? (
+          <section className={styles.detailSection}>
+            <h3>Contact</h3>
+            <div className={styles.detailGrid}>{contactItems}</div>
+          </section>
+        ) : null}
+
+        {stayDateItems.length > 0 ||
+        stayCountItems.length > 0 ||
+        bookingTotalItem ? (
+          <section className={styles.detailSection}>
+            <h3>Stay</h3>
+            {stayDateItems.length > 0 ? (
+              <div className={styles.detailGrid}>{stayDateItems}</div>
+            ) : null}
+            {stayCountItems.length > 0 ? (
+              <div className={`${styles.detailGrid} ${styles.detailGridCompact}`}>
+                {stayCountItems}
+              </div>
+            ) : null}
+            {bookingTotalItem ? (
+              <div className={`${styles.detailGrid} ${styles.detailTotalGrid}`}>
+                {bookingTotalItem}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+      </>
+    );
+  }
+
+  function renderCombinedContactContent(submissions: Submission[], fallback: Submission) {
+    const contactItems = submissions.length ? submissions : [fallback];
+    const messages = contactItems.filter((submission) =>
+      hasDisplayValue(submission.message)
+    );
+    const mailErrors = contactItems.filter((submission) =>
+      hasDisplayValue(submission.mailError)
+    );
+
+    return (
+      <>
+        {messages.length > 0 ? (
+          <section className={styles.detailSection}>
+            <h3>{messages.length === 1 ? "Message" : "Messages"}</h3>
+            <div className={styles.contactMessageList}>
+              {messages.map((messageSubmission) => (
+                <article
+                  className={styles.contactMessageCard}
+                  key={messageSubmission.id}
+                >
+                  <div className={styles.contactMessageHeader}>
+                    <div>
+                      <strong>{displayNameWithCountry(messageSubmission)}</strong>
+                      <span>{formatDateTime(messageSubmission.createdAtMs)}</span>
+                    </div>
+                    <span
+                      className={`${styles.badge} ${statusClassName(
+                        messageSubmission.status
+                      )}`}
+                    >
+                      {statusLabel(messageSubmission.status)}
+                    </span>
+                  </div>
+                  <p className={styles.detailMessage}>{messageSubmission.message}</p>
+                  {renderLoggedMeta(messageSubmission)}
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {mailErrors.length > 0 ? (
+          <section className={styles.detailSection}>
+            <h3>Email errors</h3>
+            <div className={styles.contactMessageList}>
+              {mailErrors.map((errorSubmission) => (
+                <article
+                  className={styles.contactMessageCard}
+                  key={`${errorSubmission.id}-mail-error`}
+                >
+                  <div className={styles.contactMessageHeader}>
+                    <div>
+                      <strong>{displayNameWithCountry(errorSubmission)}</strong>
+                      <span>{formatDateTime(errorSubmission.createdAtMs)}</span>
+                    </div>
+                    {submissionStatusIcon(errorSubmission)}
+                  </div>
+                  <p className={styles.detailMessage}>{errorSubmission.mailError}</p>
+                  {renderLoggedMeta(errorSubmission)}
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </>
+    );
+  }
+
   function renderSubmissionDetailContent(submission: Submission) {
     const isOverview = activeGroupDetail === "overview";
-    const overviewStayDate = isOverview
-      ? findOverviewStayDate(selectedGroup, submission)
-      : null;
-    const hasBookingDates = Boolean(
-      submission.selection?.start || submission.selection?.endExclusive
-    );
-    const contactItems = isOverview
-      ? [
-          renderDetailItem("Email", submission.email, submission),
-          renderDetailItem("Phone", submission.phone, submission),
-        ].filter(Boolean)
-      : [];
+    if (isOverview) {
+      return renderOverviewContent(selectedGroup, submission);
+    }
+    if (activeGroupDetail === CONTACT_GROUP_DETAIL) {
+      return renderCombinedContactContent(contactSubmissions, submission);
+    }
+
+    const isBookingSubmission = submission.intent === "booking";
+    const isContact = isContactSubmission(submission);
     const stayDateItems = [
-      renderDetailItem(
-        "Check-in",
-        formatPlainDate(submission.selection?.start),
-        submission
-      ),
-      renderDetailItem(
-        "Check-out",
-        formatPlainDate(submission.selection?.endExclusive),
-        submission
-      ),
-      isOverview && !hasBookingDates
-        ? renderDetailItem("Stay date", formatPlainDate(overviewStayDate), submission)
+      isBookingSubmission
+        ? renderDetailItem(
+            "Check-in",
+            formatPlainDate(submission.selection?.start),
+            submission
+          )
+        : null,
+      isBookingSubmission
+        ? renderDetailItem(
+            "Check-out",
+            formatPlainDate(submission.selection?.endExclusive),
+            submission
+          )
         : null,
     ].filter(Boolean);
     const stayCountItems = [
-      renderDetailItem("Nights", submission.selection?.nights, submission),
-      renderDetailItem(
-        "Guests",
-        submission.guests?.total,
-        submission,
-        hasGuestBreakdown(submission.guests)
-          ? {
-              after: (
-                <div className={styles.detailSubValues}>
-                  {typeof submission.guests?.adults === "number" ? (
-                    <span>Adults: {submission.guests.adults}</span>
-                  ) : null}
-                  {typeof submission.guests?.children === "number" ? (
-                    <span>Kids: {submission.guests.children}</span>
-                  ) : null}
-                  {typeof submission.guests?.babies === "number" ? (
-                    <span>Babies: {submission.guests.babies}</span>
-                  ) : null}
-                </div>
-              ),
-            }
-          : undefined
-      ),
+      isBookingSubmission
+        ? renderDetailItem("Nights", submission.selection?.nights, submission)
+        : null,
+      isBookingSubmission
+        ? renderDetailItem(
+            "Guests",
+            submission.guests?.total,
+            submission,
+            hasGuestBreakdown(submission.guests)
+              ? {
+                  after: (
+                    <div className={styles.detailSubValues}>
+                      {typeof submission.guests?.adults === "number" ? (
+                        <span>Adults: {submission.guests.adults}</span>
+                      ) : null}
+                      {typeof submission.guests?.children === "number" ? (
+                        <span>Kids: {submission.guests.children}</span>
+                      ) : null}
+                      {typeof submission.guests?.babies === "number" ? (
+                        <span>Babies: {submission.guests.babies}</span>
+                      ) : null}
+                    </div>
+                  ),
+                }
+              : undefined
+          )
+        : null,
     ].filter(Boolean);
     const selectionTotal =
       submission.selection?.totalAfterAirbnbDiscountDKK ??
       submission.selection?.totalWithCleaningDKK;
-    const stayTotalItem = renderDetailItem(
-      "Total",
-      selectionTotal != null ? formatMoney(selectionTotal) : null,
-      submission,
-      {
-        wide: true,
-        after: renderSelectionPriceBreakdown(submission.selection),
-      }
-    );
+    const stayTotalItem = isBookingSubmission
+      ? renderDetailItem(
+          "Total",
+          selectionTotal != null ? formatMoney(selectionTotal) : null,
+          submission,
+          {
+            wide: true,
+            after: renderSelectionPriceBreakdown(submission.selection),
+          }
+        )
+      : null;
     const stayPurposeItem = renderDetailItem(
       "Purpose",
       submission.stayPurpose,
@@ -1090,40 +2828,31 @@ export default function AdminForms() {
 
     const checkinItems = [
       renderDetailItem("Key code", submission.checkin?.keycode, submission),
-      renderDetailItem(
-        "Electricity",
-        submission.checkin?.meterReadings?.electricity,
-        submission
-      ),
-      renderDetailItem(
-        "Water (house)",
-        submission.checkin?.meterReadings?.waterHouse,
-        submission
-      ),
-      renderDetailItem(
-        "Water (pool)",
-        submission.checkin?.meterReadings?.waterPool,
-        submission
-      ),
+      renderMeterDetailItem("Electricity", "electricity", submission),
+      renderMeterDetailItem("Water (house)", "waterHouse", submission),
+      renderMeterDetailItem("Water (pool)", "waterPool", submission),
     ].filter(Boolean);
     const hasCheckinSection =
       checkinItems.length > 0 || Boolean(submission.checkin?.attachments?.length);
-    const checkinTypeOptions = Array.from(
-      new Set(
-        checkinSubmissions
-          .map((item) => item.checkin?.type)
-          .filter((type): type is CheckinDetailSelection =>
-            type === "checkin" || type === "checkout"
-          )
-      )
+    const checkinTypeOptions: CheckinDetailSelection[] = ["checkin", "checkout"];
+    const availableCheckinTypes = new Set(
+      checkinSubmissions
+        .map((item) => item.checkin?.type)
+        .filter((type): type is CheckinDetailSelection =>
+          type === "checkin" || type === "checkout"
+        )
     );
 
     return (
       <>
-        {contactItems.length > 0 ? (
+        {isContact && submission.message ? (
           <section className={styles.detailSection}>
-            <h3>Contact</h3>
-            <div className={styles.detailGrid}>{contactItems}</div>
+            <h3>Message</h3>
+            <div className={styles.detailList}>
+              {renderDetailItem("Message", submission.message, submission, {
+                message: true,
+              })}
+            </div>
           </section>
         ) : null}
 
@@ -1158,16 +2887,13 @@ export default function AdminForms() {
                   <div className={styles.serviceItem} key={`${item.id || "extra"}-${index}`}>
                     <div>
                       <span className={styles.serviceName}>
-                        {item.label?.en || item.label?.da || item.id || "Extra"}
+                        {extraItemLabel(item)}
                       </span>
-                      {typeof item.unitPriceDKK === "number" ? (
-                        <span className={styles.servicePrice}>
-                          {formatMoney(item.unitPriceDKK)} each
-                        </span>
-                      ) : null}
                     </div>
                     {typeof item.qty === "number" ? (
-                      <span className={styles.serviceQty}>x {item.qty}</span>
+                      <span className={styles.serviceQty}>
+                        {isYesNoExtraItem(item) ? "Yes" : `x ${item.qty}`}
+                      </span>
                     ) : null}
                   </div>
                 ))}
@@ -1184,8 +2910,7 @@ export default function AdminForms() {
         {submission.checkin && hasCheckinSection ? (
           <section className={styles.detailSection}>
             <h3>{submission.checkin.type === "checkout" ? "Check-out" : "Check-in"}</h3>
-            {activeGroupDetail === CHECKIN_GROUP_DETAIL &&
-            checkinTypeOptions.length > 1 ? (
+            {isCheckinSubmission(submission) ? (
               <div
                 className={`${styles.linkedTabList} ${styles.inlineTabList}`}
                 role="tablist"
@@ -1198,9 +2923,16 @@ export default function AdminForms() {
                     className={styles.linkedTab}
                     role="tab"
                     aria-selected={activeCheckinDetail === type}
-                    onClick={() => setActiveCheckinDetail(type)}
+                    aria-disabled={!availableCheckinTypes.has(type)}
+                    disabled={!availableCheckinTypes.has(type)}
+                    onClick={() => openCheckinDetail(type)}
                   >
                     <span>{type === "checkout" ? "Check-out" : "Check-in"}</span>
+                    {submissionStatusIcon(
+                      checkinSubmissions.find(
+                        (submission) => submission.checkin?.type === type
+                      )
+                    )}
                   </button>
                 ))}
               </div>
@@ -1208,22 +2940,11 @@ export default function AdminForms() {
             {checkinItems.length > 0 ? (
               <div className={styles.detailGrid}>{checkinItems}</div>
             ) : null}
-            {submission.checkin.attachments?.length ? (
-              <div className={styles.detailList}>
-                {submission.checkin.attachments.map((file, index) => (
-                  <div className={styles.detailListRow} key={`${file.filename || "file"}-${index}`}>
-                    <span>{file.filename || "Attachment"}</span>
-                    {file.sizeBytes ? (
-                      <span>{Math.round(file.sizeBytes / 1024)} KB</span>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            ) : null}
+            {renderCheckinAttachments(submission)}
           </section>
         ) : null}
 
-        {submission.message ? (
+        {!isContact && submission.message ? (
           <section className={styles.detailSection}>
             <h3>Message</h3>
             <p className={styles.detailMessage}>{submission.message}</p>
@@ -1245,6 +2966,7 @@ export default function AdminForms() {
   async function handleDeleteSubmission() {
     const target = deleteTarget;
     if (!target || deleting) return;
+    const targetIds = target.items.map((submission) => submission.id).filter(Boolean);
 
     setDeleteError(null);
 
@@ -1261,14 +2983,14 @@ export default function AdminForms() {
           ? null
           : await auth.currentUser.getIdToken(true);
 
-      const res = await fetch(`/api/admin/forms?id=${encodeURIComponent(target.id)}`, {
+      const res = await fetch("/api/admin/forms", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          id: target.id,
+          ids: targetIds,
           confirmation: deleteConfirmation.trim(),
         }),
       });
@@ -1281,12 +3003,15 @@ export default function AdminForms() {
       }
 
       setSubmissions((current) => {
-        const next = current.filter(
-          (submission) => submission.id !== target.id
-        );
-        setSelectedId((current) =>
-          current === target.id ? next[0]?.id ?? null : current
-        );
+        const deletedIds = new Set(data.deletedIds?.length ? data.deletedIds : targetIds);
+        const next = current.filter((submission) => !deletedIds.has(submission.id));
+        setSelectedId((current) => {
+          if (current !== target.groupId) return current;
+          const nextGroup = buildSubmissionGroups(next)[0] ?? null;
+          const nextId = nextGroup?.id ?? null;
+          navigate(nextId ? adminSubmissionPath(nextId) : "/admin/forms");
+          return nextId;
+        });
         return next;
       });
       setDeleteConfirmation("");
@@ -1299,6 +3024,185 @@ export default function AdminForms() {
       setDeleting(false);
     }
   }
+
+  const testSubmissionTool = (
+    <section className={styles.testPanel} aria-label="Manual test submissions">
+      <div>
+        <p className={styles.eyebrow}>Manual testing</p>
+        <h2>Send test form emails</h2>
+        <p>
+          Sends real form emails using prefilled test values for guest{" "}
+          <strong>rafy@marbin.dk</strong>, then deletes the temporary submission
+          data whether the email succeeds or fails.
+        </p>
+        <details className={styles.testDetails}>
+          <summary>Show test values</summary>
+          <div className={styles.testValueGrid}>
+            <span>Name</span>
+            <strong>Rafy Marbin Test Guest</strong>
+            <span>Email</span>
+            <strong>rafy@marbin.dk</strong>
+            <span>Phone</span>
+            <strong>+45 22 33 44 55</strong>
+            <span>Country</span>
+            <strong>Denmark (DK)</strong>
+            <span>Stay</span>
+            <strong>12. 08. 2026 - 19. 08. 2026</strong>
+            <span>Guests</span>
+            <strong>3 adults, 2 kids, 1 baby</strong>
+            <span>Extras</span>
+            <strong>5 linen packages and 1 baby crib</strong>
+            <span>Meters</span>
+            <strong>Electricity 055540, house water 0002142, pool 00516263</strong>
+            <span>Images</span>
+            <strong>
+              electricity-meter.jpeg, water-house-meter.jpeg, water-pool-meter.jpeg
+            </strong>
+          </div>
+        </details>
+      </div>
+      <div className={styles.testControls}>
+        <label className={styles.filterLabel} htmlFor="admin-test-submission-type">
+          <span>Test form</span>
+          <select
+            id="admin-test-submission-type"
+            className={styles.filterSelect}
+            value={testSubmissionType}
+            onChange={(event) =>
+              setTestSubmissionType(event.target.value as TestSubmissionType)
+            }
+          >
+            <option value="all">Full guest journey</option>
+            <option value="booking">Booking</option>
+            <option value="contact">Contact</option>
+            <option value="extra-services">Extra services</option>
+            <option value="checkin">Check-in</option>
+            <option value="checkout">Check-out</option>
+          </select>
+        </label>
+        <button
+          type="button"
+          className={styles.button}
+          disabled={creatingTestSubmission}
+          onClick={() => void createTestSubmission()}
+        >
+          {creatingTestSubmission ? "Creating..." : "Create test"}
+        </button>
+        <button
+          type="button"
+          className={styles.ghostButton}
+          disabled={creatingTestSubmission}
+          onClick={() => void createTestSubmission("all")}
+        >
+          Create full group
+        </button>
+        {testRunResults.length > 0 ? (
+          <div className={styles.testResults}>
+            {testRunResults.map((result) => (
+              <div
+                key={result.type}
+                className={styles.testResult}
+                data-state={result.status === "sent" && result.deleted ? "success" : "error"}
+              >
+                <strong>{result.label}</strong>
+                <span>
+                  {result.status === "sent"
+                    ? "Mail sent"
+                    : result.status === "failed"
+                      ? "Mail failed"
+                      : "Error"}
+                  {result.submissionId
+                    ? result.deleted
+                      ? " · data deleted"
+                      : " · cleanup failed"
+                    : ""}
+                </span>
+                {result.detail ? <small>{result.detail}</small> : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {testSubmissionMessage ? (
+          <p className={styles.testStatus} data-state="success">
+            {testSubmissionMessage}
+          </p>
+        ) : null}
+        {testSubmissionError ? (
+          <p className={styles.testStatus} data-state="error">
+            {testSubmissionError}
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+
+  const manualSubmissionForm = (
+    <section className={styles.manualPanel} aria-label="Create manual submission">
+      <div className={styles.manualHeader}>
+        <div>
+          <p className={styles.eyebrow}>Manual entry</p>
+          <h2>Create a submission with the real forms</h2>
+          <p>
+            Use the existing guest forms. Manual admin submissions send the guest
+            email and skip the admin notification.
+          </p>
+        </div>
+      </div>
+      <label className={styles.manualField}>
+        <span>Submission form</span>
+        <select
+          className={styles.filterSelect}
+          value={manualSubmissionType}
+          onChange={(event) =>
+            setManualSubmissionType(
+              event.target.value as Exclude<TestSubmissionType, "all">
+            )
+          }
+        >
+          <option value="booking">Booking</option>
+          <option value="contact">Contact</option>
+          <option value="extra-services">Extra services</option>
+          <option value="checkin">Check-in / check-out</option>
+        </select>
+      </label>
+      <div className={styles.manualEmbeddedForm}>
+        {manualSubmissionType === "booking" ? (
+          <ContactForm
+            key="manual-booking"
+            lang="en"
+            variant="booking"
+            adminManual
+            getRequestHeaders={adminAuthHeaders}
+          />
+        ) : null}
+        {manualSubmissionType === "contact" ? (
+          <ContactForm
+            key="manual-contact"
+            lang="en"
+            variant="contact"
+            adminManual
+            getRequestHeaders={adminAuthHeaders}
+          />
+        ) : null}
+        {manualSubmissionType === "extra-services" ? (
+          <ExtraServices
+            key="manual-extra-services"
+            lang="en"
+            adminManual
+            getRequestHeaders={adminAuthHeaders}
+          />
+        ) : null}
+        {manualSubmissionType === "checkin" || manualSubmissionType === "checkout" ? (
+          <CheckInOut
+            key="manual-checkin"
+            adminManual
+            getRequestHeaders={adminAuthHeaders}
+            forceMobile
+          />
+        ) : null}
+      </div>
+    </section>
+  );
 
   if (!DASHBOARD_AUTH_DISABLED && !isFirebaseClientConfigured()) {
     return (
@@ -1373,6 +3277,179 @@ export default function AdminForms() {
     );
   }
 
+  if (isTestSubmissionsPage) {
+    return (
+      <Theme appearance={appearance} accentColor="gray" radius="large">
+        <Helmet>
+          <title>Test submissions | Fyrrehaven 61 admin</title>
+          <meta name="robots" content="noindex,nofollow,noarchive" />
+        </Helmet>
+        <div className={styles.page}>
+          <div className={styles.shell}>
+            <div className={styles.hero}>
+              <div className={styles.heroTop}>
+                <div>
+                  <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
+                  <h1>Test submissions</h1>
+                </div>
+                <div className={styles.heroActions}>
+                  <button
+                    type="button"
+                    className={styles.ghostButton}
+                    onClick={() => navigate("/admin/forms")}
+                  >
+                    <FiChevronLeft aria-hidden="true" />
+                    Back to admin
+                  </button>
+                  <div className={styles.accountPill}>
+                    <FiUser aria-hidden="true" className={styles.accountIcon} />
+                    <div className={styles.accountText}>
+                      <span>Logged in</span>
+                      <strong>
+                        {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
+                      </strong>
+                    </div>
+                    {!DASHBOARD_AUTH_DISABLED ? (
+                      <button
+                        type="button"
+                        className={styles.accountLogout}
+                        onClick={() => void handleSignOut()}
+                      >
+                        <FiLogOut aria-hidden="true" />
+                        <span>Log out</span>
+                      </button>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.themeButton}
+                    onClick={toggleAppearance}
+                    aria-label={
+                      appearance === "dark"
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                    }
+                    title={
+                      appearance === "dark"
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                    }
+                  >
+                    {appearance === "dark" ? (
+                      <FiSun aria-hidden="true" />
+                    ) : (
+                      <FiMoon aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {testSubmissionTool}
+          </div>
+        </div>
+      </Theme>
+    );
+  }
+
+  if (isManualSubmissionPage) {
+    return (
+      <Theme appearance={appearance} accentColor="gray" radius="large">
+        <Helmet>
+          <title>Manual submission | Fyrrehaven 61 admin</title>
+          <meta name="robots" content="noindex,nofollow,noarchive" />
+        </Helmet>
+        <div className={styles.page}>
+          <div className={styles.shell}>
+            <div className={styles.hero}>
+              <div className={styles.heroTop}>
+                <div>
+                  <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
+                  <h1>Manual submission</h1>
+                </div>
+                <div className={styles.heroActions}>
+                  <button
+                    type="button"
+                    className={styles.ghostButton}
+                    onClick={() => navigate("/admin/forms")}
+                  >
+                    <FiChevronLeft aria-hidden="true" />
+                    Back to admin
+                  </button>
+                  <div className={styles.accountPill}>
+                    <FiUser aria-hidden="true" className={styles.accountIcon} />
+                    <div className={styles.accountText}>
+                      <span>Logged in</span>
+                      <strong>
+                        {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
+                      </strong>
+                    </div>
+                    {!DASHBOARD_AUTH_DISABLED ? (
+                      <button
+                        type="button"
+                        className={styles.accountLogout}
+                        onClick={() => void handleSignOut()}
+                      >
+                        <FiLogOut aria-hidden="true" />
+                        <span>Log out</span>
+                      </button>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.themeButton}
+                    onClick={toggleAppearance}
+                    aria-label={
+                      appearance === "dark"
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                    }
+                    title={
+                      appearance === "dark"
+                        ? "Switch to light mode"
+                        : "Switch to dark mode"
+                    }
+                  >
+                    {appearance === "dark" ? (
+                      <FiSun aria-hidden="true" />
+                    ) : (
+                      <FiMoon aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {manualSubmissionForm}
+          </div>
+        </div>
+      </Theme>
+    );
+  }
+
+  if (isLoadingSubmissions && !hasLoadedSubmissions) {
+    return (
+      <Theme appearance={appearance} accentColor="gray" radius="large">
+        <Helmet>
+          <title>Admin dashboard | Fyrrehaven 61</title>
+          <meta name="robots" content="noindex,nofollow,noarchive" />
+        </Helmet>
+        <div className={styles.page}>
+          <div className={styles.shell}>
+            <div className={styles.loadingState}>
+              <span className={styles.loader} aria-hidden="true" />
+              <div>
+                <p className={styles.eyebrow}>Admin dashboard</p>
+                <h1>Loading submissions...</h1>
+                <p>Fetching all submissions once so filtering and navigation stay fast.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Theme>
+    );
+  }
+
   return (
     <Theme appearance={appearance} accentColor="gray" radius="large">
       <Helmet>
@@ -1388,12 +3465,27 @@ export default function AdminForms() {
                 <h1>Forms dashboard</h1>
               </div>
               <div className={styles.heroActions}>
+                <button
+                  type="button"
+                  className={styles.ghostButton}
+                  onClick={() => navigate("/admin/manual-submission")}
+                >
+                  <FiEdit3 aria-hidden="true" />
+                  Manual submission
+                </button>
+                <button
+                  type="button"
+                  className={styles.ghostButton}
+                  onClick={() => navigate("/admin/test-submissions")}
+                >
+                  Test submissions
+                </button>
                 <div className={styles.accountPill}>
                   <FiUser aria-hidden="true" className={styles.accountIcon} />
                   <div className={styles.accountText}>
                     <span>Logged in</span>
                     <strong>
-                      {adminEmail || user?.email || "dashboard@fyrrehaven-61.dk"}
+                      {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
                     </strong>
                   </div>
                   {!DASHBOARD_AUTH_DISABLED ? (
@@ -1441,7 +3533,7 @@ export default function AdminForms() {
                 />
                 <p className={styles.cardLabel}>Total submissions</p>
               </div>
-              <p className={styles.cardValue}>{submissions.length}</p>
+              <p className={styles.cardValue}>{filteredDashboardStats.total}</p>
             </div>
             <div className={styles.card}>
               <div className={styles.cardLabelRow}>
@@ -1472,7 +3564,7 @@ export default function AdminForms() {
                 <p className={styles.cardLabel}>Latest submission</p>
               </div>
               <p className={`${styles.cardValue} ${styles.cardValueLatest}`}>
-                {formatDateTime(submissions[0]?.createdAtMs)}
+                {formatDateTime(filteredDashboardStats.latestAtMs)}
               </p>
             </div>
           </div>
@@ -1493,26 +3585,48 @@ export default function AdminForms() {
                       <h2>Submissions</h2>
                       <p>All website forms, sorted by newest first.</p>
                     </div>
-                    <label className={styles.filterLabel} htmlFor="admin-submission-filter">
-                      <span>Filter</span>
-                      <select
-                        id="admin-submission-filter"
-                        className={styles.filterSelect}
-                        value={submissionFilter}
-                        onChange={(event) =>
-                          setSubmissionFilter(event.target.value as SubmissionFilter)
-                        }
-                      >
-                        <option value="all">All</option>
-                        <option value="booking">Bookings</option>
-                        <option value="contact">Contacts</option>
-                        <option value="extra-services">Extra services</option>
-                        <option value="guest-checkin">Check-in / check-out</option>
-                      </select>
-                    </label>
+                    <div className={styles.filterGroup}>
+                      <label className={styles.filterLabel} htmlFor="admin-submission-filter">
+                        <span>Filter</span>
+                        <select
+                          id="admin-submission-filter"
+                          className={styles.filterSelect}
+                          value={submissionFilter}
+                          onChange={(event) =>
+                            setSubmissionFilter(event.target.value as SubmissionFilter)
+                          }
+                        >
+                          <option value="all">All</option>
+                          <option value="booking">Bookings</option>
+                          <option value="contact">Contacts</option>
+                          <option value="extra-services">Extra services</option>
+                          <option value="guest-checkin">Check-in / check-out</option>
+                        </select>
+                      </label>
+                      <label className={styles.filterLabel} htmlFor="admin-date-filter">
+                        <span>Date</span>
+                        <select
+                          id="admin-date-filter"
+                          className={styles.filterSelect}
+                          value={dateFilter}
+                          onChange={(event) =>
+                            setDateFilter(event.target.value as SubmissionDateFilter)
+                          }
+                        >
+                          <option value="all">All time</option>
+                          <option value="today">Today</option>
+                          <option value="current-week">Current week</option>
+                          <option value="last-week">Last week</option>
+                          <option value="last-month">Last month</option>
+                          <option value="last-3-months">Last 3 months</option>
+                          <option value="last-6-months">Last 6 months</option>
+                          <option value="year">This year</option>
+                        </select>
+                      </label>
+                    </div>
                   </div>
                 </div>
-                <div className={styles.list}>
+                <div className={styles.list} onScroll={handleSubmissionListScroll}>
                   {visibleGroups.length === 0 ? (
                     <div className={styles.emptyState}>
                       <h2>No submissions found</h2>
@@ -1521,7 +3635,8 @@ export default function AdminForms() {
                       </p>
                     </div>
                   ) : (
-                    visibleGroups.map((group) => {
+                    <>
+                    {renderedGroups.map((group) => {
                       const submission = group.primary;
                       const groupContextTag = submissionContextTag(submission);
                       const groupValue = submissionValue(submission);
@@ -1534,24 +3649,30 @@ export default function AdminForms() {
                       <article
                         key={group.id}
                         className={styles.rowCard}
-                        data-active={group.id === selectedId}
+                        data-active={selectedGroup?.id === group.id}
                       >
                         <div className={styles.rowCardHeader}>
                           <div
                             className={styles.rowButton}
                             role="button"
                             tabIndex={0}
-                            onClick={() => setSelectedId(group.id)}
+                            onClick={() => openSubmissionDetail(group.id, "overview")}
                             onKeyDown={(event) => {
                               if (!isActivationKey(event)) return;
                               event.preventDefault();
-                              setSelectedId(group.id);
+                              openSubmissionDetail(group.id, "overview");
                             }}
                           >
                             <div className={styles.rowTop}>
                               <div>
                                 <p className={styles.rowName}>
-                                  {displayNameWithCountry(submission) || "Unknown name"}
+                                  <span>
+                                    {displayNameWithCountry(submission) ||
+                                      "Unknown name"}
+                                  </span>
+                                  <span className={styles.rowBookingNumber}>
+                                    #{group.bookingNumber}
+                                  </span>
                                 </p>
                                 <div className={styles.rowEmail}>
                                   {submission.email || "—"}
@@ -1585,12 +3706,12 @@ export default function AdminForms() {
                           <button
                             type="button"
                             className={styles.iconButton}
-                            aria-label={`Delete submission from ${submission.name || submission.email || "unknown sender"}`}
+                            aria-label={`Delete ${group.items.length} submission${
+                              group.items.length === 1 ? "" : "s"
+                            } from ${submission.name || submission.email || "unknown sender"}`}
                             onClick={(event) => {
                               event.stopPropagation();
-                              setDeleteError(null);
-                              setDeleteConfirmation("");
-                              setDeleteTarget(submission);
+                              openDeleteDialog(group);
                             }}
                           >
                             <FiTrash2 aria-hidden="true" />
@@ -1598,7 +3719,16 @@ export default function AdminForms() {
                         </div>
                       </article>
                       );
-                    })
+                    })}
+                    {hasMoreVisibleGroups ? (
+                      <div className={styles.listLoading}>
+                        <span className={styles.loaderSmall} aria-hidden="true" />
+                        <span>
+                          Loading more submissions in the background...
+                        </span>
+                      </div>
+                    ) : null}
+                    </>
                   )}
                 </div>
               </section>
@@ -1607,7 +3737,7 @@ export default function AdminForms() {
                 <aside className={styles.detailCard}>
                   {selectedSubmission && detailSubmission ? (
                     <div className={styles.detailScroll}>
-                      {selectedGroup && selectedGroup.items.length > 1 ? (
+                      {selectedGroup ? (
                         <section className={styles.detailSection}>
                           <h3>Submission views</h3>
                           {renderGroupDetailSwitcher(selectedGroup)}
@@ -1656,7 +3786,7 @@ export default function AdminForms() {
               <span />
             </button>
             <div className={styles.mobileDetailScroll}>
-              {selectedGroup && selectedGroup.items.length > 1 ? (
+              {selectedGroup ? (
                 <section className={styles.detailSection}>
                   <h3>Submission views</h3>
                   {renderGroupDetailSwitcher(selectedGroup)}
@@ -1668,15 +3798,233 @@ export default function AdminForms() {
         </div>
       ) : null}
 
+      {imagePreview
+        ? (() => {
+            const attachments = imagePreviewAttachments(imagePreview);
+            const hasMultipleImages = attachments.length > 1;
+            const selectedMeter = meterDraftKey || null;
+            const currentReading = selectedMeter
+              ? currentMeterReading(imagePreview.submission, selectedMeter)
+              : "";
+            const correction = selectedMeter
+              ? meterCorrection(imagePreview.submission, selectedMeter)
+              : null;
+            const originalValue = correction?.originalValue || currentReading || "";
+            const originalNumber = parseMeterNumber(originalValue);
+            const draftNumber = parseMeterNumber(meterDraftValue);
+            const difference =
+              originalNumber != null && draftNumber != null
+                ? draftNumber - originalNumber
+                : correction?.difference ?? null;
+            const differenceClass =
+              difference == null || difference === 0
+                ? styles.meterDifferenceNeutral
+                : difference > 0
+                  ? styles.meterDifferencePositive
+                  : styles.meterDifferenceNegative;
+
+            return (
+              <div
+                className={styles.imagePreviewOverlay}
+                role="presentation"
+                onClick={() => setImagePreview(null)}
+              >
+                <div
+                  className={styles.imagePreviewCard}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label={`Meter image ${imagePreview.index + 1}`}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className={styles.imagePreviewHeader}>
+                    <div>
+                      <p className={styles.eyebrow}>Check-in/out image</p>
+                      <h2>{imagePreview.attachment.filename || "Meter image"}</h2>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.ghostButton}
+                      onClick={() => setImagePreview(null)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className={styles.imagePreviewBody}>
+                    {imageSource(imagePreview.attachment) ? (
+                      <div className={styles.imagePreviewImageWrap}>
+                        {hasMultipleImages ? (
+                          <button
+                            type="button"
+                            className={`${styles.imagePreviewArrow} ${styles.imagePreviewArrowLeft}`}
+                            aria-label="Previous image"
+                            onClick={() => switchPreviewImage(-1)}
+                          >
+                            <FiChevronLeft aria-hidden="true" />
+                          </button>
+                        ) : null}
+                        <img
+                          className={styles.imagePreviewImage}
+                          src={imageSource(imagePreview.attachment) || ""}
+                          alt={imagePreview.attachment.filename || "Meter image"}
+                        />
+                        {hasMultipleImages ? (
+                          <button
+                            type="button"
+                            className={`${styles.imagePreviewArrow} ${styles.imagePreviewArrowRight}`}
+                            aria-label="Next image"
+                            onClick={() => switchPreviewImage(1)}
+                          >
+                            <FiChevronRight aria-hidden="true" />
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className={styles.imagePreviewMissing}>
+                        <FiAlertCircle aria-hidden="true" />
+                        <div>
+                          <h3>Image source missing</h3>
+                          <p>
+                            {imagePreview.attachment.viewError ||
+                              "This submission has the filename and file size, but no stored image URL or Firebase Storage path."}
+                          </p>
+                          <p>
+                            Older submissions may need to be submitted again so the
+                            uploaded image can be stored with a retrievable path.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <div className={styles.imagePreviewMeta}>
+                      <div className={styles.imageCounter}>
+                        <span>
+                          Image {imagePreview.index + 1} of {attachments.length || 1}
+                        </span>
+                        {imagePreview.attachment.sizeBytes ? (
+                          <span>
+                            {Math.round(imagePreview.attachment.sizeBytes / 1024)} KB
+                          </span>
+                        ) : null}
+                      </div>
+
+                      <div className={styles.meterCorrectionPanel}>
+                        <div className={styles.meterCorrectionTitle}>
+                          <FiEdit3 aria-hidden="true" />
+                          <div>
+                            <h3>Verify meter reading</h3>
+                            <p>Keep the guest value and save your corrected value.</p>
+                          </div>
+                        </div>
+
+                        <label className={styles.meterField}>
+                          <span>Meter</span>
+                          <select
+                            value={meterDraftKey}
+                            onChange={(event) => {
+                              const nextMeter = event.target.value;
+                              if (!isMeterKey(nextMeter)) return;
+                              const previewKey = imagePreviewKey(imagePreview);
+                              if (previewKey) {
+                                setMeterDraftByImage((current) => ({
+                                  ...current,
+                                  [previewKey]: nextMeter,
+                                }));
+                              }
+                              setMeterDraftKey(nextMeter);
+                              setMeterDraftValue(
+                                currentMeterReading(imagePreview.submission, nextMeter)
+                              );
+                              setMeterSaveState("idle");
+                              setMeterSaveError(null);
+                            }}
+                          >
+                            <option value="" disabled>
+                              Select meter
+                            </option>
+                            {METER_OPTIONS.map((option) => (
+                              <option key={option.key} value={option.key}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className={styles.meterReadingCard}>
+                          <span className={styles.meterReadingIcon}>
+                            {selectedMeter ? (
+                              meterIcon(selectedMeter)
+                            ) : (
+                              <FiEdit3 aria-hidden="true" />
+                            )}
+                          </span>
+                          <div>
+                            <span>Guest input</span>
+                            <strong>{originalValue || "No guest value"}</strong>
+                          </div>
+                        </div>
+
+                        <label className={styles.meterField}>
+                          <span>Correct amount</span>
+                          <input
+                            value={meterDraftValue}
+                            inputMode="decimal"
+                            placeholder="Enter corrected reading"
+                            onChange={(event) => {
+                              setMeterDraftValue(event.target.value);
+                              setMeterSaveState("idle");
+                              setMeterSaveError(null);
+                            }}
+                          />
+                        </label>
+
+                        <div className={`${styles.meterDifference} ${differenceClass}`}>
+                          <span>Difference</span>
+                          <strong>{formatMeterDifference(difference)}</strong>
+                        </div>
+
+                        {meterSaveError ? (
+                          <div className={styles.meterCorrectionError}>
+                            <FiAlertCircle aria-hidden="true" />
+                            <span>{meterSaveError}</span>
+                          </div>
+                        ) : null}
+
+                        <div
+                          className={styles.meterAutosaveStatus}
+                          data-state={meterSaveState}
+                          aria-live="polite"
+                        >
+                          {meterSaveState === "saved" ? (
+                            <FiCheck aria-hidden="true" />
+                          ) : meterSaveState === "error" ? (
+                            <FiAlertCircle aria-hidden="true" />
+                          ) : (
+                            <FiEdit3 aria-hidden="true" />
+                          )}
+                          <span>
+                            {meterSaveState === "saving"
+                              ? "Saving..."
+                              : meterSaveState === "saved"
+                                ? "Updated"
+                                : meterSaveState === "error"
+                                  ? "Not saved"
+                                  : "Saves automatically"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()
+        : null}
+
       {deleteTarget ? (
         <div
           className={styles.modalOverlay}
           role="presentation"
           onClick={() => {
-            if (deleting) return;
-            setDeleteTarget(null);
-            setDeleteConfirmation("");
-            setDeleteError(null);
+            closeDeleteDialog();
           }}
         >
           <div
@@ -1686,16 +4034,25 @@ export default function AdminForms() {
             aria-labelledby="delete-submission-title"
             onClick={(event) => event.stopPropagation()}
           >
-            <p className={styles.eyebrow}>Delete submission</p>
-            <h2 id="delete-submission-title">Remove this submission?</h2>
+            <p className={styles.eyebrow}>Delete submissions</p>
+            <h2 id="delete-submission-title">
+              Remove this dataset?
+            </h2>
             <p className={styles.detailMuted}>
-              This will delete the submission from both the dashboard and Firestore.
+              This will delete all {deleteTarget.items.length} related submission
+              {deleteTarget.items.length === 1 ? "" : "s"} in this dataset from
+              both the dashboard and Firestore.
               Type <strong>delete</strong> to confirm.
             </p>
             <div className={styles.modalSummary}>
-              <strong>{deleteTarget.name || "Unknown name"}</strong>
-              <span>{deleteTarget.email || "—"}</span>
-              <span>{submissionLabel(deleteTarget)}</span>
+              <strong>{deleteTarget.primary.name || "Unknown name"}</strong>
+              <span>{deleteTarget.primary.email || "—"}</span>
+              <span>#{deleteTarget.bookingNumber}</span>
+              <span>
+                {deleteTarget.labels.length > 1
+                  ? deleteTarget.labels.join(" • ")
+                  : deleteTarget.labels[0] || submissionLabel(deleteTarget.primary)}
+              </span>
             </div>
             <label
               className={styles.detailLabel}
@@ -1712,7 +4069,6 @@ export default function AdminForms() {
               placeholder='Type "delete"'
               autoComplete="off"
               spellCheck={false}
-              autoFocus
             />
             {deleteError ? (
               <p className={styles.deleteError}>{deleteError}</p>
@@ -1721,12 +4077,7 @@ export default function AdminForms() {
               <button
                 type="button"
                 className={styles.ghostButton}
-                onClick={() => {
-                  if (deleting) return;
-                  setDeleteTarget(null);
-                  setDeleteConfirmation("");
-                  setDeleteError(null);
-                }}
+                onClick={closeDeleteDialog}
               >
                 Cancel
               </button>
@@ -1739,7 +4090,11 @@ export default function AdminForms() {
                   deleteConfirmation.trim().toLowerCase() !== "delete"
                 }
               >
-                {deleting ? "Deleting..." : "Delete submission"}
+                {deleting
+                  ? "Deleting..."
+                  : `Delete ${deleteTarget.items.length} submission${
+                      deleteTarget.items.length === 1 ? "" : "s"
+                    }`}
               </button>
             </div>
           </div>

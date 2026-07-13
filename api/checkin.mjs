@@ -1,7 +1,12 @@
 import nodemailer from "nodemailer";
 import Busboy from "busboy";
-import { getFirestoreDb } from "./_lib/firebaseAdmin.mjs";
 import {
+  getFirestoreDb,
+  getStorageBucket,
+  verifyAdminRequest,
+} from "./_lib/firebaseAdmin.mjs";
+import {
+  FORM_SUBMISSION_FILES_COLLECTION,
   createFormSubmission,
   updateFormSubmission,
 } from "./_lib/formSubmissions.mjs";
@@ -36,6 +41,9 @@ const normalizeSmtpUser = (user, from) => {
   return domain ? `${normalized}@${domain}` : normalized;
 };
 
+const randomBookingNumber = (hasBookingInfo) =>
+  `${hasBookingInfo ? "9" : "7"}${String(Math.floor(Math.random() * 10000)).padStart(4, "0")}`;
+
 const esc = (s = "") =>
   String(s)
     .replaceAll("&", "&amp;")
@@ -60,6 +68,178 @@ const ALLOWED_UPLOAD_MIME_TYPES = new Set([
 ]);
 const ALLOWED_UPLOAD_EXTENSIONS = /\.(jpe?g|png|webp|heic|heif)$/i;
 const READING_RE = /^\d{1,10}(?:[.,]\d{1,3})?$/;
+
+const sanitizeStorageSegment = (value) =>
+  String(value || "file")
+    .trim()
+    .replace(/[^a-z0-9._-]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "file";
+
+const FIRESTORE_FILE_CHUNK_SIZE = 400_000;
+
+async function storeCheckinFilesInFirestore(db, submissionId, files, fallbackReason = "") {
+  if (!db || !submissionId || !files.length) {
+    return files.map((file) => ({
+      fieldname: file.fieldname,
+      filename: file.filename,
+      contentType: file.contentType,
+      sizeBytes: file.content.length,
+      viewError: fallbackReason || "Image storage is not configured.",
+    }));
+  }
+
+  return Promise.all(
+    files.map(async (file, index) => {
+      try {
+        const fileId = [
+          sanitizeStorageSegment(submissionId),
+          String(index + 1).padStart(2, "0"),
+          sanitizeStorageSegment(file.filename),
+        ].join("-");
+        const fileRef = db.collection(FORM_SUBMISSION_FILES_COLLECTION).doc(fileId);
+        const base64 = file.content.toString("base64");
+        const chunks = [];
+
+        for (let offset = 0; offset < base64.length; offset += FIRESTORE_FILE_CHUNK_SIZE) {
+          chunks.push(base64.slice(offset, offset + FIRESTORE_FILE_CHUNK_SIZE));
+        }
+
+        await fileRef.set({
+          submissionId,
+          index,
+          fieldname: file.fieldname,
+          filename: file.filename,
+          contentType: file.contentType,
+          sizeBytes: file.content.length,
+          encoding: "base64",
+          chunkCount: chunks.length,
+          storageFallback: "firestore",
+          fallbackReason: fallbackReason || null,
+          createdAtMs: Date.now(),
+        });
+
+        for (const [chunkIndex, chunk] of chunks.entries()) {
+          await fileRef
+            .collection("chunks")
+            .doc(String(chunkIndex).padStart(4, "0"))
+            .set({
+              index: chunkIndex,
+              data: chunk,
+            });
+        }
+
+        return {
+          fieldname: file.fieldname,
+          filename: file.filename,
+          contentType: file.contentType,
+          sizeBytes: file.content.length,
+          firestoreFileId: fileRef.id,
+          firestoreChunkCount: chunks.length,
+          storageFallback: "firestore",
+          storageUploadError: fallbackReason || undefined,
+        };
+      } catch (firestoreError) {
+        const fallbackError = String(firestoreError?.message || firestoreError);
+        console.error("CHECKIN_IMAGE_FIRESTORE_FALLBACK_SAVE_FAILED", {
+          submissionId,
+          filename: file.filename,
+          sizeBytes: file.content.length,
+          error: fallbackError,
+        });
+
+        return {
+          fieldname: file.fieldname,
+          filename: file.filename,
+          contentType: file.contentType,
+          sizeBytes: file.content.length,
+          viewError: [
+            fallbackReason || "Firebase Storage could not store this image.",
+            `Firestore fallback failed: ${fallbackError}`,
+          ].join(" "),
+        };
+      }
+    })
+  );
+}
+
+async function uploadFilesToStorage(bucket, submissionId, files) {
+  return Promise.all(
+    files.map(async (file, index) => {
+      const storagePath = [
+        "form-submissions",
+        sanitizeStorageSegment(submissionId),
+        "checkin-images",
+        `${String(index + 1).padStart(2, "0")}-${sanitizeStorageSegment(file.filename)}`,
+      ].join("/");
+      const bucketFile = bucket.file(storagePath);
+
+      await bucketFile.save(file.content, {
+        resumable: false,
+        metadata: {
+          contentType: file.contentType,
+          metadata: {
+            originalFilename: file.filename,
+            formField: file.fieldname,
+          },
+        },
+      });
+
+      return {
+        fieldname: file.fieldname,
+        filename: file.filename,
+        contentType: file.contentType,
+        sizeBytes: file.content.length,
+        storagePath,
+      };
+    })
+  );
+}
+
+async function uploadCheckinFiles(db, submissionId, files) {
+  const bucket = await getStorageBucket();
+  if (!files.length) {
+    return [];
+  }
+
+  if (!bucket || !submissionId) {
+    return storeCheckinFilesInFirestore(
+      db,
+      submissionId,
+      files,
+      !bucket
+        ? "Firebase Storage is not configured for this deployment."
+        : "Submission id is missing for image storage."
+    );
+  }
+
+  try {
+    return await uploadFilesToStorage(bucket, submissionId, files);
+  } catch (storageError) {
+    const uploadError = String(storageError?.message || storageError);
+    console.error("CHECKIN_IMAGE_STORAGE_UPLOAD_FAILED_USING_FIRESTORE", {
+      submissionId,
+      error: uploadError,
+    });
+    return storeCheckinFilesInFirestore(
+      db,
+      submissionId,
+      files,
+      `Firebase Storage upload failed: ${uploadError}`
+    );
+  }
+}
+
+function checkinImageUploadStatus(files, attachments) {
+  if (!files.length) return "none";
+  if (attachments.some((attachment) => attachment.storagePath || attachment.firestoreFileId)) {
+    return "stored";
+  }
+  if (attachments.some((attachment) => attachment.viewError)) {
+    return "failed";
+  }
+  return "not-configured";
+}
 
 // Vercel handler
 export default async function handler(req, res) {
@@ -216,8 +396,23 @@ export default async function handler(req, res) {
           comment,
           consent,
           lang = "da",
+          adminManualGuestOnly,
         } = fields;
         const uiLang = normalizeLang(lang);
+        const manualGuestOnly =
+          adminManualGuestOnly === true ||
+          String(adminManualGuestOnly || "").toLowerCase() === "true";
+        if (manualGuestOnly) {
+          const adminCheck = await verifyAdminRequest(req);
+          if (!adminCheck.ok) {
+            sendJson(res, adminCheck.status, {
+              ok: false,
+              error: adminCheck.error,
+              detail: adminCheck.detail || null,
+            });
+            return;
+          }
+        }
         const emailNormalized = normalizeEmail(email);
         const consentAccepted =
           consent === true || String(consent || "").toLowerCase() === "true";
@@ -290,9 +485,17 @@ export default async function handler(req, res) {
           name,
         });
         const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
+        const submittedStayDate = new Date().toISOString().slice(0, 10);
         const db = await getFirestoreDb();
+        let storedAttachments = files.map((file) => ({
+          fieldname: file.fieldname,
+          filename: file.filename,
+          contentType: file.contentType,
+          sizeBytes: file.content.length,
+        }));
         const submissionRecord = {
           intent: "guest-checkin",
+          bookingNumber: randomBookingNumber(false),
           lang: uiLang,
           name: String(name).trim(),
           email: emailNormalized,
@@ -301,6 +504,8 @@ export default async function handler(req, res) {
           checkin: {
             type: String(checkType || ""),
             typeLabel,
+            stayDate: submittedStayDate,
+            submittedStayDate,
             keycode: String(keycode || "").trim(),
             meterReadings: {
               electricity: String(elReading || "").trim(),
@@ -310,12 +515,7 @@ export default async function handler(req, res) {
                   ? String(waterPool).trim()
                   : null,
             },
-            attachments: files.map((file) => ({
-              fieldname: file.fieldname,
-              filename: file.filename,
-              contentType: file.contentType,
-              sizeBytes: file.content.length,
-            })),
+            attachments: storedAttachments,
           },
           source: "guest-form",
           status: "pending",
@@ -333,9 +533,53 @@ export default async function handler(req, res) {
         if (db) {
           try {
             submissionRef = await createFormSubmission(db, submissionRecord);
+          } catch (firestoreError) {
+            console.error("FIRESTORE_WRITE_FAILED", firestoreError);
+          }
+        }
+
+        if (db && submissionRef) {
+          try {
+            storedAttachments = await uploadCheckinFiles(db, submissionRef.id, files);
+            await updateFormSubmission(submissionRef, {
+              checkin: {
+                ...submissionRecord.checkin,
+                attachments: storedAttachments,
+                imageUploadStatus: checkinImageUploadStatus(files, storedAttachments),
+              },
+              updatedAtMs: Date.now(),
+            });
           } catch (storageError) {
-            submissionRef = null;
-            console.error("FIRESTORE_WRITE_FAILED", storageError);
+            const uploadError = String(storageError?.message || storageError);
+            console.error("CHECKIN_IMAGE_UPLOAD_FAILED", {
+              submissionId: submissionRef.id,
+              error: uploadError,
+            });
+
+            storedAttachments = files.map((file) => ({
+              fieldname: file.fieldname,
+              filename: file.filename,
+              contentType: file.contentType,
+              sizeBytes: file.content.length,
+              viewError: `Firebase Storage upload failed: ${uploadError}`,
+            }));
+
+            try {
+              await updateFormSubmission(submissionRef, {
+                checkin: {
+                  ...submissionRecord.checkin,
+                  attachments: storedAttachments,
+                  imageUploadStatus: "failed",
+                  imageUploadError: uploadError,
+                },
+                updatedAtMs: Date.now(),
+              });
+            } catch (updateError) {
+              console.error("CHECKIN_IMAGE_UPLOAD_ERROR_SAVE_FAILED", {
+                submissionId: submissionRef.id,
+                error: String(updateError?.message || updateError),
+              });
+            }
           }
         }
 
@@ -379,10 +623,11 @@ ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
 
         await transporter.sendMail({
           from,
-          to,
+          to: manualGuestOnly ? emailNormalized : to,
           subject,
           html,
           text,
+          replyTo: manualGuestOnly ? to : undefined,
           attachments: files.map((file) => ({
             filename: file.filename,
             content: file.content,
