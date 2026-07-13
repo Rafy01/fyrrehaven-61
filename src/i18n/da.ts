@@ -6,7 +6,8 @@ export const da = {
     "form": {
       "selectPlaceholder": "Vælg",
       "chooseFile": "Vælg fil",
-      "chooseFiles": "Vælg filer"
+      "chooseFiles": "Vælg filer",
+      "required": "Dette felt er påkrævet"
     }
   },
   "home": {

@@ -62,6 +62,25 @@ export async function deleteFormSubmission(db, submissionId) {
   return false;
 }
 
+export async function findFormSubmissionDoc(db, submissionId) {
+  if (!db || !submissionId) return null;
+
+  const collections = [
+    FORM_SUBMISSIONS_COLLECTION,
+    LEGACY_CONTACT_SUBMISSIONS_COLLECTION,
+  ];
+
+  for (const collectionName of collections) {
+    const docRef = db.collection(collectionName).doc(submissionId);
+    const snapshot = await docRef.get();
+    if (snapshot.exists) {
+      return { docRef, snapshot, collectionName };
+    }
+  }
+
+  return null;
+}
+
 export async function listFormSubmissions(db, limit = 250) {
   if (!db) return [];
 

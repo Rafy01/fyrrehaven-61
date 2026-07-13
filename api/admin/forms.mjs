@@ -13,6 +13,7 @@ import {
   updateFormSubmission,
 } from "../_lib/formSubmissions.mjs";
 import { applySecurityHeaders, sendJson } from "../_lib/httpSecurity.mjs";
+import { deliverSubmissionEvent } from "../_lib/submissionIntegration.mjs";
 
 const DASHBOARD_AUTH_DISABLED =
   process.env.NODE_ENV !== "production" ||
@@ -289,7 +290,7 @@ export default async function handler(req, res) {
       const meter = String(req.body?.meter || "").trim();
       const correctedValue = String(req.body?.correctedValue || "").trim();
 
-      if (action !== "correct-meter") {
+      if (action !== "correct-meter" && action !== "approve-checkin-meters") {
         sendJson(res, 400, {
           ok: false,
           error: "UNKNOWN_PATCH_ACTION",
@@ -303,6 +304,71 @@ export default async function handler(req, res) {
           ok: false,
           error: "SUBMISSION_ID_REQUIRED",
           detail: "Missing submission id.",
+        });
+        return;
+      }
+
+      if (action === "approve-checkin-meters") {
+        const found = await findSubmissionDoc(db, submissionId);
+        if (!found) {
+          sendJson(res, 404, {
+            ok: false,
+            error: "SUBMISSION_NOT_FOUND",
+            detail: "No stored submission matched that id.",
+          });
+          return;
+        }
+
+        const existing = { id: found.snapshot.id, ...found.snapshot.data() };
+        if (!existing.checkin) {
+          sendJson(res, 400, {
+            ok: false,
+            error: "CHECKIN_SUBMISSION_REQUIRED",
+            detail: "Only check-in/out submissions can be approved.",
+          });
+          return;
+        }
+
+        const checkin = existing.checkin || {};
+        const updatedAtMs = Date.now();
+        const meterApproval = {
+          status: "approved",
+          approvedAtMs: updatedAtMs,
+          approvedBy: adminEmail,
+        };
+
+        await updateFormSubmission(found.docRef, {
+          checkin: {
+            ...checkin,
+            meterApproval,
+          },
+          updatedAtMs,
+        });
+
+        const updatedSubmission = {
+          ...existing,
+          checkin: {
+            ...checkin,
+            meterApproval,
+          },
+          updatedAtMs,
+        };
+
+        await deliverSubmissionEvent(
+          db,
+          found.docRef,
+          "submission.approved",
+          updatedSubmission
+        );
+
+        const [submissionWithUrls] = await addAttachmentViewUrls(
+          [updatedSubmission],
+          db
+        );
+
+        sendJson(res, 200, {
+          ok: true,
+          submission: submissionWithUrls,
         });
         return;
       }

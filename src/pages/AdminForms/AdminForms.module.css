@@ -1238,6 +1238,68 @@
   margin-top: 14px;
 }
 
+.checkinApprovalPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #1f9d57 32%, var(--gray-5));
+  background: color-mix(in srgb, #1f9d57 9%, transparent);
+}
+
+.checkinApprovalPanel strong,
+.checkinApprovalPanel span {
+  display: block;
+}
+
+.checkinApprovalPanel strong {
+  color: var(--gray-12);
+}
+
+.checkinApprovalPanel span {
+  margin-top: 3px;
+  color: var(--gray-10);
+  font-size: 0.88rem;
+}
+
+.checkinApprovalButton {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #1f9d57 48%, var(--gray-6));
+  background: color-mix(in srgb, #1f9d57 18%, var(--gray-2));
+  color: var(--gray-12);
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.checkinApprovalButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, #1f9d57 72%, var(--gray-6));
+  background: color-mix(in srgb, #1f9d57 26%, var(--gray-2));
+}
+
+.checkinApprovalButton:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.checkinApprovalError {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #ff8a9e;
+  font-size: 0.9rem;
+}
+
 .attachmentGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

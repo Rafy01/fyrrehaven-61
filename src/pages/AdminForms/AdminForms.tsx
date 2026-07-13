@@ -56,6 +56,12 @@ type MeterCorrection = {
   updatedBy?: string | null;
 };
 
+type MeterApproval = {
+  status?: "approved" | string;
+  approvedAtMs?: number | null;
+  approvedBy?: string | null;
+};
+
 type ExtraItem = NonNullable<NonNullable<Submission["extras"]>["items"]>[number];
 
 type Submission = {
@@ -117,6 +123,7 @@ type Submission = {
       waterPool?: string | null;
     } | null;
     meterCorrections?: Partial<Record<MeterKey, MeterCorrection>> | null;
+    meterApproval?: MeterApproval | null;
     attachments?: Array<{
       fieldname?: string;
       filename?: string;
@@ -1076,6 +1083,11 @@ export default function AdminForms() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [meterSaveError, setMeterSaveError] = React.useState<string | null>(null);
+  const [approvingCheckinId, setApprovingCheckinId] = React.useState<string | null>(
+    null
+  );
+  const [checkinApprovalError, setCheckinApprovalError] =
+    React.useState<string | null>(null);
   const meterAutosaveTimer = React.useRef<number | null>(null);
   const lastMeterSaveSignature = React.useRef("");
   const activeImagePreviewKey = React.useRef("");
@@ -2387,6 +2399,27 @@ export default function AdminForms() {
     };
   }
 
+  function buildApprovedCheckinSubmission(
+    submission: Submission,
+    approvedBy: string | null
+  ): Submission {
+    const checkin = submission.checkin || {};
+    const updatedAtMs = Date.now();
+
+    return {
+      ...submission,
+      checkin: {
+        ...checkin,
+        meterApproval: {
+          status: "approved",
+          approvedAtMs: updatedAtMs,
+          approvedBy,
+        },
+      },
+      updatedAtMs,
+    };
+  }
+
   function replaceSubmission(nextSubmission: Submission) {
     setSubmissions((current) =>
       current.map((submission) =>
@@ -2483,6 +2516,51 @@ export default function AdminForms() {
     }
   }
 
+  async function approveCheckinMeters(submission: Submission) {
+    if (!submission.checkin || approvingCheckinId) return;
+
+    setApprovingCheckinId(submission.id);
+    setCheckinApprovalError(null);
+
+    try {
+      if (DASHBOARD_AUTH_DISABLED) {
+        replaceSubmission(
+          buildApprovedCheckinSubmission(
+            submission,
+            adminEmail || "local@fyrrehaven-61.dk"
+          )
+        );
+        return;
+      }
+
+      const auth = getFirebaseAuth();
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken(true) : null;
+      const res = await fetch("/api/admin/forms", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          action: "approve-checkin-meters",
+          id: submission.id,
+        }),
+      });
+      const data = (await res.json()) as ApiResponse;
+      if (!res.ok || !data.ok || !data.submission) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+
+      replaceSubmission(data.submission);
+    } catch (nextError) {
+      setCheckinApprovalError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    } finally {
+      setApprovingCheckinId(null);
+    }
+  }
+
   React.useEffect(() => {
     if (meterAutosaveTimer.current) {
       window.clearTimeout(meterAutosaveTimer.current);
@@ -2531,6 +2609,39 @@ export default function AdminForms() {
 
     return () => window.clearTimeout(timeout);
   }, [meterSaveState]);
+
+  function renderCheckinApproval(submission: Submission) {
+    const approval = submission.checkin?.meterApproval || null;
+    const isApproved = approval?.status === "approved" && approval.approvedAtMs;
+    const isApproving = approvingCheckinId === submission.id;
+
+    return (
+      <div className={styles.checkinApprovalPanel}>
+        <div>
+          <strong>
+            {isApproved ? "Meter readings approved" : "Approve meter readings"}
+          </strong>
+          <span>
+            {isApproved
+              ? `Approved ${formatDateTime(approval.approvedAtMs || undefined)}`
+              : "Sends check-in/out numbers to the integration API after review."}
+          </span>
+        </div>
+        <button
+          type="button"
+          className={styles.checkinApprovalButton}
+          disabled={Boolean(isApproved) || isApproving}
+          onClick={() => void approveCheckinMeters(submission)}
+        >
+          <FiCheckCircle aria-hidden="true" />
+          {isApproving ? "Approving..." : isApproved ? "Approved" : "Approve"}
+        </button>
+        {checkinApprovalError ? (
+          <p className={styles.checkinApprovalError}>{checkinApprovalError}</p>
+        ) : null}
+      </div>
+    );
+  }
 
   function renderCheckinAttachments(submission: Submission) {
     const attachments = submission.checkin?.attachments || [];
@@ -2940,6 +3051,7 @@ export default function AdminForms() {
             {checkinItems.length > 0 ? (
               <div className={styles.detailGrid}>{checkinItems}</div>
             ) : null}
+            {renderCheckinApproval(submission)}
             {renderCheckinAttachments(submission)}
           </section>
         ) : null}
@@ -3198,6 +3310,7 @@ export default function AdminForms() {
             adminManual
             getRequestHeaders={adminAuthHeaders}
             forceMobile
+            langOverride="en"
           />
         ) : null}
       </div>

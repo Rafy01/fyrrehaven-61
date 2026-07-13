@@ -636,11 +636,12 @@ ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
         });
 
         if (submissionRef) {
-          await updateFormSubmission(submissionRef, {
+          const sentPatch = {
             status: "sent",
             mailStatus: "sent",
             updatedAtMs: Date.now(),
-          });
+          };
+          await updateFormSubmission(submissionRef, sentPatch);
         }
 
         sendJson(res, 200, {
@@ -657,7 +658,7 @@ ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
             : String(err);
 
         if (typeof submissionRef !== "undefined" && submissionRef) {
-          await updateFormSubmission(submissionRef, {
+          const failedPatch = {
             status: "mail_failed",
             mailStatus: "failed",
             mailError: msg,
@@ -666,7 +667,8 @@ ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
                 ? String(err.code || "")
                 : null,
             updatedAtMs: Date.now(),
-          });
+          };
+          await updateFormSubmission(submissionRef, failedPatch);
 
           sendJson(res, 200, {
             ok: true,

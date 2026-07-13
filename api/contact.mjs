@@ -4,6 +4,7 @@ import {
   createFormSubmission,
   updateFormSubmission,
 } from "./_lib/formSubmissions.mjs";
+import { deliverSubmissionEvent } from "./_lib/submissionIntegration.mjs";
 import {
   checkRateLimit,
   getRequesterIp,
@@ -774,7 +775,7 @@ export default async function handler(req, res) {
       }
 
       if (submissionRef) {
-        await updateFormSubmission(submissionRef, {
+        const sentPatch = {
           status: "sent",
           mailStatus: "sent",
           updatedAtMs: Date.now(),
@@ -794,7 +795,18 @@ export default async function handler(req, res) {
                   response: infoAdmin?.response || null,
                 },
               }),
-        });
+        };
+        await updateFormSubmission(submissionRef, sentPatch);
+        await deliverSubmissionEvent(
+          db,
+          submissionRef,
+          "submission.created",
+          {
+            id: submissionRef.id,
+            ...submissionRecord,
+            ...sentPatch,
+          }
+        );
       }
 
       sendJson(res, 200, {
@@ -819,13 +831,24 @@ export default async function handler(req, res) {
       });
     } catch (mailError) {
       if (submissionRef) {
-        await updateFormSubmission(submissionRef, {
+        const failedPatch = {
           status: "mail_failed",
           mailStatus: "failed",
           mailError: sanitizeErrorMessage(mailError?.response || mailError),
           mailErrorCode: mailError?.code || null,
           updatedAtMs: Date.now(),
-        });
+        };
+        await updateFormSubmission(submissionRef, failedPatch);
+        await deliverSubmissionEvent(
+          db,
+          submissionRef,
+          "submission.created",
+          {
+            id: submissionRef.id,
+            ...submissionRecord,
+            ...failedPatch,
+          }
+        );
 
         sendJson(res, 200, {
           ok: true,
