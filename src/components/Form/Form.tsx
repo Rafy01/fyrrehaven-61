@@ -5,6 +5,7 @@ import Buttons from "../Buttons";
 
 import { useTranslation } from "react-i18next";
 import { UI_ICONS } from "../../lib/icons";
+import type { Lang } from "../../lib/lang";
 
 export type Field =
   | {
@@ -63,10 +64,12 @@ export type FormProps = {
   fields: Field[];
   onSubmit: (values: Record<string, string | FileList | boolean>) => void;
   submitLabel: string;
+  lang?: Lang;
 };
 
-export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
-  const { t } = useTranslation("common");
+export default function Form({ fields, onSubmit, submitLabel, lang }: FormProps) {
+  const { i18n, t: currentT } = useTranslation("common");
+  const t = lang ? i18n.getFixedT(lang, "common") : currentT;
   const [values, setValues] = React.useState<
     Record<string, string | FileList | boolean>
   >(() =>
@@ -109,7 +112,6 @@ export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
         [name]: files ?? new DataTransfer().files,
       });
 
-      // Opdater liste med viste filnavne
       setFileNames({
         ...fileNames,
         [name]: files ? Array.from(files).map((f) => f.name) : [],
@@ -131,7 +133,7 @@ export default function Form({ fields, onSubmit, submitLabel }: FormProps) {
           (field.type === "file" &&
             (values[field.name] as FileList)?.length === 0))
       ) {
-        newErrors[field.name] = "Dette felt er påkrævet";
+        newErrors[field.name] = t("form.required");
       }
     }
 

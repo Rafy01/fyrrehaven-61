@@ -64,7 +64,8 @@ export default function ExtraServices({
   adminManual?: boolean;
   getRequestHeaders?: () => Promise<Record<string, string>>;
 }) {
-  const { t } = useTranslation("extraServices");
+  const { i18n } = useTranslation("extraServices");
+  const t = i18n.getFixedT(lang, "extraServices");
   const path = guestPathOf(lang, "extraServices");
   const seo = getSeoMeta(lang, "extraServices");
   const locale =

@@ -6,7 +6,8 @@ export const en = {
     "form": {
       "selectPlaceholder": "Choose",
       "chooseFile": "Choose file",
-      "chooseFiles": "Choose files"
+      "chooseFiles": "Choose files",
+      "required": "This field is required"
     }
   },
   "home": {

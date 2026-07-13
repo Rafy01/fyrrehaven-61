@@ -23,17 +23,22 @@ export default function CheckInOut({
   adminManual = false,
   getRequestHeaders,
   forceMobile = false,
+  langOverride,
 }: {
   adminManual?: boolean;
   getRequestHeaders?: () => Promise<Record<string, string>>;
   forceMobile?: boolean;
+  langOverride?: Lang;
 }) {
-  const { i18n, t: tg } = useTranslation("guest");
-  const lang: Lang = i18n.language.startsWith("da")
-    ? "da"
-    : i18n.language.startsWith("de")
-    ? "de"
-    : "en";
+  const { i18n } = useTranslation("guest");
+  const lang: Lang =
+    langOverride ||
+    (i18n.language.startsWith("da")
+      ? "da"
+      : i18n.language.startsWith("de")
+        ? "de"
+        : "en");
+  const tg = i18n.getFixedT(lang, "guest");
 
   const [poolOpen, setPoolOpen] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
@@ -41,7 +46,7 @@ export default function CheckInOut({
   const [isSending, setIsSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formKey, setFormKey] = useState(0); // 🔁 Brugt til at nulstille formen
+  const [formKey, setFormKey] = useState(0);
   const [formStartedAt, setFormStartedAt] = useState(() => String(Date.now()));
 
   useEffect(() => {
@@ -99,14 +104,14 @@ export default function CheckInOut({
           const data = await res.json();
           errorMessage = data?.detail || errorMessage;
         } catch {
-          // Ingen JSON body – behold standardbesked
+          // Keep the default message if the API does not return JSON.
         }
         setError(errorMessage);
         return;
       }
 
       setSuccess(true);
-      setFormKey((k) => k + 1); // 🧼 Nulstil formularen
+      setFormKey((k) => k + 1);
       setFormStartedAt(String(Date.now()));
     } catch (err: any) {
       console.error("Submit error:", err);
@@ -283,10 +288,11 @@ export default function CheckInOut({
           {tg("checkInOutPage.title")}
         </h1>
         <Form
-          key={formKey} // 🧼 Force reset
+          key={formKey}
           fields={fields}
           onSubmit={handleSubmit}
           submitLabel={tg("checkInOutPage.submit")}
+          lang={lang}
         />
 
         {isSending && (
@@ -307,7 +313,7 @@ export default function CheckInOut({
           </p>
         )}
 
-        <Accordion items={accordionItems as any} i18nNs="guest" />
+        <Accordion items={accordionItems as any} i18nNs="guest" lang={lang} />
       </div>
     </>
   );

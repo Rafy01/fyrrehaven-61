@@ -3,6 +3,7 @@ import styles from "./Accordion.module.css";
 import React, { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { UI_ICONS } from "../../lib/icons";
+import type { Lang } from "../../lib/lang";
 
 type Item = {
   id: string;
@@ -16,14 +17,17 @@ type AccordionProps = {
   items: Item[];
   defaultOpenId?: string;
   i18nNs?: string;
+  lang?: Lang;
 };
 
 export default function Accordion({
   items,
   defaultOpenId,
   i18nNs = "common",
+  lang,
 }: AccordionProps) {
-  const { t } = useTranslation(i18nNs);
+  const { i18n, t: currentT } = useTranslation(i18nNs);
+  const t = lang ? i18n.getFixedT(lang, i18nNs) : currentT;
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const handleValueChange = (value: string) => {

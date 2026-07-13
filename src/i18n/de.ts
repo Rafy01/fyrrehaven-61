@@ -6,7 +6,8 @@ export const de = {
     "form": {
       "selectPlaceholder": "Auswählen",
       "chooseFile": "Datei auswählen",
-      "chooseFiles": "Dateien auswählen"
+      "chooseFiles": "Dateien auswählen",
+      "required": "Dieses Feld ist erforderlich"
     }
   },
   "home": {
