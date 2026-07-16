@@ -21,6 +21,24 @@ import Home from "./pages/Home";
 import { pickInitialLang, type Lang } from "./lib/lang";
 import { SLUGS, GUEST_PAGES } from "./lib/routes";
 
+if (typeof window !== "undefined") {
+  const setInputModality = (modality: "keyboard" | "pointer") => {
+    document.documentElement.dataset.inputModality = modality;
+  };
+
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      setInputModality("keyboard");
+    },
+    { passive: true }
+  );
+  window.addEventListener("pointerdown", () => setInputModality("pointer"), {
+    passive: true,
+  });
+}
+
 const House = React.lazy(() => import("./pages/House"));
 const Area = React.lazy(() => import("./pages/Area"));
 const Gallery = React.lazy(() => import("./pages/Gallery"));
@@ -153,8 +171,7 @@ const router = createBrowserRouter([
   },
 
   { path: "/debug/chat", element: lazyElement(<ChatDebug />, "chat-debug") },
-  { path: "/admin", element: lazyElement(<AdminForms />, "admin") },
-  { path: "/admin/forms", element: lazyElement(<AdminForms />, "admin-forms") },
+  { path: "/admin/*", element: lazyElement(<AdminForms />, "admin") },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 
