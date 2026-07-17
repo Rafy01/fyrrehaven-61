@@ -4,6 +4,7 @@ import {
   createFormSubmission,
   updateFormSubmission,
 } from "./_lib/formSubmissions.mjs";
+import { validateExtraServiceBooking } from "./_lib/extraServiceBookingValidation.mjs";
 import { deliverSubmissionEvent } from "./_lib/submissionIntegration.mjs";
 import {
   checkRateLimit,
@@ -303,6 +304,19 @@ export default async function handler(req, res) {
     }
 
     const db = await getFirestoreDb();
+    if (isExtraServicesReq && !manualGuestOnly) {
+      const bookingValidation = await validateExtraServiceBooking({
+        db,
+        stayDate: extras?.stayDate,
+        name,
+      });
+
+      if (!bookingValidation.ok) {
+        sendJson(res, bookingValidation.status || 400, bookingValidation);
+        return;
+      }
+    }
+
     const bookingNumber = randomBookingNumber(isBookingReq);
     const submissionRecord = {
       intent,
