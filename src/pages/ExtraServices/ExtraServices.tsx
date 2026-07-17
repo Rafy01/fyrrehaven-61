@@ -55,6 +55,10 @@ function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
+type BookingValidationResponse =
+  | { ok: true }
+  | { ok: false; error?: string; detail?: string | null };
+
 export default function ExtraServices({
   lang,
   adminManual = false,
@@ -268,6 +272,38 @@ export default function ExtraServices({
 
     setSending(true);
     try {
+      if (!adminManual) {
+        const validationRes = await fetch("/api/extra-services/validate-booking", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: trimmedName,
+            stayDate,
+          }),
+        });
+        const validation =
+          (await validationRes.json().catch(() => null)) as
+            | BookingValidationResponse
+            | null;
+
+        const validationError =
+          validation && !validation.ok ? validation : null;
+
+        if (!validationRes.ok || validationError) {
+          const code = validationError?.error || "";
+          const message =
+            code === "EXTRA_SERVICE_DATE_NOT_BOOKED"
+              ? t("form.errors.dateNotBooked")
+              : code === "EXTRA_SERVICE_BOOKING_NAME_MISMATCH"
+                ? t("form.errors.nameMismatch")
+                : code === "BOOKING_CALENDAR_UNAVAILABLE"
+                  ? t("form.errors.bookingCheckUnavailable")
+                  : validationError?.detail || t("form.errors.bookingCheck");
+          setError(message);
+          return;
+        }
+      }
+
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: {
