@@ -12,21 +12,23 @@ export const de = {
   },
   "home": {
     "heroTitle": "Familienfreundliches Ferienhaus im Wald – in der Nähe des Strandes",
-    "heroSubtitle": "Hallenbad, Whirlpool und Platz für die ganze Familie.",
+    "heroSubtitle": "Pool, Whirlpool, Sauna, Aktivitätsraum und Platz für die ganze Familie.",
     "ctaSeeHouse_da": "Se huset",
     "ctaSeeHouse_en": "See the house",
-    "badgePool": "Hallenbad",
+    "badgePool": "Beheizter Außenpool",
     "badgeHotTub": "Whirlpool",
+    "badgeActivityRoom": "Aktivitätsraum",
     "badgeBeach": "In Strandnähe",
     "altKitchen": "Helle Wohnküche",
-    "altPool": "Hallenbad",
+    "altPool": "Beheizter Außenpool",
     "altHotTub": "Whirlpool im Garten",
     "altBeach": "Strand bei Fjellerup",
     "whyFamiliesTitle": "Warum Familien Fyrrehaven 61 lieben",
     "whyFamiliesSub": "Alles was Sie für einen gemütlichen Urlaub brauchen – mit der Natur direkt vor der Tür.",
     "featSleeps": "Platz für {{count}} Gäste (Bettaufteilung und Familienausstattung)",
-    "featPool": "Wasserspaß das ganze Jahr: beheiztes Hallenbad",
+    "featPool": "Beheizter Außenpool in der Saison",
     "featHotTub": "Entspannung im Whirlpool unter den Kiefern",
+    "featActivityRoom": "Aktivitätsraum mit Billard, Tischtennis, Airhockey, Darts und Projektor",
     "featBeach": "Kurzer Spaziergang zum Strand und zur Eisdiele",
     "featForest": "Waldgebiet mit Spielplätzen und Wanderwegen",
     "featKids": "Hochstuhl, Reisebett und Familienbrettspiele",
@@ -229,6 +231,10 @@ export const de = {
         "title": "Schäden am Whirlpool",
         "note": "Mindestgebühr – tatsächliche Reparatur-/Ersatzkosten können hinzukommen."
       },
+      "spa-tech-damage": {
+        "title": "Schäden an Hot-Tub-Technik (Wärmepumpe, Wasserpumpe usw.)",
+        "note": "Mindestgebühr – tatsächliche Reparatur-/Ersatzkosten können hinzukommen."
+      },
       "grill-not-cleaned": {
         "title": "Grill nicht gereinigt"
       },
@@ -278,6 +284,14 @@ export const de = {
       "pool-tech-damage": {
         "title": "Schäden an der Pooltechnik (Pumpe, Filter, Wärmepumpe usw.)",
         "note": "Mindestgebühr – tatsächliche Kosten können hinzukommen."
+      },
+      "activity-table-damage": {
+        "title": "Schäden am 3-in-1-Multispieltisch",
+        "note": "Mindestgebühr – tatsächliche Reparatur-/Ersatzkosten können hinzukommen."
+      },
+      "dart-damage": {
+        "title": "Schäden an Dartscheibe oder Schutzpolstern",
+        "note": "Mindestgebühr – tatsächliche Reparatur-/Ersatzkosten können hinzukommen."
       }
     }
   },
@@ -660,6 +674,80 @@ export const de = {
         "cover": "Poolabdeckung entfernen und in den Schuppen legen (gefaltet oder zusammengerollt)"
       }
     },
+    "activityRoomPage": {
+      "seo": {
+        "title": "Aktivitätsraum – Fyrrehaven 61",
+        "description": "Anleitung zur Nutzung des Aktivitätsraums mit Billard, Tischtennis, Airhockey, Darts, Projektor, Kühlschrank und Sicherheitsregeln."
+      },
+      "title": "Aktivitätsraum",
+      "subtitle": "Hier können Sie Billard, Tischtennis, Airhockey und Darts spielen oder Filme über den Projektor mit Chromecast und Google TV ansehen. Klappstühle befinden sich im Raum und können als zusätzliche Sitzplätze genutzt werden.",
+      "fridge": {
+        "title": "Kühlschrank bei Ankunft",
+        "body": "Der Kühlschrank muss bei Ankunft eingeschaltet werden. Nutzen Sie den Schalter neben dem Kühlschrank und geben Sie ihm etwas Zeit, kalt zu werden."
+      },
+      "table": {
+        "title": "Nutzung des Multispieltisches",
+        "intro": "Der Multispieltisch wird für Billard, Airhockey und Tischtennis genutzt. Er ist schwer, wechseln Sie das Spiel daher langsam und vorsichtig.",
+        "howToTitle": "So wechseln Sie das Spiel",
+        "steps": [
+          "Entfernen Sie immer Kugeln, Queues, Schläger, Pucks und Netz vom Tisch, bevor Sie das Spiel wechseln.",
+          "Wechseln Sie zwischen Billard und Airhockey, indem Sie die Halterungen entriegeln, die Tischplatte vorsichtig drehen und die Halterungen vor dem Spielen wieder verriegeln.",
+          "Für Tischtennis werden die Tischtennisplatten oben auf den Tisch gelegt und das Netz in der Mitte befestigt.",
+          "Verwenden Sie nur das Zubehör, das zum jeweiligen Spiel gehört, und legen Sie nach der Nutzung alles zurück."
+        ],
+        "safetyTitle": "Nutzungs- und Sicherheitshinweise",
+        "safety": [
+          "Der Tisch darf nur genutzt werden, wenn alle vier Verriegelungen geschlossen sind und den Tisch stützen.",
+          "Beim Drehen des Tisches müssen alle vier Verriegelungen vollständig geöffnet sein. Ist eine Verriegelung geschlossen, kann sie brechen.",
+          "Drehen Sie den Tisch immer langsam und mit größtmöglicher Vorsicht.",
+          "Lehnen Sie sich niemals an den Tisch und setzen Sie sich niemals auf die Kanten.",
+          "Stellen Sie immer sicher, dass die Poolkugeln aus dem Tisch entfernt sind und das Airhockey-Stromkabel zurückgezogen ist, bevor Sie den Tisch drehen.",
+          "Kinder müssen beim Spielen oder Drehen des Tisches immer von einem Erwachsenen begleitet werden.",
+          "Wenn der Tisch uneben steht, können die verstellbaren Füße an jeder Ecke angepasst werden.",
+          "Nur für den Innenbereich."
+        ]
+      },
+      "airHockey": {
+        "title": "Airhockey",
+        "steps": [
+          "Stecken Sie das Airhockey-Stromkabel in eine Steckdose, bevor Sie spielen.",
+          "Verwenden Sie nur die passenden Pucks und Schieber.",
+          "Ziehen Sie das Stromkabel wieder heraus und legen Sie es zurück, bevor der Tisch zu einem anderen Spiel gedreht wird."
+        ]
+      },
+      "dart": {
+        "title": "Darts",
+        "steps": [
+          "Die Dartscheibe befindet sich über dem Kühlschrank.",
+          "Verwenden Sie Dartpfeile nur an der Dartscheibe.",
+          "Rund um die Dartscheibe befinden sich Schutzpolster, falls ein Pfeil daneben geht. Prüfen Sie trotzdem immer den Bereich um die Scheibe, bevor Sie werfen.",
+          "Kinder dürfen nur zusammen mit einem Erwachsenen Darts spielen."
+        ]
+      },
+      "projector": {
+        "title": "Projektor, Chromecast und Google TV",
+        "steps": [
+          "Schalten Sie den Projektor ein.",
+          "Schalten Sie die Soundbar ein. Sie ist per Bluetooth mit dem Projektor verbunden.",
+          "Streamen Sie von Ihrem Telefon oder melden Sie sich über Google TV bei Ihrem eigenen Streamingdienst an.",
+          "Melden Sie sich von Streamingdiensten ab, wenn Sie fertig sind.",
+          "Schalten Sie vor dem Verlassen des Raums nur den Projektor aus. Die Soundbar schaltet sich zusammen mit dem Projektor aus."
+        ]
+      },
+      "closedArea": {
+        "title": "Geschlossener Technikbereich",
+        "body": "Der Bereich mit Poolmotor, Chemikalien und technischer Ausrüstung ist abgeschlossen und darf nicht geöffnet werden. Der abgeschlossene Bereich wird videoüberwacht."
+      },
+      "leaving": {
+        "title": "Bevor Sie den Raum verlassen",
+        "steps": [
+          "Legen Sie alles Spielzubehör zurück an seinen Platz.",
+          "Klappen Sie die Klappstühle zusammen und stellen Sie sie zurück.",
+          "Leeren Sie den Kühlschrank von Ihren eigenen Sachen.",
+          "Schalten Sie Projektor, Licht und Geräte aus, die nicht eingeschaltet bleiben sollen."
+        ]
+      }
+    },
     "welcome": {
       "title": "Willkommen – Fyrrehaven 61",
       "hero": {
@@ -703,6 +791,7 @@ export const de = {
     "guest": {
       "welcome": "Willkommen",
       "manual": "Benutzerhandbuch",
+      "activityRoom": "Aktivitätsraum",
       "pool": "Pool",
       "sauna": "Sauna",
       "spa": "Whirlpool",
@@ -747,6 +836,7 @@ export const de = {
       "contact": "Kontakt aufnehmen",
       "houseRules": "Hausregeln",
       "faq": "Häufig gestellte Fragen",
+      "activityRoom": "Aktivitätsraum",
       "extraServices": "Zusatzleistungen",
       "privacy": "Datenschutz",
       "cookies": "Cookie-Einstellungen",
@@ -762,7 +852,7 @@ export const de = {
   "seo": {
     "home": {
       "title": "Fyrrehaven 61 – Ferienhaus in Dänemark für 10 Personen nahe Fjellerup Strand",
-      "description": "Familienfreundliches Ferienhaus auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool und Sauna. Perfekt für Familien aus Dänemark, Norwegen und Deutschland, nahe Strand und Wald.",
+      "description": "Familienfreundliches Ferienhaus auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool, Sauna und Aktivitätsraum. Perfekt für Familien aus Dänemark, Norwegen und Deutschland, nahe Strand und Wald.",
       "keywords": [
         "Ferienhaus Dänemark",
         "Sommerhaus Fjellerup",
@@ -771,6 +861,8 @@ export const de = {
         "beheizter Pool Ferienhaus",
         "Whirlpool Ferienhaus",
         "Sauna Ferienhaus",
+        "Ferienhaus mit Aktivitätsraum",
+        "Ferienhaus mit Billard",
         "Djursland Ferienhaus",
         "Fyrrehaven 61"
       ],
@@ -783,13 +875,16 @@ export const de = {
       }
     },
     "house": {
-      "title": "Das Haus – Pool, Whirlpool & Sauna in Dänemark | Fyrrehaven 61",
-      "description": "Ferienhaus für 10 Personen auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool und Sauna. Familienfreundliche Unterkunft, ideal für Gäste aus Deutschland, Norwegen und Dänemark.",
+      "title": "Das Haus – Pool, Whirlpool, Sauna & Aktivitätsraum | Fyrrehaven 61",
+      "description": "Ferienhaus für 10 Personen auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool, Sauna und Aktivitätsraum mit Billard, Tischtennis, Airhockey, Darts und Projektor. Familienfreundlich nahe Wald und Strand.",
       "keywords": [
         "Ferienhaus Fjellerup",
         "beheizter Außenpool",
         "Whirlpool",
         "Sauna",
+        "Aktivitätsraum",
+        "Billard",
+        "Airhockey",
         "familienfreundlich",
         "10 Personen",
         "Djursland Urlaub",
@@ -829,8 +924,8 @@ export const de = {
       }
     },
     "gallery": {
-      "title": "Galerie – Fotos vom Haus, Pool und der Umgebung",
-      "description": "Sehen Sie Fotos vom Wohnzimmer, Essbereich, Schlafzimmern und Dachboden – plus dem beheizten Außenpool (1. Mai–1. Okt), elektrischem Whirlpool, Elektro-Sauna und dem nahegelegenen Wald und Strand bei Fjellerup. Gewinnen Sie einen echten Eindruck.",
+      "title": "Galerie – Fotos vom Haus, Pool, Aktivitätsraum und der Umgebung",
+      "description": "Sehen Sie Fotos vom Wohnzimmer, Essbereich, Schlafzimmern, Dachboden und Aktivitätsraum – plus dem beheizten Außenpool (1. Mai–1. Okt), elektrischem Whirlpool, Elektro-Sauna und dem nahegelegenen Wald und Strand bei Fjellerup. Gewinnen Sie einen echten Eindruck.",
       "keywords": [
         "Fyrrehaven 61",
         "Galerie",
@@ -838,6 +933,7 @@ export const de = {
         "beheizter Außenpool",
         "Whirlpool",
         "Sauna",
+        "Aktivitätsraum",
         "Fjellerup",
         "Djursland",
         "Wald und Strand",
@@ -887,7 +983,7 @@ export const de = {
     },
     "book": {
       "title": "Buchung bei Fyrrehaven 61 – direkte Anfrage",
-      "description": "Buchen Sie direkt bei den Gastgebern oder über Airbnb. Beheizter Außenpool (1. Mai–1. Okt.), Platz für 10 Gäste und familienfreundlich nahe Wald und Strand. Wir antworten normalerweise innerhalb von 1 Stunde. Strom 4 DKK/kWh und Wasser 80 DKK/m³ werden nach dem Aufenthalt abgerechnet.",
+      "description": "Buchen Sie direkt bei den Gastgebern oder über Airbnb. Beheizter Außenpool (1. Mai–1. Okt.), Aktivitätsraum, Platz für 10 Gäste und familienfreundlich nahe Wald und Strand. Wir antworten normalerweise innerhalb von 1 Stunde. Strom 4 DKK/kWh und Wasser 80 DKK/m³ werden nach dem Aufenthalt abgerechnet.",
       "keywords": [
         "Ferienhaus Buchung",
         "Fyrrehaven 61 Buchung",
@@ -895,6 +991,7 @@ export const de = {
         "beheizter Außenpool",
         "Whirlpool",
         "Sauna",
+        "Aktivitätsraum",
         "familienfreundliche Unterkunft",
         "direkt buchen",
         "Airbnb Fjellerup",
@@ -1016,18 +1113,20 @@ export const de = {
       "poolSeason": "Geöffnet vom 1. Mai bis 1. Oktober",
       "hotTub": "Elektrischer Whirlpool",
       "sauna": "Elektrische Sauna",
+      "activityRoom": "Aktivitätsraum mit Spielen und Projektor",
       "beachForest": "Nahe Strand & Wald"
     },
     "hero": {
-      "title": "Das Haus – Platz für 10, Außenpool & Wellness",
-      "subtitle": "4 Schlafzimmer + Galerie. Beheizter Außenpool (1. Mai–1. Okt.), elektrischer Whirlpool und Sauna.",
+      "title": "Das Haus – Platz für 10, Pool, Wellness & Aktivitätsraum",
+      "subtitle": "4 Schlafzimmer + Galerie. Beheizter Außenpool (1. Mai–1. Okt.), elektrischer Whirlpool, Sauna und Aktivitätsraum.",
       "badges": [
         "10 Gäste",
         "4 Schlafzimmer",
         "2 Badezimmer",
         "Beheizter Außenpool",
         "Whirlpool",
-        "Sauna"
+        "Sauna",
+        "Aktivitätsraum"
       ],
       "primaryCta": "Privat buchen",
       "secondaryCta": "Buchen | Airbnb",
@@ -1074,6 +1173,21 @@ export const de = {
         "Bis zu 8 Personen",
         "Innen- und Außenbeleuchtung",
         "Für Dampf vorsichtig Wasser auf den Ofen gießen"
+      ]
+    },
+    "activityRoom": {
+      "title": "Aktivitätsraum",
+      "gamesTitle": "Spiele im Raum",
+      "games": [
+        "3-in-1-Tisch für Billard, Tischtennis und Airhockey",
+        "Dartscheibe über dem Kühlschrank mit Schutzpolstern rundherum",
+        "Airhockey benötigt Strom und muss vor der Nutzung an eine Steckdose angeschlossen werden"
+      ],
+      "movieTitle": "Filme & Aufenthalt",
+      "movie": [
+        "Projektor mit Chromecast und Google TV",
+        "Bluetooth-Soundbar für den Filmton",
+        "Klappstühle und zusätzlicher Platz für entspannte Abende"
       ]
     },
     "kitchenLiving": {
@@ -1123,6 +1237,15 @@ export const de = {
           "Reisebett für Kinder (kostenlos vorab bestellen)",
           "Bügeleisen und Föhn",
           "E-Auto-Ladestation"
+        ]
+      },
+      "activityRoom": {
+        "title": "Aktivitätsraum",
+        "bullets": [
+          "3-in-1-Tisch für Billard, Tischtennis und Airhockey",
+          "Dartscheibe über dem Kühlschrank mit Schutzpolstern rundherum",
+          "Projektor mit Chromecast, Google TV und Bluetooth-Soundbar",
+          "Klappstühle und kleiner Kühlschrank im Raum"
         ]
       },
       "outdoor": {

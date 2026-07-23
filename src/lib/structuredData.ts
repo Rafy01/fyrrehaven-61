@@ -84,6 +84,12 @@ const containsPlace = [
     name: "Pool and wellness area",
     description: "Heated outdoor pool, electric hot tub, and electric sauna.",
   },
+  {
+    "@type": "Place",
+    name: "Activity room",
+    description:
+      "Activity room with billiards, table tennis, air hockey, darts, projector, Chromecast, Google TV, and Bluetooth soundbar.",
+  },
 ];
 
 function baseAmenity(name: string, description?: string) {
@@ -180,6 +186,10 @@ export function buildLodgingBusinessSchema({
       baseAmenity("Heated outdoor pool", "Open May 1 to October 1"),
       baseAmenity("Electric hot tub"),
       baseAmenity("Electric sauna"),
+      baseAmenity(
+        "Activity room",
+        "Billiards, table tennis, air hockey, darts, projector, Chromecast, Google TV, and Bluetooth soundbar"
+      ),
       baseAmenity("Forest and beach nearby"),
     ],
     makesOffer: {

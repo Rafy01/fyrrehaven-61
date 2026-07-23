@@ -258,14 +258,24 @@ export default function Footer({
                   </Link>
                 </li>
                 {guest && (
-                  <li>
-                    <Link
-                      className={styles.link}
-                      to={guestPathOf(currentLang, "extraServices")}
-                    >
-                      {t("links.extraServices")}
-                    </Link>
-                  </li>
+                  <>
+                    <li>
+                      <Link
+                        className={styles.link}
+                        to={guestPathOf(currentLang, "activityRoom")}
+                      >
+                        {t("links.activityRoom")}
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        className={styles.link}
+                        to={guestPathOf(currentLang, "extraServices")}
+                      >
+                        {t("links.extraServices")}
+                      </Link>
+                    </li>
+                  </>
                 )}
               </ul>
               <div
@@ -445,14 +455,24 @@ export default function Footer({
                       </Link>
                     </li>
                     {guest && (
-                      <li>
-                        <Link
-                          className={styles.mobileLink}
-                          to={guestPathOf(currentLang, "extraServices")}
-                        >
-                          {t("links.extraServices")}
-                        </Link>
-                      </li>
+                      <>
+                        <li>
+                          <Link
+                            className={styles.mobileLink}
+                            to={guestPathOf(currentLang, "activityRoom")}
+                          >
+                            {t("links.activityRoom")}
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            className={styles.mobileLink}
+                            to={guestPathOf(currentLang, "extraServices")}
+                          >
+                            {t("links.extraServices")}
+                          </Link>
+                        </li>
+                      </>
                     )}
                   </ul>
                 </div>

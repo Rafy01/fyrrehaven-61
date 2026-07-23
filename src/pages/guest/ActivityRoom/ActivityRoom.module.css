@@ -1,0 +1,63 @@
+.wrapper {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.hero {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.05;
+  margin: 0 0 0.75rem;
+}
+
+.subtitle {
+  color: var(--muted);
+  line-height: 1.65;
+  margin: 0;
+}
+
+.section {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.section h3 {
+  font-size: 1.05rem;
+  margin: 1.25rem 0 0.45rem;
+}
+
+.section p {
+  margin: 0.7rem 0;
+}
+
+.section ul,
+.section ol {
+  margin: 0.7rem 0 0;
+  padding-left: 1.35rem;
+}
+
+.section li {
+  padding-left: 0.25rem;
+  margin: 0.45rem 0;
+}
+
+.section li::marker {
+  color: var(--gold-600);
+  font-weight: 800;
+}
+
+.warningBox {
+  background-color: color-mix(in srgb, var(--gold-500) 14%, var(--surface));
+  border-left: 4px solid var(--gold-500);
+  margin-bottom: 2rem;
+  padding: 1rem;
+  line-height: 1.6;
+}
+
+.warningBox p {
+  margin: 0.45rem 0 0;
+}

@@ -8,6 +8,7 @@ export const fees: FeeItem[] = [
   { id: "late-checkout-unauthorized", amountDKK: 200 },
   { id: "hottub-over-42c", amountDKK: 500 },
   { id: "hottub-damage", amountDKK: 3000 },
+  { id: "spa-tech-damage", amountDKK: 6000 },
   { id: "grill-not-cleaned", amountDKK: 300 },
   { id: "trash-not-disposed", amountDKK: 200 },
   { id: "dishwasher-not-emptied", amountDKK: 200 },
@@ -22,4 +23,6 @@ export const fees: FeeItem[] = [
   { id: "sauna-damage", amountDKK: 2500 },
   { id: "sauna-stove-damage", amountDKK: 4500 },
   { id: "pool-tech-damage", amountDKK: 6000 },
+  { id: "activity-table-damage", amountDKK: 5000 },
+  { id: "dart-damage", amountDKK: 500 },
 ];

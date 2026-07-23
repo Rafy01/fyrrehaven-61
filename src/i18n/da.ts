@@ -12,21 +12,23 @@ export const da = {
   },
   "home": {
     "heroTitle": "Familievenligt sommerhus i skoven – tæt på stranden",
-    "heroSubtitle": "Indendørs pool, vildmarksbad og plads til hele familien.",
+    "heroSubtitle": "Pool, vildmarksbad, sauna, aktivitetsrum og plads til hele familien.",
     "ctaSeeHouse_da": "Se huset",
     "ctaSeeHouse_en": "See the house",
-    "badgePool": "Indendørs pool",
+    "badgePool": "Udendørs opvarmet pool",
     "badgeHotTub": "Vildmarksbad",
+    "badgeActivityRoom": "Aktivitetsrum",
     "badgeBeach": "Tæt på strand",
     "altKitchen": "Lyst køkken-alrum",
-    "altPool": "Indendørs pool",
+    "altPool": "Udendørs opvarmet pool",
     "altHotTub": "Vildmarksbad i haven",
     "altBeach": "Stranden ved Fjellerup",
     "whyFamiliesTitle": "Hvorfor familier elsker Fyrrehaven 61",
     "whyFamiliesSub": "Alt hvad I har brug for til en hyggelig ferie – med naturen lige udenfor.",
     "featSleeps": "Plads til {{count}} personer (sengefordeling og børneudstyr)",
-    "featPool": "Badeland året rundt: opvarmet indendørs pool",
+    "featPool": "Udendørs opvarmet pool i sæsonen",
     "featHotTub": "Afslapning i vildmarksbadet under trætoppene",
+    "featActivityRoom": "Aktivitetsrum med billard, bordtennis, airhockey, dart og projektor",
     "featBeach": "Kort gåtur til strand og iskiosk",
     "featForest": "Skovområde med legepladser og stier",
     "featKids": "Højstol, weekendseng og familiespil",
@@ -229,6 +231,10 @@ export const da = {
         "title": "Skader på vildmarksbad",
         "note": "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges."
       },
+      "spa-tech-damage": {
+        "title": "Skader på hot tub-teknik (varmepumpe, vandpumpe m.m.)",
+        "note": "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges."
+      },
       "grill-not-cleaned": {
         "title": "Manglende rengøring af grill"
       },
@@ -278,6 +284,14 @@ export const da = {
       "pool-tech-damage": {
         "title": "Skader på poolteknik (pumpe, filter, varmepumpe m.m.)",
         "note": "Minimumsgebyr – faktiske omkostninger kan tillægges."
+      },
+      "activity-table-damage": {
+        "title": "Skader på 3-i-1 multibord",
+        "note": "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges."
+      },
+      "dart-damage": {
+        "title": "Skader på dartskive eller sikkerhedspuder",
+        "note": "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges."
       }
     }
   },
@@ -660,6 +674,80 @@ export const da = {
         "cover": "Fjern pool cover og læg det i skuret (foldes eller rulles sammen)"
       }
     },
+    "activityRoomPage": {
+      "seo": {
+        "title": "Aktivitetsrum – Fyrrehaven 61",
+        "description": "Guide til brug af aktivitetsrummet med billard, bordtennis, airhockey, dart, projektor, køleskab og sikkerhedsregler."
+      },
+      "title": "Aktivitetsrum",
+      "subtitle": "Her kan I spille billard, bordtennis, airhockey og dart, eller sætte film på projektoren med Chromecast og Google TV. Klapstole findes i rummet, så I kan lave ekstra siddepladser.",
+      "fridge": {
+        "title": "Køleskab ved ankomst",
+        "body": "Køleskabet skal tændes, når I ankommer. Brug kontakten ved siden af køleskabet, og giv det lidt tid til at blive koldt."
+      },
+      "table": {
+        "title": "Brug af multibordet",
+        "intro": "Multibordet bruges til billard, airhockey og bordtennis. Det er tungt, så skift spil langsomt og forsigtigt.",
+        "howToTitle": "Sådan skifter I spil",
+        "steps": [
+          "Fjern altid kugler, køer, bats, pucke og net fra bordet, før I skifter spil.",
+          "Skift mellem billard og airhockey ved at låse bordets beslag op, vende bordpladen roligt og låse beslagene igen, før I spiller.",
+          "Til bordtennis lægges bordtennispladerne ovenpå bordet, og nettet sættes fast i midten.",
+          "Brug kun det tilbehør, der hører til spillet, og læg det hele tilbage efter brug."
+        ],
+        "safetyTitle": "Brugs- og sikkerhedsanvisninger",
+        "safety": [
+          "Bordet må kun bruges, når alle fire låsebeslag er låst og understøtter bordet.",
+          "Når bordet drejes, skal alle fire låsebeslag være helt åbne. Hvis et beslag er lukket, kan det gå i stykker.",
+          "Bordet skal altid drejes langsomt og med størst mulig forsigtighed.",
+          "Læn dig aldrig op ad bordet, og sid aldrig på bordets kanter.",
+          "Sørg altid for, at poolkuglerne er ude af bordet, og at airhockey-strømkablet er trukket tilbage, før du prøver at dreje bordet.",
+          "Børn skal altid være sammen med en voksen, når de spiller på eller drejer bordet.",
+          "Hvis bordet står ujævnt, kan de justerbare fødder bruges til at hæve eller sænke hvert hjørne.",
+          "Kun til indendørs brug."
+        ]
+      },
+      "airHockey": {
+        "title": "Airhockey",
+        "steps": [
+          "Sæt airhockey-strømkablet i en stikkontakt, før I spiller.",
+          "Brug kun de tilhørende pucks og håndskydere.",
+          "Tag strømkablet ud igen, og træk det tilbage, før bordet drejes til et andet spil."
+        ]
+      },
+      "dart": {
+        "title": "Dartskive",
+        "steps": [
+          "Dartskiven hænger over køleskabet.",
+          "Brug kun pilene ved dartskiven.",
+          "Der er sikkerhedspuder rundt om dartskiven, hvis en pil rammer ved siden af. Tjek alligevel altid området omkring skiven, før I kaster.",
+          "Børn må kun kaste med pile sammen med en voksen."
+        ]
+      },
+      "projector": {
+        "title": "Projektor, Chromecast og Google TV",
+        "steps": [
+          "Tænd projektoren.",
+          "Tænd soundbaren. Den er forbundet med Bluetooth til projektoren.",
+          "Cast fra jeres telefon, eller brug Google TV til at logge ind på jeres egen streamingtjeneste.",
+          "Log ud af streamingtjenester, når I er færdige.",
+          "Sluk kun projektoren, før I forlader rummet. Soundbaren slukker sammen med projektoren."
+        ]
+      },
+      "closedArea": {
+        "title": "Lukket teknikområde",
+        "body": "Området med poolmotor, kemikalier og teknisk udstyr er låst og må ikke åbnes. Den lukkede sektion er videoovervåget."
+      },
+      "leaving": {
+        "title": "Når I forlader rummet",
+        "steps": [
+          "Læg alt spiltilbehør tilbage på plads.",
+          "Fold klapstole sammen og stil dem tilbage.",
+          "Tøm køleskabet for jeres egne varer.",
+          "Sluk projektor, lys og udstyr, der ikke skal være tændt."
+        ]
+      }
+    },
     "welcome": {
       "title": "Velkomst – Fyrrehaven 61",
       "hero": {
@@ -703,6 +791,7 @@ export const da = {
     "guest": {
       "welcome": "Velkomst",
       "manual": "Manual",
+      "activityRoom": "Aktivitetsrum",
       "pool": "Pool",
       "sauna": "Sauna",
       "spa": "Vildmarksbad",
@@ -747,6 +836,7 @@ export const da = {
       "contact": "Kontakt os",
       "houseRules": "Husregler",
       "faq": "Ofte stillede spørgsmål",
+      "activityRoom": "Aktivitetsrum",
       "extraServices": "Ekstra services",
       "privacy": "Privatliv",
       "cookies": "Cookieindstillinger",
@@ -762,7 +852,7 @@ export const da = {
   "seo": {
     "home": {
       "title": "Fyrrehaven 61 – feriehus i Danmark til 10 personer ved Fjellerup Strand",
-      "description": "Familievenligt feriehus på Djursland med opvarmet udendørs pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Perfekt for familier fra Danmark, Norge og Tyskland, med plads til 10 gæster og kort afstand til strand og skov.",
+      "description": "Familievenligt feriehus på Djursland med opvarmet udendørs pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og aktivitetsrum. Perfekt for familier fra Danmark, Norge og Tyskland, med plads til 10 gæster og kort afstand til strand og skov.",
       "keywords": [
         "feriehus danmark",
         "sommerhus fjellerup",
@@ -772,6 +862,8 @@ export const da = {
         "opvarmet pool sommerhus",
         "vildmarksbad sommerhus",
         "sauna sommerhus",
+        "sommerhus med aktivitetsrum",
+        "sommerhus med billard",
         "djursland feriehus",
         "Fyrrehaven 61"
       ],
@@ -784,14 +876,17 @@ export const da = {
       }
     },
     "house": {
-      "title": "Sommerhuset – pool, vildmarksbad og sauna i Danmark | Fyrrehaven 61",
-      "description": "Sommerhus til 10 på Djursland med udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Familievenligt feriehus i Danmark, godt for danske, norske og tyske gæster, tæt på skov, strand og lokale attraktioner.",
+      "title": "Sommerhuset – pool, vildmarksbad, sauna og aktivitetsrum | Fyrrehaven 61",
+      "description": "Sommerhus til 10 på Djursland med udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og aktivitetsrum med billard, bordtennis, airhockey, dart og projektor. Familievenligt feriehus tæt på skov, strand og lokale attraktioner.",
       "keywords": [
         "sommerhus fjellerup",
         "sommerhus med pool",
         "opvarmet udendørs pool",
         "vildmarksbad",
         "sauna",
+        "aktivitetsrum",
+        "billard",
+        "airhockey",
         "familievenligt sommerhus",
         "10 personer",
         "djursland feriehus",
@@ -832,8 +927,8 @@ export const da = {
       }
     },
     "gallery": {
-      "title": "Galleri – billeder af hus, pool og omgivelser",
-      "description": "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
+      "title": "Galleri – billeder af hus, pool, aktivitetsrum og omgivelser",
+      "description": "Se billeder af stue, køkken-alrum, soveværelser, hems og aktivitetsrum – plus udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
       "keywords": [
         "Fyrrehaven 61",
         "galleri",
@@ -841,6 +936,7 @@ export const da = {
         "udendørs opvarmet pool",
         "vildmarksbad",
         "sauna",
+        "aktivitetsrum",
         "Fjellerup",
         "Djursland",
         "skov og strand",
@@ -890,7 +986,7 @@ export const da = {
     },
     "book": {
       "title": "Booking hos Fyrrehaven 61 – direkte forespørgsel",
-      "description": "Book direkte hos værterne eller via Airbnb. Udendørs opvarmet pool (1. maj–1. okt.), plads til 10 og familievenligt nær skov og strand. Vi svarer typisk inden for 1 time. El 4 kr./kWh og vand 80 kr./m³ afregnes efter opholdet.",
+      "description": "Book direkte hos værterne eller via Airbnb. Udendørs opvarmet pool (1. maj–1. okt.), aktivitetsrum, plads til 10 og familievenligt nær skov og strand. Vi svarer typisk inden for 1 time. El 4 kr./kWh og vand 80 kr./m³ afregnes efter opholdet.",
       "keywords": [
         "booking sommerhus",
         "Fyrrehaven 61 booking",
@@ -898,6 +994,7 @@ export const da = {
         "udendørs opvarmet pool",
         "vildmarksbad",
         "sauna",
+        "aktivitetsrum",
         "familievenligt sommerhus",
         "book direkte",
         "Airbnb Fjellerup",
@@ -1019,18 +1116,20 @@ export const da = {
       "poolSeason": "Åben 1. maj – 1. oktober",
       "hotTub": "Elektrisk vildmarksbad",
       "sauna": "El-sauna",
+      "activityRoom": "Aktivitetsrum med spil og projektor",
       "beachForest": "Tæt på strand & skov"
     },
     "hero": {
-      "title": "Sommerhuset – plads til 10, udendørs pool & wellness",
-      "subtitle": "4 soveværelser + hems. Udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna.",
+      "title": "Sommerhuset – plads til 10, pool, wellness & aktivitetsrum",
+      "subtitle": "4 soveværelser + hems. Udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og aktivitetsrum.",
       "badges": [
         "10 gæster",
         "4 soveværelser",
         "2 badeværelser",
         "Udendørs opvarmet pool",
         "Vildmarksbad",
-        "Sauna"
+        "Sauna",
+        "Aktivitetsrum"
       ],
       "primaryCta": "Book privat",
       "secondaryCta": "Book | Airbnb",
@@ -1077,6 +1176,21 @@ export const da = {
         "Op til 8 personer",
         "Lys indvendig og udvendig",
         "Hæld stille og roligt vand på ovnen for damp"
+      ]
+    },
+    "activityRoom": {
+      "title": "Aktivitetsrum",
+      "gamesTitle": "Spil i rummet",
+      "games": [
+        "3-i-1 bord til billard, bordtennis og airhockey",
+        "Dartskive over køleskabet med sikkerhedspuder omkring",
+        "Airhockey bruger strøm og skal tilsluttes stikkontakt før brug"
+      ],
+      "movieTitle": "Film & ophold",
+      "movie": [
+        "Projektor med Chromecast og Google TV",
+        "Bluetooth soundbar til filmlyd",
+        "Folde stole og ekstra plads til hyggelige aftener"
       ]
     },
     "kitchenLiving": {
@@ -1126,6 +1240,15 @@ export const da = {
           "Rejseseng til børn (bestilles gratis forud)",
           "Strygejern og hårtørrer",
           "El-lader til elbil"
+        ]
+      },
+      "activityRoom": {
+        "title": "Aktivitetsrum",
+        "bullets": [
+          "3-i-1 bord til billard, bordtennis og airhockey",
+          "Dartskive over køleskabet med sikkerhedspuder omkring",
+          "Projektor med Chromecast, Google TV og Bluetooth soundbar",
+          "Folde stole og lille køleskab i rummet"
         ]
       },
       "outdoor": {

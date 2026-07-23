@@ -26,6 +26,7 @@ export default function GalleryPage({ lang }: { lang: Lang }) {
   const albums = [
     { id: "plantegning", label: t("Plantegning", "Floor plan", "Grundriss") },
     { id: "indoor", label: t("Indendørs", "Indoor", "Innenbereich") },
+    { id: "activity_room", label: t("Aktivitetsrum", "Activity room", "Aktivitätsraum") },
     { id: "pool", label: t("Pool", "Pool", "Pool") },
     { id: "spa", label: t("Spa", "Spa", "Spa") },
     { id: "sauna", label: t("Sauna", "Sauna", "Sauna") },

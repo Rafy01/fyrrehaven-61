@@ -196,6 +196,10 @@ useEffect(() => {
           label: t("guest.manual"),
         },
         {
+          to: `/guest/${lang}/${GUEST_PAGES.activityRoom[lang]}`,
+          label: t("guest.activityRoom"),
+        },
+        {
           to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`,
           label: t("guest.pool"),
         },

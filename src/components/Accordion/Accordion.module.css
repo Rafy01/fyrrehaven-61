@@ -3,12 +3,13 @@
 }
 
 .accordionItem {
-  border-radius: 12px 0px 12px 0px;
+  border-radius: 8px;
   background: var(--surface);
   border: 1px solid var(--border-muted);
   margin-top: 12px;
   box-shadow: 0 2px 6px var(--shadow-soft);
   transition: box-shadow 0.2s ease-in-out;
+  overflow: hidden;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -28,13 +29,14 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 1rem 0rem; /* match med .accordionInner */
+  padding: 1rem 1.25rem;
+  box-sizing: border-box;
   font-size: 1.1rem;
   font-weight: 600;
   background: linear-gradient(to right, var(--surface), var(--surface-soft));
   color: var(--ink-900);
   cursor: pointer;
-  border-radius: 12px 12px 0px 0px;
+  border-radius: 8px;
   transition: background 0.2s ease, transform 0.15s ease;
 }
 
@@ -42,7 +44,6 @@
 
 .accordionTrigger:hover {
   background: linear-gradient(to right, var(--surface-soft), var(--surface-hover));
-  transform: scale(1.01);
 }
 }
 
@@ -66,6 +67,10 @@
   animation-timing-function: ease-out;
   will-change: height, opacity;
   border-top: 1px solid var(--border-muted);
+}
+
+.accordionTrigger[data-state="open"] {
+  border-radius: 8px 8px 0 0;
 }
 
 .accordionContent[data-state="open"] {
@@ -114,7 +119,7 @@
 @media (max-width: 600px) {
   .accordionTrigger {
     font-size: 1rem;
-    padding: 0.75rem 0rem;
+    padding: 0.75rem 1rem;
   }
 
   .accordionInner {

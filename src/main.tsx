@@ -53,6 +53,7 @@ const AdminForms = React.lazy(() => import("./pages/AdminForms/AdminForms"));
 
 const GuestWelcome = React.lazy(() => import("./pages/guest/Welcome"));
 const GuestManual = React.lazy(() => import("./pages/guest/Manual"));
+const ActivityRoom = React.lazy(() => import("./pages/guest/ActivityRoom"));
 const Pool = React.lazy(() => import("./pages/guest/Pool"));
 const Sauna = React.lazy(() => import("./pages/guest/Sauna"));
 const Spa = React.lazy(() => import("./pages/guest/Spa"));
@@ -114,6 +115,13 @@ const guestRoutes = (lang: Lang) => [
   {
     path: GUEST_PAGES.manual[lang],
     element: lazyElement(<GuestManual lang={lang} />, `guest-manual-${lang}`),
+  },
+  {
+    path: GUEST_PAGES.activityRoom[lang],
+    element: lazyElement(
+      <ActivityRoom lang={lang} />,
+      `guest-activity-room-${lang}`
+    ),
   },
   {
     path: GUEST_PAGES.pool[lang],

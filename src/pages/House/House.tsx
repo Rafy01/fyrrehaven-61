@@ -31,6 +31,7 @@ export default function House({ lang }: { lang: Lang }) {
       { name: t("jsonLd.outdoorPool"), description: t("jsonLd.poolSeason") },
       { name: t("jsonLd.hotTub") },
       { name: t("jsonLd.sauna") },
+      { name: t("jsonLd.activityRoom") },
       { name: t("jsonLd.beachForest") },
     ],
   });
@@ -147,6 +148,39 @@ export default function House({ lang }: { lang: Lang }) {
                 </Heading>
                 <ul className={styles.list}>
                   {list("wellness.sauna").map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </Card>
+            </Grid>
+          </section>
+        </Box>
+
+        {/* Aktivitetsrum */}
+        <Box asChild id="aktivitetsrum">
+          <section className={styles.section}>
+            <Heading as="h2" size="6">
+              {t("activityRoom.title")}
+            </Heading>
+
+            <Grid columns={{ initial: "1", md: "2" }} gap="4" mt="3">
+              <Card variant="surface">
+                <Heading as="h3" size="3">
+                  {t("activityRoom.gamesTitle")}
+                </Heading>
+                <ul className={styles.list}>
+                  {list("activityRoom.games").map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </Card>
+
+              <Card variant="surface">
+                <Heading as="h3" size="3">
+                  {t("activityRoom.movieTitle")}
+                </Heading>
+                <ul className={styles.list}>
+                  {list("activityRoom.movie").map((item) => (
                     <li key={item}>{item}</li>
                   ))}
                 </ul>
