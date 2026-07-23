@@ -229,6 +229,10 @@ export const da = {
         "title": "Skader på vildmarksbad",
         "note": "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges."
       },
+      "spa-tech-damage": {
+        "title": "Skader på hot tub-teknik (varmepumpe, vandpumpe m.m.)",
+        "note": "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges."
+      },
       "grill-not-cleaned": {
         "title": "Manglende rengøring af grill"
       },
@@ -278,6 +282,14 @@ export const da = {
       "pool-tech-damage": {
         "title": "Skader på poolteknik (pumpe, filter, varmepumpe m.m.)",
         "note": "Minimumsgebyr – faktiske omkostninger kan tillægges."
+      },
+      "activity-table-damage": {
+        "title": "Skader på 3-i-1 multibord",
+        "note": "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges."
+      },
+      "dart-damage": {
+        "title": "Skader på dartskive eller sikkerhedspuder",
+        "note": "Minimumsgebyr – faktiske reparations-/udskiftningsomkostninger kan tillægges."
       }
     }
   },

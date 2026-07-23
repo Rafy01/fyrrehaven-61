@@ -229,6 +229,10 @@ export const en = {
         "title": "Damage to hot tub",
         "note": "Minimum fee – actual repair/replacement costs may be added."
       },
+      "spa-tech-damage": {
+        "title": "Damage to hot tub equipment (heat pump, water pump, etc.)",
+        "note": "Minimum fee – actual repair/replacement costs may be added."
+      },
       "grill-not-cleaned": {
         "title": "Barbecue not cleaned"
       },
@@ -278,6 +282,14 @@ export const en = {
       "pool-tech-damage": {
         "title": "Damage to pool equipment (pump, filter, heat pump, etc.)",
         "note": "Minimum fee – actual costs may be added."
+      },
+      "activity-table-damage": {
+        "title": "Damage to 3-in-1 multi-game table",
+        "note": "Minimum fee – actual repair/replacement costs may be added."
+      },
+      "dart-damage": {
+        "title": "Damage to dartboard or safety pads",
+        "note": "Minimum fee – actual repair/replacement costs may be added."
       }
     }
   },

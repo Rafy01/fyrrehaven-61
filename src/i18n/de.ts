@@ -229,6 +229,10 @@ export const de = {
         "title": "Schäden am Whirlpool",
         "note": "Mindestgebühr – tatsächliche Reparatur-/Ersatzkosten können hinzukommen."
       },
+      "spa-tech-damage": {
+        "title": "Schäden an Hot-Tub-Technik (Wärmepumpe, Wasserpumpe usw.)",
+        "note": "Mindestgebühr – tatsächliche Reparatur-/Ersatzkosten können hinzukommen."
+      },
       "grill-not-cleaned": {
         "title": "Grill nicht gereinigt"
       },
@@ -278,6 +282,14 @@ export const de = {
       "pool-tech-damage": {
         "title": "Schäden an der Pooltechnik (Pumpe, Filter, Wärmepumpe usw.)",
         "note": "Mindestgebühr – tatsächliche Kosten können hinzukommen."
+      },
+      "activity-table-damage": {
+        "title": "Schäden am 3-in-1-Multispieltisch",
+        "note": "Mindestgebühr – tatsächliche Reparatur-/Ersatzkosten können hinzukommen."
+      },
+      "dart-damage": {
+        "title": "Schäden an Dartscheibe oder Schutzpolstern",
+        "note": "Mindestgebühr – tatsächliche Reparatur-/Ersatzkosten können hinzukommen."
       }
     }
   },
