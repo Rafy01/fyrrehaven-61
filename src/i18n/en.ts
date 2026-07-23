@@ -660,6 +660,80 @@ export const en = {
         "cover": "Remove pool cover and place it in the shed (can be folded or rolled up)"
       }
     },
+    "activityRoomPage": {
+      "seo": {
+        "title": "Activity room – Fyrrehaven 61",
+        "description": "Guide for using the activity room with billiards, table tennis, air hockey, darts, projector, fridge and safety rules."
+      },
+      "title": "Activity room",
+      "subtitle": "Here you can play billiards, table tennis, air hockey and darts, or watch movies on the projector with Chromecast and Google TV. Folding chairs are available in the room for extra seating.",
+      "fridge": {
+        "title": "Fridge on arrival",
+        "body": "The fridge must be turned on when you arrive. Use the switch next to the fridge and give it a little time to get cold."
+      },
+      "table": {
+        "title": "Using the multi-game table",
+        "intro": "The multi-game table is used for billiards, air hockey and table tennis. It is heavy, so change games slowly and carefully.",
+        "howToTitle": "How to change game",
+        "steps": [
+          "Always remove balls, cues, bats, pucks and net from the table before changing game.",
+          "Change between billiards and air hockey by unlocking the table brackets, turning the tabletop carefully and locking the brackets again before playing.",
+          "For table tennis, place the table tennis plates on top of the table and attach the net in the middle.",
+          "Only use the accessories that belong to the game, and put everything back after use."
+        ],
+        "safetyTitle": "Usage and safety instructions",
+        "safety": [
+          "Only use the table when all four locking brackets are locked and supporting the table.",
+          "When turning the table, make sure all four locking brackets are fully open. If a bracket is closed, it may break.",
+          "Always turn the table slowly and with as much care as possible.",
+          "Never lean on the table and never sit on the edges.",
+          "Always make sure the pool balls are out of the table and the air hockey power cable is pulled back before trying to turn the table.",
+          "Children must always be accompanied by an adult when playing on or turning the table.",
+          "If the table stands unevenly, use the adjustable feet to raise or lower each corner.",
+          "Indoor use only."
+        ]
+      },
+      "airHockey": {
+        "title": "Air hockey",
+        "steps": [
+          "Plug the air hockey power cable into an outlet before playing.",
+          "Only use the matching pucks and pushers.",
+          "Unplug the power cable and pull it back before turning the table to another game."
+        ]
+      },
+      "dart": {
+        "title": "Darts",
+        "steps": [
+          "The dartboard is placed above the fridge.",
+          "Only use darts at the dartboard.",
+          "There are safety pads around the dartboard in case a dart misses the board. Still check the area around the board before throwing.",
+          "Children may only play darts with an adult."
+        ]
+      },
+      "projector": {
+        "title": "Projector, Chromecast and Google TV",
+        "steps": [
+          "Turn on the projector.",
+          "Turn on the soundbar. It is connected to the projector via Bluetooth.",
+          "Cast from your phone, or use Google TV to sign in to your own streaming service.",
+          "Sign out of streaming services when you are done.",
+          "Only turn off the projector before leaving the room. The soundbar turns off with the projector."
+        ]
+      },
+      "closedArea": {
+        "title": "Closed technical area",
+        "body": "The area with the pool motor, chemicals and technical equipment is locked and must not be opened. The locked section is monitored by video."
+      },
+      "leaving": {
+        "title": "Before leaving the room",
+        "steps": [
+          "Put all game accessories back in place.",
+          "Fold the folding chairs and return them.",
+          "Empty the fridge of your own items.",
+          "Turn off projector, lights and equipment that should not stay on."
+        ]
+      }
+    },
     "welcome": {
       "title": "Welcome – Fyrrehaven 61",
       "hero": {
@@ -703,6 +777,7 @@ export const en = {
     "guest": {
       "welcome": "Welcome",
       "manual": "Manual",
+      "activityRoom": "Activity room",
       "pool": "Pool",
       "sauna": "Sauna",
       "spa": "Hot Tub",
@@ -747,6 +822,7 @@ export const en = {
       "contact": "Contact us",
       "houseRules": "House rules",
       "faq": "Frequently asked questions",
+      "activityRoom": "Activity room",
       "extraServices": "Extra services",
       "privacy": "Privacy",
       "cookies": "Cookie settings",

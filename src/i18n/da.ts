@@ -660,6 +660,80 @@ export const da = {
         "cover": "Fjern pool cover og læg det i skuret (foldes eller rulles sammen)"
       }
     },
+    "activityRoomPage": {
+      "seo": {
+        "title": "Aktivitetsrum – Fyrrehaven 61",
+        "description": "Guide til brug af aktivitetsrummet med billard, bordtennis, airhockey, dart, projektor, køleskab og sikkerhedsregler."
+      },
+      "title": "Aktivitetsrum",
+      "subtitle": "Her kan I spille billard, bordtennis, airhockey og dart, eller sætte film på projektoren med Chromecast og Google TV. Klapstole findes i rummet, så I kan lave ekstra siddepladser.",
+      "fridge": {
+        "title": "Køleskab ved ankomst",
+        "body": "Køleskabet skal tændes, når I ankommer. Brug kontakten ved siden af køleskabet, og giv det lidt tid til at blive koldt."
+      },
+      "table": {
+        "title": "Brug af multibordet",
+        "intro": "Multibordet bruges til billard, airhockey og bordtennis. Det er tungt, så skift spil langsomt og forsigtigt.",
+        "howToTitle": "Sådan skifter I spil",
+        "steps": [
+          "Fjern altid kugler, køer, bats, pucke og net fra bordet, før I skifter spil.",
+          "Skift mellem billard og airhockey ved at låse bordets beslag op, vende bordpladen roligt og låse beslagene igen, før I spiller.",
+          "Til bordtennis lægges bordtennispladerne ovenpå bordet, og nettet sættes fast i midten.",
+          "Brug kun det tilbehør, der hører til spillet, og læg det hele tilbage efter brug."
+        ],
+        "safetyTitle": "Brugs- og sikkerhedsanvisninger",
+        "safety": [
+          "Bordet må kun bruges, når alle fire låsebeslag er låst og understøtter bordet.",
+          "Når bordet drejes, skal alle fire låsebeslag være helt åbne. Hvis et beslag er lukket, kan det gå i stykker.",
+          "Bordet skal altid drejes langsomt og med størst mulig forsigtighed.",
+          "Læn dig aldrig op ad bordet, og sid aldrig på bordets kanter.",
+          "Sørg altid for, at poolkuglerne er ude af bordet, og at airhockey-strømkablet er trukket tilbage, før du prøver at dreje bordet.",
+          "Børn skal altid være sammen med en voksen, når de spiller på eller drejer bordet.",
+          "Hvis bordet står ujævnt, kan de justerbare fødder bruges til at hæve eller sænke hvert hjørne.",
+          "Kun til indendørs brug."
+        ]
+      },
+      "airHockey": {
+        "title": "Airhockey",
+        "steps": [
+          "Sæt airhockey-strømkablet i en stikkontakt, før I spiller.",
+          "Brug kun de tilhørende pucks og håndskydere.",
+          "Tag strømkablet ud igen, og træk det tilbage, før bordet drejes til et andet spil."
+        ]
+      },
+      "dart": {
+        "title": "Dartskive",
+        "steps": [
+          "Dartskiven hænger over køleskabet.",
+          "Brug kun pilene ved dartskiven.",
+          "Der er sikkerhedspuder rundt om dartskiven, hvis en pil rammer ved siden af. Tjek alligevel altid området omkring skiven, før I kaster.",
+          "Børn må kun kaste med pile sammen med en voksen."
+        ]
+      },
+      "projector": {
+        "title": "Projektor, Chromecast og Google TV",
+        "steps": [
+          "Tænd projektoren.",
+          "Tænd soundbaren. Den er forbundet med Bluetooth til projektoren.",
+          "Cast fra jeres telefon, eller brug Google TV til at logge ind på jeres egen streamingtjeneste.",
+          "Log ud af streamingtjenester, når I er færdige.",
+          "Sluk kun projektoren, før I forlader rummet. Soundbaren slukker sammen med projektoren."
+        ]
+      },
+      "closedArea": {
+        "title": "Lukket teknikområde",
+        "body": "Området med poolmotor, kemikalier og teknisk udstyr er låst og må ikke åbnes. Den lukkede sektion er videoovervåget."
+      },
+      "leaving": {
+        "title": "Når I forlader rummet",
+        "steps": [
+          "Læg alt spiltilbehør tilbage på plads.",
+          "Fold klapstole sammen og stil dem tilbage.",
+          "Tøm køleskabet for jeres egne varer.",
+          "Sluk projektor, lys og udstyr, der ikke skal være tændt."
+        ]
+      }
+    },
     "welcome": {
       "title": "Velkomst – Fyrrehaven 61",
       "hero": {
@@ -703,6 +777,7 @@ export const da = {
     "guest": {
       "welcome": "Velkomst",
       "manual": "Manual",
+      "activityRoom": "Aktivitetsrum",
       "pool": "Pool",
       "sauna": "Sauna",
       "spa": "Vildmarksbad",
@@ -747,6 +822,7 @@ export const da = {
       "contact": "Kontakt os",
       "houseRules": "Husregler",
       "faq": "Ofte stillede spørgsmål",
+      "activityRoom": "Aktivitetsrum",
       "extraServices": "Ekstra services",
       "privacy": "Privatliv",
       "cookies": "Cookieindstillinger",

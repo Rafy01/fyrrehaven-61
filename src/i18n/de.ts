@@ -660,6 +660,80 @@ export const de = {
         "cover": "Poolabdeckung entfernen und in den Schuppen legen (gefaltet oder zusammengerollt)"
       }
     },
+    "activityRoomPage": {
+      "seo": {
+        "title": "Aktivitätsraum – Fyrrehaven 61",
+        "description": "Anleitung zur Nutzung des Aktivitätsraums mit Billard, Tischtennis, Airhockey, Darts, Projektor, Kühlschrank und Sicherheitsregeln."
+      },
+      "title": "Aktivitätsraum",
+      "subtitle": "Hier können Sie Billard, Tischtennis, Airhockey und Darts spielen oder Filme über den Projektor mit Chromecast und Google TV ansehen. Klappstühle befinden sich im Raum und können als zusätzliche Sitzplätze genutzt werden.",
+      "fridge": {
+        "title": "Kühlschrank bei Ankunft",
+        "body": "Der Kühlschrank muss bei Ankunft eingeschaltet werden. Nutzen Sie den Schalter neben dem Kühlschrank und geben Sie ihm etwas Zeit, kalt zu werden."
+      },
+      "table": {
+        "title": "Nutzung des Multispieltisches",
+        "intro": "Der Multispieltisch wird für Billard, Airhockey und Tischtennis genutzt. Er ist schwer, wechseln Sie das Spiel daher langsam und vorsichtig.",
+        "howToTitle": "So wechseln Sie das Spiel",
+        "steps": [
+          "Entfernen Sie immer Kugeln, Queues, Schläger, Pucks und Netz vom Tisch, bevor Sie das Spiel wechseln.",
+          "Wechseln Sie zwischen Billard und Airhockey, indem Sie die Halterungen entriegeln, die Tischplatte vorsichtig drehen und die Halterungen vor dem Spielen wieder verriegeln.",
+          "Für Tischtennis werden die Tischtennisplatten oben auf den Tisch gelegt und das Netz in der Mitte befestigt.",
+          "Verwenden Sie nur das Zubehör, das zum jeweiligen Spiel gehört, und legen Sie nach der Nutzung alles zurück."
+        ],
+        "safetyTitle": "Nutzungs- und Sicherheitshinweise",
+        "safety": [
+          "Der Tisch darf nur genutzt werden, wenn alle vier Verriegelungen geschlossen sind und den Tisch stützen.",
+          "Beim Drehen des Tisches müssen alle vier Verriegelungen vollständig geöffnet sein. Ist eine Verriegelung geschlossen, kann sie brechen.",
+          "Drehen Sie den Tisch immer langsam und mit größtmöglicher Vorsicht.",
+          "Lehnen Sie sich niemals an den Tisch und setzen Sie sich niemals auf die Kanten.",
+          "Stellen Sie immer sicher, dass die Poolkugeln aus dem Tisch entfernt sind und das Airhockey-Stromkabel zurückgezogen ist, bevor Sie den Tisch drehen.",
+          "Kinder müssen beim Spielen oder Drehen des Tisches immer von einem Erwachsenen begleitet werden.",
+          "Wenn der Tisch uneben steht, können die verstellbaren Füße an jeder Ecke angepasst werden.",
+          "Nur für den Innenbereich."
+        ]
+      },
+      "airHockey": {
+        "title": "Airhockey",
+        "steps": [
+          "Stecken Sie das Airhockey-Stromkabel in eine Steckdose, bevor Sie spielen.",
+          "Verwenden Sie nur die passenden Pucks und Schieber.",
+          "Ziehen Sie das Stromkabel wieder heraus und legen Sie es zurück, bevor der Tisch zu einem anderen Spiel gedreht wird."
+        ]
+      },
+      "dart": {
+        "title": "Darts",
+        "steps": [
+          "Die Dartscheibe befindet sich über dem Kühlschrank.",
+          "Verwenden Sie Dartpfeile nur an der Dartscheibe.",
+          "Rund um die Dartscheibe befinden sich Schutzpolster, falls ein Pfeil daneben geht. Prüfen Sie trotzdem immer den Bereich um die Scheibe, bevor Sie werfen.",
+          "Kinder dürfen nur zusammen mit einem Erwachsenen Darts spielen."
+        ]
+      },
+      "projector": {
+        "title": "Projektor, Chromecast und Google TV",
+        "steps": [
+          "Schalten Sie den Projektor ein.",
+          "Schalten Sie die Soundbar ein. Sie ist per Bluetooth mit dem Projektor verbunden.",
+          "Streamen Sie von Ihrem Telefon oder melden Sie sich über Google TV bei Ihrem eigenen Streamingdienst an.",
+          "Melden Sie sich von Streamingdiensten ab, wenn Sie fertig sind.",
+          "Schalten Sie vor dem Verlassen des Raums nur den Projektor aus. Die Soundbar schaltet sich zusammen mit dem Projektor aus."
+        ]
+      },
+      "closedArea": {
+        "title": "Geschlossener Technikbereich",
+        "body": "Der Bereich mit Poolmotor, Chemikalien und technischer Ausrüstung ist abgeschlossen und darf nicht geöffnet werden. Der abgeschlossene Bereich wird videoüberwacht."
+      },
+      "leaving": {
+        "title": "Bevor Sie den Raum verlassen",
+        "steps": [
+          "Legen Sie alles Spielzubehör zurück an seinen Platz.",
+          "Klappen Sie die Klappstühle zusammen und stellen Sie sie zurück.",
+          "Leeren Sie den Kühlschrank von Ihren eigenen Sachen.",
+          "Schalten Sie Projektor, Licht und Geräte aus, die nicht eingeschaltet bleiben sollen."
+        ]
+      }
+    },
     "welcome": {
       "title": "Willkommen – Fyrrehaven 61",
       "hero": {
@@ -703,6 +777,7 @@ export const de = {
     "guest": {
       "welcome": "Willkommen",
       "manual": "Benutzerhandbuch",
+      "activityRoom": "Aktivitätsraum",
       "pool": "Pool",
       "sauna": "Sauna",
       "spa": "Whirlpool",
@@ -747,6 +822,7 @@ export const de = {
       "contact": "Kontakt aufnehmen",
       "houseRules": "Hausregeln",
       "faq": "Häufig gestellte Fragen",
+      "activityRoom": "Aktivitätsraum",
       "extraServices": "Zusatzleistungen",
       "privacy": "Datenschutz",
       "cookies": "Cookie-Einstellungen",
