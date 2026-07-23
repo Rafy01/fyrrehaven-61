@@ -219,6 +219,31 @@ export const SNIPPETS: Snippet[] = [
       "• **Quiet hours**: **22:00–06:00**. Please be considerate 🌙",
     triggers: ["regler", "husregler", "rules", "party", "smoking", "rygning", "quiet"],
   },
+  {
+    id: "activity-room",
+    titleDa: "Aktivitetsrum",
+    titleEn: "Activity room",
+    bodyDa:
+      "Aktivitetsrummet har **3-i-1 bord** til billard, bordtennis og airhockey, **dart**, projektor med Chromecast/Google TV, Bluetooth soundbar, folde stole og et lille køleskab.\n\n" +
+      "Airhockey skal tilsluttes en stikkontakt før brug. Det låste teknikområde med pooludstyr må ikke åbnes.",
+    bodyEn:
+      "The activity room has a **3-in-1 table** for billiards, table tennis and air hockey, **darts**, a projector with Chromecast/Google TV, Bluetooth soundbar, folding chairs and a small fridge.\n\n" +
+      "Air hockey must be plugged into an outlet before use. The locked technical area with pool equipment must not be opened.",
+    triggers: [
+      "aktivitetsrum",
+      "billard",
+      "bordtennis",
+      "airhockey",
+      "dart",
+      "projektor",
+      "activity room",
+      "billiards",
+      "table tennis",
+      "air hockey",
+      "darts",
+      "projector",
+    ],
+  },
 
   /* =========================
    * SIKKERHED & UDSTYR

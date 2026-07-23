@@ -35,9 +35,10 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
 };
 
 // Gæste-sider (separat fordi de har præfikset `/guest`)
-export const GUEST_PAGES: Record<"welcome" | "manual" | "pool" | "sauna" | "spa" | "contact" | "practicalInfo" | "checkInOut" | "extraServices", Record<Lang, string>> = {
+export const GUEST_PAGES: Record<"welcome" | "manual" | "activityRoom" | "pool" | "sauna" | "spa" | "contact" | "practicalInfo" | "checkInOut" | "extraServices", Record<Lang, string>> = {
   welcome: { da: "velkomst", en: "welcome", de: "willkommen" },
   manual: { da: "manual", en: "manual", de: "benutzerhandbuch" },
+  activityRoom: { da: "aktivitetsrum", en: "activity-room", de: "aktivitaetsraum" },
   pool: { da: "pool", en: "pool", de: "pool" },
   sauna: { da: "sauna", en: "sauna", de: "sauna" },
   spa: { da: "vildmarksbad", en: "hot-tub", de: "whirlpool" },

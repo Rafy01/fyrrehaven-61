@@ -10,6 +10,15 @@
 .hSubtitle{ max-width: 60ch; margin: 0; }
 .center .hSubtitle{ margin-inline: auto; }
 
+.carousel{
+  position: relative;
+}
+
+.viewport{
+  min-width: 0;
+  touch-action: pan-y;
+}
+
 /* Grid: 1 / 2 / 4 kolonner */
 .grid{
   display: grid;
@@ -19,8 +28,47 @@
 @media (min-width: 700px){
   .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
+
+.carouselEnabled .viewport{
+  cursor: grab;
+  overflow: hidden;
+}
+
+.carouselEnabled.dragging .viewport{
+  cursor: grabbing;
+}
+
+.carouselEnabled .carouselTrack{
+  --carousel-offset: 0px;
+  display: flex;
+  grid-template-columns: none;
+  transform: translateX(calc(var(--carousel-offset) * -1));
+  will-change: transform;
+  user-select: none;
+}
+
+.carouselEnabled .card{
+  flex: 0 0 82%;
+}
+
+@media (min-width: 700px){
+  .carouselEnabled .card{
+    flex-basis: calc((100% - .9rem) / 2);
+  }
+}
+
 @media (min-width: 1040px){
   .grid{ grid-template-columns: repeat(4, minmax(0,1fr)); }
+
+  .carouselEnabled .card{
+    flex-basis: calc((100% - 2.7rem) / 4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .carouselEnabled .carouselTrack{
+    will-change: auto;
+  }
 }
 
 .card{
@@ -36,9 +84,7 @@
   display: grid; gap: .6rem;
   padding: .9rem .95rem .8rem;
   color: inherit; text-decoration: none;
-}
-@media (hover: hover) and (pointer: fine){
-.cardBody:hover{ background: var(--surface-hover); }
+  -webkit-user-drag: none;
 }
 .cardBody:focus-visible{ outline: 3px solid var(--focus); outline-offset: 4px; border-radius: 14px; }
 
@@ -64,6 +110,8 @@
   width: 100%; height: 100%; object-fit: cover;
   display: block;
   transform: scale(1.0001);
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 /* Tekst */
