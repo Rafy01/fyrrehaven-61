@@ -693,6 +693,7 @@ export const de = {
           "Entfernen Sie immer Kugeln, Queues, Schläger, Pucks und Netz vom Tisch, bevor Sie das Spiel wechseln.",
           "Wechseln Sie zwischen Billard und Airhockey, indem Sie die Halterungen entriegeln, die Tischplatte vorsichtig drehen und die Halterungen vor dem Spielen wieder verriegeln.",
           "Für Tischtennis werden die Tischtennisplatten oben auf den Tisch gelegt und das Netz in der Mitte befestigt.",
+          "Wenn der Tisch als normaler Tisch genutzt wird, legen Sie zuerst die Tischdecke darauf. Verschüttetes kann sonst nach unten gelangen und die Spielfläche darunter beschädigen.",
           "Verwenden Sie nur das Zubehör, das zum jeweiligen Spiel gehört, und legen Sie nach der Nutzung alles zurück."
         ],
         "safetyTitle": "Nutzungs- und Sicherheitshinweise",
@@ -728,7 +729,7 @@ export const de = {
         "title": "Projektor, Chromecast und Google TV",
         "steps": [
           "Schalten Sie den Projektor ein.",
-          "Schalten Sie die Soundbar ein. Sie ist per Bluetooth mit dem Projektor verbunden.",
+          "Schalten Sie die Soundbar manuell ein, wenn sie ausgeschaltet ist. Sie leuchtet rot, wenn sie ausgeschaltet ist, und verbindet sich danach automatisch.",
           "Streamen Sie von Ihrem Telefon oder melden Sie sich über Google TV bei Ihrem eigenen Streamingdienst an.",
           "Melden Sie sich von Streamingdiensten ab, wenn Sie fertig sind.",
           "Schalten Sie vor dem Verlassen des Raums nur den Projektor aus. Die Soundbar schaltet sich zusammen mit dem Projektor aus."
@@ -742,7 +743,7 @@ export const de = {
         "title": "Bevor Sie den Raum verlassen",
         "steps": [
           "Legen Sie alles Spielzubehör zurück an seinen Platz.",
-          "Klappen Sie die Klappstühle zusammen und stellen Sie sie zurück.",
+          "Klappen Sie die Klappstühle zusammen und hinterlassen Sie sie wie bei der Ankunft.",
           "Leeren Sie den Kühlschrank von Ihren eigenen Sachen.",
           "Schalten Sie Projektor, Licht und Geräte aus, die nicht eingeschaltet bleiben sollen."
         ]

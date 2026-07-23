@@ -693,6 +693,7 @@ export const en = {
           "Always remove balls, cues, bats, pucks and net from the table before changing game.",
           "Change between billiards and air hockey by unlocking the table brackets, turning the tabletop carefully and locking the brackets again before playing.",
           "For table tennis, place the table tennis plates on top of the table and attach the net in the middle.",
+          "When using the table as a normal table, place the tablecloth on top first. Spills may otherwise reach and damage the game surface underneath.",
           "Only use the accessories that belong to the game, and put everything back after use."
         ],
         "safetyTitle": "Usage and safety instructions",
@@ -728,7 +729,7 @@ export const en = {
         "title": "Projector, Chromecast and Google TV",
         "steps": [
           "Turn on the projector.",
-          "Turn on the soundbar. It is connected to the projector via Bluetooth.",
+          "Turn on the soundbar manually if it is off. It lights red when it is off and connects automatically afterwards.",
           "Cast from your phone, or use Google TV to sign in to your own streaming service.",
           "Sign out of streaming services when you are done.",
           "Only turn off the projector before leaving the room. The soundbar turns off with the projector."
@@ -742,7 +743,7 @@ export const en = {
         "title": "Before leaving the room",
         "steps": [
           "Put all game accessories back in place.",
-          "Fold the folding chairs and return them.",
+          "Fold the folding chairs and leave them as they were on arrival.",
           "Empty the fridge of your own items.",
           "Turn off projector, lights and equipment that should not stay on."
         ]

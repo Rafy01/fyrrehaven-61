@@ -693,6 +693,7 @@ export const da = {
           "Fjern altid kugler, køer, bats, pucke og net fra bordet, før I skifter spil.",
           "Skift mellem billard og airhockey ved at låse bordets beslag op, vende bordpladen roligt og låse beslagene igen, før I spiller.",
           "Til bordtennis lægges bordtennispladerne ovenpå bordet, og nettet sættes fast i midten.",
+          "Når bordet bruges som almindeligt bord, skal dugen lægges ovenpå bordet. Spild kan ellers trænge ned og ødelægge spillet under bordpladen.",
           "Brug kun det tilbehør, der hører til spillet, og læg det hele tilbage efter brug."
         ],
         "safetyTitle": "Brugs- og sikkerhedsanvisninger",
@@ -728,7 +729,7 @@ export const da = {
         "title": "Projektor, Chromecast og Google TV",
         "steps": [
           "Tænd projektoren.",
-          "Tænd soundbaren. Den er forbundet med Bluetooth til projektoren.",
+          "Tænd soundbaren manuelt, hvis den er slukket. Den lyser rødt, når den er slukket, og forbinder automatisk bagefter.",
           "Cast fra jeres telefon, eller brug Google TV til at logge ind på jeres egen streamingtjeneste.",
           "Log ud af streamingtjenester, når I er færdige.",
           "Sluk kun projektoren, før I forlader rummet. Soundbaren slukker sammen med projektoren."
@@ -742,7 +743,7 @@ export const da = {
         "title": "Når I forlader rummet",
         "steps": [
           "Læg alt spiltilbehør tilbage på plads.",
-          "Fold klapstole sammen og stil dem tilbage.",
+          "Fold klapstolene sammen, og efterlad dem som ved ankomst.",
           "Tøm køleskabet for jeres egne varer.",
           "Sluk projektor, lys og udstyr, der ikke skal være tændt."
         ]
