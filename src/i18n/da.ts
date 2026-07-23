@@ -12,21 +12,23 @@ export const da = {
   },
   "home": {
     "heroTitle": "Familievenligt sommerhus i skoven – tæt på stranden",
-    "heroSubtitle": "Indendørs pool, vildmarksbad og plads til hele familien.",
+    "heroSubtitle": "Pool, vildmarksbad, sauna, aktivitetsrum og plads til hele familien.",
     "ctaSeeHouse_da": "Se huset",
     "ctaSeeHouse_en": "See the house",
-    "badgePool": "Indendørs pool",
+    "badgePool": "Udendørs opvarmet pool",
     "badgeHotTub": "Vildmarksbad",
+    "badgeActivityRoom": "Aktivitetsrum",
     "badgeBeach": "Tæt på strand",
     "altKitchen": "Lyst køkken-alrum",
-    "altPool": "Indendørs pool",
+    "altPool": "Udendørs opvarmet pool",
     "altHotTub": "Vildmarksbad i haven",
     "altBeach": "Stranden ved Fjellerup",
     "whyFamiliesTitle": "Hvorfor familier elsker Fyrrehaven 61",
     "whyFamiliesSub": "Alt hvad I har brug for til en hyggelig ferie – med naturen lige udenfor.",
     "featSleeps": "Plads til {{count}} personer (sengefordeling og børneudstyr)",
-    "featPool": "Badeland året rundt: opvarmet indendørs pool",
+    "featPool": "Udendørs opvarmet pool i sæsonen",
     "featHotTub": "Afslapning i vildmarksbadet under trætoppene",
+    "featActivityRoom": "Aktivitetsrum med billard, bordtennis, airhockey, dart og projektor",
     "featBeach": "Kort gåtur til strand og iskiosk",
     "featForest": "Skovområde med legepladser og stier",
     "featKids": "Højstol, weekendseng og familiespil",
@@ -850,7 +852,7 @@ export const da = {
   "seo": {
     "home": {
       "title": "Fyrrehaven 61 – feriehus i Danmark til 10 personer ved Fjellerup Strand",
-      "description": "Familievenligt feriehus på Djursland med opvarmet udendørs pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Perfekt for familier fra Danmark, Norge og Tyskland, med plads til 10 gæster og kort afstand til strand og skov.",
+      "description": "Familievenligt feriehus på Djursland med opvarmet udendørs pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og aktivitetsrum. Perfekt for familier fra Danmark, Norge og Tyskland, med plads til 10 gæster og kort afstand til strand og skov.",
       "keywords": [
         "feriehus danmark",
         "sommerhus fjellerup",
@@ -860,6 +862,8 @@ export const da = {
         "opvarmet pool sommerhus",
         "vildmarksbad sommerhus",
         "sauna sommerhus",
+        "sommerhus med aktivitetsrum",
+        "sommerhus med billard",
         "djursland feriehus",
         "Fyrrehaven 61"
       ],
@@ -872,14 +876,17 @@ export const da = {
       }
     },
     "house": {
-      "title": "Sommerhuset – pool, vildmarksbad og sauna i Danmark | Fyrrehaven 61",
-      "description": "Sommerhus til 10 på Djursland med udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna. Familievenligt feriehus i Danmark, godt for danske, norske og tyske gæster, tæt på skov, strand og lokale attraktioner.",
+      "title": "Sommerhuset – pool, vildmarksbad, sauna og aktivitetsrum | Fyrrehaven 61",
+      "description": "Sommerhus til 10 på Djursland med udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og aktivitetsrum med billard, bordtennis, airhockey, dart og projektor. Familievenligt feriehus tæt på skov, strand og lokale attraktioner.",
       "keywords": [
         "sommerhus fjellerup",
         "sommerhus med pool",
         "opvarmet udendørs pool",
         "vildmarksbad",
         "sauna",
+        "aktivitetsrum",
+        "billard",
+        "airhockey",
         "familievenligt sommerhus",
         "10 personer",
         "djursland feriehus",
@@ -920,8 +927,8 @@ export const da = {
       }
     },
     "gallery": {
-      "title": "Galleri – billeder af hus, pool og omgivelser",
-      "description": "Se billeder af stue, køkken-alrum, soveværelser og hems – plus udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
+      "title": "Galleri – billeder af hus, pool, aktivitetsrum og omgivelser",
+      "description": "Se billeder af stue, køkken-alrum, soveværelser, hems og aktivitetsrum – plus udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og nærliggende skov og strand ved Fjellerup. Få et ærligt indtryk.",
       "keywords": [
         "Fyrrehaven 61",
         "galleri",
@@ -929,6 +936,7 @@ export const da = {
         "udendørs opvarmet pool",
         "vildmarksbad",
         "sauna",
+        "aktivitetsrum",
         "Fjellerup",
         "Djursland",
         "skov og strand",
@@ -978,7 +986,7 @@ export const da = {
     },
     "book": {
       "title": "Booking hos Fyrrehaven 61 – direkte forespørgsel",
-      "description": "Book direkte hos værterne eller via Airbnb. Udendørs opvarmet pool (1. maj–1. okt.), plads til 10 og familievenligt nær skov og strand. Vi svarer typisk inden for 1 time. El 4 kr./kWh og vand 80 kr./m³ afregnes efter opholdet.",
+      "description": "Book direkte hos værterne eller via Airbnb. Udendørs opvarmet pool (1. maj–1. okt.), aktivitetsrum, plads til 10 og familievenligt nær skov og strand. Vi svarer typisk inden for 1 time. El 4 kr./kWh og vand 80 kr./m³ afregnes efter opholdet.",
       "keywords": [
         "booking sommerhus",
         "Fyrrehaven 61 booking",
@@ -986,6 +994,7 @@ export const da = {
         "udendørs opvarmet pool",
         "vildmarksbad",
         "sauna",
+        "aktivitetsrum",
         "familievenligt sommerhus",
         "book direkte",
         "Airbnb Fjellerup",
@@ -1107,18 +1116,20 @@ export const da = {
       "poolSeason": "Åben 1. maj – 1. oktober",
       "hotTub": "Elektrisk vildmarksbad",
       "sauna": "El-sauna",
+      "activityRoom": "Aktivitetsrum med spil og projektor",
       "beachForest": "Tæt på strand & skov"
     },
     "hero": {
-      "title": "Sommerhuset – plads til 10, udendørs pool & wellness",
-      "subtitle": "4 soveværelser + hems. Udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad og el-sauna.",
+      "title": "Sommerhuset – plads til 10, pool, wellness & aktivitetsrum",
+      "subtitle": "4 soveværelser + hems. Udendørs opvarmet pool (1. maj–1. oktober), elektrisk vildmarksbad, el-sauna og aktivitetsrum.",
       "badges": [
         "10 gæster",
         "4 soveværelser",
         "2 badeværelser",
         "Udendørs opvarmet pool",
         "Vildmarksbad",
-        "Sauna"
+        "Sauna",
+        "Aktivitetsrum"
       ],
       "primaryCta": "Book privat",
       "secondaryCta": "Book | Airbnb",
@@ -1165,6 +1176,21 @@ export const da = {
         "Op til 8 personer",
         "Lys indvendig og udvendig",
         "Hæld stille og roligt vand på ovnen for damp"
+      ]
+    },
+    "activityRoom": {
+      "title": "Aktivitetsrum",
+      "gamesTitle": "Spil i rummet",
+      "games": [
+        "3-i-1 bord til billard, bordtennis og airhockey",
+        "Dartskive over køleskabet med sikkerhedspuder omkring",
+        "Airhockey bruger strøm og skal tilsluttes stikkontakt før brug"
+      ],
+      "movieTitle": "Film & ophold",
+      "movie": [
+        "Projektor med Chromecast og Google TV",
+        "Bluetooth soundbar til filmlyd",
+        "Folde stole og ekstra plads til hyggelige aftener"
       ]
     },
     "kitchenLiving": {
@@ -1214,6 +1240,15 @@ export const da = {
           "Rejseseng til børn (bestilles gratis forud)",
           "Strygejern og hårtørrer",
           "El-lader til elbil"
+        ]
+      },
+      "activityRoom": {
+        "title": "Aktivitetsrum",
+        "bullets": [
+          "3-i-1 bord til billard, bordtennis og airhockey",
+          "Dartskive over køleskabet med sikkerhedspuder omkring",
+          "Projektor med Chromecast, Google TV og Bluetooth soundbar",
+          "Folde stole og lille køleskab i rummet"
         ]
       },
       "outdoor": {

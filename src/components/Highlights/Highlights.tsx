@@ -78,9 +78,274 @@ export default function Highlights({
   dense = false,
 }: HighlightsProps) {
   const sectionAlign = align === "center" ? styles.center : "";
+  const hasCarousel = items.length > 4;
+  const carouselItems = hasCarousel ? [...items, ...items] : items;
+  const sectionRef = React.useRef<HTMLElement | null>(null);
+  const trackRef = React.useRef<HTMLDivElement | null>(null);
+  const offsetRef = React.useRef(0);
+  const cycleWidthRef = React.useRef(0);
+  const dragStartXRef = React.useRef(0);
+  const dragStartOffsetRef = React.useRef(0);
+  const isHoveringRef = React.useRef(false);
+  const isFocusWithinRef = React.useRef(false);
+  const isDraggingRef = React.useRef(false);
+  const didDragRef = React.useRef(false);
+  const [carouselOffset, setCarouselOffset] = React.useState(0);
+  const [isPaused, setIsPaused] = React.useState(false);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [isInView, setIsInView] = React.useState(true);
+  const [isDesktop, setIsDesktop] = React.useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] =
+    React.useState(false);
+
+  const setWrappedOffset = React.useCallback((nextOffset: number) => {
+    const cycleWidth = cycleWidthRef.current;
+    const wrappedOffset =
+      cycleWidth > 0
+        ? ((nextOffset % cycleWidth) + cycleWidth) % cycleWidth
+        : Math.max(0, nextOffset);
+
+    offsetRef.current = wrappedOffset;
+    setCarouselOffset(wrappedOffset);
+  }, []);
+
+  const updatePauseState = React.useCallback(() => {
+    setIsPaused(
+      isHoveringRef.current ||
+        isFocusWithinRef.current ||
+        isDraggingRef.current
+    );
+  }, []);
+
+  React.useEffect(() => {
+    if (!hasCarousel) return;
+
+    const desktopQuery = window.matchMedia("(min-width: 1040px)");
+    const reducedMotionQuery = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    );
+
+    const syncMedia = () => {
+      setIsDesktop(desktopQuery.matches);
+      setPrefersReducedMotion(reducedMotionQuery.matches);
+    };
+
+    syncMedia();
+    desktopQuery.addEventListener("change", syncMedia);
+    reducedMotionQuery.addEventListener("change", syncMedia);
+
+    return () => {
+      desktopQuery.removeEventListener("change", syncMedia);
+      reducedMotionQuery.removeEventListener("change", syncMedia);
+    };
+  }, [hasCarousel]);
+
+  React.useEffect(() => {
+    if (!hasCarousel) return;
+
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(section);
+
+    return () => observer.disconnect();
+  }, [hasCarousel]);
+
+  React.useEffect(() => {
+    if (!hasCarousel) return;
+
+    const measureCarousel = () => {
+      const track = trackRef.current;
+      const firstCard = track?.querySelector<HTMLElement>(
+        `.${styles.card}`
+      );
+      if (!track || !firstCard) return;
+
+      const trackStyles = window.getComputedStyle(track);
+      const gap = Number.parseFloat(trackStyles.columnGap || "0");
+      cycleWidthRef.current = (firstCard.offsetWidth + gap) * items.length;
+      setWrappedOffset(offsetRef.current);
+    };
+
+    measureCarousel();
+
+    const resizeObserver = new ResizeObserver(measureCarousel);
+    if (trackRef.current) {
+      resizeObserver.observe(trackRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [hasCarousel, items.length, setWrappedOffset]);
+
+  React.useEffect(() => {
+    if (
+      !hasCarousel ||
+      !isDesktop ||
+      !isInView ||
+      isPaused ||
+      prefersReducedMotion
+    ) {
+      return;
+    }
+
+    let animationFrame = 0;
+    let lastTime = window.performance.now();
+    const pixelsPerMs = 0.028;
+
+    const tick = (time: number) => {
+      const delta = time - lastTime;
+      lastTime = time;
+      setWrappedOffset(offsetRef.current + delta * pixelsPerMs);
+      animationFrame = window.requestAnimationFrame(tick);
+    };
+
+    animationFrame = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [
+    hasCarousel,
+    isDesktop,
+    isInView,
+    isPaused,
+    prefersReducedMotion,
+    setWrappedOffset,
+  ]);
+
+  const handlePointerDown = (
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
+    if (!hasCarousel || !isDesktop) return;
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    isDraggingRef.current = true;
+    didDragRef.current = false;
+    dragStartXRef.current = event.clientX;
+    dragStartOffsetRef.current = offsetRef.current;
+    setIsDragging(true);
+    updatePauseState();
+  };
+
+  const handlePointerMove = (
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
+    if (!isDraggingRef.current) return;
+
+    const deltaX = event.clientX - dragStartXRef.current;
+    if (Math.abs(deltaX) > 4) {
+      didDragRef.current = true;
+    }
+    setWrappedOffset(dragStartOffsetRef.current - deltaX);
+  };
+
+  const handlePointerEnd = (
+    event: React.PointerEvent<HTMLDivElement>
+  ) => {
+    if (!isDraggingRef.current) return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    updatePauseState();
+  };
+
+  const handleClickCapture = (
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
+    if (!didDragRef.current) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    didDragRef.current = false;
+  };
+
+  const renderCard = (
+    it: HighlightItem,
+    idx: number,
+    isDuplicate = false
+  ) => {
+    const hasCta = !!(it.ctaLabel && (it.to || it.href));
+
+    return (
+      <article
+        key={`${isDuplicate ? "duplicate" : "item"}-${idx}`}
+        role={isDuplicate ? undefined : "listitem"}
+        aria-hidden={isDuplicate ? "true" : undefined}
+        className={styles.card}
+      >
+        <CardWrapper
+          to={isDuplicate ? undefined : it.to}
+          href={isDuplicate ? undefined : it.href}
+          external={isDuplicate ? undefined : it.external}
+          className={styles.cardBody}
+        >
+          {it.media && (
+            <figure
+              className={styles.media}
+              style={
+                it.media.kind === "image" && it.media.aspect
+                  ? ({
+                      ["--aspect"]: it.media.aspect,
+                    } as React.CSSProperties)
+                  : undefined
+              }
+            >
+              {it.media.kind === "icon" ? (
+                <div className={styles.iconBox} aria-hidden="true">
+                  {it.media.icon}
+                </div>
+              ) : (
+                <div className={styles.imgFrame}>
+                  <LazyImage
+                    src={it.media.src}
+                    alt={it.media.alt ?? ""}
+                    className={styles.img}
+                    loading="lazy"
+                  />
+                </div>
+              )}
+            </figure>
+          )}
+
+          {it.badge && <span className={styles.badge}>{it.badge}</span>}
+
+          <Heading as="h3" size="4" className={styles.title}>
+            {it.title}
+          </Heading>
+
+          {it.body && (
+            <Text as="p" color="gray" className={styles.body}>
+              {it.body}
+            </Text>
+          )}
+        </CardWrapper>
+
+        {hasCta && !isDuplicate && (
+          <div className={styles.ctaRow}>
+            <Buttons
+              variant="secondary"
+              label={it.ctaLabel!}
+              {...(it.to
+                ? { to: it.to }
+                : { href: it.href!, external: it.external })}
+            />
+          </div>
+        )}
+      </article>
+    );
+  };
 
   return (
     <section
+      ref={sectionRef}
       id={id}
       className={[styles.wrap, dense ? styles.dense : ""].join(" ")}
     >
@@ -99,72 +364,57 @@ export default function Highlights({
         </header>
       )}
 
-      <div className={styles.grid} role="list">
-        {items.map((it, idx) => {
-          const hasCta = !!(it.ctaLabel && (it.to || it.href));
-          return (
-            <article key={idx} role="listitem" className={styles.card}>
-              <CardWrapper
-                to={it.to}
-                href={it.href}
-                external={it.external}
-                className={styles.cardBody}
-              >
-                {it.media && (
-                  <figure
-                    className={styles.media}
-                    style={
-                      it.media.kind === "image" && it.media.aspect
-                        ? ({
-                            ["--aspect"]: it.media.aspect,
-                          } as React.CSSProperties)
-                        : undefined
-                    }
-                  >
-                    {it.media.kind === "icon" ? (
-                      <div className={styles.iconBox} aria-hidden="true">
-                        {it.media.icon}
-                      </div>
-                    ) : (
-                      <div className={styles.imgFrame}>
-                        <LazyImage
-                          src={it.media.src}
-                          alt={it.media.alt ?? ""}
-                          className={styles.img}
-                          loading="lazy"
-                        />
-                      </div>
-                    )}
-                  </figure>
-                )}
-
-                {it.badge && <span className={styles.badge}>{it.badge}</span>}
-
-                <Heading as="h3" size="4" className={styles.title}>
-                  {it.title}
-                </Heading>
-
-                {it.body && (
-                  <Text as="p" color="gray" className={styles.body}>
-                    {it.body}
-                  </Text>
-                )}
-              </CardWrapper>
-
-              {hasCta && (
-                <div className={styles.ctaRow}>
-                  <Buttons
-                    variant="secondary"
-                    label={it.ctaLabel!}
-                    {...(it.to
-                      ? { to: it.to }
-                      : { href: it.href!, external: it.external })}
-                  />
-                </div>
-              )}
-            </article>
-          );
-        })}
+      <div
+        className={[
+          styles.carousel,
+          hasCarousel ? styles.carouselEnabled : "",
+          isDragging ? styles.dragging : "",
+        ].join(" ")}
+        onMouseEnter={() => {
+          isHoveringRef.current = true;
+          updatePauseState();
+        }}
+        onMouseLeave={() => {
+          isHoveringRef.current = false;
+          updatePauseState();
+        }}
+        onFocus={() => {
+          isFocusWithinRef.current = true;
+          updatePauseState();
+        }}
+        onBlur={() => {
+          isFocusWithinRef.current = false;
+          updatePauseState();
+        }}
+      >
+        <div
+          className={styles.viewport}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerEnd}
+          onPointerCancel={handlePointerEnd}
+          onClickCapture={handleClickCapture}
+        >
+          <div
+            ref={trackRef}
+            className={[
+              styles.grid,
+              hasCarousel ? styles.carouselTrack : "",
+            ].join(" ")}
+            role="list"
+            style={
+              hasCarousel
+                ? ({
+                    ["--carousel-offset"]: `${carouselOffset}px`,
+                  } as React.CSSProperties)
+                : undefined
+            }
+          >
+            {carouselItems.map((it, idx) =>
+              renderCard(it, idx, hasCarousel && idx >= items.length)
+            )}
+          </div>
+        </div>
       </div>
     </section>
   );

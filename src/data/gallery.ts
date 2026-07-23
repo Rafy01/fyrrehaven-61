@@ -3,6 +3,7 @@ import type { Lang } from "../lib/lang";
 export type AlbumId =
   | "plantegning"
   | "indoor"
+  | "activity_room"
   | "pool"
   | "spa"
   | "sauna"
@@ -32,6 +33,9 @@ export type GalleryAlbum = {
 
 const BASE = "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09";
 const u = (file: string) => `${BASE}/${file}`;
+
+// Replace this with the final media URL when the activity room photo is ready.
+export const ACTIVITY_ROOM_IMAGE_URL = "/activity-room-image-needed.webp";
 
 /** Få et album efter id */
 export function getAlbum(id: AlbumId): GalleryAlbum | undefined {
@@ -215,6 +219,25 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
         src: u("IMG_3686.webp"),
         altDa: "Kaffestation tæt ved køkken – klar til slow mornings",
         altEn: "Coffee nook by the kitchen – perfect for slow mornings",
+      },
+    ],
+  },
+
+  /* ------------------------------- Activity room ----------------------------- */
+  {
+    id: "activity_room",
+    titleDa: "Aktivitetsrum",
+    titleEn: "Activity room",
+    cover: ACTIVITY_ROOM_IMAGE_URL,
+    items: [
+      {
+        src: ACTIVITY_ROOM_IMAGE_URL,
+        altDa:
+          "Aktivitetsrum med billard, bordtennis, airhockey, dart og projektor",
+        altEn:
+          "Activity room with billiards, table tennis, air hockey, darts and projector",
+        altDe:
+          "Aktivitätsraum mit Billard, Tischtennis, Airhockey, Darts und Projektor",
       },
     ],
   },

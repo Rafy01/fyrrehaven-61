@@ -12,21 +12,23 @@ export const de = {
   },
   "home": {
     "heroTitle": "Familienfreundliches Ferienhaus im Wald – in der Nähe des Strandes",
-    "heroSubtitle": "Hallenbad, Whirlpool und Platz für die ganze Familie.",
+    "heroSubtitle": "Pool, Whirlpool, Sauna, Aktivitätsraum und Platz für die ganze Familie.",
     "ctaSeeHouse_da": "Se huset",
     "ctaSeeHouse_en": "See the house",
-    "badgePool": "Hallenbad",
+    "badgePool": "Beheizter Außenpool",
     "badgeHotTub": "Whirlpool",
+    "badgeActivityRoom": "Aktivitätsraum",
     "badgeBeach": "In Strandnähe",
     "altKitchen": "Helle Wohnküche",
-    "altPool": "Hallenbad",
+    "altPool": "Beheizter Außenpool",
     "altHotTub": "Whirlpool im Garten",
     "altBeach": "Strand bei Fjellerup",
     "whyFamiliesTitle": "Warum Familien Fyrrehaven 61 lieben",
     "whyFamiliesSub": "Alles was Sie für einen gemütlichen Urlaub brauchen – mit der Natur direkt vor der Tür.",
     "featSleeps": "Platz für {{count}} Gäste (Bettaufteilung und Familienausstattung)",
-    "featPool": "Wasserspaß das ganze Jahr: beheiztes Hallenbad",
+    "featPool": "Beheizter Außenpool in der Saison",
     "featHotTub": "Entspannung im Whirlpool unter den Kiefern",
+    "featActivityRoom": "Aktivitätsraum mit Billard, Tischtennis, Airhockey, Darts und Projektor",
     "featBeach": "Kurzer Spaziergang zum Strand und zur Eisdiele",
     "featForest": "Waldgebiet mit Spielplätzen und Wanderwegen",
     "featKids": "Hochstuhl, Reisebett und Familienbrettspiele",
@@ -850,7 +852,7 @@ export const de = {
   "seo": {
     "home": {
       "title": "Fyrrehaven 61 – Ferienhaus in Dänemark für 10 Personen nahe Fjellerup Strand",
-      "description": "Familienfreundliches Ferienhaus auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool und Sauna. Perfekt für Familien aus Dänemark, Norwegen und Deutschland, nahe Strand und Wald.",
+      "description": "Familienfreundliches Ferienhaus auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool, Sauna und Aktivitätsraum. Perfekt für Familien aus Dänemark, Norwegen und Deutschland, nahe Strand und Wald.",
       "keywords": [
         "Ferienhaus Dänemark",
         "Sommerhaus Fjellerup",
@@ -859,6 +861,8 @@ export const de = {
         "beheizter Pool Ferienhaus",
         "Whirlpool Ferienhaus",
         "Sauna Ferienhaus",
+        "Ferienhaus mit Aktivitätsraum",
+        "Ferienhaus mit Billard",
         "Djursland Ferienhaus",
         "Fyrrehaven 61"
       ],
@@ -871,13 +875,16 @@ export const de = {
       }
     },
     "house": {
-      "title": "Das Haus – Pool, Whirlpool & Sauna in Dänemark | Fyrrehaven 61",
-      "description": "Ferienhaus für 10 Personen auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool und Sauna. Familienfreundliche Unterkunft, ideal für Gäste aus Deutschland, Norwegen und Dänemark.",
+      "title": "Das Haus – Pool, Whirlpool, Sauna & Aktivitätsraum | Fyrrehaven 61",
+      "description": "Ferienhaus für 10 Personen auf Djursland mit beheiztem Außenpool (1. Mai–1. Okt.), elektrischem Whirlpool, Sauna und Aktivitätsraum mit Billard, Tischtennis, Airhockey, Darts und Projektor. Familienfreundlich nahe Wald und Strand.",
       "keywords": [
         "Ferienhaus Fjellerup",
         "beheizter Außenpool",
         "Whirlpool",
         "Sauna",
+        "Aktivitätsraum",
+        "Billard",
+        "Airhockey",
         "familienfreundlich",
         "10 Personen",
         "Djursland Urlaub",
@@ -917,8 +924,8 @@ export const de = {
       }
     },
     "gallery": {
-      "title": "Galerie – Fotos vom Haus, Pool und der Umgebung",
-      "description": "Sehen Sie Fotos vom Wohnzimmer, Essbereich, Schlafzimmern und Dachboden – plus dem beheizten Außenpool (1. Mai–1. Okt), elektrischem Whirlpool, Elektro-Sauna und dem nahegelegenen Wald und Strand bei Fjellerup. Gewinnen Sie einen echten Eindruck.",
+      "title": "Galerie – Fotos vom Haus, Pool, Aktivitätsraum und der Umgebung",
+      "description": "Sehen Sie Fotos vom Wohnzimmer, Essbereich, Schlafzimmern, Dachboden und Aktivitätsraum – plus dem beheizten Außenpool (1. Mai–1. Okt), elektrischem Whirlpool, Elektro-Sauna und dem nahegelegenen Wald und Strand bei Fjellerup. Gewinnen Sie einen echten Eindruck.",
       "keywords": [
         "Fyrrehaven 61",
         "Galerie",
@@ -926,6 +933,7 @@ export const de = {
         "beheizter Außenpool",
         "Whirlpool",
         "Sauna",
+        "Aktivitätsraum",
         "Fjellerup",
         "Djursland",
         "Wald und Strand",
@@ -975,7 +983,7 @@ export const de = {
     },
     "book": {
       "title": "Buchung bei Fyrrehaven 61 – direkte Anfrage",
-      "description": "Buchen Sie direkt bei den Gastgebern oder über Airbnb. Beheizter Außenpool (1. Mai–1. Okt.), Platz für 10 Gäste und familienfreundlich nahe Wald und Strand. Wir antworten normalerweise innerhalb von 1 Stunde. Strom 4 DKK/kWh und Wasser 80 DKK/m³ werden nach dem Aufenthalt abgerechnet.",
+      "description": "Buchen Sie direkt bei den Gastgebern oder über Airbnb. Beheizter Außenpool (1. Mai–1. Okt.), Aktivitätsraum, Platz für 10 Gäste und familienfreundlich nahe Wald und Strand. Wir antworten normalerweise innerhalb von 1 Stunde. Strom 4 DKK/kWh und Wasser 80 DKK/m³ werden nach dem Aufenthalt abgerechnet.",
       "keywords": [
         "Ferienhaus Buchung",
         "Fyrrehaven 61 Buchung",
@@ -983,6 +991,7 @@ export const de = {
         "beheizter Außenpool",
         "Whirlpool",
         "Sauna",
+        "Aktivitätsraum",
         "familienfreundliche Unterkunft",
         "direkt buchen",
         "Airbnb Fjellerup",
@@ -1104,18 +1113,20 @@ export const de = {
       "poolSeason": "Geöffnet vom 1. Mai bis 1. Oktober",
       "hotTub": "Elektrischer Whirlpool",
       "sauna": "Elektrische Sauna",
+      "activityRoom": "Aktivitätsraum mit Spielen und Projektor",
       "beachForest": "Nahe Strand & Wald"
     },
     "hero": {
-      "title": "Das Haus – Platz für 10, Außenpool & Wellness",
-      "subtitle": "4 Schlafzimmer + Galerie. Beheizter Außenpool (1. Mai–1. Okt.), elektrischer Whirlpool und Sauna.",
+      "title": "Das Haus – Platz für 10, Pool, Wellness & Aktivitätsraum",
+      "subtitle": "4 Schlafzimmer + Galerie. Beheizter Außenpool (1. Mai–1. Okt.), elektrischer Whirlpool, Sauna und Aktivitätsraum.",
       "badges": [
         "10 Gäste",
         "4 Schlafzimmer",
         "2 Badezimmer",
         "Beheizter Außenpool",
         "Whirlpool",
-        "Sauna"
+        "Sauna",
+        "Aktivitätsraum"
       ],
       "primaryCta": "Privat buchen",
       "secondaryCta": "Buchen | Airbnb",
@@ -1162,6 +1173,21 @@ export const de = {
         "Bis zu 8 Personen",
         "Innen- und Außenbeleuchtung",
         "Für Dampf vorsichtig Wasser auf den Ofen gießen"
+      ]
+    },
+    "activityRoom": {
+      "title": "Aktivitätsraum",
+      "gamesTitle": "Spiele im Raum",
+      "games": [
+        "3-in-1-Tisch für Billard, Tischtennis und Airhockey",
+        "Dartscheibe über dem Kühlschrank mit Schutzpolstern rundherum",
+        "Airhockey benötigt Strom und muss vor der Nutzung an eine Steckdose angeschlossen werden"
+      ],
+      "movieTitle": "Filme & Aufenthalt",
+      "movie": [
+        "Projektor mit Chromecast und Google TV",
+        "Bluetooth-Soundbar für den Filmton",
+        "Klappstühle und zusätzlicher Platz für entspannte Abende"
       ]
     },
     "kitchenLiving": {
@@ -1211,6 +1237,15 @@ export const de = {
           "Reisebett für Kinder (kostenlos vorab bestellen)",
           "Bügeleisen und Föhn",
           "E-Auto-Ladestation"
+        ]
+      },
+      "activityRoom": {
+        "title": "Aktivitätsraum",
+        "bullets": [
+          "3-in-1-Tisch für Billard, Tischtennis und Airhockey",
+          "Dartscheibe über dem Kühlschrank mit Schutzpolstern rundherum",
+          "Projektor mit Chromecast, Google TV und Bluetooth-Soundbar",
+          "Klappstühle und kleiner Kühlschrank im Raum"
         ]
       },
       "outdoor": {

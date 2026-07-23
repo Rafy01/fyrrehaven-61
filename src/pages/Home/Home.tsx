@@ -14,6 +14,7 @@ import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import { HOME_USP_ICONS } from "../../lib/icons";
 import { buildVacationRentalSchema } from "../../lib/structuredData";
+import { ACTIVITY_ROOM_IMAGE_URL } from "../../data/gallery";
 
 export default function Home({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
@@ -28,9 +29,9 @@ export default function Home({ lang }: { lang: Lang }) {
     "Familienfreundliches Ferienhaus im Wald – in Strandnähe"
   );
   const heroSubtitle = t(
-    "Indendørs pool, vildmarksbad og god plads til hele familien.",
-    "Indoor pool, hot tub and plenty of space for the whole family.",
-    "Hallenbad, Whirlpool und viel Platz für die ganze Familie."
+    "Pool, vildmarksbad, sauna, aktivitetsrum og god plads til hele familien.",
+    "Pool, hot tub, sauna, activity room and plenty of space for the whole family.",
+    "Pool, Whirlpool, Sauna, Aktivitätsraum und viel Platz für die ganze Familie."
   );
 
   // Structured data for SEO (uses centralized meta without affecting the hero)
@@ -41,6 +42,7 @@ export default function Home({ lang }: { lang: Lang }) {
       { name: t("Opvarmet udendørs pool", "Heated outdoor pool", "Beheizter Außenpool"), description: t("Åben 1. maj – 1. oktober", "Open May 1 to October 1", "Geöffnet 1. Mai bis 1. Oktober") },
       { name: t("Elektrisk vildmarksbad", "Electric hot tub", "Elektrischer Whirlpool") },
       { name: t("Elektrisk sauna", "Electric sauna", "Elektrische Sauna") },
+      { name: t("Aktivitetsrum", "Activity room", "Aktivitätsraum"), description: t("Billard, bordtennis, airhockey, dart og projektor", "Billiards, table tennis, air hockey, darts and projector", "Billard, Tischtennis, Airhockey, Darts und Projektor") },
       { name: t("Tæt på strand og skov", "Close to beach and forest", "Nah an Strand und Wald") },
     ],
   });
@@ -126,9 +128,10 @@ export default function Home({ lang }: { lang: Lang }) {
           t("2 badværelser", "2 bathrooms", "2 Badezimmer"),
           t(
             "Pool-Vildmarksbad-Sauna",
-            "Pool-Hottub-Sauna",
+            "Pool-Hot tub-Sauna",
             "Pool-Whirlpool-Sauna"
           ),
+          t("Aktivitetsrum", "Activity room", "Aktivitätsraum"),
         ]}
         primaryCta={{
           label: t("Book nu", "Book now", "Jetzt buchen"),
@@ -215,6 +218,24 @@ export default function Home({ lang }: { lang: Lang }) {
               },
             },
             {
+              title: t("Aktivitetsrum", "Activity room", "Aktivitätsraum"),
+              body: t(
+                "Spil billard, bordtennis, airhockey og dart – eller sæt film på projektoren.",
+                "Play billiards, table tennis, air hockey and darts – or watch movies on the projector.",
+                "Spielen Sie Billard, Tischtennis, Airhockey und Darts – oder schauen Sie Filme über den Projektor."
+              ),
+              media: {
+                kind: "image",
+                src: ACTIVITY_ROOM_IMAGE_URL,
+                alt: t(
+                  "Aktivitetsrum med spil og projektor",
+                  "Activity room with games and projector",
+                  "Aktivitätsraum mit Spielen und Projektor"
+                ),
+                aspect: "4 / 3",
+              },
+            },
+            {
               title: t("Fantastisk område", "Fantastic surroundings"),
               body: t(
                 "Skov og strand tæt på stier, natur og ro i kort afstand.",
@@ -237,14 +258,18 @@ export default function Home({ lang }: { lang: Lang }) {
       <GalleryTeaser
         title={t("Billeder", "Photos", "Bilder")}
         subtitle={t(
-          "Få et hurtigt indtryk - se stue, pool, vildmarksbad og omgivelser.",
-          "Get a quick feel—see the living room, pool, hot tub and surroundings.",
-          "Verschaffen Sie sich einen schnellen Eindruck – sehen Sie Wohnzimmer, Pool, Whirlpool und Umgebung."
+          "Få et hurtigt indtryk - se stue, aktivitetsrum, pool, vildmarksbad og omgivelser.",
+          "Get a quick feel—see the living room, activity room, pool, hot tub and surroundings.",
+          "Verschaffen Sie sich einen schnellen Eindruck - sehen Sie Wohnzimmer, Aktivitätsraum, Pool, Whirlpool und Umgebung."
         )}
         items={[
           {
-            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3669.webp",
-            alt: t("Stue med lysindfald", "Living room with daylight", "Wohnzimmer mit Tageslicht"),
+            src: ACTIVITY_ROOM_IMAGE_URL,
+            alt: t(
+              "Aktivitetsrum med spil og projektor",
+              "Activity room with games and projector",
+              "Aktivitätsraum mit Spielen und Projektor"
+            ),
           },
           {
             src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3668.webp",
@@ -265,6 +290,10 @@ export default function Home({ lang }: { lang: Lang }) {
           {
             src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/2c0c5a11-59f7-4ddf-9fda-10068650f7a1.webp",
             alt: t("Skovsti mod stranden", "Forest path to the beach", "Waldweg zum Strand"),
+          },
+          {
+            src: "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/IMG_3669.webp",
+            alt: t("Stue med lysindfald", "Living room with daylight", "Wohnzimmer mit Tageslicht"),
           },
           // du kan have flere – +N overlay vises automatisk hvis items.length > max
         ]}

@@ -12,21 +12,23 @@ export const en = {
   },
   "home": {
     "heroTitle": "Family-friendly holiday home in the woods – near the beach",
-    "heroSubtitle": "Indoor pool, hot tub, and room for everyone.",
+    "heroSubtitle": "Pool, hot tub, sauna, activity room and room for everyone.",
     "ctaSeeHouse_da": "Se huset",
     "ctaSeeHouse_en": "See the house",
-    "badgePool": "Indoor pool",
+    "badgePool": "Outdoor heated pool",
     "badgeHotTub": "Hot tub",
+    "badgeActivityRoom": "Activity room",
     "badgeBeach": "Near the beach",
     "altKitchen": "Bright kitchen-living area",
-    "altPool": "Indoor pool",
+    "altPool": "Outdoor heated pool",
     "altHotTub": "Outdoor hot tub",
     "altBeach": "Fjellerup beach",
     "whyFamiliesTitle": "Why families love Fyrrehaven 61",
     "whyFamiliesSub": "Everything you need for a cosy getaway — nature right outside.",
     "featSleeps": "Sleeps {{count}} (bed layout & family gear)",
-    "featPool": "Year-round fun: heated indoor pool",
+    "featPool": "Outdoor heated pool in season",
     "featHotTub": "Relaxing hot tub under the pines",
+    "featActivityRoom": "Activity room with billiards, table tennis, air hockey, darts and projector",
     "featBeach": "Short walk to the beach & ice cream shop",
     "featForest": "Woodland area with playgrounds and trails",
     "featKids": "High chair, travel cot and family games",
@@ -850,7 +852,7 @@ export const en = {
   "seo": {
     "home": {
       "title": "Fyrrehaven 61 – Denmark holiday home for 10 by Fjellerup Beach",
-      "description": "Family-friendly holiday home in Denmark with a heated outdoor pool (May 1–Oct 1), electric hot tub and electric sauna. Popular with families from Denmark, Norway and Germany, just minutes from Fjellerup Beach and the forest.",
+      "description": "Family-friendly holiday home in Denmark with a heated outdoor pool (May 1–Oct 1), electric hot tub, electric sauna and activity room. Popular with families from Denmark, Norway and Germany, just minutes from Fjellerup Beach and the forest.",
       "keywords": [
         "Denmark holiday home",
         "holiday home Fjellerup",
@@ -860,6 +862,8 @@ export const en = {
         "heated pool holiday home",
         "hot tub rental",
         "sauna holiday home",
+        "holiday home with activity room",
+        "holiday home with billiards",
         "Djursland vacation rental",
         "Fyrrehaven 61"
       ],
@@ -872,13 +876,16 @@ export const en = {
       }
     },
     "house": {
-      "title": "The House – pool, hot tub & sauna in Denmark | Fyrrehaven 61",
-      "description": "Holiday home for 10 in Denmark with an outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna. Family-friendly rental ideal for guests from Denmark, Norway and Germany, close to forest and beach.",
+      "title": "The House – pool, hot tub, sauna & activity room | Fyrrehaven 61",
+      "description": "Holiday home for 10 in Denmark with an outdoor heated pool (May 1–Oct 1), electric hot tub, electric sauna and activity room with billiards, table tennis, air hockey, darts and projector. Family-friendly rental close to forest and beach.",
       "keywords": [
         "holiday home Fjellerup",
         "heated outdoor pool",
         "hot tub",
         "sauna",
+        "activity room",
+        "billiards",
+        "air hockey",
         "family friendly",
         "sleeps 10",
         "Djursland vacation rental",
@@ -919,8 +926,8 @@ export const en = {
       }
     },
     "gallery": {
-      "title": "Gallery – photos of the house, pool and surroundings",
-      "description": "Browse photos of the living room, kitchen-diner, bedrooms and loft — plus the heated outdoor pool (May 1–Oct 1), electric hot tub, electric sauna and nearby forest and beach in Fjellerup. Get a true feel for the place.",
+      "title": "Gallery – photos of the house, pool, activity room and surroundings",
+      "description": "Browse photos of the living room, kitchen-diner, bedrooms, loft and activity room — plus the heated outdoor pool (May 1–Oct 1), electric hot tub, electric sauna and nearby forest and beach in Fjellerup. Get a true feel for the place.",
       "keywords": [
         "Fyrrehaven 61",
         "gallery",
@@ -928,6 +935,7 @@ export const en = {
         "heated outdoor pool",
         "hot tub",
         "sauna",
+        "activity room",
         "Fjellerup",
         "Djursland",
         "forest and beach",
@@ -977,7 +985,7 @@ export const en = {
     },
     "book": {
       "title": "Book Fyrrehaven 61 – direct request",
-      "description": "Book directly with the hosts or via Airbnb. Heated outdoor pool (May 1–Oct 1), sleeps 10 and family-friendly near forest and beach. We usually reply within 1 hour. Electricity 4 DKK/kWh and water 80 DKK/m³ are settled after your stay.",
+      "description": "Book directly with the hosts or via Airbnb. Heated outdoor pool (May 1–Oct 1), activity room, sleeps 10 and family-friendly near forest and beach. We usually reply within 1 hour. Electricity 4 DKK/kWh and water 80 DKK/m³ are settled after your stay.",
       "keywords": [
         "holiday home booking",
         "Fyrrehaven 61 booking",
@@ -985,6 +993,7 @@ export const en = {
         "heated outdoor pool",
         "hot tub",
         "sauna",
+        "activity room",
         "family friendly rental",
         "book direct",
         "Airbnb Fjellerup",
@@ -1106,18 +1115,20 @@ export const en = {
       "poolSeason": "Open May 1 – Oct 1",
       "hotTub": "Electric hot tub",
       "sauna": "Electric sauna",
+      "activityRoom": "Activity room with games and projector",
       "beachForest": "Near beach & forest"
     },
     "hero": {
-      "title": "The House – sleeps 10, outdoor pool & wellness",
-      "subtitle": "4 bedrooms + loft. Outdoor heated pool (May 1–Oct 1), electric hot tub and electric sauna.",
+      "title": "The House – sleeps 10, pool, wellness & activity room",
+      "subtitle": "4 bedrooms + loft. Outdoor heated pool (May 1–Oct 1), electric hot tub, electric sauna and activity room.",
       "badges": [
         "10 guests",
         "4 bedrooms",
         "2 bathrooms",
         "Outdoor heated pool",
         "Hot tub",
-        "Sauna"
+        "Sauna",
+        "Activity room"
       ],
       "primaryCta": "Book privately",
       "secondaryCta": "Book | Airbnb",
@@ -1164,6 +1175,21 @@ export const en = {
         "Up to 8 people",
         "Interior and exterior lights",
         "Gently pour water on the heater for steam"
+      ]
+    },
+    "activityRoom": {
+      "title": "Activity room",
+      "gamesTitle": "Games in the room",
+      "games": [
+        "3-in-1 table for billiards, table tennis and air hockey",
+        "Dartboard above the fridge with safety pads around it",
+        "Air hockey uses power and must be plugged into an outlet before use"
+      ],
+      "movieTitle": "Movies & hangout",
+      "movie": [
+        "Projector with Chromecast and Google TV",
+        "Bluetooth soundbar for movie audio",
+        "Folding chairs and extra space for relaxed evenings"
       ]
     },
     "kitchenLiving": {
@@ -1213,6 +1239,15 @@ export const en = {
           "Travel cot (pre-book for free)",
           "Iron and hair dryer",
           "EV charger"
+        ]
+      },
+      "activityRoom": {
+        "title": "Activity room",
+        "bullets": [
+          "3-in-1 table for billiards, table tennis and air hockey",
+          "Dartboard above the fridge with safety pads around it",
+          "Projector with Chromecast, Google TV and Bluetooth soundbar",
+          "Folding chairs and small fridge in the room"
         ]
       },
       "outdoor": {

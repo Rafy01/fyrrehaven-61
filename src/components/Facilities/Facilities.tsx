@@ -2,7 +2,14 @@ import styles from "./Facilities.module.css";
 import { useTranslation } from "react-i18next";
 import type { Lang } from "../../lib/lang";
 
-const CATEGORY_IDS = ["kitchen", "living", "outdoor", "checkin", "rules"];
+const CATEGORY_IDS = [
+  "kitchen",
+  "living",
+  "activityRoom",
+  "outdoor",
+  "checkin",
+  "rules",
+];
 
 export default function Facilities({ lang }: { lang: Lang }) {
   const { t } = useTranslation("facilities");
