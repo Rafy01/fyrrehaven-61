@@ -79,7 +79,6 @@ export default function Highlights({
 }: HighlightsProps) {
   const sectionAlign = align === "center" ? styles.center : "";
   const hasCarousel = items.length > 4;
-  const carouselItems = hasCarousel ? [...items, ...items] : items;
   const sectionRef = React.useRef<HTMLElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
   const offsetRef = React.useRef(0);
@@ -87,16 +86,19 @@ export default function Highlights({
   const dragStartXRef = React.useRef(0);
   const dragStartOffsetRef = React.useRef(0);
   const isHoveringRef = React.useRef(false);
+  const canHoverRef = React.useRef(false);
   const isFocusWithinRef = React.useRef(false);
   const isDraggingRef = React.useRef(false);
   const didDragRef = React.useRef(false);
+  const isTapPausedRef = React.useRef(false);
   const [carouselOffset, setCarouselOffset] = React.useState(0);
   const [isPaused, setIsPaused] = React.useState(false);
   const [isDragging, setIsDragging] = React.useState(false);
   const [isInView, setIsInView] = React.useState(true);
-  const [isDesktop, setIsDesktop] = React.useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] =
     React.useState(false);
+  const isCarouselActive = hasCarousel;
+  const carouselItems = isCarouselActive ? [...items, ...items] : items;
 
   const setWrappedOffset = React.useCallback((nextOffset: number) => {
     const cycleWidth = cycleWidthRef.current;
@@ -113,30 +115,34 @@ export default function Highlights({
     setIsPaused(
       isHoveringRef.current ||
         isFocusWithinRef.current ||
-        isDraggingRef.current
+        isDraggingRef.current ||
+        isTapPausedRef.current
     );
   }, []);
 
   React.useEffect(() => {
     if (!hasCarousel) return;
 
-    const desktopQuery = window.matchMedia("(min-width: 1040px)");
     const reducedMotionQuery = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     );
+    const hoverQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
 
     const syncMedia = () => {
-      setIsDesktop(desktopQuery.matches);
       setPrefersReducedMotion(reducedMotionQuery.matches);
+      canHoverRef.current = hoverQuery.matches;
+      if (!hoverQuery.matches) {
+        isHoveringRef.current = false;
+      }
     };
 
     syncMedia();
-    desktopQuery.addEventListener("change", syncMedia);
     reducedMotionQuery.addEventListener("change", syncMedia);
+    hoverQuery.addEventListener("change", syncMedia);
 
     return () => {
-      desktopQuery.removeEventListener("change", syncMedia);
       reducedMotionQuery.removeEventListener("change", syncMedia);
+      hoverQuery.removeEventListener("change", syncMedia);
     };
   }, [hasCarousel]);
 
@@ -187,7 +193,6 @@ export default function Highlights({
   React.useEffect(() => {
     if (
       !hasCarousel ||
-      !isDesktop ||
       !isInView ||
       isPaused ||
       prefersReducedMotion
@@ -211,7 +216,6 @@ export default function Highlights({
     return () => window.cancelAnimationFrame(animationFrame);
   }, [
     hasCarousel,
-    isDesktop,
     isInView,
     isPaused,
     prefersReducedMotion,
@@ -221,7 +225,7 @@ export default function Highlights({
   const handlePointerDown = (
     event: React.PointerEvent<HTMLDivElement>
   ) => {
-    if (!hasCarousel || !isDesktop) return;
+    if (!hasCarousel) return;
 
     event.currentTarget.setPointerCapture(event.pointerId);
     isDraggingRef.current = true;
@@ -252,8 +256,16 @@ export default function Highlights({
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+    const shouldToggleTapPause =
+      event.type === "pointerup" &&
+      event.pointerType !== "mouse" &&
+      !didDragRef.current;
+
     isDraggingRef.current = false;
     setIsDragging(false);
+    if (shouldToggleTapPause) {
+      isTapPausedRef.current = !isTapPausedRef.current;
+    }
     updatePauseState();
   };
 
@@ -367,14 +379,16 @@ export default function Highlights({
       <div
         className={[
           styles.carousel,
-          hasCarousel ? styles.carouselEnabled : "",
+          isCarouselActive ? styles.carouselEnabled : "",
           isDragging ? styles.dragging : "",
         ].join(" ")}
         onMouseEnter={() => {
+          if (!canHoverRef.current) return;
           isHoveringRef.current = true;
           updatePauseState();
         }}
         onMouseLeave={() => {
+          if (!canHoverRef.current) return;
           isHoveringRef.current = false;
           updatePauseState();
         }}
@@ -399,11 +413,11 @@ export default function Highlights({
             ref={trackRef}
             className={[
               styles.grid,
-              hasCarousel ? styles.carouselTrack : "",
+              isCarouselActive ? styles.carouselTrack : "",
             ].join(" ")}
             role="list"
             style={
-              hasCarousel
+              isCarouselActive
                 ? ({
                     ["--carousel-offset"]: `${carouselOffset}px`,
                   } as React.CSSProperties)
@@ -411,7 +425,7 @@ export default function Highlights({
             }
           >
             {carouselItems.map((it, idx) =>
-              renderCard(it, idx, hasCarousel && idx >= items.length)
+              renderCard(it, idx, isCarouselActive && idx >= items.length)
             )}
           </div>
         </div>

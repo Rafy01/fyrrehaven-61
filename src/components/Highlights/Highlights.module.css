@@ -28,26 +28,40 @@
 @media (min-width: 700px){
   .grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
+
+.carouselEnabled .viewport{
+  cursor: grab;
+  overflow: hidden;
+}
+
+.carouselEnabled.dragging .viewport{
+  cursor: grabbing;
+}
+
+.carouselEnabled .carouselTrack{
+  --carousel-offset: 0px;
+  display: flex;
+  grid-template-columns: none;
+  transform: translateX(calc(var(--carousel-offset) * -1));
+  will-change: transform;
+  user-select: none;
+}
+
+.carouselEnabled .card{
+  flex: 0 0 82%;
+}
+
+@media (min-width: 700px){
+  .carouselEnabled .card{
+    flex-basis: calc((100% - .9rem) / 2);
+  }
+}
+
 @media (min-width: 1040px){
   .grid{ grid-template-columns: repeat(4, minmax(0,1fr)); }
 
-  .carouselEnabled .viewport{
-    cursor: grab;
-    overflow: hidden;
-  }
-
-  .carouselEnabled.dragging .viewport{
-    cursor: grabbing;
-  }
-
-  .carouselEnabled .carouselTrack{
-    --carousel-offset: 0px;
-    grid-auto-flow: column;
-    grid-auto-columns: calc((100% - 2.7rem) / 4);
-    grid-template-columns: none;
-    transform: translateX(calc(var(--carousel-offset) * -1));
-    will-change: transform;
-    user-select: none;
+  .carouselEnabled .card{
+    flex-basis: calc((100% - 2.7rem) / 4);
   }
 }
 
