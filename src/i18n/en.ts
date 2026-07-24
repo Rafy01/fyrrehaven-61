@@ -704,7 +704,6 @@ export const en = {
           "Never lean on the table and never sit on the edges.",
           "Always make sure the pool balls are out of the table and the air hockey power cable is pulled back before trying to turn the table.",
           "Children must always be accompanied by an adult when playing on or turning the table.",
-          "If the table stands unevenly, use the adjustable feet to raise or lower each corner.",
           "Indoor use only."
         ]
       },
@@ -743,6 +742,7 @@ export const en = {
         "title": "Before leaving the room",
         "steps": [
           "Put all game accessories back in place.",
+          "Place the tablecloth on top of the table before leaving.",
           "Fold the folding chairs and leave them as they were on arrival.",
           "Empty the fridge of your own items.",
           "Turn off projector, lights and equipment that should not stay on."

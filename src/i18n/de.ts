@@ -704,7 +704,6 @@ export const de = {
           "Lehnen Sie sich niemals an den Tisch und setzen Sie sich niemals auf die Kanten.",
           "Stellen Sie immer sicher, dass die Poolkugeln aus dem Tisch entfernt sind und das Airhockey-Stromkabel zurückgezogen ist, bevor Sie den Tisch drehen.",
           "Kinder müssen beim Spielen oder Drehen des Tisches immer von einem Erwachsenen begleitet werden.",
-          "Wenn der Tisch uneben steht, können die verstellbaren Füße an jeder Ecke angepasst werden.",
           "Nur für den Innenbereich."
         ]
       },
@@ -743,6 +742,7 @@ export const de = {
         "title": "Bevor Sie den Raum verlassen",
         "steps": [
           "Legen Sie alles Spielzubehör zurück an seinen Platz.",
+          "Legen Sie die Tischdecke vor dem Verlassen oben auf den Tisch.",
           "Klappen Sie die Klappstühle zusammen und hinterlassen Sie sie wie bei der Ankunft.",
           "Leeren Sie den Kühlschrank von Ihren eigenen Sachen.",
           "Schalten Sie Projektor, Licht und Geräte aus, die nicht eingeschaltet bleiben sollen."

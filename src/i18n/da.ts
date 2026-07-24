@@ -704,7 +704,6 @@ export const da = {
           "Læn dig aldrig op ad bordet, og sid aldrig på bordets kanter.",
           "Sørg altid for, at poolkuglerne er ude af bordet, og at airhockey-strømkablet er trukket tilbage, før du prøver at dreje bordet.",
           "Børn skal altid være sammen med en voksen, når de spiller på eller drejer bordet.",
-          "Hvis bordet står ujævnt, kan de justerbare fødder bruges til at hæve eller sænke hvert hjørne.",
           "Kun til indendørs brug."
         ]
       },
@@ -743,6 +742,7 @@ export const da = {
         "title": "Når I forlader rummet",
         "steps": [
           "Læg alt spiltilbehør tilbage på plads.",
+          "Læg dugen ovenpå bordet, før I forlader rummet.",
           "Fold klapstolene sammen, og efterlad dem som ved ankomst.",
           "Tøm køleskabet for jeres egne varer.",
           "Sluk projektor, lys og udstyr, der ikke skal være tændt."
