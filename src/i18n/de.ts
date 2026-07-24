@@ -528,7 +528,7 @@ export const de = {
           },
           "hotTub": {
             "title": "Whirlpool",
-            "body": "Lassen Sie den Whirlpool nach der Nutzung so, wie er ist. Das Wasser kann im Whirlpool bleiben, und es gibt keine Asche oder keinen Ofen zu reinigen."
+            "body": "Lassen Sie den Whirlpool nach der Nutzung so, wie er ist. Das Wasser kann im Whirlpool bleiben."
           },
           "activityRoom": {
             "title": "Aktivitätsraum",

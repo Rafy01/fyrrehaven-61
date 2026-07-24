@@ -528,7 +528,7 @@ export const da = {
           },
           "hotTub": {
             "title": "Vildmarksbad",
-            "body": "Efterlad vildmarksbadet, som det er efter brug. Vandet må gerne blive i, og der er ingen aske eller brændeovn, der skal rengøres."
+            "body": "Efterlad vildmarksbadet, som det er efter brug. Vandet må gerne blive i."
           },
           "activityRoom": {
             "title": "Aktivitetsrum",

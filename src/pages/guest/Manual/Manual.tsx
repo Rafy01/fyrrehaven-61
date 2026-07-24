@@ -23,15 +23,15 @@ export default function Manual({ lang }: Props) {
   const hotTubCheckoutText = {
     da: {
       title: "Vildmarksbad",
-      body: "Efterlad vildmarksbadet, som det er efter brug. Vandet må gerne blive i, og der er ingen aske eller brændeovn, der skal rengøres.",
+      body: "Efterlad vildmarksbadet, som det er efter brug. Vandet må gerne blive i.",
     },
     en: {
       title: "Hot tub",
-      body: "Leave the hot tub as it is after use. The water can stay in, and there are no ashes or stove to clean.",
+      body: "Leave the hot tub as it is after use. The water can stay in.",
     },
     de: {
       title: "Whirlpool",
-      body: "Lassen Sie den Whirlpool nach der Nutzung so, wie er ist. Das Wasser kann im Whirlpool bleiben, und es gibt keine Asche oder keinen Ofen zu reinigen.",
+      body: "Lassen Sie den Whirlpool nach der Nutzung so, wie er ist. Das Wasser kann im Whirlpool bleiben.",
     },
   }[lang];
 

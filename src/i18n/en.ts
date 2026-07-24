@@ -528,7 +528,7 @@ export const en = {
           },
           "hotTub": {
             "title": "Hot tub",
-            "body": "Leave the hot tub as it is after use. The water can stay in, and there are no ashes or stove to clean."
+            "body": "Leave the hot tub as it is after use. The water can stay in."
           },
           "activityRoom": {
             "title": "Activity room",
