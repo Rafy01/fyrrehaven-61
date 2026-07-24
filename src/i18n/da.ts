@@ -526,10 +526,13 @@ export const da = {
             "title": "Grill",
             "body": "Efterlad grillen rengjort og dækket til"
           },
-          "hotTub": {
-            "title": "Vildmarksbad",
-            "ashes": "Tøm brændovnen for aske og efterlad den ren",
-            "drain": "Tøm for vandet og lad afløbshanen stå åben"
+          "activityRoom": {
+            "title": "Aktivitetsrum",
+            "accessories": "Læg alt spiltilbehør tilbage på plads.",
+            "tabletop": "Læg bordtennis-/almindelig bordplade på igen først, og læg derefter dugen ovenpå bordet, før I forlader rummet.",
+            "chairs": "Fold klapstolene sammen, og efterlad dem som ved ankomst.",
+            "fridge": "Tøm køleskabet for jeres egne varer.",
+            "power": "Sluk projektor, lys og udstyr, der ikke skal være tændt."
           },
           "lock": {
             "title": "Lås af",

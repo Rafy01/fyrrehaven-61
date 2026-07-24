@@ -526,10 +526,13 @@ export const de = {
             "title": "Grill",
             "body": "Grill gereinigt und abgedeckt hinterlassen"
           },
-          "hotTub": {
-            "title": "Whirlpool",
-            "ashes": "Asche aus dem Ofen entfernen und sauber hinterlassen",
-            "drain": "Wasser ablassen und Ablasshahn offen lassen"
+          "activityRoom": {
+            "title": "Aktivitätsraum",
+            "accessories": "Legen Sie alles Spielzubehör zurück an seinen Platz.",
+            "tabletop": "Legen Sie zuerst die Tischtennis-/normale Tischplatte wieder auf und danach vor dem Verlassen die Tischdecke oben auf den Tisch.",
+            "chairs": "Klappen Sie die Klappstühle zusammen und hinterlassen Sie sie wie bei der Ankunft.",
+            "fridge": "Leeren Sie den Kühlschrank von Ihren eigenen Sachen.",
+            "power": "Schalten Sie Projektor, Licht und Geräte aus, die nicht eingeschaltet bleiben sollen."
           },
           "lock": {
             "title": "Abschließen",

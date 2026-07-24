@@ -526,10 +526,13 @@ export const en = {
             "title": "Grill",
             "body": "Clean and cover grill after use"
           },
-          "hotTub": {
-            "title": "Hot tub",
-            "ashes": "Empty ashes and clean stove",
-            "drain": "Drain water and leave valve open"
+          "activityRoom": {
+            "title": "Activity room",
+            "accessories": "Put all game accessories back in place.",
+            "tabletop": "Put the table tennis/normal tabletop back on first, then place the tablecloth on top before leaving.",
+            "chairs": "Fold the folding chairs and leave them as they were on arrival.",
+            "fridge": "Empty the fridge of your own items.",
+            "power": "Turn off projector, lights and equipment that should not stay on."
           },
           "lock": {
             "title": "Lock up",
