@@ -125,6 +125,17 @@ export default function ContactForm({
     babies: 0,
     stayPurpose: "",
   });
+  const confirmEmailMismatchMessage = t(
+    "E-mail og bekræft e-mail skal være ens.",
+    "Email and confirm email must match.",
+    "E-Mail und E-Mail-Bestätigung müssen übereinstimmen."
+  );
+  const confirmEmailError =
+    normalizeEmail(state.confirmEmail) &&
+    normalizeEmail(state.email).toLowerCase() !==
+      normalizeEmail(state.confirmEmail).toLowerCase()
+      ? confirmEmailMismatchMessage
+      : "";
 
   // Formål (kun synligt i booking-varianten, men vi holder state alligevel)
   const [purpose, setPurpose] = React.useState<Purpose>(
@@ -306,13 +317,6 @@ export default function ContactForm({
     }
 
     if (email.toLowerCase() !== confirmEmail.toLowerCase()) {
-      setError(
-        t(
-          "E-mail og bekræft e-mail skal være ens.",
-          "Email and confirm email must match.",
-          "E-Mail und E-Mail-Bestätigung müssen übereinstimmen."
-        )
-      );
       return;
     }
 
@@ -1010,6 +1014,11 @@ export default function ContactForm({
           }
           placeholder={t("din@adresse.dk", "your@email.com", "ihre@email.de")}
         />
+        {confirmEmailError && (
+          <div className={styles.error} role="alert">
+            {confirmEmailError}
+          </div>
+        )}
       </div>
 
       <div className={styles.rowGroup}>

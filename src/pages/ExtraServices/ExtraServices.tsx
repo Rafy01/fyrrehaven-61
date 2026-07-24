@@ -93,6 +93,12 @@ export default function ExtraServices({
   const [error, setError] = React.useState<string | null>(null);
   const datePickerRef = React.useRef<HTMLDivElement>(null);
   const formStartedAtRef = React.useRef<number>(Date.now());
+  const confirmEmailError =
+    normalizeEmail(confirmEmail) &&
+    normalizeEmail(email).toLowerCase() !==
+      normalizeEmail(confirmEmail).toLowerCase()
+      ? t("form.errors.emailMismatch")
+      : "";
 
   React.useEffect(() => {
     function onPointerDown(event: PointerEvent) {
@@ -260,7 +266,6 @@ export default function ExtraServices({
       return;
     }
     if (replyEmail.toLowerCase() !== confirmedEmail.toLowerCase()) {
-      setError(t("form.errors.emailMismatch"));
       return;
     }
     if (wantsExtras === "yes" && selectedItems.length === 0) {
@@ -467,6 +472,11 @@ export default function ExtraServices({
                     placeholder={t("form.placeholders.email")}
                     required
                   />
+                  {confirmEmailError && (
+                    <p className={formStyles.error} role="alert">
+                      {confirmEmailError}
+                    </p>
+                  )}
                 </div>
               </div>
 
