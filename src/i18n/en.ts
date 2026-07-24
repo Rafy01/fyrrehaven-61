@@ -669,7 +669,7 @@ export const en = {
       },
       "rules": {
         "title": "Rules and use",
-        "temperature": "Pool temperature is approx. 24–28 degrees Celsius",
+        "temperature": "Pool temperature is approx. 28 degrees Celsius",
         "depth": "1.5 meter deep",
         "automatic": "Pool is automatically filled with water and chemicals",
         "noDiving": "No diving",

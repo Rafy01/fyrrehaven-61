@@ -669,7 +669,7 @@ export const da = {
       },
       "rules": {
         "title": "Regler og brug",
-        "temperature": "Temperaturen i pool er ca. mellem 24–28 grader",
+        "temperature": "Temperaturen i poolen er ca. 28 grader",
         "depth": "1,5 meter dyb",
         "automatic": "Pool bliver automatisk fyldt med vand og kemikalier",
         "noDiving": "Ingen hovedspring",

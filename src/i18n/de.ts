@@ -669,7 +669,7 @@ export const de = {
       },
       "rules": {
         "title": "Regeln und Nutzung",
-        "temperature": "Die Pooltemperatur liegt ungefähr zwischen 24–28 Grad Celsius",
+        "temperature": "Die Pooltemperatur liegt bei ca. 28 Grad Celsius",
         "depth": "1,5 Meter tief",
         "automatic": "Der Pool wird automatisch mit Wasser und Chemikalien befüllt",
         "noDiving": "Nicht hineinspringen",
