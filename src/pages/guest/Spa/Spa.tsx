@@ -124,13 +124,6 @@ export default function Spa({ lang }: Props) {
           <ul>
             <li>
               {t(
-                "Opvarmning tager ca. 6 timer.",
-                "Heating takes approx. 6 hours.",
-                "Das Aufheizen dauert ca. 6 Stunden."
-              )}
-            </li>
-            <li>
-              {t(
                 "Hvis vandet køler under brug startes opvarmning automatisk igen. Sørg for altid at slukke korrekt efter brug.",
                 "If the water cools during use, heating will start automatically again. Always shut down correctly after use.",
                 "Wenn das Wasser während der Nutzung abkühlt, startet die Heizung automatisch erneut. Schalten Sie nach der Nutzung immer korrekt aus."
