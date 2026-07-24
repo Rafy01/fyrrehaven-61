@@ -20,6 +20,20 @@ export default function Manual({ lang }: Props) {
   const hottubUrl = guestPathOf(lang, "spa");
   const poolUrl = guestPathOf(lang, "pool");
   const meterReadingUrl = guestPathOf(lang, "checkInOut");
+  const hotTubCheckoutText = {
+    da: {
+      title: "Vildmarksbad",
+      body: "Efterlad vildmarksbadet, som det er efter brug. Vandet må gerne blive i, og der er ingen aske eller brændeovn, der skal rengøres.",
+    },
+    en: {
+      title: "Hot tub",
+      body: "Leave the hot tub as it is after use. The water can stay in, and there are no ashes or stove to clean.",
+    },
+    de: {
+      title: "Whirlpool",
+      body: "Lassen Sie den Whirlpool nach der Nutzung so, wie er ist. Das Wasser kann im Whirlpool bleiben, und es gibt keine Asche oder keinen Ofen zu reinigen.",
+    },
+  }[lang];
 
   const duringStayItems = [
     {
@@ -166,8 +180,16 @@ export default function Manual({ lang }: Props) {
     },
     {
       id: "vildmarksbad",
-      titleKey: "accordion.manual.after.hotTub.title",
-      content: <p>{tg("accordion.manual.after.hotTub.body")}</p>,
+      title: tg("accordion.manual.after.hotTub.title", {
+        defaultValue: hotTubCheckoutText.title,
+      }),
+      content: (
+        <p>
+          {tg("accordion.manual.after.hotTub.body", {
+            defaultValue: hotTubCheckoutText.body,
+          })}
+        </p>
+      ),
     },
     {
       id: "aktivitetsrum",
