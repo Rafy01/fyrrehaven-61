@@ -742,7 +742,7 @@ export const de = {
         "title": "Bevor Sie den Raum verlassen",
         "steps": [
           "Legen Sie alles Spielzubehör zurück an seinen Platz.",
-          "Legen Sie die Tischdecke vor dem Verlassen oben auf den Tisch.",
+          "Legen Sie zuerst die Tischtennis-/normale Tischplatte wieder auf und danach vor dem Verlassen die Tischdecke oben auf den Tisch.",
           "Klappen Sie die Klappstühle zusammen und hinterlassen Sie sie wie bei der Ankunft.",
           "Leeren Sie den Kühlschrank von Ihren eigenen Sachen.",
           "Schalten Sie Projektor, Licht und Geräte aus, die nicht eingeschaltet bleiben sollen."
@@ -764,7 +764,7 @@ export const de = {
       "meterIntro": "Machen Sie bitte zuerst bei Ankunft ein Foto vom Stromkasten und den Wasserzählern – und erneut vor der Abreise – und senden Sie es uns zur Abrechnung des Verbrauchs.",
       "electricityMeter": "Der Stromzähler befindet sich rechts von der Haustür auf der überdachten Terrasse.",
       "waterMeters": "Wasserzähler: Einer befindet sich im Technikschrank im Eingangsbereich (ganzjährig genutzt), ein weiterer bei der Pooltechnik im Aktivitätsraum (nur in der Poolsaison genutzt).",
-      "keyBox": "Den Schlüsselkasten finden Sie rechts von der Haustür. Der Code wird 1 Stunde vor Ankunft per E-Mail gesendet.",
+      "keyBox": "Den Schlüsselkasten finden Sie rechts von der Haustür. Der Code wird 1 Stunde vor Ankunft per E-Mail oder Airbnb-Nachricht gesendet.",
       "guideIntro": "Wichtig! Bevor Sie Pool, Sauna und Whirlpool benutzen, lesen Sie bitte die Anleitung:",
       "pool": "Pool",
       "sauna": "Sauna",

@@ -742,7 +742,7 @@ export const en = {
         "title": "Before leaving the room",
         "steps": [
           "Put all game accessories back in place.",
-          "Place the tablecloth on top of the table before leaving.",
+          "Put the table tennis/normal tabletop back on first, then place the tablecloth on top before leaving.",
           "Fold the folding chairs and leave them as they were on arrival.",
           "Empty the fridge of your own items.",
           "Turn off projector, lights and equipment that should not stay on."
@@ -764,7 +764,7 @@ export const en = {
       "meterIntro": "First, take a photo of the electricity and water meters upon arrival – and again before departure – and send it to us for consumption billing.",
       "electricityMeter": "Electricity meter is located to the right of the front door under the covered terrace.",
       "waterMeters": "Water meters: One is in the technical cabinet in the entrance (used year-round), and another is near the pool system in the activity room (used only in pool season).",
-      "keyBox": "The key box is to the right of the front door. The code is sent via email 1 hour before arrival.",
+      "keyBox": "The key box is to the right of the front door. The code is sent via email or Airbnb message 1 hour before arrival.",
       "guideIntro": "Important! Before using the pool, sauna, and hot tub, please read the guide:",
       "pool": "Pool",
       "sauna": "Sauna",

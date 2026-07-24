@@ -742,7 +742,7 @@ export const da = {
         "title": "Når I forlader rummet",
         "steps": [
           "Læg alt spiltilbehør tilbage på plads.",
-          "Læg dugen ovenpå bordet, før I forlader rummet.",
+          "Læg bordtennis-/almindelig bordplade på igen først, og læg derefter dugen ovenpå bordet, før I forlader rummet.",
           "Fold klapstolene sammen, og efterlad dem som ved ankomst.",
           "Tøm køleskabet for jeres egne varer.",
           "Sluk projektor, lys og udstyr, der ikke skal være tændt."
@@ -764,7 +764,7 @@ export const da = {
       "meterIntro": "I skal som det første tage ét billede af eltavlen og vandmålerne ved ankomst – og igen ved afrejse – og sende til os for at afregne forbrug.",
       "electricityMeter": "Elmåleren findes til højre for hoveddøren i den overdækkede terrasse.",
       "waterMeters": "Vandmålerne: En findes i teknikskabet i entréen (bruges hele året), og en anden ved poolteknikken i aktivitetsrummet (bruges kun i poolsæson).",
-      "keyBox": "Nøgleboksen finder I til højre for hoveddøren. Koden sendes 1 time før ankomst via mail.",
+      "keyBox": "Nøgleboksen finder I til højre for hoveddøren. Koden sendes 1 time før ankomst via mail eller Airbnb-besked.",
       "guideIntro": "Vigtigt! Før I bruger pool, sauna og vildmarksbad, skal I læse vejledningen:",
       "pool": "Pool",
       "sauna": "Sauna",
