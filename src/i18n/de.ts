@@ -464,7 +464,8 @@ export const de = {
           "access": {
             "title": "Zutritt verboten",
             "shed": "Schuppen",
-            "annex": "Anbau"
+            "annex": "Anbau",
+            "activityRoomTechnical": "Abgeschlossener Technikbereich im Aktivitätsraum"
           },
           "smoking": {
             "title": "Rauchen",
@@ -531,8 +532,15 @@ export const de = {
           },
           "hotTub": {
             "title": "Whirlpool",
-            "ashes": "Asche aus dem Ofen entfernen und sauber hinterlassen",
-            "drain": "Wasser ablassen und Ablasshahn offen lassen"
+            "body": "Lassen Sie den Whirlpool nach der Nutzung so, wie er ist. Das Wasser kann im Whirlpool bleiben."
+          },
+          "activityRoom": {
+            "title": "Aktivitätsraum",
+            "accessories": "Legen Sie alles Spielzubehör zurück an seinen Platz.",
+            "tabletop": "Legen Sie zuerst die Tischtennis-/normale Tischplatte wieder auf und danach vor dem Verlassen die Tischdecke oben auf den Tisch.",
+            "chairs": "Klappen Sie die Klappstühle zusammen und hinterlassen Sie sie wie bei der Ankunft.",
+            "fridge": "Leeren Sie den Kühlschrank von Ihren eigenen Sachen.",
+            "power": "Schalten Sie Projektor, Licht und Geräte aus, die nicht eingeschaltet bleiben sollen."
           },
           "lock": {
             "title": "Abschließen",
@@ -665,7 +673,7 @@ export const de = {
       },
       "rules": {
         "title": "Regeln und Nutzung",
-        "temperature": "Die Pooltemperatur liegt ungefähr zwischen 24–28 Grad Celsius",
+        "temperature": "Die Pooltemperatur liegt bei ca. 28 Grad Celsius",
         "depth": "1,5 Meter tief",
         "automatic": "Der Pool wird automatisch mit Wasser und Chemikalien befüllt",
         "noDiving": "Nicht hineinspringen",
@@ -697,6 +705,7 @@ export const de = {
           "Entfernen Sie immer Kugeln, Queues, Schläger, Pucks und Netz vom Tisch, bevor Sie das Spiel wechseln.",
           "Wechseln Sie zwischen Billard und Airhockey, indem Sie die Halterungen entriegeln, die Tischplatte vorsichtig drehen und die Halterungen vor dem Spielen wieder verriegeln.",
           "Für Tischtennis werden die Tischtennisplatten oben auf den Tisch gelegt und das Netz in der Mitte befestigt.",
+          "Wenn der Tisch als normaler Tisch genutzt wird, legen Sie zuerst die Tischdecke darauf. Verschüttetes kann sonst nach unten gelangen und die Spielfläche darunter beschädigen.",
           "Verwenden Sie nur das Zubehör, das zum jeweiligen Spiel gehört, und legen Sie nach der Nutzung alles zurück."
         ],
         "safetyTitle": "Nutzungs- und Sicherheitshinweise",
@@ -707,7 +716,6 @@ export const de = {
           "Lehnen Sie sich niemals an den Tisch und setzen Sie sich niemals auf die Kanten.",
           "Stellen Sie immer sicher, dass die Poolkugeln aus dem Tisch entfernt sind und das Airhockey-Stromkabel zurückgezogen ist, bevor Sie den Tisch drehen.",
           "Kinder müssen beim Spielen oder Drehen des Tisches immer von einem Erwachsenen begleitet werden.",
-          "Wenn der Tisch uneben steht, können die verstellbaren Füße an jeder Ecke angepasst werden.",
           "Nur für den Innenbereich."
         ]
       },
@@ -732,7 +740,7 @@ export const de = {
         "title": "Projektor, Chromecast und Google TV",
         "steps": [
           "Schalten Sie den Projektor ein.",
-          "Schalten Sie die Soundbar ein. Sie ist per Bluetooth mit dem Projektor verbunden.",
+          "Schalten Sie die Soundbar manuell ein, wenn sie ausgeschaltet ist. Sie leuchtet rot, wenn sie ausgeschaltet ist, und verbindet sich danach automatisch.",
           "Streamen Sie von Ihrem Telefon oder melden Sie sich über Google TV bei Ihrem eigenen Streamingdienst an.",
           "Melden Sie sich von Streamingdiensten ab, wenn Sie fertig sind.",
           "Schalten Sie vor dem Verlassen des Raums nur den Projektor aus. Die Soundbar schaltet sich zusammen mit dem Projektor aus."
@@ -746,7 +754,8 @@ export const de = {
         "title": "Bevor Sie den Raum verlassen",
         "steps": [
           "Legen Sie alles Spielzubehör zurück an seinen Platz.",
-          "Klappen Sie die Klappstühle zusammen und stellen Sie sie zurück.",
+          "Legen Sie zuerst die Tischtennis-/normale Tischplatte wieder auf und danach vor dem Verlassen die Tischdecke oben auf den Tisch.",
+          "Klappen Sie die Klappstühle zusammen und hinterlassen Sie sie wie bei der Ankunft.",
           "Leeren Sie den Kühlschrank von Ihren eigenen Sachen.",
           "Schalten Sie Projektor, Licht und Geräte aus, die nicht eingeschaltet bleiben sollen."
         ]
@@ -767,7 +776,7 @@ export const de = {
       "meterIntro": "Machen Sie bitte zuerst bei Ankunft ein Foto vom Stromkasten und den Wasserzählern – und erneut vor der Abreise – und senden Sie es uns zur Abrechnung des Verbrauchs.",
       "electricityMeter": "Der Stromzähler befindet sich rechts von der Haustür auf der überdachten Terrasse.",
       "waterMeters": "Wasserzähler: Einer befindet sich im Technikschrank im Eingangsbereich (ganzjährig genutzt), ein weiterer bei der Pooltechnik im Aktivitätsraum (nur in der Poolsaison genutzt).",
-      "keyBox": "Den Schlüsselkasten finden Sie rechts von der Haustür. Der Code wird 1 Stunde vor Ankunft per E-Mail gesendet.",
+      "keyBox": "Den Schlüsselkasten finden Sie rechts von der Haustür. Der Code wird 1 Stunde vor Ankunft per E-Mail oder Airbnb-Nachricht gesendet.",
       "guideIntro": "Wichtig! Bevor Sie Pool, Sauna und Whirlpool benutzen, lesen Sie bitte die Anleitung:",
       "pool": "Pool",
       "sauna": "Sauna",

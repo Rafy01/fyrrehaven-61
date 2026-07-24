@@ -464,7 +464,8 @@ export const en = {
           "access": {
             "title": "No access",
             "shed": "Tool shed",
-            "annex": "Annex"
+            "annex": "Annex",
+            "activityRoomTechnical": "Locked technical area in the activity room"
           },
           "smoking": {
             "title": "Smoking",
@@ -531,8 +532,15 @@ export const en = {
           },
           "hotTub": {
             "title": "Hot tub",
-            "ashes": "Empty ashes and clean stove",
-            "drain": "Drain water and leave valve open"
+            "body": "Leave the hot tub as it is after use. The water can stay in."
+          },
+          "activityRoom": {
+            "title": "Activity room",
+            "accessories": "Put all game accessories back in place.",
+            "tabletop": "Put the table tennis/normal tabletop back on first, then place the tablecloth on top before leaving.",
+            "chairs": "Fold the folding chairs and leave them as they were on arrival.",
+            "fridge": "Empty the fridge of your own items.",
+            "power": "Turn off projector, lights and equipment that should not stay on."
           },
           "lock": {
             "title": "Lock up",
@@ -665,7 +673,7 @@ export const en = {
       },
       "rules": {
         "title": "Rules and use",
-        "temperature": "Pool temperature is approx. 24–28 degrees Celsius",
+        "temperature": "Pool temperature is approx. 28 degrees Celsius",
         "depth": "1.5 meter deep",
         "automatic": "Pool is automatically filled with water and chemicals",
         "noDiving": "No diving",
@@ -697,6 +705,7 @@ export const en = {
           "Always remove balls, cues, bats, pucks and net from the table before changing game.",
           "Change between billiards and air hockey by unlocking the table brackets, turning the tabletop carefully and locking the brackets again before playing.",
           "For table tennis, place the table tennis plates on top of the table and attach the net in the middle.",
+          "When using the table as a normal table, place the tablecloth on top first. Spills may otherwise reach and damage the game surface underneath.",
           "Only use the accessories that belong to the game, and put everything back after use."
         ],
         "safetyTitle": "Usage and safety instructions",
@@ -707,7 +716,6 @@ export const en = {
           "Never lean on the table and never sit on the edges.",
           "Always make sure the pool balls are out of the table and the air hockey power cable is pulled back before trying to turn the table.",
           "Children must always be accompanied by an adult when playing on or turning the table.",
-          "If the table stands unevenly, use the adjustable feet to raise or lower each corner.",
           "Indoor use only."
         ]
       },
@@ -732,7 +740,7 @@ export const en = {
         "title": "Projector, Chromecast and Google TV",
         "steps": [
           "Turn on the projector.",
-          "Turn on the soundbar. It is connected to the projector via Bluetooth.",
+          "Turn on the soundbar manually if it is off. It lights red when it is off and connects automatically afterwards.",
           "Cast from your phone, or use Google TV to sign in to your own streaming service.",
           "Sign out of streaming services when you are done.",
           "Only turn off the projector before leaving the room. The soundbar turns off with the projector."
@@ -746,7 +754,8 @@ export const en = {
         "title": "Before leaving the room",
         "steps": [
           "Put all game accessories back in place.",
-          "Fold the folding chairs and return them.",
+          "Put the table tennis/normal tabletop back on first, then place the tablecloth on top before leaving.",
+          "Fold the folding chairs and leave them as they were on arrival.",
           "Empty the fridge of your own items.",
           "Turn off projector, lights and equipment that should not stay on."
         ]
@@ -767,7 +776,7 @@ export const en = {
       "meterIntro": "First, take a photo of the electricity and water meters upon arrival – and again before departure – and send it to us for consumption billing.",
       "electricityMeter": "Electricity meter is located to the right of the front door under the covered terrace.",
       "waterMeters": "Water meters: One is in the technical cabinet in the entrance (used year-round), and another is near the pool system in the activity room (used only in pool season).",
-      "keyBox": "The key box is to the right of the front door. The code is sent via email 1 hour before arrival.",
+      "keyBox": "The key box is to the right of the front door. The code is sent via email or Airbnb message 1 hour before arrival.",
       "guideIntro": "Important! Before using the pool, sauna, and hot tub, please read the guide:",
       "pool": "Pool",
       "sauna": "Sauna",
