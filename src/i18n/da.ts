@@ -461,7 +461,8 @@ export const da = {
           "access": {
             "title": "Adgang forbudt",
             "shed": "Skur",
-            "annex": "Anneks"
+            "annex": "Anneks",
+            "activityRoomTechnical": "Låst teknikområde i aktivitetsrummet"
           },
           "smoking": {
             "title": "Rygning",

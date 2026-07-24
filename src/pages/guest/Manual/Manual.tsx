@@ -74,6 +74,7 @@ export default function Manual({ lang }: Props) {
         <ul>
           <li>{tg("accordion.manual.during.access.shed")}</li>
           <li>{tg("accordion.manual.during.access.annex")}</li>
+          <li>{tg("accordion.manual.during.access.activityRoomTechnical")}</li>
         </ul>
       ),
     },

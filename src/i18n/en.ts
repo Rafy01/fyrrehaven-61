@@ -461,7 +461,8 @@ export const en = {
           "access": {
             "title": "No access",
             "shed": "Tool shed",
-            "annex": "Annex"
+            "annex": "Annex",
+            "activityRoomTechnical": "Locked technical area in the activity room"
           },
           "smoking": {
             "title": "Smoking",

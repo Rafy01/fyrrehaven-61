@@ -461,7 +461,8 @@ export const de = {
           "access": {
             "title": "Zutritt verboten",
             "shed": "Schuppen",
-            "annex": "Anbau"
+            "annex": "Anbau",
+            "activityRoomTechnical": "Abgeschlossener Technikbereich im Aktivitätsraum"
           },
           "smoking": {
             "title": "Rauchen",
