@@ -7,6 +7,13 @@ import { useTranslation } from "react-i18next";
 import { UI_ICONS } from "../../lib/icons";
 import type { Lang } from "../../lib/lang";
 
+function normalizeEmail(value: unknown) {
+  return String(value ?? "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 export type Field =
   | {
       type: "text" | "email" | "tel" | "number";
@@ -102,22 +109,43 @@ export default function Form({ fields, onSubmit, submitLabel, lang }: FormProps)
     >
   ) => {
     const { name, type } = e.target;
+    let nextValues = values;
 
     if (type === "checkbox") {
-      setValues({ ...values, [name]: (e.target as HTMLInputElement).checked });
+      nextValues = { ...values, [name]: (e.target as HTMLInputElement).checked };
+      setValues(nextValues);
     } else if (type === "file") {
       const files = (e.target as HTMLInputElement).files;
-      setValues({
+      nextValues = {
         ...values,
         [name]: files ?? new DataTransfer().files,
-      });
+      };
+      setValues(nextValues);
 
       setFileNames({
         ...fileNames,
         [name]: files ? Array.from(files).map((f) => f.name) : [],
       });
     } else {
-      setValues({ ...values, [name]: e.target.value });
+      nextValues = { ...values, [name]: e.target.value };
+      setValues(nextValues);
+    }
+
+    if (name === "email" || name === "confirmEmail") {
+      const email = normalizeEmail(nextValues.email);
+      const confirmEmail = normalizeEmail(nextValues.confirmEmail);
+
+      setErrors((prev) => {
+        const next = { ...prev };
+
+        if (confirmEmail && email !== confirmEmail) {
+          next.confirmEmail = t("form.emailMismatch");
+        } else if (next.confirmEmail === t("form.emailMismatch")) {
+          delete next.confirmEmail;
+        }
+
+        return next;
+      });
     }
   };
 
@@ -135,6 +163,15 @@ export default function Form({ fields, onSubmit, submitLabel, lang }: FormProps)
       ) {
         newErrors[field.name] = t("form.required");
       }
+    }
+
+    if (
+      fields.some((field) => field.name === "email") &&
+      fields.some((field) => field.name === "confirmEmail") &&
+      normalizeEmail(values.confirmEmail) &&
+      normalizeEmail(values.email) !== normalizeEmail(values.confirmEmail)
+    ) {
+      newErrors.confirmEmail = t("form.emailMismatch");
     }
 
     setErrors(newErrors);

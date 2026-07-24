@@ -18,6 +18,7 @@ import { pathOf, switchLangPath, GUEST_PAGES } from "../../lib/routes";
 import Buttons from "../Buttons";
 import type { ResolvedAppearance } from "../../app/App";
 import { UI_ICONS } from "../../lib/icons";
+import { isPoolSeason } from "../../data/pricing";
 
 type Props = {
   lang: Lang;
@@ -186,7 +187,7 @@ useEffect(() => {
 
   const navItems = useMemo(() => {
     if (guest) {
-      return [
+      const items = [
         {
           to: `/guest/${lang}/${GUEST_PAGES.welcome[lang]}`,
           label: t("guest.welcome"),
@@ -199,10 +200,14 @@ useEffect(() => {
           to: `/guest/${lang}/${GUEST_PAGES.activityRoom[lang]}`,
           label: t("guest.activityRoom"),
         },
-        {
-          to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`,
-          label: t("guest.pool"),
-        },
+        ...(isPoolSeason(new Date())
+          ? [
+              {
+                to: `/guest/${lang}/${GUEST_PAGES.pool[lang]}`,
+                label: t("guest.pool"),
+              },
+            ]
+          : []),
         {
           to: `/guest/${lang}/${GUEST_PAGES.sauna[lang]}`,
           label: t("guest.sauna"),
@@ -216,6 +221,7 @@ useEffect(() => {
           label: t("guest.practicalInfo"),
         },
       ];
+      return items;
     }
     return [
       { to: pathOf(lang, "house"), label: t("public.house") },

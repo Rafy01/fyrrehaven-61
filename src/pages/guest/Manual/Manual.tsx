@@ -20,6 +20,20 @@ export default function Manual({ lang }: Props) {
   const hottubUrl = guestPathOf(lang, "spa");
   const poolUrl = guestPathOf(lang, "pool");
   const meterReadingUrl = guestPathOf(lang, "checkInOut");
+  const hotTubCheckoutText = {
+    da: {
+      title: "Vildmarksbad",
+      body: "Efterlad vildmarksbadet, som det er efter brug. Vandet må gerne blive i.",
+    },
+    en: {
+      title: "Hot tub",
+      body: "Leave the hot tub as it is after use. The water can stay in.",
+    },
+    de: {
+      title: "Whirlpool",
+      body: "Lassen Sie den Whirlpool nach der Nutzung so, wie er ist. Das Wasser kann im Whirlpool bleiben.",
+    },
+  }[lang];
 
   const duringStayItems = [
     {
@@ -60,6 +74,7 @@ export default function Manual({ lang }: Props) {
         <ul>
           <li>{tg("accordion.manual.during.access.shed")}</li>
           <li>{tg("accordion.manual.during.access.annex")}</li>
+          <li>{tg("accordion.manual.during.access.activityRoomTechnical")}</li>
         </ul>
       ),
     },
@@ -166,11 +181,27 @@ export default function Manual({ lang }: Props) {
     },
     {
       id: "vildmarksbad",
-      titleKey: "accordion.manual.after.hotTub.title",
+      title: tg("accordion.manual.after.hotTub.title", {
+        defaultValue: hotTubCheckoutText.title,
+      }),
+      content: (
+        <p>
+          {tg("accordion.manual.after.hotTub.body", {
+            defaultValue: hotTubCheckoutText.body,
+          })}
+        </p>
+      ),
+    },
+    {
+      id: "aktivitetsrum",
+      titleKey: "accordion.manual.after.activityRoom.title",
       content: (
         <ul>
-          <li>{tg("accordion.manual.after.hotTub.ashes")}</li>
-          <li>{tg("accordion.manual.after.hotTub.drain")}</li>
+          <li>{tg("accordion.manual.after.activityRoom.accessories")}</li>
+          <li>{tg("accordion.manual.after.activityRoom.tabletop")}</li>
+          <li>{tg("accordion.manual.after.activityRoom.chairs")}</li>
+          <li>{tg("accordion.manual.after.activityRoom.fridge")}</li>
+          <li>{tg("accordion.manual.after.activityRoom.power")}</li>
         </ul>
       ),
     },

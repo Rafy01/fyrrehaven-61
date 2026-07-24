@@ -7,7 +7,8 @@ export const da = {
       "selectPlaceholder": "Vælg",
       "chooseFile": "Vælg fil",
       "chooseFiles": "Vælg filer",
-      "required": "Dette felt er påkrævet"
+      "required": "Dette felt er påkrævet",
+      "emailMismatch": "E-mail og bekræft e-mail skal være ens."
     }
   },
   "home": {
@@ -321,6 +322,7 @@ export const da = {
       "fields": {
         "name": "Navn",
         "email": "E-mailadresse",
+        "confirmEmail": "Bekræft e-mail",
         "stayDate": "Dato for ophold",
         "wantsExtras": "Ønsker du ekstra services?",
         "otherRequests": "Andre ønsker?"
@@ -345,9 +347,10 @@ export const da = {
       "feeList": "gebyroversigt",
       "acceptAfter": "ved eventuelle overtrædelser. Koden til nøgleboksen sendes 1 time før ankomst, når dette er bekræftet.",
       "errors": {
-        "required": "Udfyld venligst navn, e-mail og dato for ophold.",
+        "required": "Udfyld venligst navn, e-mail, bekræft e-mail og dato for ophold.",
         "dateTooSoon": "Ekstra services skal bestilles senest 3 dage før ankomst. Vælg venligst en senere ankomstdato, eller kontakt os direkte, hvis opholdet er tæt på.",
         "email": "Indtast venligst en gyldig e-mailadresse.",
+        "emailMismatch": "E-mail og bekræft e-mail skal være ens.",
         "dateNotBooked": "Vi kan ikke finde en booking, der starter på den dato. Vælg venligst bookingens startdato.",
         "nameMismatch": "Navnet matcher ikke den booking, vi fandt på den dato. Brug venligst samme navn som på bookingen.",
         "bookingCheckUnavailable": "Vi kunne ikke tjekke bookingkalenderen lige nu. Prøv venligst igen om lidt.",
@@ -461,7 +464,8 @@ export const da = {
           "access": {
             "title": "Adgang forbudt",
             "shed": "Skur",
-            "annex": "Anneks"
+            "annex": "Anneks",
+            "activityRoomTechnical": "Låst teknikområde i aktivitetsrummet"
           },
           "smoking": {
             "title": "Rygning",
@@ -528,8 +532,15 @@ export const da = {
           },
           "hotTub": {
             "title": "Vildmarksbad",
-            "ashes": "Tøm brændovnen for aske og efterlad den ren",
-            "drain": "Tøm for vandet og lad afløbshanen stå åben"
+            "body": "Efterlad vildmarksbadet, som det er efter brug. Vandet må gerne blive i."
+          },
+          "activityRoom": {
+            "title": "Aktivitetsrum",
+            "accessories": "Læg alt spiltilbehør tilbage på plads.",
+            "tabletop": "Læg bordtennis-/almindelig bordplade på igen først, og læg derefter dugen ovenpå bordet, før I forlader rummet.",
+            "chairs": "Fold klapstolene sammen, og efterlad dem som ved ankomst.",
+            "fridge": "Tøm køleskabet for jeres egne varer.",
+            "power": "Sluk projektor, lys og udstyr, der ikke skal være tændt."
           },
           "lock": {
             "title": "Lås af",
@@ -605,6 +616,7 @@ export const da = {
           "checkin": "Tjek-ind",
           "checkout": "Tjek-ud"
         },
+        "confirmEmail": "Bekræft e-mail",
         "elReading": "EL måler aflæsning",
         "waterHouse": "Vand (huset)",
         "waterPool": "Vand (pool)",
@@ -661,7 +673,7 @@ export const da = {
       },
       "rules": {
         "title": "Regler og brug",
-        "temperature": "Temperaturen i pool er ca. mellem 24–28 grader",
+        "temperature": "Temperaturen i poolen er ca. 28 grader",
         "depth": "1,5 meter dyb",
         "automatic": "Pool bliver automatisk fyldt med vand og kemikalier",
         "noDiving": "Ingen hovedspring",
@@ -693,6 +705,7 @@ export const da = {
           "Fjern altid kugler, køer, bats, pucke og net fra bordet, før I skifter spil.",
           "Skift mellem billard og airhockey ved at låse bordets beslag op, vende bordpladen roligt og låse beslagene igen, før I spiller.",
           "Til bordtennis lægges bordtennispladerne ovenpå bordet, og nettet sættes fast i midten.",
+          "Når bordet bruges som almindeligt bord, skal dugen lægges ovenpå bordet. Spild kan ellers trænge ned og ødelægge spillet under bordpladen.",
           "Brug kun det tilbehør, der hører til spillet, og læg det hele tilbage efter brug."
         ],
         "safetyTitle": "Brugs- og sikkerhedsanvisninger",
@@ -703,7 +716,6 @@ export const da = {
           "Læn dig aldrig op ad bordet, og sid aldrig på bordets kanter.",
           "Sørg altid for, at poolkuglerne er ude af bordet, og at airhockey-strømkablet er trukket tilbage, før du prøver at dreje bordet.",
           "Børn skal altid være sammen med en voksen, når de spiller på eller drejer bordet.",
-          "Hvis bordet står ujævnt, kan de justerbare fødder bruges til at hæve eller sænke hvert hjørne.",
           "Kun til indendørs brug."
         ]
       },
@@ -728,7 +740,7 @@ export const da = {
         "title": "Projektor, Chromecast og Google TV",
         "steps": [
           "Tænd projektoren.",
-          "Tænd soundbaren. Den er forbundet med Bluetooth til projektoren.",
+          "Tænd soundbaren manuelt, hvis den er slukket. Den lyser rødt, når den er slukket, og forbinder automatisk bagefter.",
           "Cast fra jeres telefon, eller brug Google TV til at logge ind på jeres egen streamingtjeneste.",
           "Log ud af streamingtjenester, når I er færdige.",
           "Sluk kun projektoren, før I forlader rummet. Soundbaren slukker sammen med projektoren."
@@ -742,7 +754,8 @@ export const da = {
         "title": "Når I forlader rummet",
         "steps": [
           "Læg alt spiltilbehør tilbage på plads.",
-          "Fold klapstole sammen og stil dem tilbage.",
+          "Læg bordtennis-/almindelig bordplade på igen først, og læg derefter dugen ovenpå bordet, før I forlader rummet.",
+          "Fold klapstolene sammen, og efterlad dem som ved ankomst.",
           "Tøm køleskabet for jeres egne varer.",
           "Sluk projektor, lys og udstyr, der ikke skal være tændt."
         ]
@@ -763,7 +776,7 @@ export const da = {
       "meterIntro": "I skal som det første tage ét billede af eltavlen og vandmålerne ved ankomst – og igen ved afrejse – og sende til os for at afregne forbrug.",
       "electricityMeter": "Elmåleren findes til højre for hoveddøren i den overdækkede terrasse.",
       "waterMeters": "Vandmålerne: En findes i teknikskabet i entréen (bruges hele året), og en anden ved poolteknikken i aktivitetsrummet (bruges kun i poolsæson).",
-      "keyBox": "Nøgleboksen finder I til højre for hoveddøren. Koden sendes 1 time før ankomst via mail.",
+      "keyBox": "Nøgleboksen finder I til højre for hoveddøren. Koden sendes 1 time før ankomst via mail eller Airbnb-besked.",
       "guideIntro": "Vigtigt! Før I bruger pool, sauna og vildmarksbad, skal I læse vejledningen:",
       "pool": "Pool",
       "sauna": "Sauna",

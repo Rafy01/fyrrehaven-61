@@ -43,6 +43,7 @@ type NumOrEmpty = number | ""; // ← tillad tom input
 type FormState = {
   name: string;
   email: string;
+  confirmEmail: string;
   phone: string; // national del (uden +kode)
   countryIso: ISO2;
   message: string; // kun i contact-varianten
@@ -110,6 +111,7 @@ export default function ContactForm({
   const [state, setState] = React.useState<FormState>({
     name: "",
     email: "",
+    confirmEmail: "",
     phone:
       typeof localStorage !== "undefined"
         ? localStorage.getItem("cf_phone") ?? ""
@@ -123,6 +125,17 @@ export default function ContactForm({
     babies: 0,
     stayPurpose: "",
   });
+  const confirmEmailMismatchMessage = t(
+    "E-mail og bekræft e-mail skal være ens.",
+    "Email and confirm email must match.",
+    "E-Mail und E-Mail-Bestätigung müssen übereinstimmen."
+  );
+  const confirmEmailError =
+    normalizeEmail(state.confirmEmail) &&
+    normalizeEmail(state.email).toLowerCase() !==
+      normalizeEmail(state.confirmEmail).toLowerCase()
+      ? confirmEmailMismatchMessage
+      : "";
 
   // Formål (kun synligt i booking-varianten, men vi holder state alligevel)
   const [purpose, setPurpose] = React.useState<Purpose>(
@@ -268,22 +281,24 @@ export default function ContactForm({
     e.preventDefault();
     setError(null);
     const email = normalizeEmail(state.email);
+    const confirmEmail = normalizeEmail(state.confirmEmail);
 
     const missingMsg = isBooking
       ? t(
-          "Udfyld venligst navn og e-mail.",
-          "Please fill in your name and email.",
-          "Bitte geben Sie Name und E-Mail ein."
+          "Udfyld venligst navn, e-mail og bekræft e-mail.",
+          "Please fill in your name, email and confirm email.",
+          "Bitte geben Sie Name, E-Mail und E-Mail-Bestätigung ein."
         )
       : t(
-          "Udfyld venligst navn, e-mail og besked.",
-          "Please fill in your name, email and message.",
-          "Bitte geben Sie Name, E-Mail und Nachricht ein."
+          "Udfyld venligst navn, e-mail, bekræft e-mail og besked.",
+          "Please fill in your name, email, confirm email and message.",
+          "Bitte geben Sie Name, E-Mail, E-Mail-Bestätigung und Nachricht ein."
         );
 
     if (
       !state.name.trim() ||
       !email ||
+      !confirmEmail ||
       (!isBooking && !state.message.trim())
     ) {
       setError(missingMsg);
@@ -298,6 +313,10 @@ export default function ContactForm({
           "Bitte geben Sie eine gültige E-Mail-Adresse ein."
         )
       );
+      return;
+    }
+
+    if (email.toLowerCase() !== confirmEmail.toLowerCase()) {
       return;
     }
 
@@ -971,6 +990,35 @@ export default function ContactForm({
           onBlur={(e) => onChange("email", normalizeEmail(e.target.value))}
           placeholder={t("din@adresse.dk", "your@email.com", "ihre@email.de")}
         />
+      </div>
+
+      <div className={styles.row}>
+        <label
+          className={styles.label}
+          htmlFor="cf-confirm-email"
+          data-required="true"
+        >
+          {t("Bekræft e-mail", "Confirm email", "E-Mail bestätigen")}
+        </label>
+        <input
+          id="cf-confirm-email"
+          className={styles.input}
+          type="email"
+          name="confirmEmail"
+          required
+          autoComplete="email"
+          value={state.confirmEmail}
+          onChange={(e) => onChange("confirmEmail", e.target.value)}
+          onBlur={(e) =>
+            onChange("confirmEmail", normalizeEmail(e.target.value))
+          }
+          placeholder={t("din@adresse.dk", "your@email.com", "ihre@email.de")}
+        />
+        {confirmEmailError && (
+          <div className={styles.error} role="alert">
+            {confirmEmailError}
+          </div>
+        )}
       </div>
 
       <div className={styles.rowGroup}>

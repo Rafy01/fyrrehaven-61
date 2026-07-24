@@ -77,6 +77,7 @@ export default function ExtraServices({
 
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
+  const [confirmEmail, setConfirmEmail] = React.useState("");
   const [stayDate, setStayDate] = React.useState(earliestArrivalYmd);
   const [calendarOpen, setCalendarOpen] = React.useState(false);
   const [calendarMonth, setCalendarMonth] = React.useState(() =>
@@ -92,6 +93,12 @@ export default function ExtraServices({
   const [error, setError] = React.useState<string | null>(null);
   const datePickerRef = React.useRef<HTMLDivElement>(null);
   const formStartedAtRef = React.useRef<number>(Date.now());
+  const confirmEmailError =
+    normalizeEmail(confirmEmail) &&
+    normalizeEmail(email).toLowerCase() !==
+      normalizeEmail(confirmEmail).toLowerCase()
+      ? t("form.errors.emailMismatch")
+      : "";
 
   React.useEffect(() => {
     function onPointerDown(event: PointerEvent) {
@@ -242,10 +249,11 @@ export default function ExtraServices({
     setError(null);
 
     const replyEmail = normalizeEmail(email);
+    const confirmedEmail = normalizeEmail(confirmEmail);
     const trimmedName = name.trim();
     const trimmedMessage = message.trim();
 
-    if (!trimmedName || !replyEmail || !stayDate) {
+    if (!trimmedName || !replyEmail || !confirmedEmail || !stayDate) {
       setError(t("form.errors.required"));
       return;
     }
@@ -255,6 +263,9 @@ export default function ExtraServices({
     }
     if (!EMAIL_RE.test(replyEmail)) {
       setError(t("form.errors.email"));
+      return;
+    }
+    if (replyEmail.toLowerCase() !== confirmedEmail.toLowerCase()) {
       return;
     }
     if (wantsExtras === "yes" && selectedItems.length === 0) {
@@ -337,6 +348,7 @@ export default function ExtraServices({
       setSent(true);
       setName("");
       setEmail("");
+      setConfirmEmail("");
       setStayDate(earliestArrivalYmd());
       setCalendarMonth(parseYmd(earliestArrivalYmd()));
       setWantsExtras("no");
@@ -443,6 +455,28 @@ export default function ExtraServices({
                     placeholder={t("form.placeholders.email")}
                     required
                   />
+                </div>
+
+                <div className={formStyles.row}>
+                  <label className={formStyles.label} htmlFor="extra-confirm-email" data-required="true">
+                    {t("form.fields.confirmEmail")}
+                  </label>
+                  <input
+                    id="extra-confirm-email"
+                    className={formStyles.input}
+                    type="email"
+                    autoComplete="email"
+                    value={confirmEmail}
+                    onChange={(event) => setConfirmEmail(event.target.value)}
+                    onBlur={(event) => setConfirmEmail(normalizeEmail(event.target.value))}
+                    placeholder={t("form.placeholders.email")}
+                    required
+                  />
+                  {confirmEmailError && (
+                    <p className={formStyles.error} role="alert">
+                      {confirmEmailError}
+                    </p>
+                  )}
                 </div>
               </div>
 
