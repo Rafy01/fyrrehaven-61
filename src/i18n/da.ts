@@ -526,6 +526,10 @@ export const da = {
             "title": "Grill",
             "body": "Efterlad grillen rengjort og dækket til"
           },
+          "hotTub": {
+            "title": "Vildmarksbad",
+            "body": "Efterlad vildmarksbadet, som det er efter brug. Vandet må gerne blive i, og der er ingen aske eller brændeovn, der skal rengøres."
+          },
           "activityRoom": {
             "title": "Aktivitetsrum",
             "accessories": "Læg alt spiltilbehør tilbage på plads.",

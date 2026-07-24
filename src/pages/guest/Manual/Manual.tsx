@@ -165,6 +165,11 @@ export default function Manual({ lang }: Props) {
       content: <p>{tg("accordion.manual.after.grill.body")}</p>,
     },
     {
+      id: "vildmarksbad",
+      titleKey: "accordion.manual.after.hotTub.title",
+      content: <p>{tg("accordion.manual.after.hotTub.body")}</p>,
+    },
+    {
       id: "aktivitetsrum",
       titleKey: "accordion.manual.after.activityRoom.title",
       content: (

@@ -526,6 +526,10 @@ export const en = {
             "title": "Grill",
             "body": "Clean and cover grill after use"
           },
+          "hotTub": {
+            "title": "Hot tub",
+            "body": "Leave the hot tub as it is after use. The water can stay in, and there are no ashes or stove to clean."
+          },
           "activityRoom": {
             "title": "Activity room",
             "accessories": "Put all game accessories back in place.",

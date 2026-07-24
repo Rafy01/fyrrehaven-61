@@ -526,6 +526,10 @@ export const de = {
             "title": "Grill",
             "body": "Grill gereinigt und abgedeckt hinterlassen"
           },
+          "hotTub": {
+            "title": "Whirlpool",
+            "body": "Lassen Sie den Whirlpool nach der Nutzung so, wie er ist. Das Wasser kann im Whirlpool bleiben, und es gibt keine Asche oder keinen Ofen zu reinigen."
+          },
           "activityRoom": {
             "title": "Aktivitätsraum",
             "accessories": "Legen Sie alles Spielzubehör zurück an seinen Platz.",
