@@ -7,7 +7,8 @@ export const en = {
       "selectPlaceholder": "Choose",
       "chooseFile": "Choose file",
       "chooseFiles": "Choose files",
-      "required": "This field is required"
+      "required": "This field is required",
+      "emailMismatch": "Email and confirm email must match."
     }
   },
   "home": {
@@ -321,6 +322,7 @@ export const en = {
       "fields": {
         "name": "Name",
         "email": "Email Address",
+        "confirmEmail": "Confirm email",
         "stayDate": "Date of stay",
         "wantsExtras": "Would you like our extra service?",
         "otherRequests": "Any other requests?"
@@ -345,9 +347,10 @@ export const en = {
       "feeList": "fee list",
       "acceptAfter": "for potential violations. The code for the key box will be sent 1 hour before arrival, once this is confirmed.",
       "errors": {
-        "required": "Please fill in name, email and date of stay.",
+        "required": "Please fill in name, email, confirm email and date of stay.",
         "dateTooSoon": "Extra services must be requested at least 3 days before arrival. Please choose a later arrival date, or contact us directly if your stay is soon.",
         "email": "Please enter a valid email address.",
+        "emailMismatch": "Email and confirm email must match.",
         "dateNotBooked": "We cannot find a booking starting on that date. Please choose your booking start date.",
         "nameMismatch": "The name does not match the booking we found for that date. Please use the same name as on the booking.",
         "bookingCheckUnavailable": "We could not verify the booking calendar right now. Please try again shortly.",
@@ -613,6 +616,7 @@ export const en = {
           "checkin": "Check-in",
           "checkout": "Check-out"
         },
+        "confirmEmail": "Confirm email",
         "elReading": "Electricity meter reading",
         "waterHouse": "Water (house)",
         "waterPool": "Water (pool)",

@@ -7,7 +7,8 @@ export const da = {
       "selectPlaceholder": "Vælg",
       "chooseFile": "Vælg fil",
       "chooseFiles": "Vælg filer",
-      "required": "Dette felt er påkrævet"
+      "required": "Dette felt er påkrævet",
+      "emailMismatch": "E-mail og bekræft e-mail skal være ens."
     }
   },
   "home": {
@@ -321,6 +322,7 @@ export const da = {
       "fields": {
         "name": "Navn",
         "email": "E-mailadresse",
+        "confirmEmail": "Bekræft e-mail",
         "stayDate": "Dato for ophold",
         "wantsExtras": "Ønsker du ekstra services?",
         "otherRequests": "Andre ønsker?"
@@ -345,9 +347,10 @@ export const da = {
       "feeList": "gebyroversigt",
       "acceptAfter": "ved eventuelle overtrædelser. Koden til nøgleboksen sendes 1 time før ankomst, når dette er bekræftet.",
       "errors": {
-        "required": "Udfyld venligst navn, e-mail og dato for ophold.",
+        "required": "Udfyld venligst navn, e-mail, bekræft e-mail og dato for ophold.",
         "dateTooSoon": "Ekstra services skal bestilles senest 3 dage før ankomst. Vælg venligst en senere ankomstdato, eller kontakt os direkte, hvis opholdet er tæt på.",
         "email": "Indtast venligst en gyldig e-mailadresse.",
+        "emailMismatch": "E-mail og bekræft e-mail skal være ens.",
         "dateNotBooked": "Vi kan ikke finde en booking, der starter på den dato. Vælg venligst bookingens startdato.",
         "nameMismatch": "Navnet matcher ikke den booking, vi fandt på den dato. Brug venligst samme navn som på bookingen.",
         "bookingCheckUnavailable": "Vi kunne ikke tjekke bookingkalenderen lige nu. Prøv venligst igen om lidt.",
@@ -613,6 +616,7 @@ export const da = {
           "checkin": "Tjek-ind",
           "checkout": "Tjek-ud"
         },
+        "confirmEmail": "Bekræft e-mail",
         "elReading": "EL måler aflæsning",
         "waterHouse": "Vand (huset)",
         "waterPool": "Vand (pool)",

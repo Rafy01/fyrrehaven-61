@@ -82,6 +82,8 @@ export default function CheckInOut({
       const formData = new FormData();
 
       for (const key in values) {
+        if (key === "confirmEmail") continue;
+
         const value = values[key];
         if (value instanceof FileList) {
           Array.from(value).forEach((file) => formData.append(key, file));
@@ -170,6 +172,13 @@ export default function CheckInOut({
       type: "email",
       name: "email",
       label: "Email",
+      required: true,
+      placeholder: "john@doe.dk",
+    },
+    {
+      type: "email",
+      name: "confirmEmail",
+      label: tg("checkInOutPage.fields.confirmEmail"),
       required: true,
       placeholder: "john@doe.dk",
     },

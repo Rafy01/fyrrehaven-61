@@ -7,7 +7,8 @@ export const de = {
       "selectPlaceholder": "Auswählen",
       "chooseFile": "Datei auswählen",
       "chooseFiles": "Dateien auswählen",
-      "required": "Dieses Feld ist erforderlich"
+      "required": "Dieses Feld ist erforderlich",
+      "emailMismatch": "E-Mail und E-Mail-Bestätigung müssen übereinstimmen."
     }
   },
   "home": {
@@ -321,6 +322,7 @@ export const de = {
       "fields": {
         "name": "Name",
         "email": "E-Mail-Adresse",
+        "confirmEmail": "E-Mail bestätigen",
         "stayDate": "Aufenthaltsdatum",
         "wantsExtras": "Möchten Sie Zusatzleistungen?",
         "otherRequests": "Weitere Wünsche?"
@@ -345,9 +347,10 @@ export const de = {
       "feeList": "Gebührenübersicht",
       "acceptAfter": "für mögliche Verstöße gelesen und akzeptiert haben. Der Code für den Schlüsselkasten wird 1 Stunde vor Ankunft gesendet, sobald dies bestätigt ist.",
       "errors": {
-        "required": "Bitte füllen Sie Name, E-Mail und Aufenthaltsdatum aus.",
+        "required": "Bitte füllen Sie Name, E-Mail, E-Mail-Bestätigung und Aufenthaltsdatum aus.",
         "dateTooSoon": "Zusatzleistungen müssen spätestens 3 Tage vor Ankunft angefragt werden. Bitte wählen Sie ein späteres Anreisedatum oder kontaktieren Sie uns direkt, wenn Ihr Aufenthalt kurz bevorsteht.",
         "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+        "emailMismatch": "E-Mail und E-Mail-Bestätigung müssen übereinstimmen.",
         "dateNotBooked": "Wir können keine Buchung finden, die an diesem Datum beginnt. Bitte wählen Sie das Startdatum Ihrer Buchung.",
         "nameMismatch": "Der Name stimmt nicht mit der Buchung überein, die wir für dieses Datum gefunden haben. Bitte verwenden Sie denselben Namen wie in der Buchung.",
         "bookingCheckUnavailable": "Wir konnten den Buchungskalender gerade nicht prüfen. Bitte versuchen Sie es gleich noch einmal.",
@@ -613,6 +616,7 @@ export const de = {
           "checkin": "Check-in",
           "checkout": "Check-out"
         },
+        "confirmEmail": "E-Mail bestätigen",
         "elReading": "Stromzählerstand",
         "waterHouse": "Wasser (Haus)",
         "waterPool": "Wasser (Pool)",
