@@ -7,6 +7,13 @@ import { useTranslation } from "react-i18next";
 import { UI_ICONS } from "../../lib/icons";
 import type { Lang } from "../../lib/lang";
 
+function normalizeEmail(value: unknown) {
+  return String(value ?? "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 export type Field =
   | {
       type: "text" | "email" | "tel" | "number";
@@ -135,6 +142,14 @@ export default function Form({ fields, onSubmit, submitLabel, lang }: FormProps)
       ) {
         newErrors[field.name] = t("form.required");
       }
+    }
+
+    if (
+      fields.some((field) => field.name === "email") &&
+      fields.some((field) => field.name === "confirmEmail") &&
+      normalizeEmail(values.email) !== normalizeEmail(values.confirmEmail)
+    ) {
+      newErrors.confirmEmail = t("form.emailMismatch");
     }
 
     setErrors(newErrors);
