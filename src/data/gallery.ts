@@ -44,7 +44,9 @@ export const ACTIVITY_ROOM_IMAGES = {
   airHockey: activityRoomUrl("air-hockey-scaled.webp"),
 } as const;
 
-export const ACTIVITY_ROOM_IMAGE_URL = ACTIVITY_ROOM_IMAGES.billiards;
+export const ACTIVITY_ROOM_HIGHLIGHT_IMAGE_URL = ACTIVITY_ROOM_IMAGES.billiards;
+export const ACTIVITY_ROOM_PHOTOS_IMAGE_URL = ACTIVITY_ROOM_IMAGES.tableTennis;
+export const ACTIVITY_ROOM_IMAGE_URL = ACTIVITY_ROOM_HIGHLIGHT_IMAGE_URL;
 
 /** Få et album efter id */
 export function getAlbum(id: AlbumId): GalleryAlbum | undefined {
