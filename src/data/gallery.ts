@@ -32,10 +32,21 @@ export type GalleryAlbum = {
 /* -------------------------------------------------------------------------- */
 
 const BASE = "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09";
+const ACTIVITY_ROOM_BASE =
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2026/07";
 const u = (file: string) => `${BASE}/${file}`;
+const activityRoomUrl = (file: string) => `${ACTIVITY_ROOM_BASE}/${file}`;
 
-// Replace this with the final media URL when the activity room photo is ready.
-export const ACTIVITY_ROOM_IMAGE_URL = "/activity-room-image-needed.webp";
+export const ACTIVITY_ROOM_IMAGES = {
+  fridge: activityRoomUrl("fridge.webp"),
+  tableTennis: activityRoomUrl("tabletennis.webp"),
+  billiards: activityRoomUrl("billard.webp"),
+  airHockey: activityRoomUrl("air-hockey.webp"),
+} as const;
+
+export const ACTIVITY_ROOM_HIGHLIGHT_IMAGE_URL = ACTIVITY_ROOM_IMAGES.billiards;
+export const ACTIVITY_ROOM_PHOTOS_IMAGE_URL = ACTIVITY_ROOM_IMAGES.airHockey;
+export const ACTIVITY_ROOM_IMAGE_URL = ACTIVITY_ROOM_HIGHLIGHT_IMAGE_URL;
 
 /** Få et album efter id */
 export function getAlbum(id: AlbumId): GalleryAlbum | undefined {
@@ -231,13 +242,31 @@ export const GALLERY_ALBUMS: GalleryAlbum[] = [
     cover: ACTIVITY_ROOM_IMAGE_URL,
     items: [
       {
-        src: ACTIVITY_ROOM_IMAGE_URL,
+        src: ACTIVITY_ROOM_IMAGES.billiards,
+        altDa: "Aktivitetsrum med billardbord og projektor",
+        altEn: "Activity room with billiards table and projector",
+        altDe: "Aktivitätsraum mit Billardtisch und Projektor",
+      },
+      {
+        src: ACTIVITY_ROOM_IMAGES.tableTennis,
+        altDa: "Aktivitetsrum med bordtennisplade på multibordet",
+        altEn: "Activity room with table tennis top on the multi-game table",
+        altDe: "Aktivitätsraum mit Tischtennisplatte auf dem Multispieltisch",
+      },
+      {
+        src: ACTIVITY_ROOM_IMAGES.airHockey,
+        altDa: "Aktivitetsrum med airhockeybord og projektor",
+        altEn: "Activity room with air hockey table and projector",
+        altDe: "Aktivitätsraum mit Airhockeytisch und Projektor",
+      },
+      {
+        src: ACTIVITY_ROOM_IMAGES.fridge,
         altDa:
-          "Aktivitetsrum med billard, bordtennis, airhockey, dart og projektor",
+          "Aktivitetsrum med køleskab, projektor og billardbord",
         altEn:
-          "Activity room with billiards, table tennis, air hockey, darts and projector",
+          "Activity room with fridge, projector and billiards table",
         altDe:
-          "Aktivitätsraum mit Billard, Tischtennis, Airhockey, Darts und Projektor",
+          "Aktivitätsraum mit Kühlschrank, Projektor und Billardtisch",
       },
     ],
   },

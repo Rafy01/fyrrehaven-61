@@ -274,7 +274,7 @@ export default function CheckInOut({
       content: (
         <div className={styles.meterGuide}>
           <img
-            src="https://media.fyrrehaven-61.dk/wp-content/uploads/2026/06/pool_aflaesning.webp"
+            src="https://media.fyrrehaven-61.dk/wp-content/uploads/2026/07/pool_watter_meter.webp"
             alt={tg("accordion.checkInOut.poolWaterReadingAlt")}
             className={styles.image}
           />

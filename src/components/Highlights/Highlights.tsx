@@ -14,7 +14,13 @@ type LinkLike =
 /** Medie pr. kort: ikon (ReactNode) eller billede */
 export type HighlightMedia =
   | { kind: "icon"; icon: React.ReactNode }
-  | { kind: "image"; src: string; alt?: string; aspect?: string };
+  | {
+      kind: "image";
+      src: string;
+      alt?: string;
+      aspect?: string;
+      objectPosition?: string;
+    };
 
 export type HighlightItem = LinkLike & {
   title: string;
@@ -321,6 +327,11 @@ export default function Highlights({
                     alt={it.media.alt ?? ""}
                     className={styles.img}
                     loading="lazy"
+                    style={
+                      it.media.objectPosition
+                        ? { objectPosition: it.media.objectPosition }
+                        : undefined
+                    }
                   />
                 </div>
               )}
