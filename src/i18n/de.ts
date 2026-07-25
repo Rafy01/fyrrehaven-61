@@ -697,13 +697,6 @@ export const de = {
         "title": "Kühlschrank bei Ankunft",
         "body": "Der Kühlschrank muss bei Ankunft eingeschaltet werden. Nutzen Sie den Schalter neben dem Kühlschrank und geben Sie ihm etwas Zeit, kalt zu werden."
       },
-      "images": {
-        "label": "Fotos vom Aktivitätsraum",
-        "billiards": "Aktivitätsraum mit Billardtisch und Projektor",
-        "tableTennis": "Aktivitätsraum mit Tischtennisplatte auf dem Multispieltisch",
-        "airHockey": "Aktivitätsraum mit Airhockeytisch und Projektor",
-        "fridge": "Aktivitätsraum mit Kühlschrank, Projektor und Billardtisch"
-      },
       "table": {
         "title": "Nutzung des Multispieltisches",
         "intro": "Der Multispieltisch wird für Billard, Airhockey und Tischtennis genutzt. Er ist schwer, wechseln Sie das Spiel daher langsam und vorsichtig.",

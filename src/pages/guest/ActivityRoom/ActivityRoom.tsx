@@ -3,7 +3,6 @@ import Head from "../../../lib/Head";
 import Accordion from "../../../components/Accordion/Accordion";
 import type { Lang } from "../../../lib/lang";
 import { guestPathOf } from "../../../lib/routes";
-import { ACTIVITY_ROOM_IMAGES } from "../../../data/gallery";
 import styles from "./ActivityRoom.module.css";
 
 type Props = {
@@ -31,24 +30,6 @@ export default function ActivityRoom({ lang }: Props) {
   const leavingSteps = tg("activityRoomPage.leaving.steps", {
     returnObjects: true,
   }) as string[];
-  const images = [
-    {
-      src: ACTIVITY_ROOM_IMAGES.billiards,
-      alt: tg("activityRoomPage.images.billiards"),
-    },
-    {
-      src: ACTIVITY_ROOM_IMAGES.tableTennis,
-      alt: tg("activityRoomPage.images.tableTennis"),
-    },
-    {
-      src: ACTIVITY_ROOM_IMAGES.airHockey,
-      alt: tg("activityRoomPage.images.airHockey"),
-    },
-    {
-      src: ACTIVITY_ROOM_IMAGES.fridge,
-      alt: tg("activityRoomPage.images.fridge"),
-    },
-  ];
 
   const items = [
     {
@@ -140,18 +121,6 @@ export default function ActivityRoom({ lang }: Props) {
           <h1 className={styles.title}>{tg("activityRoomPage.title")}</h1>
           <p className={styles.subtitle}>{tg("activityRoomPage.subtitle")}</p>
         </header>
-
-        <div className={styles.imageGrid} aria-label={tg("activityRoomPage.images.label")}>
-          {images.map((image) => (
-            <img
-              key={image.src}
-              className={styles.roomImage}
-              src={image.src}
-              alt={image.alt}
-              loading="lazy"
-            />
-          ))}
-        </div>
 
         <div className={styles.warningBox}>
           <strong>{tg("activityRoomPage.fridge.title")}</strong>
