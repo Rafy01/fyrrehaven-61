@@ -14,7 +14,10 @@ import { chooseLang } from "../../lib/lang";
 import type { Lang } from "../../lib/lang";
 import { HOME_USP_ICONS } from "../../lib/icons";
 import { buildVacationRentalSchema } from "../../lib/structuredData";
-import { ACTIVITY_ROOM_IMAGE_URL } from "../../data/gallery";
+import {
+  ACTIVITY_ROOM_HIGHLIGHT_IMAGE_URL,
+  ACTIVITY_ROOM_PHOTOS_IMAGE_URL,
+} from "../../data/gallery";
 
 export default function Home({ lang }: { lang: Lang }) {
   const t = (da: string, en: string, de = en) =>
@@ -226,7 +229,8 @@ export default function Home({ lang }: { lang: Lang }) {
               ),
               media: {
                 kind: "image",
-                src: ACTIVITY_ROOM_IMAGE_URL,
+                src: ACTIVITY_ROOM_HIGHLIGHT_IMAGE_URL,
+                objectPosition: "55% 58%",
                 alt: t(
                   "Aktivitetsrum med spil og projektor",
                   "Activity room with games and projector",
@@ -264,7 +268,8 @@ export default function Home({ lang }: { lang: Lang }) {
         )}
         items={[
           {
-            src: ACTIVITY_ROOM_IMAGE_URL,
+            src: ACTIVITY_ROOM_PHOTOS_IMAGE_URL,
+            objectPosition: "48% 60%",
             alt: t(
               "Aktivitetsrum med spil og projektor",
               "Activity room with games and projector",

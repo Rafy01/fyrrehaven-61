@@ -8,6 +8,7 @@ export type GalleryItem = {
   src: string; // thumbnail
   full?: string; // stor version (fallback = src)
   alt?: string; // "" hvis dekorativt
+  objectPosition?: string;
 };
 
 type CTA =
@@ -115,6 +116,11 @@ export default function GalleryTeaser({
                 src={it.src}
                 alt={it.alt ?? ""}
                 loading="lazy"
+                style={
+                  it.objectPosition
+                    ? { objectPosition: it.objectPosition }
+                    : undefined
+                }
               />
             </div>
           </button>
@@ -136,6 +142,11 @@ export default function GalleryTeaser({
                 src={fourth.src}
                 alt={fourth.alt ?? ""}
                 loading="lazy"
+                style={
+                  fourth.objectPosition
+                    ? { objectPosition: fourth.objectPosition }
+                    : undefined
+                }
               />
             ) : (
               <div className={styles.placeholder} aria-hidden="true" />

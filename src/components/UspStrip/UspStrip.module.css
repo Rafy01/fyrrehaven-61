@@ -6,7 +6,7 @@
   --ink: var(--ink-900);
 
   padding-block: .6rem;
-  background: var(--header-bg);
+
   -webkit-backdrop-filter: blur(10px) saturate(140%);
   backdrop-filter: blur(10px) saturate(140%);
   border-bottom: 1px solid var(--border-muted);

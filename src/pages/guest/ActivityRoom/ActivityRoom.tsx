@@ -9,6 +9,14 @@ type Props = {
   lang: Lang;
 };
 
+const ACTIVITY_ROOM_INSTRUCTION_IMAGE_BASE =
+  "https://media.fyrrehaven-61.dk/wp-content/uploads/2026/07";
+
+const instructionImages = {
+  wheelLock: `${ACTIVITY_ROOM_INSTRUCTION_IMAGE_BASE}/table_wheel_lock.webp`,
+  brackets: `${ACTIVITY_ROOM_INSTRUCTION_IMAGE_BASE}/table_brackets.webp`,
+} as const;
+
 export default function ActivityRoom({ lang }: Props) {
   const { i18n } = useTranslation("guest");
   const tg = i18n.getFixedT(lang, "guest");
@@ -30,6 +38,18 @@ export default function ActivityRoom({ lang }: Props) {
   const leavingSteps = tg("activityRoomPage.leaving.steps", {
     returnObjects: true,
   }) as string[];
+  const tableFigures = [
+    {
+      src: instructionImages.wheelLock,
+      alt: tg("activityRoomPage.table.wheelLockImageAlt"),
+      caption: tg("activityRoomPage.table.wheelLockCaption"),
+    },
+    {
+      src: instructionImages.brackets,
+      alt: tg("activityRoomPage.table.bracketsImageAlt"),
+      caption: tg("activityRoomPage.table.bracketsCaption"),
+    },
+  ];
 
   const items = [
     {
@@ -44,6 +64,19 @@ export default function ActivityRoom({ lang }: Props) {
               <li key={step}>{step}</li>
             ))}
           </ol>
+          <div className={styles.figureGrid}>
+            {tableFigures.map((figure) => (
+              <figure className={styles.figure} key={figure.src}>
+                <img
+                  className={styles.figureImage}
+                  src={figure.src}
+                  alt={figure.alt}
+                  loading="lazy"
+                />
+                <figcaption>{figure.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
           <h3>{tg("activityRoomPage.table.safetyTitle")}</h3>
           <ul>
             {tableSafety.map((rule) => (

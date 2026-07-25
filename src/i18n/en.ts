@@ -703,14 +703,20 @@ export const en = {
         "howToTitle": "How to change game",
         "steps": [
           "Always remove balls, cues, bats, pucks and net from the table before changing game.",
+          "The table has custom wheels with locks. If you move the table, lock all four wheels again before using it.",
           "Change between billiards and air hockey by unlocking the table brackets, turning the tabletop carefully and locking the brackets again before playing.",
           "For table tennis, place the table tennis plates on top of the table and attach the net in the middle.",
           "When using the table as a normal table, place the tablecloth on top first. Spills may otherwise reach and damage the game surface underneath.",
           "Only use the accessories that belong to the game, and put everything back after use."
         ],
+        "wheelLockImageAlt": "Close-up of the lock on one of the multi-game table wheels",
+        "wheelLockCaption": "There is a lock on each of the four wheels. Lock all wheels before playing.",
+        "bracketsImageAlt": "Close-up of the red table brackets on the multi-game table",
+        "bracketsCaption": "Open the table brackets before turning the tabletop, then lock them again before use.",
         "safetyTitle": "Usage and safety instructions",
         "safety": [
           "Only use the table when all four locking brackets are locked and supporting the table.",
+          "Only use the table when all four wheel locks are locked.",
           "When turning the table, make sure all four locking brackets are fully open. If a bracket is closed, it may break.",
           "Always turn the table slowly and with as much care as possible.",
           "Never lean on the table and never sit on the edges.",
