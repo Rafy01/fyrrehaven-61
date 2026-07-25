@@ -703,14 +703,20 @@ export const de = {
         "howToTitle": "So wechseln Sie das Spiel",
         "steps": [
           "Entfernen Sie immer Kugeln, Queues, Schläger, Pucks und Netz vom Tisch, bevor Sie das Spiel wechseln.",
+          "Der Tisch hat Spezialrollen mit Bremsen. Wenn Sie den Tisch verschieben, müssen alle vier Rollen vor der Nutzung wieder festgestellt werden.",
           "Wechseln Sie zwischen Billard und Airhockey, indem Sie die Halterungen entriegeln, die Tischplatte vorsichtig drehen und die Halterungen vor dem Spielen wieder verriegeln.",
           "Für Tischtennis werden die Tischtennisplatten oben auf den Tisch gelegt und das Netz in der Mitte befestigt.",
           "Wenn der Tisch als normaler Tisch genutzt wird, legen Sie zuerst die Tischdecke darauf. Verschüttetes kann sonst nach unten gelangen und die Spielfläche darunter beschädigen.",
           "Verwenden Sie nur das Zubehör, das zum jeweiligen Spiel gehört, und legen Sie nach der Nutzung alles zurück."
         ],
+        "wheelLockImageAlt": "Nahaufnahme der Bremse an einer Rolle des Multispieltisches",
+        "wheelLockCaption": "Jede der vier Rollen hat eine Bremse. Stellen Sie alle Rollen fest, bevor Sie spielen.",
+        "bracketsImageAlt": "Nahaufnahme der roten Tischhalterungen am Multispieltisch",
+        "bracketsCaption": "Öffnen Sie die Tischhalterungen vor dem Drehen der Tischplatte und verriegeln Sie sie vor der Nutzung wieder.",
         "safetyTitle": "Nutzungs- und Sicherheitshinweise",
         "safety": [
           "Der Tisch darf nur genutzt werden, wenn alle vier Verriegelungen geschlossen sind und den Tisch stützen.",
+          "Der Tisch darf nur genutzt werden, wenn alle vier Rollenbremsen festgestellt sind.",
           "Beim Drehen des Tisches müssen alle vier Verriegelungen vollständig geöffnet sein. Ist eine Verriegelung geschlossen, kann sie brechen.",
           "Drehen Sie den Tisch immer langsam und mit größtmöglicher Vorsicht.",
           "Lehnen Sie sich niemals an den Tisch und setzen Sie sich niemals auf die Kanten.",

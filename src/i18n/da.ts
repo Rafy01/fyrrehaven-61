@@ -703,14 +703,20 @@ export const da = {
         "howToTitle": "Sådan skifter I spil",
         "steps": [
           "Fjern altid kugler, køer, bats, pucke og net fra bordet, før I skifter spil.",
+          "Bordet har specialhjul med lås. Hvis I flytter bordet, skal alle fire hjul låses igen, før bordet bruges.",
           "Skift mellem billard og airhockey ved at låse bordets beslag op, vende bordpladen roligt og låse beslagene igen, før I spiller.",
           "Til bordtennis lægges bordtennispladerne ovenpå bordet, og nettet sættes fast i midten.",
           "Når bordet bruges som almindeligt bord, skal dugen lægges ovenpå bordet. Spild kan ellers trænge ned og ødelægge spillet under bordpladen.",
           "Brug kun det tilbehør, der hører til spillet, og læg det hele tilbage efter brug."
         ],
+        "wheelLockImageAlt": "Nærbillede af låsen på et af multibordets hjul",
+        "wheelLockCaption": "Der er lås på alle fire hjul. Lås alle hjul, før I spiller.",
+        "bracketsImageAlt": "Nærbillede af de røde bordbeslag på multibordet",
+        "bracketsCaption": "Åbn bordbeslagene, før bordpladen vendes, og lås dem igen før brug.",
         "safetyTitle": "Brugs- og sikkerhedsanvisninger",
         "safety": [
           "Bordet må kun bruges, når alle fire låsebeslag er låst og understøtter bordet.",
+          "Bordet må kun bruges, når alle fire hjullåse er låst.",
           "Når bordet drejes, skal alle fire låsebeslag være helt åbne. Hvis et beslag er lukket, kan det gå i stykker.",
           "Bordet skal altid drejes langsomt og med størst mulig forsigtighed.",
           "Læn dig aldrig op ad bordet, og sid aldrig på bordets kanter.",
