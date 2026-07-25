@@ -39,13 +39,13 @@ const activityRoomUrl = (file: string) => `${ACTIVITY_ROOM_BASE}/${file}`;
 
 export const ACTIVITY_ROOM_IMAGES = {
   fridge: activityRoomUrl("fridge.webp"),
-  tableTennis: activityRoomUrl("tabletennis-scaled.webp"),
-  billiards: activityRoomUrl("billard-scaled.webp"),
-  airHockey: activityRoomUrl("air-hockey-scaled.webp"),
+  tableTennis: activityRoomUrl("tabletennis.webp"),
+  billiards: activityRoomUrl("billard.webp"),
+  airHockey: activityRoomUrl("air-hockey.webp"),
 } as const;
 
 export const ACTIVITY_ROOM_HIGHLIGHT_IMAGE_URL = ACTIVITY_ROOM_IMAGES.billiards;
-export const ACTIVITY_ROOM_PHOTOS_IMAGE_URL = ACTIVITY_ROOM_IMAGES.tableTennis;
+export const ACTIVITY_ROOM_PHOTOS_IMAGE_URL = ACTIVITY_ROOM_IMAGES.airHockey;
 export const ACTIVITY_ROOM_IMAGE_URL = ACTIVITY_ROOM_HIGHLIGHT_IMAGE_URL;
 
 /** Få et album efter id */

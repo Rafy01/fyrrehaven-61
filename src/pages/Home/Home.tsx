@@ -230,6 +230,7 @@ export default function Home({ lang }: { lang: Lang }) {
               media: {
                 kind: "image",
                 src: ACTIVITY_ROOM_HIGHLIGHT_IMAGE_URL,
+                objectPosition: "55% 58%",
                 alt: t(
                   "Aktivitetsrum med spil og projektor",
                   "Activity room with games and projector",
@@ -268,6 +269,7 @@ export default function Home({ lang }: { lang: Lang }) {
         items={[
           {
             src: ACTIVITY_ROOM_PHOTOS_IMAGE_URL,
+            objectPosition: "48% 60%",
             alt: t(
               "Aktivitetsrum med spil og projektor",
               "Activity room with games and projector",
