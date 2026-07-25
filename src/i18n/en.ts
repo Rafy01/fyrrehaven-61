@@ -697,6 +697,13 @@ export const en = {
         "title": "Fridge on arrival",
         "body": "The fridge must be turned on when you arrive. Use the switch next to the fridge and give it a little time to get cold."
       },
+      "images": {
+        "label": "Activity room photos",
+        "billiards": "Activity room with billiards table and projector",
+        "tableTennis": "Activity room with table tennis top on the multi-game table",
+        "airHockey": "Activity room with air hockey table and projector",
+        "fridge": "Activity room with fridge, projector and billiards table"
+      },
       "table": {
         "title": "Using the multi-game table",
         "intro": "The multi-game table is used for billiards, air hockey and table tennis. It is heavy, so change games slowly and carefully.",

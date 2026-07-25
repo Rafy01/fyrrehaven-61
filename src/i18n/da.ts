@@ -697,6 +697,13 @@ export const da = {
         "title": "Køleskab ved ankomst",
         "body": "Køleskabet skal tændes, når I ankommer. Brug kontakten ved siden af køleskabet, og giv det lidt tid til at blive koldt."
       },
+      "images": {
+        "label": "Billeder af aktivitetsrummet",
+        "billiards": "Aktivitetsrum med billardbord og projektor",
+        "tableTennis": "Aktivitetsrum med bordtennisplade på multibordet",
+        "airHockey": "Aktivitetsrum med airhockeybord og projektor",
+        "fridge": "Aktivitetsrum med køleskab, projektor og billardbord"
+      },
       "table": {
         "title": "Brug af multibordet",
         "intro": "Multibordet bruges til billard, airhockey og bordtennis. Det er tungt, så skift spil langsomt og forsigtigt.",
