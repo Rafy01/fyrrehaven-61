@@ -44,12 +44,70 @@
   line-height: 1.05;
 }
 
+.heroSubtitle {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: var(--gray-10);
+  line-height: 1.5;
+}
+
 .heroActions {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.adminNav {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.adminNavButton {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--gray-6);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gray-12) 6%, transparent);
+  color: var(--gray-11);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.adminNavButton:hover {
+  color: var(--gray-12);
+  background: color-mix(in srgb, var(--gray-12) 10%, transparent);
+  transform: translateY(-1px);
+}
+
+.adminNavButton[data-active="true"] {
+  color: var(--gray-12);
+  border-color: color-mix(in srgb, var(--accent-9) 48%, var(--gray-6));
+  background: color-mix(in srgb, var(--accent-9) 18%, transparent);
+}
+
+.adminNavButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-9) 35%, transparent);
+  outline-offset: 3px;
+}
+
+.adminNavButton svg {
+  width: 16px;
+  height: 16px;
 }
 
 .accountPill {
@@ -506,6 +564,246 @@
 
 .cardValueLatest {
   overflow-wrap: anywhere;
+}
+
+.statsToolbar,
+.statsPanel,
+.statKpi {
+  background: color-mix(in srgb, var(--gray-1) 84%, transparent);
+  border: 1px solid var(--gray-5);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.statsToolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.statsToolbar h2 {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+}
+
+.statsToolbar p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--gray-10);
+  line-height: 1.5;
+}
+
+.statsKpiGrid,
+.statsKpiGridSecondary {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.statsKpiGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.statsKpiGridSecondary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.statKpi {
+  display: grid;
+  gap: 10px;
+  min-height: 154px;
+  padding: 18px;
+}
+
+.statKpiHeader {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--gray-10);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.statKpiIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  color: var(--accent-11);
+  background: color-mix(in srgb, var(--accent-9) 14%, transparent);
+}
+
+.statKpiIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.statKpi strong {
+  color: var(--gray-12);
+  font-size: clamp(1.55rem, 2.5vw, 2.3rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.statKpi small {
+  align-self: end;
+  color: var(--gray-10);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.statKpi[data-tone="success"] .statKpiIcon {
+  color: #16a34a;
+  background: color-mix(in srgb, #16a34a 16%, transparent);
+}
+
+.statKpi[data-tone="warning"] .statKpiIcon {
+  color: #d08c00;
+  background: color-mix(in srgb, #d08c00 16%, transparent);
+}
+
+.statKpi[data-tone="danger"] .statKpiIcon {
+  color: #d9485f;
+  background: color-mix(in srgb, #d9485f 16%, transparent);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.statsPanel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.statsPanelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gray-5);
+}
+
+.statsPanelHeader h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.statsPanelHeader span {
+  color: var(--gray-10);
+  font-size: 0.86rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.statsTableWrap {
+  overflow-x: auto;
+}
+
+.statsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.statsTable th,
+.statsTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--gray-4);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.statsTable th {
+  color: var(--gray-10);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statsTable td:first-child,
+.statsTable th:first-child {
+  white-space: normal;
+}
+
+.statsTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.countryList,
+.recentActivityList {
+  display: grid;
+  gap: 0;
+}
+
+.countryRow,
+.recentActivityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--gray-4);
+}
+
+.countryRow:last-child,
+.recentActivityRow:last-child {
+  border-bottom: 0;
+}
+
+.countryRow span,
+.recentActivityRow small {
+  color: var(--gray-10);
+}
+
+.countryRow strong {
+  color: var(--gray-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.recentActivityRow {
+  width: 100%;
+  appearance: none;
+  border-inline: 0;
+  border-top: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recentActivityRow:hover {
+  background: color-mix(in srgb, var(--accent-3) 34%, transparent);
+}
+
+.recentActivityRow > span:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.recentActivityRow strong {
+  overflow: hidden;
+  color: var(--gray-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recentActivityRow > span:last-child {
+  color: var(--gray-10);
+  font-size: 0.88rem;
+  white-space: nowrap;
 }
 
 .layout {
@@ -2214,6 +2512,22 @@
     flex: 0 0 auto;
   }
 
+  .adminNav {
+    margin-inline: -2px;
+    padding-inline: 2px;
+  }
+
+  .statsToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .statsKpiGrid,
+  .statsKpiGridSecondary,
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .accountPill {
     order: 2;
     width: 100%;
@@ -2378,10 +2692,43 @@
   .card,
   .detailCard,
   .panel,
+  .statKpi,
+  .statsPanel,
+  .statsToolbar,
   .emptyState,
   .authCard,
   .configCard {
     border-radius: 16px;
+  }
+
+  .heroTop {
+    display: grid;
+  }
+
+  .heroActions {
+    justify-content: stretch;
+  }
+
+  .adminNavButton {
+    min-height: 38px;
+    padding-inline: 12px;
+    font-size: 0.86rem;
+  }
+
+  .statsKpiGrid,
+  .statsKpiGridSecondary,
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statKpi {
+    min-height: 132px;
+  }
+
+  .statsPanelHeader,
+  .countryRow,
+  .recentActivityRow {
+    padding-inline: 14px;
   }
 
   .card {

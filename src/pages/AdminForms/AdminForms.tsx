@@ -2,6 +2,7 @@ import React from "react";
 import { Helmet } from "react-helmet-async";
 import {
   FiAlertCircle,
+  FiBarChart2,
   FiCheck,
   FiCheckCircle,
   FiChevronLeft,
@@ -14,6 +15,7 @@ import {
   FiMail,
   FiMoon,
   FiPhone,
+  FiPieChart,
   FiSun,
   FiTrash2,
   FiUser,
@@ -154,6 +156,7 @@ type Submission = {
   mailStatus?: "pending" | "sent" | "failed";
   mailError?: string | null;
   mailErrorCode?: string | null;
+  adminMailSkipped?: boolean;
   createdAtMs?: number;
   updatedAtMs?: number;
   source?: string;
@@ -234,6 +237,39 @@ type DashboardStats = {
   failed: number;
   latestAtMs?: number;
 };
+type AdminPageKey = "statistics" | "submissions" | "manual" | "test";
+type StatisticsBreakdownRow = {
+  label: string;
+  count: number;
+  sent: number;
+  failed: number;
+  valueDKK: number;
+};
+type AdminStatistics = {
+  total: number;
+  publicCount: number;
+  privateCount: number;
+  sent: number;
+  failed: number;
+  pending: number;
+  uniqueGuests: number;
+  bookingCount: number;
+  bookingNights: number;
+  bookingRevenueDKK: number;
+  extraRevenueDKK: number;
+  totalKnownRevenueDKK: number;
+  averageBookingDKK: number | null;
+  checkinCount: number;
+  checkoutCount: number;
+  approvedCheckins: number;
+  pendingCheckinApproval: number;
+  latestAtMs?: number;
+  firstAtMs?: number;
+  formRows: StatisticsBreakdownRow[];
+  sourceRows: StatisticsBreakdownRow[];
+  countryRows: Array<{ label: string; count: number }>;
+  recentRows: Submission[];
+};
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
 const SUBMISSION_BATCH_SIZE = 18;
@@ -250,6 +286,7 @@ const ADMIN_DETAIL_SLUGS = new Set([
 ]);
 const ADMIN_RESERVED_ROUTES = new Set([
   "forms",
+  "statistics",
   "test-submissions",
   "manual-submission",
 ]);
@@ -265,6 +302,19 @@ const METER_OPTIONS: Array<{
   { key: "electricity", label: "Electricity", icon: <FiZap aria-hidden="true" /> },
   { key: "waterHouse", label: "Water (house)", icon: <FiDroplet aria-hidden="true" /> },
   { key: "waterPool", label: "Water (pool)", icon: <FiDroplet aria-hidden="true" /> },
+];
+const ADMIN_DATE_FILTER_OPTIONS: Array<{
+  value: SubmissionDateFilter;
+  label: string;
+}> = [
+  { value: "all", label: "All time" },
+  { value: "today", label: "Today" },
+  { value: "current-week", label: "Current week" },
+  { value: "last-week", label: "Last week" },
+  { value: "last-month", label: "Last month" },
+  { value: "last-3-months", label: "Last 3 months" },
+  { value: "last-6-months", label: "Last 6 months" },
+  { value: "year", label: "This year" },
 ];
 
 function readAppearance(): Appearance {
@@ -393,6 +443,14 @@ function formatMoney(value?: number | null) {
     currency: "DKK",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatPercent(value: number, total: number) {
+  if (!total) return "0%";
+  return new Intl.NumberFormat("en-GB", {
+    style: "percent",
+    maximumFractionDigits: 0,
+  }).format(value / total);
 }
 
 function renderPriceAmount(value?: number | null, options?: { negative?: boolean }) {
@@ -628,6 +686,169 @@ function submissionValue(submission: Submission) {
     return formatMoney(submission.extras.totalDKK);
   }
   return null;
+}
+
+function submissionValueDKK(submission: Submission) {
+  if (submission.selection?.totalAfterAirbnbDiscountDKK != null) {
+    return submission.selection.totalAfterAirbnbDiscountDKK;
+  }
+  if (submission.selection?.totalWithCleaningDKK != null) {
+    return submission.selection.totalWithCleaningDKK;
+  }
+  if (submission.extras?.totalDKK != null) {
+    return submission.extras.totalDKK;
+  }
+  return 0;
+}
+
+function statisticsTypeKey(submission: Submission) {
+  if (submission.intent === "booking") return "Booking";
+  if (submission.intent === "extra-services") return "Extra services";
+  if (isCheckinSubmission(submission)) {
+    return submission.checkin?.type === "checkout" ? "Check-out" : "Check-in";
+  }
+  if (isContactSubmission(submission)) return "Contact";
+  return submissionLabel(submission);
+}
+
+function statisticsSourceKey(submission: Submission) {
+  if (submission.adminMailSkipped) return "Admin/manual";
+  if (submission.source === "guest-form") return "Guest/private";
+  if (submission.source === "website") return "Public website";
+  return submission.source || "Unknown";
+}
+
+function incrementStatisticsRow(
+  map: Map<string, StatisticsBreakdownRow>,
+  key: string,
+  submission: Submission
+) {
+  const existing =
+    map.get(key) ||
+    {
+      label: key,
+      count: 0,
+      sent: 0,
+      failed: 0,
+      valueDKK: 0,
+    };
+
+  existing.count += 1;
+  if (submissionOk(submission)) existing.sent += 1;
+  if (submissionFailed(submission)) existing.failed += 1;
+  existing.valueDKK += submissionValueDKK(submission);
+  map.set(key, existing);
+}
+
+function sortedStatisticsRows(map: Map<string, StatisticsBreakdownRow>) {
+  return [...map.values()].sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.label.localeCompare(b.label);
+  });
+}
+
+function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
+  const formRows = new Map<string, StatisticsBreakdownRow>();
+  const sourceRows = new Map<string, StatisticsBreakdownRow>();
+  const countries = new Map<string, number>();
+  const emails = new Set<string>();
+  const sorted = [...submissions].sort(
+    (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
+  );
+
+  let publicCount = 0;
+  let privateCount = 0;
+  let sent = 0;
+  let failed = 0;
+  let pending = 0;
+  let bookingCount = 0;
+  let bookingNights = 0;
+  let bookingRevenueDKK = 0;
+  let extraRevenueDKK = 0;
+  let checkinCount = 0;
+  let checkoutCount = 0;
+  let approvedCheckins = 0;
+
+  for (const submission of sorted) {
+    const sourceKey = statisticsSourceKey(submission);
+    if (sourceKey === "Public website") {
+      publicCount += 1;
+    } else {
+      privateCount += 1;
+    }
+
+    if (submissionOk(submission)) sent += 1;
+    else if (submissionFailed(submission)) failed += 1;
+    else pending += 1;
+
+    const email = submission.email?.trim().toLowerCase();
+    if (email) emails.add(email);
+
+    const country = countryCode(submission);
+    if (country) {
+      countries.set(country, (countries.get(country) || 0) + 1);
+    }
+
+    if (submission.intent === "booking") {
+      bookingCount += 1;
+      bookingNights += submission.selection?.nights || 0;
+      bookingRevenueDKK +=
+        submission.selection?.totalAfterAirbnbDiscountDKK ||
+        submission.selection?.totalWithCleaningDKK ||
+        0;
+    }
+
+    if (submission.intent === "extra-services") {
+      extraRevenueDKK += submission.extras?.totalDKK || 0;
+    }
+
+    if (isCheckinSubmission(submission)) {
+      if (submission.checkin?.type === "checkout") checkoutCount += 1;
+      else checkinCount += 1;
+
+      if (submission.checkin?.meterApproval?.status === "approved") {
+        approvedCheckins += 1;
+      }
+    }
+
+    incrementStatisticsRow(formRows, statisticsTypeKey(submission), submission);
+    incrementStatisticsRow(sourceRows, sourceKey, submission);
+  }
+
+  const totalCheckForms = checkinCount + checkoutCount;
+  const countryRows = [...countries.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.label.localeCompare(b.label);
+    })
+    .slice(0, 6);
+
+  return {
+    total: sorted.length,
+    publicCount,
+    privateCount,
+    sent,
+    failed,
+    pending,
+    uniqueGuests: emails.size,
+    bookingCount,
+    bookingNights,
+    bookingRevenueDKK,
+    extraRevenueDKK,
+    totalKnownRevenueDKK: bookingRevenueDKK + extraRevenueDKK,
+    averageBookingDKK: bookingCount > 0 ? bookingRevenueDKK / bookingCount : null,
+    checkinCount,
+    checkoutCount,
+    approvedCheckins,
+    pendingCheckinApproval: Math.max(0, totalCheckForms - approvedCheckins),
+    latestAtMs: sorted[0]?.createdAtMs,
+    firstAtMs: sorted[sorted.length - 1]?.createdAtMs,
+    formRows: sortedStatisticsRows(formRows),
+    sourceRows: sortedStatisticsRows(sourceRows),
+    countryRows,
+    recentRows: sorted.slice(0, 6),
+  };
 }
 
 function statusClassName(status?: SubmissionStatus) {
@@ -1027,6 +1248,7 @@ export default function AdminForms() {
   const navigate = useNavigate();
   const { "*": adminPath = "" } = useParams<{ "*": string }>();
   const [routeSubmissionId, routeAdminDetail] = adminPath.split("/");
+  const isStatisticsPage = routeSubmissionId === "statistics";
   const isTestSubmissionsPage = routeSubmissionId === "test-submissions";
   const isManualSubmissionPage = routeSubmissionId === "manual-submission";
   const routeSelectedId =
@@ -1050,6 +1272,8 @@ export default function AdminForms() {
   const [submissionFilter, setSubmissionFilter] =
     React.useState<SubmissionFilter>("all");
   const [dateFilter, setDateFilter] = React.useState<SubmissionDateFilter>("all");
+  const [statisticsDateFilter, setStatisticsDateFilter] =
+    React.useState<SubmissionDateFilter>("all");
   const [renderedGroupCount, setRenderedGroupCount] =
     React.useState(SUBMISSION_BATCH_SIZE);
   const [testSubmissionType, setTestSubmissionType] =
@@ -1270,6 +1494,20 @@ export default function AdminForms() {
       latestAtMs: filteredSubmissions[0]?.createdAtMs,
     };
   }, [filteredSubmissions]);
+
+  const statisticsSubmissions = React.useMemo(() => {
+    const range = dateFilterRange(statisticsDateFilter);
+    if (!range) return submissions;
+    return submissions.filter((submission) => {
+      const createdAt = submission.createdAtMs || 0;
+      return createdAt >= range.from && createdAt < range.to;
+    });
+  }, [statisticsDateFilter, submissions]);
+
+  const adminStatistics = React.useMemo(
+    () => buildAdminStatistics(statisticsSubmissions),
+    [statisticsSubmissions]
+  );
 
   React.useEffect(() => {
     setRenderedGroupCount(SUBMISSION_BATCH_SIZE);
@@ -2015,6 +2253,120 @@ export default function AdminForms() {
 
   function toggleAppearance() {
     setAppearance((current) => (current === "dark" ? "light" : "dark"));
+  }
+
+  function renderAccountTools() {
+    return (
+      <>
+        <div className={styles.accountPill}>
+          <FiUser aria-hidden="true" className={styles.accountIcon} />
+          <div className={styles.accountText}>
+            <span>Logged in</span>
+            <strong>
+              {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
+            </strong>
+          </div>
+          {!DASHBOARD_AUTH_DISABLED ? (
+            <button
+              type="button"
+              className={styles.accountLogout}
+              onClick={() => void handleSignOut()}
+            >
+              <FiLogOut aria-hidden="true" />
+              <span>Log out</span>
+            </button>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className={styles.themeButton}
+          onClick={toggleAppearance}
+          aria-label={
+            appearance === "dark" ? "Switch to light mode" : "Switch to dark mode"
+          }
+          title={
+            appearance === "dark" ? "Switch to light mode" : "Switch to dark mode"
+          }
+        >
+          {appearance === "dark" ? (
+            <FiSun aria-hidden="true" />
+          ) : (
+            <FiMoon aria-hidden="true" />
+          )}
+        </button>
+      </>
+    );
+  }
+
+  function renderAdminNav(active: AdminPageKey) {
+    const items: Array<{
+      key: AdminPageKey;
+      label: string;
+      to: string;
+      icon: React.ReactNode;
+    }> = [
+      {
+        key: "statistics",
+        label: "Statistics",
+        to: "/admin/statistics",
+        icon: <FiBarChart2 aria-hidden="true" />,
+      },
+      {
+        key: "submissions",
+        label: "Submissions",
+        to: "/admin/forms",
+        icon: <FiInbox aria-hidden="true" />,
+      },
+      {
+        key: "manual",
+        label: "Manual submission",
+        to: "/admin/manual-submission",
+        icon: <FiEdit3 aria-hidden="true" />,
+      },
+      {
+        key: "test",
+        label: "Test submissions",
+        to: "/admin/test-submissions",
+        icon: <FiCheckCircle aria-hidden="true" />,
+      },
+    ];
+
+    return (
+      <nav className={styles.adminNav} aria-label="Admin sections">
+        {items.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className={styles.adminNavButton}
+            data-active={active === item.key ? "true" : undefined}
+            onClick={() => navigate(item.to)}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    );
+  }
+
+  function renderAdminHeader(
+    title: string,
+    active: AdminPageKey,
+    subtitle?: string
+  ) {
+    return (
+      <div className={styles.hero}>
+        <div className={styles.heroTop}>
+          <div>
+            <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
+            <h1>{title}</h1>
+            {subtitle ? <p className={styles.heroSubtitle}>{subtitle}</p> : null}
+          </div>
+          <div className={styles.heroActions}>{renderAccountTools()}</div>
+        </div>
+        {renderAdminNav(active)}
+      </div>
+    );
   }
 
   async function copyText(value: string) {
@@ -3137,6 +3489,260 @@ export default function AdminForms() {
     }
   }
 
+  function renderStatisticsKpi(
+    label: string,
+    value: React.ReactNode,
+    meta: string,
+    icon: React.ReactNode,
+    tone: "neutral" | "success" | "warning" | "danger" = "neutral"
+  ) {
+    return (
+      <div className={styles.statKpi} data-tone={tone}>
+        <div className={styles.statKpiHeader}>
+          <span className={styles.statKpiIcon}>{icon}</span>
+          <span>{label}</span>
+        </div>
+        <strong>{value}</strong>
+        <small>{meta}</small>
+      </div>
+    );
+  }
+
+  function renderStatisticsTable(
+    title: string,
+    rows: StatisticsBreakdownRow[],
+    options?: { showValue?: boolean }
+  ) {
+    return (
+      <section className={styles.statsPanel}>
+        <div className={styles.statsPanelHeader}>
+          <h2>{title}</h2>
+          <span>
+            {rows.length} row{rows.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className={styles.statsTableWrap}>
+          <table className={styles.statsTable}>
+            <thead>
+              <tr>
+                <th>Segment</th>
+                <th>Count</th>
+                <th>Email sent</th>
+                <th>Email failed</th>
+                {options?.showValue ? <th>Known value</th> : null}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length ? (
+                rows.map((row) => (
+                  <tr key={row.label}>
+                    <td>{row.label}</td>
+                    <td>{row.count}</td>
+                    <td>{row.sent}</td>
+                    <td>{row.failed}</td>
+                    {options?.showValue ? <td>{formatMoney(row.valueDKK)}</td> : null}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={options?.showValue ? 5 : 4}>No data in this period.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  }
+
+  function renderStatisticsPage() {
+    const stats = adminStatistics;
+    const emailTotal = stats.sent + stats.failed + stats.pending;
+    const knownRevenueMeta =
+      stats.bookingCount > 0
+        ? `Average booking ${formatMoney(stats.averageBookingDKK)}`
+        : "No booking value yet";
+
+    return (
+      <Theme appearance={appearance} accentColor="gray" radius="large">
+        <Helmet>
+          <title>Statistics | Fyrrehaven 61 admin</title>
+          <meta name="robots" content="noindex,nofollow,noarchive" />
+        </Helmet>
+        <div className={styles.page}>
+          <div className={styles.shell}>
+            {renderAdminHeader(
+              "Statistics",
+              "statistics",
+              "Professional overview of public website submissions and private/admin activity."
+            )}
+
+            <section className={styles.statsToolbar}>
+              <div>
+                <p className={styles.eyebrow}>Dataset</p>
+                <h2>Whole website overview</h2>
+                <p>
+                  Based on stored form submissions. Public website, guest/private
+                  check-in/out and admin/manual submissions are separated where the
+                  stored data allows it.
+                </p>
+              </div>
+              <label className={styles.filterLabel} htmlFor="admin-statistics-date-filter">
+                <span>Date range</span>
+                <select
+                  id="admin-statistics-date-filter"
+                  className={styles.filterSelect}
+                  value={statisticsDateFilter}
+                  onChange={(event) =>
+                    setStatisticsDateFilter(
+                      event.target.value as SubmissionDateFilter
+                    )
+                  }
+                >
+                  {ADMIN_DATE_FILTER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </section>
+
+            {error ? (
+              <div className={styles.emptyState}>
+                <h2>The statistics could not load data</h2>
+                <p>{error}</p>
+              </div>
+            ) : (
+              <>
+                <section className={styles.statsKpiGrid}>
+                  {renderStatisticsKpi(
+                    "Total submissions",
+                    stats.total,
+                    `${stats.publicCount} public · ${stats.privateCount} private/admin`,
+                    <FiInbox aria-hidden="true" />
+                  )}
+                  {renderStatisticsKpi(
+                    "Known revenue",
+                    formatMoney(stats.totalKnownRevenueDKK),
+                    knownRevenueMeta,
+                    <FiBarChart2 aria-hidden="true" />,
+                    "success"
+                  )}
+                  {renderStatisticsKpi(
+                    "Email success",
+                    formatPercent(stats.sent, emailTotal),
+                    `${stats.sent} sent · ${stats.failed} failed · ${stats.pending} pending`,
+                    <FiMail aria-hidden="true" />,
+                    stats.failed ? "warning" : "success"
+                  )}
+                  {renderStatisticsKpi(
+                    "Unique guests",
+                    stats.uniqueGuests,
+                    `Latest: ${formatDateTime(stats.latestAtMs)}`,
+                    <FiUser aria-hidden="true" />
+                  )}
+                </section>
+
+                <section className={styles.statsKpiGridSecondary}>
+                  {renderStatisticsKpi(
+                    "Bookings",
+                    stats.bookingCount,
+                    `${stats.bookingNights} booked night${
+                      stats.bookingNights === 1 ? "" : "s"
+                    }`,
+                    <FiCheckCircle aria-hidden="true" />,
+                    "success"
+                  )}
+                  {renderStatisticsKpi(
+                    "Extra services",
+                    formatMoney(stats.extraRevenueDKK),
+                    "Known extra-service value",
+                    <FiPieChart aria-hidden="true" />
+                  )}
+                  {renderStatisticsKpi(
+                    "Check-in/out",
+                    stats.checkinCount + stats.checkoutCount,
+                    `${stats.checkinCount} check-in · ${stats.checkoutCount} check-out`,
+                    <FiZap aria-hidden="true" />
+                  )}
+                  {renderStatisticsKpi(
+                    "Meter approvals",
+                    stats.approvedCheckins,
+                    `${stats.pendingCheckinApproval} waiting for approval`,
+                    <FiCheck aria-hidden="true" />,
+                    stats.pendingCheckinApproval ? "warning" : "success"
+                  )}
+                </section>
+
+                <div className={styles.statsGrid}>
+                  {renderStatisticsTable("Forms", stats.formRows, {
+                    showValue: true,
+                  })}
+                  {renderStatisticsTable("Traffic source", stats.sourceRows, {
+                    showValue: true,
+                  })}
+                </div>
+
+                <div className={styles.statsGrid}>
+                  <section className={styles.statsPanel}>
+                    <div className={styles.statsPanelHeader}>
+                      <h2>Top countries</h2>
+                      <span>{stats.countryRows.length} shown</span>
+                    </div>
+                    <div className={styles.countryList}>
+                      {stats.countryRows.length ? (
+                        stats.countryRows.map((row) => (
+                          <div className={styles.countryRow} key={row.label}>
+                            <span>{row.label}</span>
+                            <strong>{row.count}</strong>
+                          </div>
+                        ))
+                      ) : (
+                        <p className={styles.detailMuted}>No country data in this period.</p>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className={styles.statsPanel}>
+                    <div className={styles.statsPanelHeader}>
+                      <h2>Latest activity</h2>
+                      <span>{formatDateTime(stats.latestAtMs)}</span>
+                    </div>
+                    <div className={styles.recentActivityList}>
+                      {stats.recentRows.length ? (
+                        stats.recentRows.map((submission) => (
+                          <button
+                            type="button"
+                            className={styles.recentActivityRow}
+                            key={submission.id}
+                            onClick={() =>
+                              navigate(adminSubmissionPath(submission.id, "overview"))
+                            }
+                          >
+                            <span>
+                              <strong>
+                                {displayNameWithCountry(submission) || "Unknown name"}
+                              </strong>
+                              <small>{submissionLabel(submission)}</small>
+                            </span>
+                            <span>{formatDateTime(submission.createdAtMs)}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <p className={styles.detailMuted}>No recent activity in this period.</p>
+                      )}
+                    </div>
+                  </section>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </Theme>
+    );
+  }
+
   const testSubmissionTool = (
     <section className={styles.testPanel} aria-label="Manual test submissions">
       <div>
@@ -3399,64 +4005,7 @@ export default function AdminForms() {
         </Helmet>
         <div className={styles.page}>
           <div className={styles.shell}>
-            <div className={styles.hero}>
-              <div className={styles.heroTop}>
-                <div>
-                  <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
-                  <h1>Test submissions</h1>
-                </div>
-                <div className={styles.heroActions}>
-                  <button
-                    type="button"
-                    className={styles.ghostButton}
-                    onClick={() => navigate("/admin/forms")}
-                  >
-                    <FiChevronLeft aria-hidden="true" />
-                    Back to admin
-                  </button>
-                  <div className={styles.accountPill}>
-                    <FiUser aria-hidden="true" className={styles.accountIcon} />
-                    <div className={styles.accountText}>
-                      <span>Logged in</span>
-                      <strong>
-                        {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
-                      </strong>
-                    </div>
-                    {!DASHBOARD_AUTH_DISABLED ? (
-                      <button
-                        type="button"
-                        className={styles.accountLogout}
-                        onClick={() => void handleSignOut()}
-                      >
-                        <FiLogOut aria-hidden="true" />
-                        <span>Log out</span>
-                      </button>
-                    ) : null}
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.themeButton}
-                    onClick={toggleAppearance}
-                    aria-label={
-                      appearance === "dark"
-                        ? "Switch to light mode"
-                        : "Switch to dark mode"
-                    }
-                    title={
-                      appearance === "dark"
-                        ? "Switch to light mode"
-                        : "Switch to dark mode"
-                    }
-                  >
-                    {appearance === "dark" ? (
-                      <FiSun aria-hidden="true" />
-                    ) : (
-                      <FiMoon aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+            {renderAdminHeader("Test submissions", "test")}
 
             {testSubmissionTool}
           </div>
@@ -3474,70 +4023,36 @@ export default function AdminForms() {
         </Helmet>
         <div className={styles.page}>
           <div className={styles.shell}>
-            <div className={styles.hero}>
-              <div className={styles.heroTop}>
-                <div>
-                  <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
-                  <h1>Manual submission</h1>
-                </div>
-                <div className={styles.heroActions}>
-                  <button
-                    type="button"
-                    className={styles.ghostButton}
-                    onClick={() => navigate("/admin/forms")}
-                  >
-                    <FiChevronLeft aria-hidden="true" />
-                    Back to admin
-                  </button>
-                  <div className={styles.accountPill}>
-                    <FiUser aria-hidden="true" className={styles.accountIcon} />
-                    <div className={styles.accountText}>
-                      <span>Logged in</span>
-                      <strong>
-                        {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
-                      </strong>
-                    </div>
-                    {!DASHBOARD_AUTH_DISABLED ? (
-                      <button
-                        type="button"
-                        className={styles.accountLogout}
-                        onClick={() => void handleSignOut()}
-                      >
-                        <FiLogOut aria-hidden="true" />
-                        <span>Log out</span>
-                      </button>
-                    ) : null}
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.themeButton}
-                    onClick={toggleAppearance}
-                    aria-label={
-                      appearance === "dark"
-                        ? "Switch to light mode"
-                        : "Switch to dark mode"
-                    }
-                    title={
-                      appearance === "dark"
-                        ? "Switch to light mode"
-                        : "Switch to dark mode"
-                    }
-                  >
-                    {appearance === "dark" ? (
-                      <FiSun aria-hidden="true" />
-                    ) : (
-                      <FiMoon aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+            {renderAdminHeader("Manual submission", "manual")}
 
             {manualSubmissionForm}
           </div>
         </div>
       </Theme>
     );
+  }
+
+  if (isStatisticsPage) {
+    if (isLoadingSubmissions && !hasLoadedSubmissions) {
+      return (
+        <Theme appearance={appearance} accentColor="gray" radius="large">
+          <div className={styles.page}>
+            <div className={styles.shell}>
+              <div className={styles.loadingState}>
+                <span className={styles.loader} aria-hidden="true" />
+                <div>
+                  <p className={styles.eyebrow}>Statistics</p>
+                  <h1>Loading statistics...</h1>
+                  <p>Fetching submissions once so the overview can be calculated.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Theme>
+      );
+    }
+
+    return renderStatisticsPage();
   }
 
   if (isLoadingSubmissions && !hasLoadedSubmissions) {
@@ -3571,71 +4086,7 @@ export default function AdminForms() {
       </Helmet>
       <div className={styles.page}>
         <div className={styles.shell}>
-          <div className={styles.hero}>
-            <div className={styles.heroTop}>
-              <div>
-                <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
-                <h1>Forms dashboard</h1>
-              </div>
-              <div className={styles.heroActions}>
-                <button
-                  type="button"
-                  className={styles.ghostButton}
-                  onClick={() => navigate("/admin/manual-submission")}
-                >
-                  <FiEdit3 aria-hidden="true" />
-                  Manual submission
-                </button>
-                <button
-                  type="button"
-                  className={styles.ghostButton}
-                  onClick={() => navigate("/admin/test-submissions")}
-                >
-                  Test submissions
-                </button>
-                <div className={styles.accountPill}>
-                  <FiUser aria-hidden="true" className={styles.accountIcon} />
-                  <div className={styles.accountText}>
-                    <span>Logged in</span>
-                    <strong>
-                      {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
-                    </strong>
-                  </div>
-                  {!DASHBOARD_AUTH_DISABLED ? (
-                    <button
-                      type="button"
-                      className={styles.accountLogout}
-                      onClick={() => void handleSignOut()}
-                    >
-                      <FiLogOut aria-hidden="true" />
-                      <span>Log out</span>
-                    </button>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  className={styles.themeButton}
-                  onClick={toggleAppearance}
-                  aria-label={
-                    appearance === "dark"
-                      ? "Switch to light mode"
-                      : "Switch to dark mode"
-                  }
-                  title={
-                    appearance === "dark"
-                      ? "Switch to light mode"
-                      : "Switch to dark mode"
-                  }
-                >
-                  {appearance === "dark" ? (
-                    <FiSun aria-hidden="true" />
-                  ) : (
-                    <FiMoon aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+          {renderAdminHeader("Forms dashboard", "submissions")}
 
           <div className={styles.cards}>
             <div className={styles.card}>
@@ -3726,14 +4177,11 @@ export default function AdminForms() {
                             setDateFilter(event.target.value as SubmissionDateFilter)
                           }
                         >
-                          <option value="all">All time</option>
-                          <option value="today">Today</option>
-                          <option value="current-week">Current week</option>
-                          <option value="last-week">Last week</option>
-                          <option value="last-month">Last month</option>
-                          <option value="last-3-months">Last 3 months</option>
-                          <option value="last-6-months">Last 6 months</option>
-                          <option value="year">This year</option>
+                          {ADMIN_DATE_FILTER_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
                         </select>
                       </label>
                     </div>
