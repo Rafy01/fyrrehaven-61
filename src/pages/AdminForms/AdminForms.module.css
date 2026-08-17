@@ -8,6 +8,7 @@
 }
 
 .shell {
+  box-sizing: border-box;
   width: 100%;
   max-width: 1240px;
   overflow-x: hidden;
@@ -19,6 +20,8 @@
 }
 
 .hero {
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 24px;
 }
 
@@ -44,12 +47,70 @@
   line-height: 1.05;
 }
 
+.heroSubtitle {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: var(--gray-10);
+  line-height: 1.5;
+}
+
 .heroActions {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.adminNav {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.adminNavButton {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--gray-6);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gray-12) 6%, transparent);
+  color: var(--gray-11);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.adminNavButton:hover {
+  color: var(--gray-12);
+  background: color-mix(in srgb, var(--gray-12) 10%, transparent);
+  transform: translateY(-1px);
+}
+
+.adminNavButton[data-active="true"] {
+  color: var(--gray-12);
+  border-color: color-mix(in srgb, var(--accent-9) 48%, var(--gray-6));
+  background: color-mix(in srgb, var(--accent-9) 18%, transparent);
+}
+
+.adminNavButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-9) 35%, transparent);
+  outline-offset: 3px;
+}
+
+.adminNavButton svg {
+  width: 16px;
+  height: 16px;
 }
 
 .accountPill {
@@ -197,6 +258,7 @@
   background: color-mix(in srgb, var(--gray-12) 8%, transparent);
   color: var(--gray-12);
   border: 1px solid var(--gray-6);
+  text-decoration: none;
 }
 
 .button:disabled,
@@ -226,6 +288,7 @@
 .detailCard,
 .testPanel,
 .manualPanel,
+.qrPanel,
 .emptyState,
 .authCard,
 .configCard {
@@ -411,6 +474,56 @@
   resize: vertical;
 }
 
+.manualField input,
+.manualField select,
+.manualField textarea {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid var(--gray-5);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--gray-1) 88%, transparent);
+  color: var(--gray-12);
+  font: inherit;
+  font-weight: 750;
+}
+
+.manualField input,
+.manualField select {
+  padding: 0 14px;
+}
+
+.manualField select {
+  appearance: none;
+  padding-inline-end: 46px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--gray-10) 50%),
+    linear-gradient(135deg, var(--gray-10) 50%, transparent 50%);
+  background-position:
+    calc(100% - 28px) 50%,
+    calc(100% - 22px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.manualField textarea {
+  padding-inline: 14px;
+}
+
+.manualField input[type="color"] {
+  padding: 6px;
+  cursor: pointer;
+}
+
+.manualField input:focus,
+.manualField select:focus,
+.manualField textarea:focus {
+  outline: 3px solid color-mix(in srgb, var(--accent-9) 28%, transparent);
+  outline-offset: 2px;
+}
+
 .manualFull {
   grid-column: 1 / -1;
 }
@@ -420,6 +533,138 @@
   justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.qrPanel {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 22px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.qrEditor {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.qrFormGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
+.qrToggleField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--gray-5);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--gray-12) 5%, transparent);
+  color: var(--gray-11);
+  font-weight: 800;
+}
+
+.qrToggleField input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-9);
+}
+
+.qrToggleField span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.qrPreviewPanel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.qrPreview {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 100%;
+  min-height: 320px;
+  padding: 20px;
+  border: 1px solid var(--gray-5);
+  border-radius: 18px;
+  background: white;
+}
+
+.qrPreview img {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  max-height: 520px;
+  height: auto;
+  object-fit: contain;
+}
+
+.qrPreview span {
+  color: var(--gray-10);
+  font-weight: 800;
+  text-align: center;
+}
+
+.qrPreviewMeta {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--gray-5);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--gray-12) 5%, transparent);
+}
+
+.qrPreviewMeta strong,
+.qrPreviewMeta span,
+.qrPreviewMeta small {
+  overflow-wrap: anywhere;
+}
+
+.qrPreviewMeta strong {
+  color: var(--gray-12);
+}
+
+.qrPreviewMeta span {
+  color: var(--gray-10);
+  font-size: 0.9rem;
+}
+
+.qrPreviewMeta small {
+  color: #d9485f;
+  font-weight: 750;
+}
+
+.qrStatsSection {
+  display: grid;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.qrTableActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.qrTableActions > button {
+  min-height: 36px;
+  height: 36px;
+  padding-inline: 12px;
 }
 
 .loadingState {
@@ -506,6 +751,341 @@
 
 .cardValueLatest {
   overflow-wrap: anywhere;
+}
+
+.statsToolbar,
+.statsPanel,
+.statKpi {
+  background: color-mix(in srgb, var(--gray-1) 84%, transparent);
+  border: 1px solid var(--gray-5);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.statsToolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.statsToolbar h2 {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+}
+
+.statsToolbar p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--gray-10);
+  line-height: 1.5;
+}
+
+.statsKpiGrid,
+.statsKpiGridSecondary {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.statsKpiGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.statsKpiGridSecondary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.statKpi {
+  display: grid;
+  gap: 10px;
+  min-height: 154px;
+  padding: 18px;
+}
+
+.statKpiHeader {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--gray-10);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.statKpiIcon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  color: var(--accent-11);
+  background: color-mix(in srgb, var(--accent-9) 14%, transparent);
+}
+
+.statKpiIcon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.statKpi strong {
+  color: var(--gray-12);
+  font-size: clamp(1.55rem, 2.5vw, 2.3rem);
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.statKpi small {
+  align-self: end;
+  color: var(--gray-10);
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.statKpi[data-tone="success"] .statKpiIcon {
+  color: #16a34a;
+  background: color-mix(in srgb, #16a34a 16%, transparent);
+}
+
+.statKpi[data-tone="warning"] .statKpiIcon {
+  color: #d08c00;
+  background: color-mix(in srgb, #d08c00 16%, transparent);
+}
+
+.statKpi[data-tone="danger"] .statKpiIcon {
+  color: #d9485f;
+  background: color-mix(in srgb, #d9485f 16%, transparent);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.statsPanel {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.statsPanelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--gray-5);
+}
+
+.statsPanelHeader h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.statsPanelHeader span {
+  color: var(--gray-10);
+  font-size: 0.86rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.statsTableWrap {
+  overflow-x: auto;
+}
+
+.statsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.statsTable th,
+.statsTable td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--gray-4);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.statsTable th {
+  color: var(--gray-10);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.statsTable td:first-child,
+.statsTable th:first-child {
+  white-space: normal;
+}
+
+.statsTable tr:last-child td {
+  border-bottom: 0;
+}
+
+.countryList,
+.recentActivityList {
+  display: grid;
+  gap: 0;
+}
+
+.countryRow,
+.recentActivityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--gray-4);
+}
+
+.countryRow:last-child,
+.recentActivityRow:last-child {
+  border-bottom: 0;
+}
+
+.countryRow span,
+.recentActivityRow small {
+  color: var(--gray-10);
+}
+
+.countryRow strong {
+  color: var(--gray-12);
+  font-variant-numeric: tabular-nums;
+}
+
+.recentActivityRow {
+  width: 100%;
+  appearance: none;
+  border-inline: 0;
+  border-top: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recentActivityRow:hover {
+  background: color-mix(in srgb, var(--accent-3) 34%, transparent);
+}
+
+.recentActivityRow > span:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.recentActivityRow strong {
+  overflow: hidden;
+  color: var(--gray-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recentActivityRow > span:last-child {
+  color: var(--gray-10);
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.analyticsList {
+  display: grid;
+  gap: 0;
+}
+
+.analyticsRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  min-height: 58px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--gray-4);
+  overflow: hidden;
+}
+
+.analyticsRow:last-child {
+  border-bottom: 0;
+}
+
+.analyticsRow div,
+.analyticsRow span {
+  position: relative;
+  z-index: 1;
+}
+
+.analyticsRow div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.analyticsRow strong {
+  overflow: hidden;
+  color: var(--gray-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analyticsRow small {
+  color: var(--gray-10);
+}
+
+.analyticsRow span {
+  align-self: center;
+  color: var(--gray-12);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.analyticsRow i {
+  position: absolute;
+  inset-block: 10px;
+  inset-inline-start: 0;
+  max-width: 100%;
+  border-radius: 0 999px 999px 0;
+  background: color-mix(in srgb, var(--accent-9) 13%, transparent);
+}
+
+.trendBars {
+  display: flex;
+  align-items: end;
+  gap: 7px;
+  min-height: 180px;
+  padding: 18px;
+}
+
+.trendBar {
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  gap: 7px;
+  flex: 1 1 0;
+  min-width: 8px;
+  height: 140px;
+}
+
+.trendBar span {
+  display: block;
+  width: 100%;
+  min-height: 5px;
+  border-radius: 999px 999px 3px 3px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent-9) 86%, white),
+    var(--accent-9)
+  );
+}
+
+.trendBar small {
+  color: var(--gray-10);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .layout {
@@ -2214,6 +2794,22 @@
     flex: 0 0 auto;
   }
 
+  .adminNav {
+    margin-inline: -2px;
+    padding-inline: 2px;
+  }
+
+  .statsToolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .statsKpiGrid,
+  .statsKpiGridSecondary,
+  .statsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .accountPill {
     order: 2;
     width: 100%;
@@ -2270,6 +2866,15 @@
 
   .manualGrid {
     grid-template-columns: 1fr;
+  }
+
+  .qrPanel,
+  .qrFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .manualActions > a {
+    width: 100%;
   }
 
   .manualActions > button {
@@ -2378,10 +2983,43 @@
   .card,
   .detailCard,
   .panel,
+  .statKpi,
+  .statsPanel,
+  .statsToolbar,
   .emptyState,
   .authCard,
   .configCard {
     border-radius: 16px;
+  }
+
+  .heroTop {
+    display: grid;
+  }
+
+  .heroActions {
+    justify-content: stretch;
+  }
+
+  .adminNavButton {
+    min-height: 38px;
+    padding-inline: 12px;
+    font-size: 0.86rem;
+  }
+
+  .statsKpiGrid,
+  .statsKpiGridSecondary,
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statKpi {
+    min-height: 132px;
+  }
+
+  .statsPanelHeader,
+  .countryRow,
+  .recentActivityRow {
+    padding-inline: 14px;
   }
 
   .card {
