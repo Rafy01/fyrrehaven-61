@@ -2,24 +2,37 @@ import React from "react";
 import { Helmet } from "react-helmet-async";
 import {
   FiAlertCircle,
+  FiBarChart2,
   FiCheck,
   FiCheckCircle,
+  FiClock,
   FiChevronLeft,
   FiChevronRight,
   FiCopy,
+  FiDownload,
   FiDroplet,
   FiEdit3,
+  FiEye,
+  FiGlobe,
+  FiGrid,
   FiInbox,
+  FiLink,
   FiLogOut,
   FiMail,
+  FiMonitor,
   FiMoon,
   FiPhone,
+  FiPieChart,
+  FiRepeat,
+  FiSmartphone,
   FiSun,
+  FiTrendingUp,
   FiTrash2,
   FiUser,
   FiZap,
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
+import QRCode from "qrcode";
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -154,6 +167,7 @@ type Submission = {
   mailStatus?: "pending" | "sent" | "failed";
   mailError?: string | null;
   mailErrorCode?: string | null;
+  adminMailSkipped?: boolean;
   createdAtMs?: number;
   updatedAtMs?: number;
   source?: string;
@@ -234,8 +248,166 @@ type DashboardStats = {
   failed: number;
   latestAtMs?: number;
 };
+type AdminPageKey = "statistics" | "submissions" | "manual" | "test" | "qr";
+type StatisticsBreakdownRow = {
+  label: string;
+  count: number;
+  sent: number;
+  failed: number;
+  valueDKK: number;
+};
+type AdminStatistics = {
+  total: number;
+  publicCount: number;
+  privateCount: number;
+  sent: number;
+  failed: number;
+  pending: number;
+  uniqueGuests: number;
+  bookingCount: number;
+  bookingNights: number;
+  bookingRevenueDKK: number;
+  extraRevenueDKK: number;
+  totalKnownRevenueDKK: number;
+  averageBookingDKK: number | null;
+  checkinCount: number;
+  checkoutCount: number;
+  approvedCheckins: number;
+  pendingCheckinApproval: number;
+  latestAtMs?: number;
+  firstAtMs?: number;
+  formRows: StatisticsBreakdownRow[];
+  sourceRows: StatisticsBreakdownRow[];
+  countryRows: Array<{ label: string; count: number }>;
+  recentRows: Submission[];
+};
+type AnalyticsRow = {
+  label: string;
+  count: number;
+};
+type AnalyticsPageRow = {
+  path: string;
+  views: number;
+  visitors: number;
+  averageTimeMs: number;
+  entries: number;
+  exits: number;
+  exitRate: number;
+};
+type AdminAnalyticsSummary = {
+  totals: {
+    events: number;
+    pageViews: number;
+    visitors: number;
+    sessions: number;
+    liveVisitors: number;
+    bounceRate: number;
+    averageSessionMs: number;
+    averagePageTimeMs: number;
+    averageLoadMs: number;
+  };
+  pages: AnalyticsPageRow[];
+  countries: AnalyticsRow[];
+  devices: AnalyticsRow[];
+  browsers: AnalyticsRow[];
+  os: AnalyticsRow[];
+  referrers: AnalyticsRow[];
+  siteAreas: AnalyticsRow[];
+  languages: AnalyticsRow[];
+  campaigns: AnalyticsRow[];
+  entryPages: AnalyticsRow[];
+  exitPages: AnalyticsRow[];
+  hourly: AnalyticsRow[];
+  daily: AnalyticsRow[];
+};
+type QrOverlayMode = "logo" | "text" | "image" | "none";
+type QrStatsRow = {
+  id: string;
+  label: string;
+  destination: string;
+  scans: number;
+  lastScanMs: number;
+};
+type SavedQrCode = {
+  id: string;
+  label: string;
+  destination: string;
+  tracked: boolean;
+  foreground: string;
+  background: string;
+  size: number;
+  margin: number;
+  errorCorrection: QrErrorCorrectionLevel;
+  overlayMode: QrOverlayMode;
+  overlayText: string;
+  overlayScale: number;
+  overlayBackground: string;
+  frameEnabled: boolean;
+  frameText1: string;
+  frameText2: string;
+  frameLinkText: string;
+  frameLinkAuto: boolean;
+  createdAtMs?: number;
+  updatedAtMs?: number;
+};
+type AdminQrStats = {
+  totals: {
+    scans: number;
+    uniqueVisitors: number;
+    qrCodes: number;
+    lastScanMs: number;
+  };
+  qrCodes: QrStatsRow[];
+  daily: AnalyticsRow[];
+  hourly: AnalyticsRow[];
+  devices: AnalyticsRow[];
+  countries: AnalyticsRow[];
+  referrers: AnalyticsRow[];
+  recent: Array<{
+    id: string;
+    label: string;
+    destination: string;
+    createdAtMs: number;
+    deviceType: string;
+    country: string;
+  }>;
+  saved: SavedQrCode[];
+};
+
+function emptyAnalyticsSummary(): AdminAnalyticsSummary {
+  return {
+    totals: {
+      events: 0,
+      pageViews: 0,
+      visitors: 0,
+      sessions: 0,
+      liveVisitors: 0,
+      bounceRate: 0,
+      averageSessionMs: 0,
+      averagePageTimeMs: 0,
+      averageLoadMs: 0,
+    },
+    pages: [],
+    countries: [],
+    devices: [],
+    browsers: [],
+    os: [],
+    referrers: [],
+    siteAreas: [],
+    languages: [],
+    campaigns: [],
+    entryPages: [],
+    exitPages: [],
+    hourly: [],
+    daily: [],
+  };
+}
 
 const APPEARANCE_STORAGE_KEY = "fyrrehaven-appearance";
+const PUBLIC_SITE_URL = "https://fyrrehaven-61.dk";
+const DEFAULT_QR_LOGO_SRC = "/logo_trans.png";
+const QR_TRACKING_PATH = "/api/qr";
+const DEFAULT_QR_GOLD = "#9f9418";
 const SUBMISSION_BATCH_SIZE = 18;
 const DASHBOARD_AUTH_DISABLED = import.meta.env.DEV;
 const CHECKIN_GROUP_DETAIL = "guest-checkin";
@@ -250,9 +422,94 @@ const ADMIN_DETAIL_SLUGS = new Set([
 ]);
 const ADMIN_RESERVED_ROUTES = new Set([
   "forms",
+  "statistics",
   "test-submissions",
   "manual-submission",
+  "qr-codes",
 ]);
+const QR_ERROR_CORRECTION_LEVELS = ["L", "M", "Q", "H"] as const;
+type QrErrorCorrectionLevel = (typeof QR_ERROR_CORRECTION_LEVELS)[number];
+const QR_GUEST_LINK_PRESETS = [
+  {
+    key: "check-inout",
+    label: "Check-in/out",
+    destination: `${PUBLIC_SITE_URL}/guest/en/check-inout`,
+    text1: "Check-in",
+    text2: "Check-out",
+  },
+  {
+    key: "pool",
+    label: "Pool",
+    destination: `${PUBLIC_SITE_URL}/guest/en/pool`,
+    text1: "Pool",
+    text2: "Guide",
+  },
+  {
+    key: "sauna",
+    label: "Sauna",
+    destination: `${PUBLIC_SITE_URL}/guest/en/sauna`,
+    text1: "Sauna",
+    text2: "Guide",
+  },
+  {
+    key: "activity-room",
+    label: "Activity room",
+    destination: `${PUBLIC_SITE_URL}/guest/en/activity-room`,
+    text1: "Activity room",
+    text2: "Guide",
+  },
+  {
+    key: "website-home",
+    label: "Website homepage",
+    destination: `${PUBLIC_SITE_URL}/en`,
+    text1: "Fyrrehaven 61",
+    text2: "Website",
+  },
+  {
+    key: "espresso",
+    label: "Espresso machine",
+    destination: `${PUBLIC_SITE_URL}/guest/en/practical-info#coffee`,
+    text1: "Espresso",
+    text2: "Machine",
+  },
+  {
+    key: "spa",
+    label: "Spa",
+    destination: `${PUBLIC_SITE_URL}/guest/en/hot-tub`,
+    text1: "Spa",
+    text2: "Guide",
+  },
+  {
+    key: "sofa-bed",
+    label: "Sofa bed",
+    destination: `${PUBLIC_SITE_URL}/guest/en/practical-info#sofa`,
+    text1: "Sofa bed",
+    text2: "Guide",
+  },
+  {
+    key: "fees",
+    label: "Fees",
+    destination: `${PUBLIC_SITE_URL}/en/fees`,
+    text1: "Fees",
+    text2: "Overview",
+  },
+  {
+    key: "wifi",
+    label: "Wifi",
+    destination: "WIFI:T:WPA;S:HabibiHytten;P:Dolma3000;;",
+    text1: "Wi-Fi",
+    text2: "Connect",
+    linkText: "WiFi: HabibiHytten",
+    tracked: false,
+  },
+  {
+    key: "house-manual",
+    label: "House manual",
+    destination: `${PUBLIC_SITE_URL}/guest/en/manual`,
+    text1: "House",
+    text2: "Manual",
+  },
+] as const;
 const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
   typeof window !== "undefined" &&
@@ -265,6 +522,19 @@ const METER_OPTIONS: Array<{
   { key: "electricity", label: "Electricity", icon: <FiZap aria-hidden="true" /> },
   { key: "waterHouse", label: "Water (house)", icon: <FiDroplet aria-hidden="true" /> },
   { key: "waterPool", label: "Water (pool)", icon: <FiDroplet aria-hidden="true" /> },
+];
+const ADMIN_DATE_FILTER_OPTIONS: Array<{
+  value: SubmissionDateFilter;
+  label: string;
+}> = [
+  { value: "all", label: "All time" },
+  { value: "today", label: "Today" },
+  { value: "current-week", label: "Current week" },
+  { value: "last-week", label: "Last week" },
+  { value: "last-month", label: "Last month" },
+  { value: "last-3-months", label: "Last 3 months" },
+  { value: "last-6-months", label: "Last 6 months" },
+  { value: "year", label: "This year" },
 ];
 
 function readAppearance(): Appearance {
@@ -393,6 +663,32 @@ function formatMoney(value?: number | null) {
     currency: "DKK",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatPercent(value: number, total: number) {
+  if (!total) return "0%";
+  return new Intl.NumberFormat("en-GB", {
+    style: "percent",
+    maximumFractionDigits: 0,
+  }).format(value / total);
+}
+
+function formatRatio(value?: number | null) {
+  return new Intl.NumberFormat("en-GB", {
+    style: "percent",
+    maximumFractionDigits: 1,
+  }).format(value || 0);
+}
+
+function formatDuration(ms?: number | null) {
+  const seconds = Math.max(0, Math.round((ms || 0) / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  if (minutes < 60) return rest ? `${minutes}m ${rest}s` : `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return remainingMinutes ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
 }
 
 function renderPriceAmount(value?: number | null, options?: { negative?: boolean }) {
@@ -628,6 +924,169 @@ function submissionValue(submission: Submission) {
     return formatMoney(submission.extras.totalDKK);
   }
   return null;
+}
+
+function submissionValueDKK(submission: Submission) {
+  if (submission.selection?.totalAfterAirbnbDiscountDKK != null) {
+    return submission.selection.totalAfterAirbnbDiscountDKK;
+  }
+  if (submission.selection?.totalWithCleaningDKK != null) {
+    return submission.selection.totalWithCleaningDKK;
+  }
+  if (submission.extras?.totalDKK != null) {
+    return submission.extras.totalDKK;
+  }
+  return 0;
+}
+
+function statisticsTypeKey(submission: Submission) {
+  if (submission.intent === "booking") return "Booking";
+  if (submission.intent === "extra-services") return "Extra services";
+  if (isCheckinSubmission(submission)) {
+    return submission.checkin?.type === "checkout" ? "Check-out" : "Check-in";
+  }
+  if (isContactSubmission(submission)) return "Contact";
+  return submissionLabel(submission);
+}
+
+function statisticsSourceKey(submission: Submission) {
+  if (submission.adminMailSkipped) return "Admin/manual";
+  if (submission.source === "guest-form") return "Guest/private";
+  if (submission.source === "website") return "Public website";
+  return submission.source || "Unknown";
+}
+
+function incrementStatisticsRow(
+  map: Map<string, StatisticsBreakdownRow>,
+  key: string,
+  submission: Submission
+) {
+  const existing =
+    map.get(key) ||
+    {
+      label: key,
+      count: 0,
+      sent: 0,
+      failed: 0,
+      valueDKK: 0,
+    };
+
+  existing.count += 1;
+  if (submissionOk(submission)) existing.sent += 1;
+  if (submissionFailed(submission)) existing.failed += 1;
+  existing.valueDKK += submissionValueDKK(submission);
+  map.set(key, existing);
+}
+
+function sortedStatisticsRows(map: Map<string, StatisticsBreakdownRow>) {
+  return [...map.values()].sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.label.localeCompare(b.label);
+  });
+}
+
+function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
+  const formRows = new Map<string, StatisticsBreakdownRow>();
+  const sourceRows = new Map<string, StatisticsBreakdownRow>();
+  const countries = new Map<string, number>();
+  const emails = new Set<string>();
+  const sorted = [...submissions].sort(
+    (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
+  );
+
+  let publicCount = 0;
+  let privateCount = 0;
+  let sent = 0;
+  let failed = 0;
+  let pending = 0;
+  let bookingCount = 0;
+  let bookingNights = 0;
+  let bookingRevenueDKK = 0;
+  let extraRevenueDKK = 0;
+  let checkinCount = 0;
+  let checkoutCount = 0;
+  let approvedCheckins = 0;
+
+  for (const submission of sorted) {
+    const sourceKey = statisticsSourceKey(submission);
+    if (sourceKey === "Public website") {
+      publicCount += 1;
+    } else {
+      privateCount += 1;
+    }
+
+    if (submissionOk(submission)) sent += 1;
+    else if (submissionFailed(submission)) failed += 1;
+    else pending += 1;
+
+    const email = submission.email?.trim().toLowerCase();
+    if (email) emails.add(email);
+
+    const country = countryCode(submission);
+    if (country) {
+      countries.set(country, (countries.get(country) || 0) + 1);
+    }
+
+    if (submission.intent === "booking") {
+      bookingCount += 1;
+      bookingNights += submission.selection?.nights || 0;
+      bookingRevenueDKK +=
+        submission.selection?.totalAfterAirbnbDiscountDKK ||
+        submission.selection?.totalWithCleaningDKK ||
+        0;
+    }
+
+    if (submission.intent === "extra-services") {
+      extraRevenueDKK += submission.extras?.totalDKK || 0;
+    }
+
+    if (isCheckinSubmission(submission)) {
+      if (submission.checkin?.type === "checkout") checkoutCount += 1;
+      else checkinCount += 1;
+
+      if (submission.checkin?.meterApproval?.status === "approved") {
+        approvedCheckins += 1;
+      }
+    }
+
+    incrementStatisticsRow(formRows, statisticsTypeKey(submission), submission);
+    incrementStatisticsRow(sourceRows, sourceKey, submission);
+  }
+
+  const totalCheckForms = checkinCount + checkoutCount;
+  const countryRows = [...countries.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.label.localeCompare(b.label);
+    })
+    .slice(0, 6);
+
+  return {
+    total: sorted.length,
+    publicCount,
+    privateCount,
+    sent,
+    failed,
+    pending,
+    uniqueGuests: emails.size,
+    bookingCount,
+    bookingNights,
+    bookingRevenueDKK,
+    extraRevenueDKK,
+    totalKnownRevenueDKK: bookingRevenueDKK + extraRevenueDKK,
+    averageBookingDKK: bookingCount > 0 ? bookingRevenueDKK / bookingCount : null,
+    checkinCount,
+    checkoutCount,
+    approvedCheckins,
+    pendingCheckinApproval: Math.max(0, totalCheckForms - approvedCheckins),
+    latestAtMs: sorted[0]?.createdAtMs,
+    firstAtMs: sorted[sorted.length - 1]?.createdAtMs,
+    formRows: sortedStatisticsRows(formRows),
+    sourceRows: sortedStatisticsRows(sourceRows),
+    countryRows,
+    recentRows: sorted.slice(0, 6),
+  };
 }
 
 function statusClassName(status?: SubmissionStatus) {
@@ -1023,12 +1482,64 @@ function buildSubmissionGroups(submissions: Submission[]): SubmissionGroup[] {
     .sort((a, b) => (b.primary.createdAtMs || 0) - (a.primary.createdAtMs || 0));
 }
 
+function qrSlug(value: string) {
+  return (value || "qr-code")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 42);
+}
+
+function qrHash(value: string) {
+  let hash = 5381;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 33) ^ value.charCodeAt(index);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+function qrCodeId(label: string, destination: string) {
+  return `${qrSlug(label)}-${qrHash(`${label}:${destination}`)}`;
+}
+
+function qrTrackingUrl(id: string, label: string, destination: string) {
+  const params = new URLSearchParams({
+    id,
+    label: label.trim() || "Untitled QR code",
+    to: destination,
+  });
+  return `${PUBLIC_SITE_URL}${QR_TRACKING_PATH}?${params.toString()}`;
+}
+
+function displayQrLink(value: string) {
+  const text = value.trim();
+  if (!text) return "";
+  try {
+    const url = new URL(text);
+    return `${url.hostname}${url.pathname}${url.hash}`.replace(/\/$/, "");
+  } catch {
+    return text;
+  }
+}
+
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("The center image could not be loaded."));
+    image.src = src;
+  });
+}
+
 export default function AdminForms() {
   const navigate = useNavigate();
   const { "*": adminPath = "" } = useParams<{ "*": string }>();
   const [routeSubmissionId, routeAdminDetail] = adminPath.split("/");
+  const isStatisticsPage = routeSubmissionId === "statistics";
   const isTestSubmissionsPage = routeSubmissionId === "test-submissions";
   const isManualSubmissionPage = routeSubmissionId === "manual-submission";
+  const isQrCodesPage = routeSubmissionId === "qr-codes";
   const routeSelectedId =
     routeSubmissionId && !ADMIN_RESERVED_ROUTES.has(routeSubmissionId)
       ? decodeURIComponent(routeSubmissionId)
@@ -1050,10 +1561,59 @@ export default function AdminForms() {
   const [submissionFilter, setSubmissionFilter] =
     React.useState<SubmissionFilter>("all");
   const [dateFilter, setDateFilter] = React.useState<SubmissionDateFilter>("all");
+  const [statisticsDateFilter, setStatisticsDateFilter] =
+    React.useState<SubmissionDateFilter>("all");
+  const [qrStatsDateFilter, setQrStatsDateFilter] =
+    React.useState<SubmissionDateFilter>("all");
+  const [analytics, setAnalytics] = React.useState<AdminAnalyticsSummary | null>(
+    null
+  );
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = React.useState(false);
+  const [analyticsError, setAnalyticsError] = React.useState<string | null>(null);
   const [renderedGroupCount, setRenderedGroupCount] =
     React.useState(SUBMISSION_BATCH_SIZE);
   const [testSubmissionType, setTestSubmissionType] =
     React.useState<TestSubmissionType>("all");
+  const [qrValue, setQrValue] = React.useState(`${PUBLIC_SITE_URL}/en/check-in-out`);
+  const [qrLabel, setQrLabel] = React.useState("Check-in and check-out");
+  const [qrForeground, setQrForeground] = React.useState(DEFAULT_QR_GOLD);
+  const [qrBackground, setQrBackground] = React.useState("#ffffff");
+  const [qrSize, setQrSize] = React.useState(720);
+  const [qrMargin, setQrMargin] = React.useState(3);
+  const [qrErrorCorrection, setQrErrorCorrection] =
+    React.useState<QrErrorCorrectionLevel>("H");
+  const [qrTracked, setQrTracked] = React.useState(true);
+  const [qrOverlayMode, setQrOverlayMode] = React.useState<QrOverlayMode>("logo");
+  const [qrOverlayText, setQrOverlayText] = React.useState("61");
+  const [qrOverlayImage, setQrOverlayImage] = React.useState("");
+  const [qrOverlayScale, setQrOverlayScale] = React.useState(22);
+  const [qrOverlayBackground, setQrOverlayBackground] = React.useState("#000000");
+  const [qrFrameEnabled, setQrFrameEnabled] = React.useState(true);
+  const [qrFrameText1, setQrFrameText1] = React.useState("Check-in");
+  const [qrFrameText2, setQrFrameText2] = React.useState("Check-out");
+  const [qrFrameLinkAuto, setQrFrameLinkAuto] = React.useState(true);
+  const [qrFrameLinkText, setQrFrameLinkText] = React.useState("");
+  const [qrPng, setQrPng] = React.useState("");
+  const [qrSvg, setQrSvg] = React.useState("");
+  const [qrError, setQrError] = React.useState<string | null>(null);
+  const [qrCopyStatus, setQrCopyStatus] = React.useState("");
+  const [qrStats, setQrStats] = React.useState<AdminQrStats | null>(null);
+  const [isLoadingQrStats, setIsLoadingQrStats] = React.useState(false);
+  const [qrStatsError, setQrStatsError] = React.useState<string | null>(null);
+  const [qrSaveStatus, setQrSaveStatus] = React.useState("");
+  const [qrDeleteStatus, setQrDeleteStatus] = React.useState("");
+  const qrDestination = qrValue.trim();
+  const qrId = React.useMemo(
+    () => qrCodeId(qrLabel, qrDestination || `${PUBLIC_SITE_URL}/en`),
+    [qrDestination, qrLabel]
+  );
+  const qrEncodedValue = React.useMemo(() => {
+    if (!qrDestination || !qrTracked) return qrDestination;
+    return qrTrackingUrl(qrId, qrLabel, qrDestination);
+  }, [qrDestination, qrId, qrLabel, qrTracked]);
+  const qrFrameDisplayLink = qrFrameLinkAuto
+    ? displayQrLink(qrDestination)
+    : qrFrameLinkText;
   const [creatingTestSubmission, setCreatingTestSubmission] = React.useState(false);
   const [testSubmissionMessage, setTestSubmissionMessage] =
     React.useState<string | null>(null);
@@ -1188,6 +1748,98 @@ export default function AdminForms() {
     }
   }, []);
 
+  const fetchAnalytics = React.useCallback(async () => {
+    setAnalyticsError(null);
+    setIsLoadingAnalytics(true);
+
+    try {
+      const auth = getFirebaseAuth();
+      const token =
+        DASHBOARD_AUTH_DISABLED || !auth?.currentUser
+          ? null
+          : await auth.currentUser.getIdToken(true);
+      const res = await fetch(
+        `/api/admin/analytics?range=${encodeURIComponent(statisticsDateFilter)}`,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        if (LOCAL_DASHBOARD_FALLBACK) {
+          setAnalytics(emptyAnalyticsSummary());
+          return;
+        }
+        throw new Error("Admin analytics API did not return JSON.");
+      }
+      const data = (await res.json()) as {
+        ok?: boolean;
+        analytics?: AdminAnalyticsSummary;
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+      setAnalytics(data.analytics || null);
+    } catch (nextError) {
+      setAnalytics(null);
+      setAnalyticsError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    } finally {
+      setIsLoadingAnalytics(false);
+    }
+  }, [statisticsDateFilter]);
+
+  const fetchQrStats = React.useCallback(async () => {
+    setQrStatsError(null);
+    setIsLoadingQrStats(true);
+
+    try {
+      const auth = getFirebaseAuth();
+      const token =
+        DASHBOARD_AUTH_DISABLED || !auth?.currentUser
+          ? null
+          : await auth.currentUser.getIdToken(true);
+      const res = await fetch(
+        `/api/admin/qr-codes?range=${encodeURIComponent(qrStatsDateFilter)}`,
+        {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+      const contentType = res.headers.get("content-type") || "";
+      if (!contentType.includes("application/json")) {
+        if (LOCAL_DASHBOARD_FALLBACK) {
+          setQrStats(null);
+          return;
+        }
+        throw new Error("QR statistics API did not return JSON.");
+      }
+      const data = (await res.json()) as {
+        ok?: boolean;
+        stats?: AdminQrStats;
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+      setQrStats(data.stats || null);
+    } catch (nextError) {
+      setQrStats(null);
+      setQrStatsError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    } finally {
+      setIsLoadingQrStats(false);
+    }
+  }, [qrStatsDateFilter]);
+
   React.useEffect(() => {
     setDeleteConfirmation("");
     setDeleteError(null);
@@ -1204,6 +1856,263 @@ export default function AdminForms() {
     if (!user && !DASHBOARD_AUTH_DISABLED) return;
     void fetchSubmissions();
   }, [user, fetchSubmissions, isManualSubmissionPage, isTestSubmissionsPage]);
+
+  React.useEffect(() => {
+    if (!isStatisticsPage) return;
+    if (!user && !DASHBOARD_AUTH_DISABLED) return;
+    void fetchAnalytics();
+  }, [user, fetchAnalytics, isStatisticsPage]);
+
+  React.useEffect(() => {
+    if (!isQrCodesPage) return;
+    if (!user && !DASHBOARD_AUTH_DISABLED) return;
+    void fetchQrStats();
+  }, [user, fetchQrStats, isQrCodesPage]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const value = qrEncodedValue.trim();
+
+    async function generateQrCode() {
+      if (!value) {
+        setQrPng("");
+        setQrSvg("");
+        setQrError("Enter a URL or text value to generate a QR code.");
+        return;
+      }
+
+      try {
+        const options = {
+          errorCorrectionLevel: qrErrorCorrection,
+          margin: qrMargin,
+          width: qrSize,
+          color: {
+            dark: qrForeground,
+            light: qrBackground,
+          },
+        } as const;
+        const qrCanvas = document.createElement("canvas");
+        await QRCode.toCanvas(qrCanvas, value, options);
+        const context = qrCanvas.getContext("2d");
+        if (!context) throw new Error("The QR canvas could not be created.");
+
+        const overlaySize = Math.round(
+          qrCanvas.width * Math.min(0.32, Math.max(0.08, qrOverlayScale / 100))
+        );
+        const overlayX = Math.round((qrCanvas.width - overlaySize) / 2);
+        const overlayY = Math.round((qrCanvas.height - overlaySize) / 2);
+        const badgePadding = Math.max(10, Math.round(overlaySize * 0.16));
+        const badgeX = overlayX - badgePadding;
+        const badgeY = overlayY - badgePadding;
+        const badgeSize = overlaySize + badgePadding * 2;
+        const radius = Math.round(badgeSize * 0.22);
+
+        if (qrOverlayMode !== "none") {
+          context.fillStyle = qrOverlayBackground;
+          context.beginPath();
+          context.roundRect(badgeX, badgeY, badgeSize, badgeSize, radius);
+          context.fill();
+        }
+
+        if (qrOverlayMode === "logo" || qrOverlayMode === "image") {
+          const src =
+            qrOverlayMode === "image" && qrOverlayImage
+              ? qrOverlayImage
+              : DEFAULT_QR_LOGO_SRC;
+          const image = await loadImage(src);
+          const ratio = Math.min(
+            overlaySize / image.naturalWidth,
+            overlaySize / image.naturalHeight
+          );
+          const drawWidth = Math.round(image.naturalWidth * ratio);
+          const drawHeight = Math.round(image.naturalHeight * ratio);
+          context.drawImage(
+            image,
+            Math.round((qrCanvas.width - drawWidth) / 2),
+            Math.round((qrCanvas.height - drawHeight) / 2),
+            drawWidth,
+            drawHeight
+          );
+        } else if (qrOverlayMode === "text") {
+          context.fillStyle = qrForeground;
+          context.font = `900 ${Math.round(overlaySize * 0.42)}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.fillText(
+            qrOverlayText.slice(0, 8) || "61",
+            qrCanvas.width / 2,
+            qrCanvas.height / 2
+          );
+        }
+
+        let exportCanvas = qrCanvas;
+        if (qrFrameEnabled) {
+          const frameCanvas = document.createElement("canvas");
+          const frameWidth = qrSize;
+          const frameHeight = Math.round(qrSize * 1.36);
+          frameCanvas.width = frameWidth;
+          frameCanvas.height = frameHeight;
+          const frame = frameCanvas.getContext("2d");
+          if (!frame) throw new Error("The QR frame could not be created.");
+
+          const cut = Math.round(frameWidth * 0.06);
+          const border = Math.round(frameWidth * 0.035);
+          const bottomHeight = Math.round(frameHeight * 0.18);
+          const qrPadding = Math.round(frameWidth * 0.055);
+          const qrAreaHeight = frameHeight - bottomHeight - border * 2;
+          const qrDrawSize = Math.min(
+            frameWidth - qrPadding * 2,
+            qrAreaHeight - qrPadding
+          );
+          const qrX = Math.round((frameWidth - qrDrawSize) / 2);
+          const qrY = border + Math.round((qrAreaHeight - qrDrawSize) / 2);
+
+          frame.fillStyle = "#000000";
+          frame.beginPath();
+          frame.moveTo(cut, 0);
+          frame.lineTo(frameWidth - cut, 0);
+          frame.lineTo(frameWidth, cut);
+          frame.lineTo(frameWidth, frameHeight - cut);
+          frame.lineTo(frameWidth - cut, frameHeight);
+          frame.lineTo(cut, frameHeight);
+          frame.lineTo(0, frameHeight - cut);
+          frame.lineTo(0, cut);
+          frame.closePath();
+          frame.fill();
+
+          frame.fillStyle = qrBackground;
+          frame.fillRect(border, border, frameWidth - border * 2, qrAreaHeight);
+          frame.drawImage(qrCanvas, qrX, qrY, qrDrawSize, qrDrawSize);
+
+          const bottomTop = frameHeight - bottomHeight;
+          frame.fillStyle = "#000000";
+          frame.fillRect(border, bottomTop, frameWidth - border * 2, bottomHeight - border);
+          frame.textAlign = "center";
+          frame.textBaseline = "middle";
+          frame.font = `500 ${Math.round(frameWidth * 0.07)}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+          const text1 = qrFrameText1.trim() || "Text 1";
+          const text2 = qrFrameText2.trim() || "Text 2";
+          const titleY = bottomTop + Math.round(bottomHeight * 0.42);
+          const gap = Math.round(frameWidth * 0.018);
+          const text1Width = frame.measureText(text1).width;
+          const text2Width = frame.measureText(text2).width;
+          const separatorWidth = frame.measureText("|").width;
+          const titleWidth = text1Width + text2Width + separatorWidth + gap * 2;
+          const titleStart = (frameWidth - titleWidth) / 2;
+          frame.fillStyle = DEFAULT_QR_GOLD;
+          frame.fillText("|", titleStart + text1Width + gap + separatorWidth / 2, titleY);
+          frame.fillStyle = "#ffffff";
+          frame.textAlign = "left";
+          frame.fillText(text1, titleStart, titleY);
+          frame.fillText(text2, titleStart + text1Width + separatorWidth + gap * 2, titleY);
+          frame.textAlign = "center";
+          frame.font = `700 ${Math.round(frameWidth * 0.035)}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+          const link = qrFrameDisplayLink.trim() || qrDestination || qrEncodedValue;
+          frame.fillText(link, frameWidth / 2, bottomTop + Math.round(bottomHeight * 0.72));
+          exportCanvas = frameCanvas;
+        }
+
+        const png = exportCanvas.toDataURL("image/png");
+        const baseSvg = await QRCode.toString(value, { ...options, type: "svg" });
+        const overlaySvg =
+          qrOverlayMode === "none"
+            ? ""
+            : qrOverlayMode === "text"
+              ? `<rect x="${badgeX}" y="${badgeY}" width="${badgeSize}" height="${badgeSize}" rx="${radius}" fill="${qrOverlayBackground}"/><text x="${qrSize / 2}" y="${qrSize / 2}" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="${Math.round(
+                  overlaySize * 0.42
+                )}" font-weight="900" fill="${qrForeground}">${(qrOverlayText.slice(0, 8) || "61")
+                  .replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")}</text>`
+              : `<rect x="${badgeX}" y="${badgeY}" width="${badgeSize}" height="${badgeSize}" rx="${radius}" fill="${qrOverlayBackground}"/><image href="${
+                  qrOverlayMode === "image" && qrOverlayImage
+                    ? qrOverlayImage
+                    : `${PUBLIC_SITE_URL}${DEFAULT_QR_LOGO_SRC}`
+                }" x="${overlayX}" y="${overlayY}" width="${overlaySize}" height="${overlaySize}" preserveAspectRatio="xMidYMid meet"/>`;
+        const bareSvg = overlaySvg
+          ? baseSvg.replace("</svg>", `${overlaySvg}</svg>`)
+          : baseSvg;
+        const escapeSvgText = (text: string) =>
+          text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+        const svg = qrFrameEnabled
+          ? (() => {
+              const frameWidth = qrSize;
+              const frameHeight = Math.round(qrSize * 1.36);
+              const cut = Math.round(frameWidth * 0.06);
+              const border = Math.round(frameWidth * 0.035);
+              const bottomHeight = Math.round(frameHeight * 0.18);
+              const qrPadding = Math.round(frameWidth * 0.055);
+              const qrAreaHeight = frameHeight - bottomHeight - border * 2;
+              const qrDrawSize = Math.min(
+                frameWidth - qrPadding * 2,
+                qrAreaHeight - qrPadding
+              );
+              const qrX = Math.round((frameWidth - qrDrawSize) / 2);
+              const qrY = border + Math.round((qrAreaHeight - qrDrawSize) / 2);
+              const bottomTop = frameHeight - bottomHeight;
+              const encodedQr = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+                bareSvg
+              )}`;
+              const text1 = qrFrameText1.trim() || "Text 1";
+              const text2 = qrFrameText2.trim() || "Text 2";
+              const titleY = bottomTop + Math.round(bottomHeight * 0.42);
+              const gap = Math.round(frameWidth * 0.018);
+              const link = qrFrameDisplayLink.trim() || qrDestination || qrEncodedValue;
+              return `<svg xmlns="http://www.w3.org/2000/svg" width="${frameWidth}" height="${frameHeight}" viewBox="0 0 ${frameWidth} ${frameHeight}">
+<path d="M ${cut} 0 H ${frameWidth - cut} L ${frameWidth} ${cut} V ${frameHeight - cut} L ${frameWidth - cut} ${frameHeight} H ${cut} L 0 ${frameHeight - cut} V ${cut} Z" fill="#000"/>
+<rect x="${border}" y="${border}" width="${frameWidth - border * 2}" height="${qrAreaHeight}" fill="${qrBackground}"/>
+<image href="${encodedQr}" x="${qrX}" y="${qrY}" width="${qrDrawSize}" height="${qrDrawSize}" preserveAspectRatio="xMidYMid meet"/>
+<rect x="${border}" y="${bottomTop}" width="${frameWidth - border * 2}" height="${bottomHeight - border}" fill="#000"/>
+<text x="${frameWidth / 2}" y="${titleY}" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="${Math.round(frameWidth * 0.07)}" font-weight="500" fill="#fff"><tspan>${escapeSvgText(text1)}</tspan><tspan dx="${gap}" fill="${DEFAULT_QR_GOLD}">|</tspan><tspan dx="${gap}" fill="#fff">${escapeSvgText(text2)}</tspan></text>
+<text x="${frameWidth / 2}" y="${bottomTop + Math.round(bottomHeight * 0.72)}" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="${Math.round(frameWidth * 0.035)}" font-weight="700" fill="${DEFAULT_QR_GOLD}">${escapeSvgText(link)}</text>
+</svg>`;
+            })()
+          : bareSvg;
+        if (cancelled) return;
+        setQrPng(png);
+        setQrSvg(svg);
+        setQrError(null);
+      } catch (nextError) {
+        if (cancelled) return;
+        setQrPng("");
+        setQrSvg("");
+        setQrError(
+          String(nextError instanceof Error ? nextError.message : nextError)
+        );
+      }
+    }
+
+    void generateQrCode();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    qrBackground,
+    qrDestination,
+    qrEncodedValue,
+    qrErrorCorrection,
+    qrForeground,
+    qrFrameEnabled,
+    qrFrameDisplayLink,
+    qrFrameText1,
+    qrFrameText2,
+    qrMargin,
+    qrOverlayBackground,
+    qrOverlayImage,
+    qrOverlayMode,
+    qrOverlayScale,
+    qrOverlayText,
+    qrSize,
+  ]);
+
+  React.useEffect(() => {
+    if (!qrCopyStatus) return;
+    const timer = window.setTimeout(() => setQrCopyStatus(""), 1800);
+    return () => window.clearTimeout(timer);
+  }, [qrCopyStatus]);
 
   React.useEffect(() => {
     if (!imagePreview) {
@@ -1270,6 +2179,20 @@ export default function AdminForms() {
       latestAtMs: filteredSubmissions[0]?.createdAtMs,
     };
   }, [filteredSubmissions]);
+
+  const statisticsSubmissions = React.useMemo(() => {
+    const range = dateFilterRange(statisticsDateFilter);
+    if (!range) return submissions;
+    return submissions.filter((submission) => {
+      const createdAt = submission.createdAtMs || 0;
+      return createdAt >= range.from && createdAt < range.to;
+    });
+  }, [statisticsDateFilter, submissions]);
+
+  const adminStatistics = React.useMemo(
+    () => buildAdminStatistics(statisticsSubmissions),
+    [statisticsSubmissions]
+  );
 
   React.useEffect(() => {
     setRenderedGroupCount(SUBMISSION_BATCH_SIZE);
@@ -2017,10 +2940,291 @@ export default function AdminForms() {
     setAppearance((current) => (current === "dark" ? "light" : "dark"));
   }
 
+  function renderAccountTools() {
+    return (
+      <>
+        <div className={styles.accountPill}>
+          <FiUser aria-hidden="true" className={styles.accountIcon} />
+          <div className={styles.accountText}>
+            <span>Logged in</span>
+            <strong>
+              {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
+            </strong>
+          </div>
+          {!DASHBOARD_AUTH_DISABLED ? (
+            <button
+              type="button"
+              className={styles.accountLogout}
+              onClick={() => void handleSignOut()}
+            >
+              <FiLogOut aria-hidden="true" />
+              <span>Log out</span>
+            </button>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className={styles.themeButton}
+          onClick={toggleAppearance}
+          aria-label={
+            appearance === "dark" ? "Switch to light mode" : "Switch to dark mode"
+          }
+          title={
+            appearance === "dark" ? "Switch to light mode" : "Switch to dark mode"
+          }
+        >
+          {appearance === "dark" ? (
+            <FiSun aria-hidden="true" />
+          ) : (
+            <FiMoon aria-hidden="true" />
+          )}
+        </button>
+      </>
+    );
+  }
+
+  function renderAdminNav(active: AdminPageKey) {
+    const items: Array<{
+      key: AdminPageKey;
+      label: string;
+      to: string;
+      icon: React.ReactNode;
+    }> = [
+      {
+        key: "statistics",
+        label: "Statistics",
+        to: "/admin/statistics",
+        icon: <FiBarChart2 aria-hidden="true" />,
+      },
+      {
+        key: "submissions",
+        label: "Submissions",
+        to: "/admin/forms",
+        icon: <FiInbox aria-hidden="true" />,
+      },
+      {
+        key: "manual",
+        label: "Manual submission",
+        to: "/admin/manual-submission",
+        icon: <FiEdit3 aria-hidden="true" />,
+      },
+      {
+        key: "qr",
+        label: "QR codes",
+        to: "/admin/qr-codes",
+        icon: <FiGrid aria-hidden="true" />,
+      },
+      {
+        key: "test",
+        label: "Test submissions",
+        to: "/admin/test-submissions",
+        icon: <FiCheckCircle aria-hidden="true" />,
+      },
+    ];
+
+    return (
+      <nav className={styles.adminNav} aria-label="Admin sections">
+        {items.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className={styles.adminNavButton}
+            data-active={active === item.key ? "true" : undefined}
+            onClick={() => navigate(item.to)}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    );
+  }
+
+  function renderAdminHeader(
+    title: string,
+    active: AdminPageKey,
+    subtitle?: string
+  ) {
+    return (
+      <div className={styles.hero}>
+        <div className={styles.heroTop}>
+          <div>
+            <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
+            <h1>{title}</h1>
+            {subtitle ? <p className={styles.heroSubtitle}>{subtitle}</p> : null}
+          </div>
+          <div className={styles.heroActions}>{renderAccountTools()}</div>
+        </div>
+        {renderAdminNav(active)}
+      </div>
+    );
+  }
+
   async function copyText(value: string) {
     const text = value.trim();
     if (!text || !navigator.clipboard) return;
     await navigator.clipboard.writeText(text);
+  }
+
+  function qrFileName(extension: "png" | "svg") {
+    const base = (qrLabel || "fyrrehaven-61-qr")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 48);
+    return `${base || "fyrrehaven-61-qr"}.${extension}`;
+  }
+
+  function downloadQrPng() {
+    if (!qrPng) return;
+    const link = document.createElement("a");
+    link.href = qrPng;
+    link.download = qrFileName("png");
+    link.click();
+  }
+
+  function downloadQrSvg() {
+    if (!qrSvg) return;
+    const blob = new Blob([qrSvg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = qrFileName("svg");
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function copyQrValue() {
+    await copyText(qrEncodedValue);
+    setQrCopyStatus("Copied");
+  }
+
+  function applyQrGuestPreset(key: string) {
+    const preset = QR_GUEST_LINK_PRESETS.find((item) => item.key === key);
+    if (!preset) return;
+    setQrValue(preset.destination);
+    setQrLabel(preset.label);
+    setQrFrameText1(preset.text1);
+    setQrFrameText2(preset.text2);
+    setQrFrameLinkText("linkText" in preset ? preset.linkText || "" : "");
+    setQrFrameLinkAuto(!("linkText" in preset && preset.linkText));
+    setQrTracked("tracked" in preset ? preset.tracked !== false : true);
+  }
+
+  function handleQrOverlayUpload(file?: File | null) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setQrError("Choose an image file for the center artwork.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setQrOverlayImage(String(reader.result || ""));
+      setQrOverlayMode("image");
+    };
+    reader.onerror = () => setQrError("The center image could not be read.");
+    reader.readAsDataURL(file);
+  }
+
+  function currentQrConfig(): SavedQrCode {
+    return {
+      id: qrId,
+      label: qrLabel.trim() || "Untitled QR code",
+      destination: qrDestination,
+      tracked: qrTracked,
+      foreground: qrForeground,
+      background: qrBackground,
+      size: qrSize,
+      margin: qrMargin,
+      errorCorrection: qrErrorCorrection,
+      overlayMode: qrOverlayMode,
+      overlayText: qrOverlayText,
+      overlayScale: qrOverlayScale,
+      overlayBackground: qrOverlayBackground,
+      frameEnabled: qrFrameEnabled,
+      frameText1: qrFrameText1,
+      frameText2: qrFrameText2,
+      frameLinkText: qrFrameDisplayLink,
+      frameLinkAuto: qrFrameLinkAuto,
+    };
+  }
+
+  async function saveQrCode() {
+    if (!qrDestination) return;
+    setQrSaveStatus("Saving...");
+    try {
+      const auth = getFirebaseAuth();
+      const token =
+        DASHBOARD_AUTH_DISABLED || !auth?.currentUser
+          ? null
+          : await auth.currentUser.getIdToken(true);
+      const res = await fetch("/api/admin/qr-codes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ qrCode: currentQrConfig() }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string; detail?: string };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+      setQrSaveStatus("Saved");
+      void fetchQrStats();
+    } catch (nextError) {
+      setQrSaveStatus(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    }
+  }
+
+  async function deleteSavedQrCode(id: string) {
+    setQrDeleteStatus("Deleting...");
+    try {
+      const auth = getFirebaseAuth();
+      const token =
+        DASHBOARD_AUTH_DISABLED || !auth?.currentUser
+          ? null
+          : await auth.currentUser.getIdToken(true);
+      const res = await fetch(`/api/admin/qr-codes?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string; detail?: string };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+      setQrDeleteStatus("Deleted");
+      void fetchQrStats();
+    } catch (nextError) {
+      setQrDeleteStatus(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    }
+  }
+
+  function loadSavedQrCode(saved: SavedQrCode) {
+    setQrValue(saved.destination);
+    setQrLabel(saved.label);
+    setQrTracked(saved.tracked);
+    setQrForeground(saved.foreground || DEFAULT_QR_GOLD);
+    setQrBackground(saved.background || "#ffffff");
+    setQrSize(saved.size || 720);
+    setQrMargin(saved.margin ?? 3);
+    setQrErrorCorrection(saved.errorCorrection || "H");
+    setQrOverlayMode(saved.overlayMode || "logo");
+    setQrOverlayText(saved.overlayText || "61");
+    setQrOverlayScale(saved.overlayScale || 22);
+    setQrOverlayBackground(saved.overlayBackground || "#000000");
+    setQrFrameEnabled(saved.frameEnabled ?? true);
+    setQrFrameText1(saved.frameText1 || "Text 1");
+    setQrFrameText2(saved.frameText2 || "Text 2");
+    setQrFrameLinkAuto(saved.frameLinkAuto ?? true);
+    setQrFrameLinkText(saved.frameLinkText || saved.destination);
   }
 
   function renderLoggedMeta(submission?: Submission | null) {
@@ -3137,6 +4341,480 @@ export default function AdminForms() {
     }
   }
 
+  function renderStatisticsKpi(
+    label: string,
+    value: React.ReactNode,
+    meta: string,
+    icon: React.ReactNode,
+    tone: "neutral" | "success" | "warning" | "danger" = "neutral"
+  ) {
+    return (
+      <div className={styles.statKpi} data-tone={tone}>
+        <div className={styles.statKpiHeader}>
+          <span className={styles.statKpiIcon}>{icon}</span>
+          <span>{label}</span>
+        </div>
+        <strong>{value}</strong>
+        <small>{meta}</small>
+      </div>
+    );
+  }
+
+  function renderStatisticsTable(
+    title: string,
+    rows: StatisticsBreakdownRow[],
+    options?: { showValue?: boolean }
+  ) {
+    return (
+      <section className={styles.statsPanel}>
+        <div className={styles.statsPanelHeader}>
+          <h2>{title}</h2>
+          <span>
+            {rows.length} row{rows.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className={styles.statsTableWrap}>
+          <table className={styles.statsTable}>
+            <thead>
+              <tr>
+                <th>Segment</th>
+                <th>Count</th>
+                <th>Email sent</th>
+                <th>Email failed</th>
+                {options?.showValue ? <th>Known value</th> : null}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length ? (
+                rows.map((row) => (
+                  <tr key={row.label}>
+                    <td>{row.label}</td>
+                    <td>{row.count}</td>
+                    <td>{row.sent}</td>
+                    <td>{row.failed}</td>
+                    {options?.showValue ? <td>{formatMoney(row.valueDKK)}</td> : null}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={options?.showValue ? 5 : 4}>No data in this period.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  }
+
+  function renderAnalyticsRows(
+    title: string,
+    rows: AnalyticsRow[] = [],
+    options?: { valueLabel?: string }
+  ) {
+    const total = rows.reduce((sum, row) => sum + row.count, 0);
+    return (
+      <section className={styles.statsPanel}>
+        <div className={styles.statsPanelHeader}>
+          <h2>{title}</h2>
+          <span>{total ? `${total} total` : "No data"}</span>
+        </div>
+        <div className={styles.analyticsList}>
+          {rows.length ? (
+            rows.map((row) => (
+              <div className={styles.analyticsRow} key={row.label}>
+                <div>
+                  <strong>{row.label}</strong>
+                  <small>{formatPercent(row.count, total)}</small>
+                </div>
+                <span>{row.count}</span>
+                <i
+                  aria-hidden="true"
+                  style={{ inlineSize: `${Math.max(6, (row.count / total) * 100)}%` }}
+                />
+              </div>
+            ))
+          ) : (
+            <p className={styles.detailMuted}>
+              {options?.valueLabel || "No analytics data in this period yet."}
+            </p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  function renderTopPagesTable(pages: AnalyticsPageRow[] = []) {
+    return (
+      <section className={styles.statsPanel}>
+        <div className={styles.statsPanelHeader}>
+          <h2>Top visited pages</h2>
+          <span>{pages.length} shown</span>
+        </div>
+        <div className={styles.statsTableWrap}>
+          <table className={styles.statsTable}>
+            <thead>
+              <tr>
+                <th>Page</th>
+                <th>Views</th>
+                <th>Visitors</th>
+                <th>Avg. time</th>
+                <th>Entries</th>
+                <th>Exit rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pages.length ? (
+                pages.map((page) => (
+                  <tr key={page.path}>
+                    <td>{page.path}</td>
+                    <td>{page.views}</td>
+                    <td>{page.visitors}</td>
+                    <td>{formatDuration(page.averageTimeMs)}</td>
+                    <td>{page.entries}</td>
+                    <td>{formatRatio(page.exitRate)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6}>No page visits in this period yet.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  }
+
+  function renderTrafficTrend(
+    rows: AnalyticsRow[] = [],
+    options?: { title?: string; emptyLabel?: string }
+  ) {
+    const max = Math.max(...rows.map((row) => row.count), 1);
+    return (
+      <section className={styles.statsPanel}>
+        <div className={styles.statsPanelHeader}>
+          <h2>{options?.title || "Traffic trend"}</h2>
+          <span>{rows.length ? "Recent periods" : "No data"}</span>
+        </div>
+        <div className={styles.trendBars}>
+          {rows.length ? (
+            rows.slice(-24).map((row) => (
+              <div className={styles.trendBar} key={row.label}>
+                <span style={{ blockSize: `${Math.max(5, (row.count / max) * 100)}%` }} />
+                <small>{row.count}</small>
+              </div>
+            ))
+          ) : (
+            <p className={styles.detailMuted}>
+              {options?.emptyLabel || "Traffic will appear here after visits are tracked."}
+            </p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  function renderStatisticsPage() {
+    const stats = adminStatistics;
+    const traffic = analytics?.totals;
+    const emailTotal = stats.sent + stats.failed + stats.pending;
+    const knownRevenueMeta =
+      stats.bookingCount > 0
+        ? `Average booking ${formatMoney(stats.averageBookingDKK)}`
+        : "No booking value yet";
+    const conversionRate =
+      traffic && traffic.visitors > 0 ? stats.bookingCount / traffic.visitors : 0;
+
+    return (
+      <Theme appearance={appearance} accentColor="gray" radius="large">
+        <Helmet>
+          <title>Statistics | Fyrrehaven 61 admin</title>
+          <meta name="robots" content="noindex,nofollow,noarchive" />
+        </Helmet>
+        <div className={styles.page}>
+          <div className={styles.shell}>
+            {renderAdminHeader(
+              "Statistics",
+              "statistics",
+              "Internal overview of website activity, submissions and booking performance."
+            )}
+
+            <section className={styles.statsToolbar}>
+              <div>
+                <p className={styles.eyebrow}>Website insights</p>
+                <h2>Private traffic and booking overview</h2>
+                <p>
+                  Consent-based first-party reporting for page visits, active visitors,
+                  devices, locations, referrer domains and booking conversions. The
+                  overview is for internal planning and does not store personal profiles.
+                </p>
+              </div>
+              <label className={styles.filterLabel} htmlFor="admin-statistics-date-filter">
+                <span>Date range</span>
+                <select
+                  id="admin-statistics-date-filter"
+                  className={styles.filterSelect}
+                  value={statisticsDateFilter}
+                  onChange={(event) =>
+                    setStatisticsDateFilter(
+                      event.target.value as SubmissionDateFilter
+                    )
+                  }
+                >
+                  {ADMIN_DATE_FILTER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </section>
+
+            {error ? (
+              <div className={styles.emptyState}>
+                <h2>The submission statistics could not load data</h2>
+                <p>{error}</p>
+              </div>
+            ) : (
+              <>
+                {analyticsError ? (
+                  <div className={styles.emptyState}>
+                    <h2>Website analytics could not load</h2>
+                    <p>{analyticsError}</p>
+                  </div>
+                ) : null}
+
+                <section className={styles.statsKpiGrid}>
+                  {renderStatisticsKpi(
+                    "Live visitors",
+                    isLoadingAnalytics ? "..." : traffic?.liveVisitors || 0,
+                    "Active in the last 5 minutes",
+                    <FiEye aria-hidden="true" />,
+                    traffic?.liveVisitors ? "success" : "neutral"
+                  )}
+                  {renderStatisticsKpi(
+                    "Page views",
+                    isLoadingAnalytics ? "..." : traffic?.pageViews || 0,
+                    `${traffic?.visitors || 0} visitors · ${
+                      traffic?.sessions || 0
+                    } sessions`,
+                    <FiGlobe aria-hidden="true" />
+                  )}
+                  {renderStatisticsKpi(
+                    "Bounce rate",
+                    isLoadingAnalytics ? "..." : formatRatio(traffic?.bounceRate),
+                    "Single-page sessions",
+                    <FiRepeat aria-hidden="true" />,
+                    (traffic?.bounceRate || 0) > 0.65 ? "warning" : "success"
+                  )}
+                  {renderStatisticsKpi(
+                    "Avg. page time",
+                    isLoadingAnalytics
+                      ? "..."
+                      : formatDuration(traffic?.averagePageTimeMs),
+                    `Session avg. ${formatDuration(traffic?.averageSessionMs)}`,
+                    <FiClock aria-hidden="true" />
+                  )}
+                </section>
+
+                <section className={styles.statsKpiGridSecondary}>
+                  {renderStatisticsKpi(
+                    "Conversion rate",
+                    formatRatio(conversionRate),
+                    `${stats.bookingCount} bookings from ${
+                      traffic?.visitors || 0
+                    } visitors`,
+                    <FiTrendingUp aria-hidden="true" />,
+                    conversionRate > 0 ? "success" : "neutral"
+                  )}
+                  {renderStatisticsKpi(
+                    "Avg. load time",
+                    formatDuration(traffic?.averageLoadMs),
+                    "Browser page load sample",
+                    <FiMonitor aria-hidden="true" />
+                  )}
+                  {renderStatisticsKpi(
+                    "Site area mix",
+                    `${analytics?.siteAreas?.[0]?.label || "No data"}`,
+                    analytics?.siteAreas
+                      ?.map((row) => `${row.label}: ${row.count}`)
+                      .join(" · ") || "No tracked visits yet",
+                    <FiPieChart aria-hidden="true" />
+                  )}
+                  {renderStatisticsKpi(
+                    "Mobile share",
+                    formatRatio(
+                      (analytics?.devices || []).find((row) => row.label === "Mobile")
+                        ?.count && traffic?.pageViews
+                        ? ((analytics?.devices || []).find(
+                            (row) => row.label === "Mobile"
+                          )?.count || 0) / traffic.pageViews
+                        : 0
+                    ),
+                    "Useful for booking experience decisions",
+                    <FiSmartphone aria-hidden="true" />
+                  )}
+                </section>
+
+                {renderTopPagesTable(analytics?.pages)}
+
+                <div className={styles.statsGrid}>
+                  {renderAnalyticsRows("Countries", analytics?.countries)}
+                  {renderAnalyticsRows("Devices", analytics?.devices)}
+                </div>
+
+                <div className={styles.statsGrid}>
+                  {renderAnalyticsRows("Referrers", analytics?.referrers)}
+                  {renderAnalyticsRows("Browsers", analytics?.browsers)}
+                </div>
+
+                <div className={styles.statsGrid}>
+                  {renderAnalyticsRows("Site areas", analytics?.siteAreas)}
+                  {renderAnalyticsRows("Languages", analytics?.languages)}
+                </div>
+
+                <div className={styles.statsGrid}>
+                  {renderAnalyticsRows("Entry pages", analytics?.entryPages)}
+                  {renderAnalyticsRows("Exit pages", analytics?.exitPages)}
+                </div>
+
+                <div className={styles.statsGrid}>
+                  {renderTrafficTrend(analytics?.daily?.length ? analytics.daily : analytics?.hourly)}
+                  {renderAnalyticsRows("Campaigns", analytics?.campaigns, {
+                    valueLabel: "Campaigns appear here when visitors arrive with UTM links.",
+                  })}
+                </div>
+
+                <section className={styles.statsKpiGrid}>
+                  {renderStatisticsKpi(
+                    "Total submissions",
+                    stats.total,
+                    `${stats.publicCount} public · ${stats.privateCount} internal/private`,
+                    <FiInbox aria-hidden="true" />
+                  )}
+                  {renderStatisticsKpi(
+                    "Known revenue",
+                    formatMoney(stats.totalKnownRevenueDKK),
+                    knownRevenueMeta,
+                    <FiBarChart2 aria-hidden="true" />,
+                    "success"
+                  )}
+                  {renderStatisticsKpi(
+                    "Email success",
+                    formatPercent(stats.sent, emailTotal),
+                    `${stats.sent} sent · ${stats.failed} failed · ${stats.pending} pending`,
+                    <FiMail aria-hidden="true" />,
+                    stats.failed ? "warning" : "success"
+                  )}
+                  {renderStatisticsKpi(
+                    "Unique guests",
+                    stats.uniqueGuests,
+                    `Latest: ${formatDateTime(stats.latestAtMs)}`,
+                    <FiUser aria-hidden="true" />
+                  )}
+                </section>
+
+                <section className={styles.statsKpiGridSecondary}>
+                  {renderStatisticsKpi(
+                    "Bookings",
+                    stats.bookingCount,
+                    `${stats.bookingNights} booked night${
+                      stats.bookingNights === 1 ? "" : "s"
+                    }`,
+                    <FiCheckCircle aria-hidden="true" />,
+                    "success"
+                  )}
+                  {renderStatisticsKpi(
+                    "Extra services",
+                    formatMoney(stats.extraRevenueDKK),
+                    "Known extra-service value",
+                    <FiPieChart aria-hidden="true" />
+                  )}
+                  {renderStatisticsKpi(
+                    "Check-in/out",
+                    stats.checkinCount + stats.checkoutCount,
+                    `${stats.checkinCount} check-in · ${stats.checkoutCount} check-out`,
+                    <FiZap aria-hidden="true" />
+                  )}
+                  {renderStatisticsKpi(
+                    "Meter approvals",
+                    stats.approvedCheckins,
+                    `${stats.pendingCheckinApproval} waiting for approval`,
+                    <FiCheck aria-hidden="true" />,
+                    stats.pendingCheckinApproval ? "warning" : "success"
+                  )}
+                </section>
+
+                <div className={styles.statsGrid}>
+                  {renderStatisticsTable("Forms", stats.formRows, {
+                    showValue: true,
+                  })}
+                  {renderStatisticsTable("Traffic source", stats.sourceRows, {
+                    showValue: true,
+                  })}
+                </div>
+
+                <div className={styles.statsGrid}>
+                  <section className={styles.statsPanel}>
+                    <div className={styles.statsPanelHeader}>
+                      <h2>Top countries</h2>
+                      <span>{stats.countryRows.length} shown</span>
+                    </div>
+                    <div className={styles.countryList}>
+                      {stats.countryRows.length ? (
+                        stats.countryRows.map((row) => (
+                          <div className={styles.countryRow} key={row.label}>
+                            <span>{row.label}</span>
+                            <strong>{row.count}</strong>
+                          </div>
+                        ))
+                      ) : (
+                        <p className={styles.detailMuted}>No country data in this period.</p>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className={styles.statsPanel}>
+                    <div className={styles.statsPanelHeader}>
+                      <h2>Latest activity</h2>
+                      <span>{formatDateTime(stats.latestAtMs)}</span>
+                    </div>
+                    <div className={styles.recentActivityList}>
+                      {stats.recentRows.length ? (
+                        stats.recentRows.map((submission) => (
+                          <button
+                            type="button"
+                            className={styles.recentActivityRow}
+                            key={submission.id}
+                            onClick={() =>
+                              navigate(adminSubmissionPath(submission.id, "overview"))
+                            }
+                          >
+                            <span>
+                              <strong>
+                                {displayNameWithCountry(submission) || "Unknown name"}
+                              </strong>
+                              <small>{submissionLabel(submission)}</small>
+                            </span>
+                            <span>{formatDateTime(submission.createdAtMs)}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <p className={styles.detailMuted}>No recent activity in this period.</p>
+                      )}
+                    </div>
+                  </section>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </Theme>
+    );
+  }
+
   const testSubmissionTool = (
     <section className={styles.testPanel} aria-label="Manual test submissions">
       <div>
@@ -3399,66 +5077,548 @@ export default function AdminForms() {
         </Helmet>
         <div className={styles.page}>
           <div className={styles.shell}>
-            <div className={styles.hero}>
-              <div className={styles.heroTop}>
-                <div>
-                  <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
-                  <h1>Test submissions</h1>
+            {renderAdminHeader("Test submissions", "test")}
+
+            {testSubmissionTool}
+          </div>
+        </div>
+      </Theme>
+    );
+  }
+
+  if (isQrCodesPage) {
+    const isProbablyUrl = /^https?:\/\//i.test(qrEncodedValue.trim());
+    const qrTotals = qrStats?.totals;
+
+    return (
+      <Theme appearance={appearance} accentColor="gray" radius="large">
+        <Helmet>
+          <title>QR codes | Fyrrehaven 61 admin</title>
+          <meta name="robots" content="noindex,nofollow,noarchive" />
+        </Helmet>
+        <div className={styles.page}>
+          <div className={styles.shell}>
+            {renderAdminHeader(
+              "QR codes",
+              "qr",
+              "Create print-ready QR codes for guest links, house information and internal materials."
+            )}
+
+            <section className={styles.qrPanel} aria-label="Create QR code">
+              <div className={styles.qrEditor}>
+                <div className={styles.manualHeader}>
+                  <h2>Create QR code</h2>
+                  <p>
+                    Generate a private QR asset in the browser. Tracked codes use
+                    Fyrrehaven's own redirect endpoint so scans can be counted.
+                  </p>
                 </div>
-                <div className={styles.heroActions}>
+
+                <div className={styles.qrFormGrid}>
+                  <label className={`${styles.manualField} ${styles.manualFull}`}>
+                    <span>English guest link</span>
+                    <select
+                      value={
+                        QR_GUEST_LINK_PRESETS.find(
+                          (preset) => preset.destination === qrDestination
+                        )?.key || ""
+                      }
+                      onChange={(event) => applyQrGuestPreset(event.target.value)}
+                    >
+                      <option value="">Custom destination</option>
+                      {QR_GUEST_LINK_PRESETS.map((preset) => (
+                        <option key={preset.key} value={preset.key}>
+                          {preset.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className={`${styles.manualField} ${styles.manualFull}`}>
+                    <span>Destination URL or text</span>
+                    <textarea
+                      value={qrValue}
+                      onChange={(event) => {
+                        setQrValue(event.target.value);
+                        if (qrFrameLinkAuto) setQrFrameLinkText("");
+                      }}
+                      placeholder="https://fyrrehaven-61.dk/en"
+                    />
+                  </label>
+
+                  <label className={`${styles.qrToggleField} ${styles.manualFull}`}>
+                    <input
+                      type="checkbox"
+                      checked={qrTracked}
+                      onChange={(event) => setQrTracked(event.target.checked)}
+                    />
+                    <span>
+                      Track scans through Fyrrehaven before opening the destination.
+                    </span>
+                  </label>
+
+                  <label className={`${styles.qrToggleField} ${styles.manualFull}`}>
+                    <input
+                      type="checkbox"
+                      checked={qrFrameEnabled}
+                      onChange={(event) => setQrFrameEnabled(event.target.checked)}
+                    />
+                    <span>Use print frame with bottom text and full link.</span>
+                  </label>
+
+                  <label className={styles.manualField}>
+                    <span>File label</span>
+                    <input
+                      value={qrLabel}
+                      onChange={(event) => setQrLabel(event.target.value)}
+                      placeholder="Fyrrehaven 61"
+                    />
+                  </label>
+
+                  <label className={styles.manualField}>
+                    <span>Size</span>
+                    <input
+                      type="number"
+                      min={240}
+                      max={1800}
+                      step={40}
+                      value={qrSize}
+                      onChange={(event) =>
+                        setQrSize(
+                          Math.min(1800, Math.max(240, Number(event.target.value) || 720))
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label className={styles.manualField}>
+                    <span>Quiet zone</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={8}
+                      value={qrMargin}
+                      onChange={(event) =>
+                        setQrMargin(
+                          Math.min(8, Math.max(0, Number(event.target.value) || 0))
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label className={styles.manualField}>
+                    <span>Error correction</span>
+                    <select
+                      value={qrErrorCorrection}
+                      onChange={(event) =>
+                        setQrErrorCorrection(
+                          event.target.value as QrErrorCorrectionLevel
+                        )
+                      }
+                    >
+                      {QR_ERROR_CORRECTION_LEVELS.map((level) => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className={styles.manualField}>
+                    <span>Center content</span>
+                    <select
+                      value={qrOverlayMode}
+                      onChange={(event) =>
+                        setQrOverlayMode(event.target.value as QrOverlayMode)
+                      }
+                    >
+                      <option value="logo">Fyrrehaven logo</option>
+                      <option value="text">Text</option>
+                      <option value="image">Custom image</option>
+                      <option value="none">None</option>
+                    </select>
+                  </label>
+
+                  <label className={styles.manualField}>
+                    <span>Center background</span>
+                    <input
+                      type="color"
+                      value={qrOverlayBackground}
+                      onChange={(event) => setQrOverlayBackground(event.target.value)}
+                    />
+                  </label>
+
+                  <label className={styles.manualField}>
+                    <span>Foreground</span>
+                    <input
+                      type="color"
+                      value={qrForeground}
+                      onChange={(event) => setQrForeground(event.target.value)}
+                    />
+                  </label>
+
+                  <label className={styles.manualField}>
+                    <span>Background</span>
+                    <input
+                      type="color"
+                      value={qrBackground}
+                      onChange={(event) => setQrBackground(event.target.value)}
+                    />
+                  </label>
+
+                  <label className={styles.manualField}>
+                    <span>Center size</span>
+                    <input
+                      type="range"
+                      min={8}
+                      max={32}
+                      value={qrOverlayScale}
+                      onChange={(event) =>
+                        setQrOverlayScale(Number(event.target.value) || 22)
+                      }
+                    />
+                  </label>
+
+                  {qrOverlayMode === "text" ? (
+                    <label className={styles.manualField}>
+                      <span>Center text</span>
+                      <input
+                        value={qrOverlayText}
+                        maxLength={8}
+                        onChange={(event) => setQrOverlayText(event.target.value)}
+                        placeholder="61"
+                      />
+                    </label>
+                  ) : null}
+
+                  {qrOverlayMode === "image" ? (
+                    <label className={styles.manualField}>
+                      <span>Center image</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) =>
+                          handleQrOverlayUpload(event.target.files?.[0])
+                        }
+                      />
+                    </label>
+                  ) : null}
+
+                  {qrFrameEnabled ? (
+                    <>
+                      <label className={styles.manualField}>
+                        <span>Text 1</span>
+                        <input
+                          value={qrFrameText1}
+                          onChange={(event) => setQrFrameText1(event.target.value)}
+                          placeholder="Text 1"
+                        />
+                      </label>
+                      <label className={styles.manualField}>
+                        <span>Text 2</span>
+                        <input
+                          value={qrFrameText2}
+                          onChange={(event) => setQrFrameText2(event.target.value)}
+                          placeholder="Text 2"
+                        />
+                      </label>
+                      <label className={`${styles.manualField} ${styles.manualFull}`}>
+                        <span>Full link text</span>
+                        <input
+                          value={qrFrameDisplayLink}
+                          onChange={(event) => {
+                            setQrFrameLinkAuto(false);
+                            setQrFrameLinkText(event.target.value);
+                          }}
+                          placeholder="www.booking.fyrrehaven-61.dk/en/check-in-out"
+                        />
+                      </label>
+                      <label className={`${styles.qrToggleField} ${styles.manualFull}`}>
+                        <input
+                          type="checkbox"
+                          checked={qrFrameLinkAuto}
+                          onChange={(event) => {
+                            setQrFrameLinkAuto(event.target.checked);
+                            if (event.target.checked) setQrFrameLinkText("");
+                          }}
+                        />
+                        <span>Update the bottom link automatically from the destination.</span>
+                      </label>
+                    </>
+                  ) : null}
+                </div>
+
+                <div className={styles.manualActions}>
                   <button
                     type="button"
                     className={styles.ghostButton}
-                    onClick={() => navigate("/admin/forms")}
+                    onClick={copyQrValue}
+                    disabled={!qrValue.trim()}
                   >
-                    <FiChevronLeft aria-hidden="true" />
-                    Back to admin
+                    <FiCopy aria-hidden="true" />
+                    {qrCopyStatus || "Copy value"}
                   </button>
-                  <div className={styles.accountPill}>
-                    <FiUser aria-hidden="true" className={styles.accountIcon} />
-                    <div className={styles.accountText}>
-                      <span>Logged in</span>
-                      <strong>
-                        {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
-                      </strong>
-                    </div>
-                    {!DASHBOARD_AUTH_DISABLED ? (
-                      <button
-                        type="button"
-                        className={styles.accountLogout}
-                        onClick={() => void handleSignOut()}
-                      >
-                        <FiLogOut aria-hidden="true" />
-                        <span>Log out</span>
-                      </button>
-                    ) : null}
-                  </div>
+                  {isProbablyUrl ? (
+                    <a
+                      className={styles.ghostButton}
+                      href={qrEncodedValue.trim()}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <FiLink aria-hidden="true" />
+                      Open link
+                    </a>
+                  ) : null}
                   <button
                     type="button"
-                    className={styles.themeButton}
-                    onClick={toggleAppearance}
-                    aria-label={
-                      appearance === "dark"
-                        ? "Switch to light mode"
-                        : "Switch to dark mode"
-                    }
-                    title={
-                      appearance === "dark"
-                        ? "Switch to light mode"
-                        : "Switch to dark mode"
-                    }
+                    className={styles.button}
+                    onClick={saveQrCode}
+                    disabled={!qrDestination}
                   >
-                    {appearance === "dark" ? (
-                      <FiSun aria-hidden="true" />
-                    ) : (
-                      <FiMoon aria-hidden="true" />
-                    )}
+                    <FiCheck aria-hidden="true" />
+                    {qrSaveStatus || "Save forever"}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.button}
+                    onClick={downloadQrPng}
+                    disabled={!qrPng}
+                  >
+                    <FiDownload aria-hidden="true" />
+                    PNG
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.button}
+                    onClick={downloadQrSvg}
+                    disabled={!qrSvg}
+                  >
+                    <FiDownload aria-hidden="true" />
+                    SVG
                   </button>
                 </div>
               </div>
-            </div>
 
-            {testSubmissionTool}
+              <aside className={styles.qrPreviewPanel} aria-label="QR preview">
+                <div className={styles.qrPreview}>
+                  {qrPng ? (
+                    <img src={qrPng} alt={`QR code for ${qrLabel || "value"}`} />
+                  ) : (
+                    <span>{qrError || "QR preview"}</span>
+                  )}
+                </div>
+                <div className={styles.qrPreviewMeta}>
+                  <strong>{qrLabel || "Untitled QR code"}</strong>
+                  <span>{qrValue.trim() || "No destination entered"}</span>
+                  {qrTracked ? <span>Scan URL: {qrEncodedValue}</span> : null}
+                  <span>ID: {qrId}</span>
+                  {qrError ? <small>{qrError}</small> : null}
+                </div>
+              </aside>
+            </section>
+
+            <section className={styles.statsPanel}>
+              <div className={styles.statsPanelHeader}>
+                <h2>Saved QR codes</h2>
+                <span>{qrStats?.saved.length || 0} saved</span>
+              </div>
+              <div className={styles.statsTableWrap}>
+                <table className={styles.statsTable}>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Destination</th>
+                      <th>Tracking</th>
+                      <th>Updated</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {qrStats?.saved.length ? (
+                      qrStats.saved.map((saved) => (
+                        <tr key={saved.id}>
+                          <td>{saved.label}</td>
+                          <td>{saved.destination}</td>
+                          <td>{saved.tracked ? "Enabled" : "Disabled"}</td>
+                          <td>
+                            {saved.updatedAtMs
+                              ? formatDateTime(saved.updatedAtMs)
+                              : "Not recorded"}
+                          </td>
+                          <td>
+                            <div className={styles.qrTableActions}>
+                              <button
+                                type="button"
+                                className={styles.ghostButton}
+                                onClick={() => loadSavedQrCode(saved)}
+                              >
+                                Load
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.deleteButton}
+                                onClick={() => deleteSavedQrCode(saved.id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5}>No saved QR codes yet.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {qrDeleteStatus ? (
+                <p className={styles.detailMuted}>{qrDeleteStatus}</p>
+              ) : null}
+            </section>
+
+            <section className={styles.qrStatsSection} aria-label="QR code statistics">
+              <div className={styles.statsToolbar}>
+                <div>
+                  <p className={styles.eyebrow}>QR scan statistics</p>
+                  <h2>Usage by code and time</h2>
+                  <p>
+                    Counts are based on scans of tracked QR codes. Untracked codes
+                    open directly and will not appear in these statistics.
+                  </p>
+                </div>
+                <label className={styles.filterLabel} htmlFor="admin-qr-date-filter">
+                  <span>Date range</span>
+                  <select
+                    id="admin-qr-date-filter"
+                    className={styles.filterSelect}
+                    value={qrStatsDateFilter}
+                    onChange={(event) =>
+                      setQrStatsDateFilter(
+                        event.target.value as SubmissionDateFilter
+                      )
+                    }
+                  >
+                    {ADMIN_DATE_FILTER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {qrStatsError ? (
+                <div className={styles.emptyState}>
+                  <h2>QR statistics could not load</h2>
+                  <p>{qrStatsError}</p>
+                </div>
+              ) : null}
+
+              <section className={styles.statsKpiGrid}>
+                {renderStatisticsKpi(
+                  "Total scans",
+                  isLoadingQrStats ? "..." : qrTotals?.scans || 0,
+                  `${qrTotals?.qrCodes || 0} tracked codes used`,
+                  <FiGrid aria-hidden="true" />
+                )}
+                {renderStatisticsKpi(
+                  "Unique visitors",
+                  isLoadingQrStats ? "..." : qrTotals?.uniqueVisitors || 0,
+                  "Based on anonymous visitor hashes",
+                  <FiUser aria-hidden="true" />
+                )}
+                {renderStatisticsKpi(
+                  "Last scan",
+                  qrTotals?.lastScanMs ? formatDateTime(qrTotals.lastScanMs) : "No scans",
+                  "Most recent tracked QR use",
+                  <FiClock aria-hidden="true" />
+                )}
+                {renderStatisticsKpi(
+                  "Current code",
+                  qrId,
+                  qrTracked ? "Tracking enabled" : "Tracking disabled",
+                  <FiLink aria-hidden="true" />,
+                  qrTracked ? "success" : "neutral"
+                )}
+              </section>
+
+              <section className={styles.statsPanel}>
+                <div className={styles.statsPanelHeader}>
+                  <h2>Tracked QR codes</h2>
+                  <span>{qrStats?.qrCodes.length || 0} shown</span>
+                </div>
+                <div className={styles.statsTableWrap}>
+                  <table className={styles.statsTable}>
+                    <thead>
+                      <tr>
+                        <th>Code</th>
+                        <th>Scans</th>
+                        <th>Last scan</th>
+                        <th>Destination</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {qrStats?.qrCodes.length ? (
+                        qrStats.qrCodes.map((row) => (
+                          <tr key={row.id}>
+                            <td>{row.label}</td>
+                            <td>{row.scans}</td>
+                            <td>{formatDateTime(row.lastScanMs)}</td>
+                            <td>{row.destination}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4}>No tracked QR scans in this period yet.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <div className={styles.statsGrid}>
+                {renderTrafficTrend(
+                  qrStats?.daily?.length ? qrStats.daily : qrStats?.hourly,
+                  {
+                    title: "Scan trend",
+                    emptyLabel: "QR scans will appear here after tracked codes are used.",
+                  }
+                )}
+                {renderAnalyticsRows("Devices", qrStats?.devices)}
+              </div>
+
+              <div className={styles.statsGrid}>
+                {renderAnalyticsRows("Countries", qrStats?.countries)}
+                {renderAnalyticsRows("Referrers", qrStats?.referrers)}
+              </div>
+
+              <section className={styles.statsPanel}>
+                <div className={styles.statsPanelHeader}>
+                  <h2>Recent scans</h2>
+                  <span>{qrStats?.recent.length || 0} shown</span>
+                </div>
+                <div className={styles.recentActivity}>
+                  {qrStats?.recent.length ? (
+                    qrStats.recent.map((scan) => (
+                      <div className={styles.recentActivityRow} key={scan.id}>
+                        <div>
+                          <strong>{scan.label}</strong>
+                          <span>
+                            {scan.deviceType || "Unknown"} · {scan.country || "Unknown"}
+                          </span>
+                        </div>
+                        <time>{formatDateTime(scan.createdAtMs)}</time>
+                      </div>
+                    ))
+                  ) : (
+                    <p className={styles.detailMuted}>Recent scans will appear here.</p>
+                  )}
+                </div>
+              </section>
+            </section>
           </div>
         </div>
       </Theme>
@@ -3474,70 +5634,36 @@ export default function AdminForms() {
         </Helmet>
         <div className={styles.page}>
           <div className={styles.shell}>
-            <div className={styles.hero}>
-              <div className={styles.heroTop}>
-                <div>
-                  <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
-                  <h1>Manual submission</h1>
-                </div>
-                <div className={styles.heroActions}>
-                  <button
-                    type="button"
-                    className={styles.ghostButton}
-                    onClick={() => navigate("/admin/forms")}
-                  >
-                    <FiChevronLeft aria-hidden="true" />
-                    Back to admin
-                  </button>
-                  <div className={styles.accountPill}>
-                    <FiUser aria-hidden="true" className={styles.accountIcon} />
-                    <div className={styles.accountText}>
-                      <span>Logged in</span>
-                      <strong>
-                        {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
-                      </strong>
-                    </div>
-                    {!DASHBOARD_AUTH_DISABLED ? (
-                      <button
-                        type="button"
-                        className={styles.accountLogout}
-                        onClick={() => void handleSignOut()}
-                      >
-                        <FiLogOut aria-hidden="true" />
-                        <span>Log out</span>
-                      </button>
-                    ) : null}
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.themeButton}
-                    onClick={toggleAppearance}
-                    aria-label={
-                      appearance === "dark"
-                        ? "Switch to light mode"
-                        : "Switch to dark mode"
-                    }
-                    title={
-                      appearance === "dark"
-                        ? "Switch to light mode"
-                        : "Switch to dark mode"
-                    }
-                  >
-                    {appearance === "dark" ? (
-                      <FiSun aria-hidden="true" />
-                    ) : (
-                      <FiMoon aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+            {renderAdminHeader("Manual submission", "manual")}
 
             {manualSubmissionForm}
           </div>
         </div>
       </Theme>
     );
+  }
+
+  if (isStatisticsPage) {
+    if (isLoadingSubmissions && !hasLoadedSubmissions) {
+      return (
+        <Theme appearance={appearance} accentColor="gray" radius="large">
+          <div className={styles.page}>
+            <div className={styles.shell}>
+              <div className={styles.loadingState}>
+                <span className={styles.loader} aria-hidden="true" />
+                <div>
+                  <p className={styles.eyebrow}>Statistics</p>
+                  <h1>Loading statistics...</h1>
+                  <p>Fetching submissions once so the overview can be calculated.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Theme>
+      );
+    }
+
+    return renderStatisticsPage();
   }
 
   if (isLoadingSubmissions && !hasLoadedSubmissions) {
@@ -3571,71 +5697,7 @@ export default function AdminForms() {
       </Helmet>
       <div className={styles.page}>
         <div className={styles.shell}>
-          <div className={styles.hero}>
-            <div className={styles.heroTop}>
-              <div>
-                <p className={styles.eyebrow}>Fyrrehaven 61 admin</p>
-                <h1>Forms dashboard</h1>
-              </div>
-              <div className={styles.heroActions}>
-                <button
-                  type="button"
-                  className={styles.ghostButton}
-                  onClick={() => navigate("/admin/manual-submission")}
-                >
-                  <FiEdit3 aria-hidden="true" />
-                  Manual submission
-                </button>
-                <button
-                  type="button"
-                  className={styles.ghostButton}
-                  onClick={() => navigate("/admin/test-submissions")}
-                >
-                  Test submissions
-                </button>
-                <div className={styles.accountPill}>
-                  <FiUser aria-hidden="true" className={styles.accountIcon} />
-                  <div className={styles.accountText}>
-                    <span>Logged in</span>
-                    <strong>
-                      {adminEmail || user?.email || "local@fyrrehaven-61.dk"}
-                    </strong>
-                  </div>
-                  {!DASHBOARD_AUTH_DISABLED ? (
-                    <button
-                      type="button"
-                      className={styles.accountLogout}
-                      onClick={() => void handleSignOut()}
-                    >
-                      <FiLogOut aria-hidden="true" />
-                      <span>Log out</span>
-                    </button>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  className={styles.themeButton}
-                  onClick={toggleAppearance}
-                  aria-label={
-                    appearance === "dark"
-                      ? "Switch to light mode"
-                      : "Switch to dark mode"
-                  }
-                  title={
-                    appearance === "dark"
-                      ? "Switch to light mode"
-                      : "Switch to dark mode"
-                  }
-                >
-                  {appearance === "dark" ? (
-                    <FiSun aria-hidden="true" />
-                  ) : (
-                    <FiMoon aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
+          {renderAdminHeader("Forms dashboard", "submissions")}
 
           <div className={styles.cards}>
             <div className={styles.card}>
@@ -3726,14 +5788,11 @@ export default function AdminForms() {
                             setDateFilter(event.target.value as SubmissionDateFilter)
                           }
                         >
-                          <option value="all">All time</option>
-                          <option value="today">Today</option>
-                          <option value="current-week">Current week</option>
-                          <option value="last-week">Last week</option>
-                          <option value="last-month">Last month</option>
-                          <option value="last-3-months">Last 3 months</option>
-                          <option value="last-6-months">Last 6 months</option>
-                          <option value="year">This year</option>
+                          {ADMIN_DATE_FILTER_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
                         </select>
                       </label>
                     </div>

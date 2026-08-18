@@ -24,11 +24,12 @@ export const cookieData: Record<"da" | "en" | "de", CookieCategory> = {
     ],
     statistics: [
       {
-        name: "_ga / _ga_*",
-        provider: "Google Analytics",
-        purpose: "Måler besøg og hjælper os med at forstå hvilke sider der bruges.",
-        duration: "op til 2 år",
-        type: "http",
+        name: "fh61_analytics_visitor / fh61_analytics_session",
+        provider: "Fyrrehaven 61",
+        purpose:
+          "Måler besøg, sider, enheder og anonym brugsstatistik med førstepartsdata, så vi kan forbedre hjemmesiden.",
+        duration: "session og op til 6 måneder",
+        type: "lokal/session storage",
       },
     ],
   },
@@ -44,11 +45,12 @@ export const cookieData: Record<"da" | "en" | "de", CookieCategory> = {
     ],
     statistics: [
       {
-        name: "_ga / _ga_*",
-        provider: "Google Analytics",
-        purpose: "Misst Besuche und hilft uns zu verstehen, welche Seiten genutzt werden.",
-        duration: "bis zu 2 Jahre",
-        type: "http",
+        name: "fh61_analytics_visitor / fh61_analytics_session",
+        provider: "Fyrrehaven 61",
+        purpose:
+          "Misst Besuche, Seiten, Geräte und anonyme Nutzungsstatistiken mit Erstanbieterdaten, damit wir die Website verbessern können.",
+        duration: "Sitzung und bis zu 6 Monate",
+        type: "Local/Session Storage",
       },
     ],
   },
@@ -64,11 +66,12 @@ export const cookieData: Record<"da" | "en" | "de", CookieCategory> = {
     ],
     statistics: [
       {
-        name: "_ga / _ga_*",
-        provider: "Google Analytics",
-        purpose: "Measures visits and helps us understand which pages are used.",
-        duration: "up to 2 years",
-        type: "http",
+        name: "fh61_analytics_visitor / fh61_analytics_session",
+        provider: "Fyrrehaven 61",
+        purpose:
+          "Measures visits, pages, devices and anonymous usage statistics with first-party data so we can improve the website.",
+        duration: "session and up to 6 months",
+        type: "local/session storage",
       },
     ],
   },
