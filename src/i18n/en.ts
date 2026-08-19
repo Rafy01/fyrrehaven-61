@@ -647,7 +647,7 @@ export const en = {
         "tooFast": "Please review the form once more and send it again in a moment.",
         "formExpired": "This form session has expired. Please reload the page and send the reading again.",
         "invalidFileType": "Please upload image files only. Photos from your phone camera are accepted.",
-        "fileTooLarge": "One or more photos are too large. Please upload smaller images or fewer photos.",
+        "fileTooLarge": "One or more photos are too large. Please upload fewer photos, or open the meter photo, take a screenshot, and upload the screenshot instead.",
         "tooManyFiles": "Too many photos were uploaded. Please upload only the meter photos needed for the reading.",
         "tooManyFields": "Too much information was submitted. Please reload the page and try again.",
         "missingFiles": "Please upload at least one photo of the meter reading.",
