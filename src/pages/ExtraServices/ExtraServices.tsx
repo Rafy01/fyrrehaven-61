@@ -62,6 +62,44 @@ function addMonths(date: Date, amount: number) {
 type BookingValidationResponse =
   | { ok: true }
   | { ok: false; error?: string; detail?: string | null };
+type ContactSubmitResponse = {
+  ok?: boolean;
+  error?: string;
+  detail?: string | null;
+  mailStatus?: string;
+};
+
+function submitErrorKey(code: string, isLateRequest: boolean) {
+  switch (code) {
+    case "RATE_LIMIT_EXCEEDED":
+      return "form.errors.rateLimited";
+    case "FORM_SUBMITTED_TOO_FAST":
+      return "form.errors.tooFast";
+    case "FORM_EXPIRED":
+    case "INVALID_FORM_STATE":
+      return "form.errors.formExpired";
+    case "INVALID_EMAIL":
+      return "form.errors.email";
+    case "INVALID_NAME":
+    case "VALIDATION_ERROR":
+      return "form.errors.required";
+    case "MISSING_CONSENT":
+    case "MISSING_FEES_ACCEPTANCE":
+      return "form.errors.accept";
+    case "FORBIDDEN_ORIGIN":
+    case "FORBIDDEN_USER_AGENT":
+    case "BOT_DETECTED":
+    case "INVALID_PAYLOAD":
+      return "form.errors.security";
+    case "ENV_MISSING":
+    case "MAIL_AUTH_FAILED":
+    case "MAIL_AUTOREPLY_FAILED":
+    case "MAIL_ERROR":
+      return isLateRequest ? "form.errors.lateSubmit" : "form.errors.submit";
+    default:
+      return isLateRequest ? "form.errors.lateSubmit" : "form.errors.submit";
+  }
+}
 
 export default function ExtraServices({
   lang,
@@ -349,7 +387,14 @@ export default function ExtraServices({
         }),
       });
 
-      if (!res.ok) throw new Error("submit failed");
+      const submitResult =
+        (await res.json().catch(() => null)) as ContactSubmitResponse | null;
+
+      if (!res.ok || submitResult?.ok === false) {
+        const code = submitResult?.error || "";
+        const key = submitErrorKey(code, isLateRequest);
+        throw new Error(t(key));
+      }
 
       setSent(true);
       setName("");
@@ -362,8 +407,12 @@ export default function ExtraServices({
       setHotTubFill("no");
       setMessage("");
       setAccepted(false);
-    } catch {
-      setError(t("form.errors.submit"));
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error && submitError.message
+          ? submitError.message
+          : t(isLateRequest ? "form.errors.lateSubmit" : "form.errors.submit")
+      );
     } finally {
       setSending(false);
     }

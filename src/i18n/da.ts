@@ -360,6 +360,11 @@ export const da = {
         "noSelection": "Vælg venligst mindst én ekstra service.",
         "tooManyPeople": "Sengetøj, sengelinned, håndklæder og pakker kan samlet højst bestilles til 10 personer.",
         "accept": "Accepter venligst husregler og gebyroversigt før indsendelse.",
+        "rateLimited": "Der er sendt for mange forespørgsler på kort tid. Vent venligst et øjeblik, og prøv igen.",
+        "tooFast": "Gennemgå venligst formularen én gang mere, og send den igen om et øjeblik.",
+        "formExpired": "Formularsessionen er udløbet. Genindlæs siden, og send forespørgslen igen.",
+        "security": "Forespørgslen kunne ikke accepteres fra denne browsersession. Genindlæs siden, og prøv igen.",
+        "lateSubmit": "Din sene forespørgsel kunne ikke sendes automatisk. Da opholdet er tæt på, bedes du kontakte os direkte, så vi kan arrangere det.",
         "submit": "Kunne ikke sende forespørgslen. Prøv igen om lidt."
       }
     }

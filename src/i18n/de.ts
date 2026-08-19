@@ -360,6 +360,11 @@ export const de = {
         "noSelection": "Bitte wählen Sie mindestens eine Zusatzleistung aus, wenn Sie mit Ja antworten.",
         "tooManyPeople": "Bettwaren, Bettwäsche, Handtücher und Pakete können insgesamt nur für bis zu 10 Personen bestellt werden.",
         "accept": "Bitte akzeptieren Sie Hausregeln und Gebührenübersicht vor dem Absenden.",
+        "rateLimited": "Es wurden zu viele Anfragen in kurzer Zeit gesendet. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+        "tooFast": "Bitte prüfen Sie das Formular noch einmal und senden Sie es in einem Moment erneut.",
+        "formExpired": "Diese Formularsitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie die Anfrage erneut.",
+        "security": "Die Anfrage konnte aus dieser Browsersitzung nicht angenommen werden. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
+        "lateSubmit": "Ihre späte Anfrage konnte nicht automatisch gesendet werden. Da Ihr Aufenthalt kurz bevorsteht, kontaktieren Sie uns bitte direkt, damit wir es arrangieren können.",
         "submit": "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es gleich noch einmal."
       }
     }

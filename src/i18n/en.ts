@@ -360,6 +360,11 @@ export const en = {
         "noSelection": "Please select at least one extra service when you answer yes.",
         "tooManyPeople": "Bed linen, sheets, towels and bundles can only be ordered for up to 10 people in total.",
         "accept": "Please accept the house rules and fee list before submitting.",
+        "rateLimited": "Too many requests were sent in a short time. Please wait a moment and try again.",
+        "tooFast": "Please review the form once more and send it again in a moment.",
+        "formExpired": "This form session has expired. Please reload the page and send the request again.",
+        "security": "The request could not be accepted from this browser session. Please reload the page and try again.",
+        "lateSubmit": "Your late request could not be sent automatically. Because your stay is soon, please contact us directly so we can arrange it.",
         "submit": "Could not send your request. Please try again shortly."
       }
     }
