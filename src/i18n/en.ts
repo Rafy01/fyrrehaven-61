@@ -314,10 +314,12 @@ export const en = {
       "submit": "Send request",
       "sending": "Sending request...",
       "success": "Thank you. Your extra service request has been sent.",
+      "successFollowup": "We will arrange it and only contact you if something cannot be done.",
       "summaryYes": "The guest would like extra services.",
       "summaryNo": "The guest does not want extra services at this time.",
       "noSpecificItems": "No specific quantities selected.",
-      "dateHint": "Extra services must be requested at least 3 days before arrival, so we have time to prepare.",
+      "dateHint": "Extra services are normally requested at least 3 days before arrival, so we have time to prepare.",
+      "lateNotice": "Late and last-minute requests are accepted. We will arrange it and only contact you if something cannot be done.",
       "bundleHint": "Complete package of bedding, sheets and towels",
       "fields": {
         "name": "Name",
@@ -348,7 +350,7 @@ export const en = {
       "acceptAfter": "for potential violations. The code for the key box will be sent 1 hour before arrival, once this is confirmed.",
       "errors": {
         "required": "Please fill in name, email, confirm email and date of stay.",
-        "dateTooSoon": "Extra services must be requested at least 3 days before arrival. Please choose a later arrival date, or contact us directly if your stay is soon.",
+        "dateTooSoon": "Please choose today or a future arrival date.",
         "email": "Please enter a valid email address.",
         "emailMismatch": "Email and confirm email must match.",
         "dateNotBooked": "We cannot find a booking starting on that date. Please choose your booking start date.",

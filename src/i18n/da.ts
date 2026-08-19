@@ -314,10 +314,12 @@ export const da = {
       "submit": "Send forespørgsel",
       "sending": "Sender forespørgsel...",
       "success": "Tak. Din forespørgsel om ekstra services er sendt.",
+      "successFollowup": "Vi sørger for det og kontakter dig kun, hvis noget ikke kan lade sig gøre.",
       "summaryYes": "Gæsten ønsker ekstra services.",
       "summaryNo": "Gæsten ønsker ikke ekstra services på nuværende tidspunkt.",
       "noSpecificItems": "Der er ikke valgt specifikke antal.",
-      "dateHint": "Ekstra services skal bestilles senest 3 dage før ankomst, så vi kan nå at klargøre.",
+      "dateHint": "Ekstra services bestilles normalt senest 3 dage før ankomst, så vi kan nå at klargøre.",
+      "lateNotice": "Sene forespørgsler og last minute-bookinger accepteres. Vi sørger for det og kontakter dig kun, hvis noget ikke kan lade sig gøre.",
       "bundleHint": "Komplet pakke med sengetøj, sengelinned og håndklæder",
       "fields": {
         "name": "Navn",
@@ -348,7 +350,7 @@ export const da = {
       "acceptAfter": "ved eventuelle overtrædelser. Koden til nøgleboksen sendes 1 time før ankomst, når dette er bekræftet.",
       "errors": {
         "required": "Udfyld venligst navn, e-mail, bekræft e-mail og dato for ophold.",
-        "dateTooSoon": "Ekstra services skal bestilles senest 3 dage før ankomst. Vælg venligst en senere ankomstdato, eller kontakt os direkte, hvis opholdet er tæt på.",
+        "dateTooSoon": "Vælg venligst i dag eller en fremtidig ankomstdato.",
         "email": "Indtast venligst en gyldig e-mailadresse.",
         "emailMismatch": "E-mail og bekræft e-mail skal være ens.",
         "dateNotBooked": "Vi kan ikke finde en booking, der starter på den dato. Vælg venligst bookingens startdato.",

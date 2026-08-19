@@ -281,6 +281,23 @@ export default async function handler(req, res) {
     const extrasItemsRaw = Array.isArray(extras?.items) ? extras.items : [];
     const isExtraServicesReq =
       intent === "extra-services" || extrasItemsRaw.length > 0;
+    const extraServiceStayDate = String(extras?.stayDate || "");
+    const isLateExtraServiceReq =
+      /^\d{4}-\d{2}-\d{2}$/.test(extraServiceStayDate) &&
+      (() => {
+        const today = new Date();
+        const todayStart = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate()
+        );
+        const [year, month, day] = extraServiceStayDate.split("-").map(Number);
+        const stayStart = new Date(year, month - 1, day);
+        const diffDays = Math.round(
+          (stayStart.getTime() - todayStart.getTime()) / 86400000
+        );
+        return diffDays >= 0 && diffDays < 3;
+      })();
     const hasRequestedExtras = extrasItemsRaw.length > 0;
     const isBookingReq =
       intent === "booking" || !!selection || !!guests || !!stayPurpose;
@@ -304,7 +321,7 @@ export default async function handler(req, res) {
     }
 
     const db = await getFirestoreDb();
-    if (isExtraServicesReq && !manualGuestOnly) {
+    if (isExtraServicesReq && !manualGuestOnly && !isLateExtraServiceReq) {
       const bookingValidation = await validateExtraServiceBooking({
         db,
         stayDate: extras?.stayDate,
@@ -340,6 +357,7 @@ export default async function handler(req, res) {
               totalDKK:
                 typeof extras.totalDKK === "number" ? extras.totalDKK : null,
               items: Array.isArray(extras.items) ? extras.items : [],
+              lateRequest: isLateExtraServiceReq || extras.lateRequest === true,
             }
           : null,
       source: "website",
@@ -549,6 +567,11 @@ export default async function handler(req, res) {
       <h3 style="margin:16px 0 8px;font-size:16px;">
         ${esc(adminT("contact.extraServices"))}
       </h3>
+      ${
+        isLateExtraServiceReq
+          ? `<p style="margin:0 0 10px;color:#8a6400"><b>Late request:</b> arrival is within 3 days. Arrange it if possible and contact the guest only if it cannot be done.</p>`
+          : ""
+      }
       <table style="border-collapse:collapse">
         ${extrasItems
           .map((it) => {

@@ -46,6 +46,10 @@ function earliestArrivalYmd() {
   return localYmd(date);
 }
 
+function todayYmd() {
+  return localYmd(new Date());
+}
+
 function parseYmd(value: string) {
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day);
@@ -194,7 +198,7 @@ export default function ExtraServices({
 
   function selectStayDate(date: Date) {
     const next = localYmd(date);
-    if (next < earliestArrivalYmd()) return;
+    if (next < todayYmd()) return;
     setStayDate(next);
     setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
     setCalendarOpen(false);
@@ -243,6 +247,7 @@ export default function ExtraServices({
     (sum, item) => sum + item.qty * item.unitPriceDKK,
     0
   );
+  const isLateRequest = stayDate >= todayYmd() && stayDate < earliestArrivalYmd();
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -257,7 +262,7 @@ export default function ExtraServices({
       setError(t("form.errors.required"));
       return;
     }
-    if (stayDate < earliestArrivalYmd()) {
+    if (stayDate < todayYmd()) {
       setError(t("form.errors.dateTooSoon"));
       return;
     }
@@ -283,7 +288,7 @@ export default function ExtraServices({
 
     setSending(true);
     try {
-      if (!adminManual) {
+      if (!adminManual && !isLateRequest) {
         const validationRes = await fetch("/api/extra-services/validate-booking", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -339,6 +344,7 @@ export default function ExtraServices({
             stayDate,
             items: selectedItems,
             totalDKK,
+            lateRequest: isLateRequest,
           },
         }),
       });
@@ -536,7 +542,7 @@ export default function ExtraServices({
                       <div className={styles.days}>
                         {calendarDays.map((date) => {
                           const ymd = localYmd(date);
-                          const disabled = ymd < earliestArrivalYmd();
+                          const disabled = ymd < todayYmd();
                           const muted =
                             date.getMonth() !== calendarMonth.getMonth();
                           const selected = ymd === stayDate;
@@ -565,6 +571,9 @@ export default function ExtraServices({
                 <small id="extra-stay-date-hint" className={styles.hint}>
                   {t("form.dateHint")}
                 </small>
+                {isLateRequest ? (
+                  <small className={styles.hint}>{t("form.lateNotice")}</small>
+                ) : null}
               </div>
 
               <div className={formStyles.row}>
@@ -744,7 +753,7 @@ export default function ExtraServices({
               )}
               {sent && (
                 <p className={styles.success} role="status">
-                  {t("form.success")}
+                  {t("form.success")} {t("form.successFollowup")}
                 </p>
               )}
 

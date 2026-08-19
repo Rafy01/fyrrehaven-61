@@ -314,10 +314,12 @@ export const de = {
       "submit": "Anfrage senden",
       "sending": "Anfrage wird gesendet...",
       "success": "Danke. Ihre Anfrage zu Zusatzleistungen wurde gesendet.",
+      "successFollowup": "Wir kümmern uns darum und melden uns nur, wenn etwas nicht möglich ist.",
       "summaryYes": "Der Gast möchte Zusatzleistungen.",
       "summaryNo": "Der Gast möchte derzeit keine Zusatzleistungen.",
       "noSpecificItems": "Keine konkreten Mengen ausgewählt.",
-      "dateHint": "Zusatzleistungen müssen spätestens 3 Tage vor Ankunft angefragt werden, damit wir Vorbereitung.",
+      "dateHint": "Zusatzleistungen werden normalerweise spätestens 3 Tage vor Ankunft angefragt, damit wir alles vorbereiten können.",
+      "lateNotice": "Späte Anfragen und Last-minute-Buchungen werden akzeptiert. Wir kümmern uns darum und melden uns nur, wenn etwas nicht möglich ist.",
       "bundleHint": "Komplettpaket mit Bettwaren, Bettwäsche und Handtüchern",
       "fields": {
         "name": "Name",
@@ -348,7 +350,7 @@ export const de = {
       "acceptAfter": "für mögliche Verstöße gelesen und akzeptiert haben. Der Code für den Schlüsselkasten wird 1 Stunde vor Ankunft gesendet, sobald dies bestätigt ist.",
       "errors": {
         "required": "Bitte füllen Sie Name, E-Mail, E-Mail-Bestätigung und Aufenthaltsdatum aus.",
-        "dateTooSoon": "Zusatzleistungen müssen spätestens 3 Tage vor Ankunft angefragt werden. Bitte wählen Sie ein späteres Anreisedatum oder kontaktieren Sie uns direkt, wenn Ihr Aufenthalt kurz bevorsteht.",
+        "dateTooSoon": "Bitte wählen Sie heute oder ein zukünftiges Anreisedatum.",
         "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
         "emailMismatch": "E-Mail und E-Mail-Bestätigung müssen übereinstimmen.",
         "dateNotBooked": "Wir können keine Buchung finden, die an diesem Datum beginnt. Bitte wählen Sie das Startdatum Ihrer Buchung.",
