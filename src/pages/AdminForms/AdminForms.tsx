@@ -55,7 +55,13 @@ import {
   isFirebaseClientConfigured,
 } from "../../lib/firebase";
 
-type SubmissionStatus = "pending" | "sent" | "mail_failed";
+type SubmissionStatus =
+  | "draft"
+  | "pending"
+  | "validation_failed"
+  | "send_failed"
+  | "sent"
+  | "mail_failed";
 type MeterKey = "electricity" | "waterHouse" | "waterPool";
 type MeterDraftKey = MeterKey | "";
 
@@ -167,6 +173,9 @@ type Submission = {
   mailStatus?: "pending" | "sent" | "failed";
   mailError?: string | null;
   mailErrorCode?: string | null;
+  formErrorCode?: string | null;
+  formErrorMessage?: string | null;
+  formLastAction?: string | null;
   adminMailSkipped?: boolean;
   createdAtMs?: number;
   updatedAtMs?: number;
@@ -256,6 +265,11 @@ type StatisticsBreakdownRow = {
   failed: number;
   valueDKK: number;
 };
+type StatisticsErrorRow = {
+  label: string;
+  count: number;
+  latestAtMs: number;
+};
 type AdminStatistics = {
   total: number;
   publicCount: number;
@@ -263,6 +277,11 @@ type AdminStatistics = {
   sent: number;
   failed: number;
   pending: number;
+  draft: number;
+  formErrors: number;
+  sendFailures: number;
+  mailFailures: number;
+  errorRate: number;
   uniqueGuests: number;
   bookingCount: number;
   bookingNights: number;
@@ -278,6 +297,9 @@ type AdminStatistics = {
   firstAtMs?: number;
   formRows: StatisticsBreakdownRow[];
   sourceRows: StatisticsBreakdownRow[];
+  errorRows: StatisticsErrorRow[];
+  errorFormRows: StatisticsErrorRow[];
+  recentErrorRows: Submission[];
   countryRows: Array<{ label: string; count: number }>;
   recentRows: Submission[];
 };
@@ -764,10 +786,16 @@ function formatMeterDifference(value?: number | null) {
 
 function statusLabel(status?: SubmissionStatus) {
   switch (status) {
+    case "draft":
+      return "Draft";
     case "sent":
       return "Email sent";
     case "mail_failed":
       return "Email failed";
+    case "validation_failed":
+      return "Form error";
+    case "send_failed":
+      return "Send failed";
     default:
       return "Pending";
   }
@@ -880,7 +908,12 @@ function routeDetailSlug(value?: string) {
 }
 
 function submissionFailed(submission?: Submission | null) {
-  return submission?.status === "mail_failed" || submission?.mailStatus === "failed";
+  return (
+    submission?.status === "mail_failed" ||
+    submission?.status === "validation_failed" ||
+    submission?.status === "send_failed" ||
+    submission?.mailStatus === "failed"
+  );
 }
 
 function submissionOk(submission?: Submission | null) {
@@ -985,9 +1018,38 @@ function sortedStatisticsRows(map: Map<string, StatisticsBreakdownRow>) {
   });
 }
 
+function incrementErrorRow(
+  map: Map<string, StatisticsErrorRow>,
+  key: string,
+  submission: Submission
+) {
+  const label = key.trim() || "Unknown error";
+  const existing =
+    map.get(label) ||
+    {
+      label,
+      count: 0,
+      latestAtMs: 0,
+    };
+
+  existing.count += 1;
+  existing.latestAtMs = Math.max(existing.latestAtMs, submission.createdAtMs || 0);
+  map.set(label, existing);
+}
+
+function sortedErrorRows(map: Map<string, StatisticsErrorRow>) {
+  return [...map.values()].sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    if (b.latestAtMs !== a.latestAtMs) return b.latestAtMs - a.latestAtMs;
+    return a.label.localeCompare(b.label);
+  });
+}
+
 function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
   const formRows = new Map<string, StatisticsBreakdownRow>();
   const sourceRows = new Map<string, StatisticsBreakdownRow>();
+  const errorRows = new Map<string, StatisticsErrorRow>();
+  const errorFormRows = new Map<string, StatisticsErrorRow>();
   const countries = new Map<string, number>();
   const emails = new Set<string>();
   const sorted = [...submissions].sort(
@@ -999,6 +1061,10 @@ function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
   let sent = 0;
   let failed = 0;
   let pending = 0;
+  let draft = 0;
+  let formErrors = 0;
+  let sendFailures = 0;
+  let mailFailures = 0;
   let bookingCount = 0;
   let bookingNights = 0;
   let bookingRevenueDKK = 0;
@@ -1015,9 +1081,25 @@ function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
       privateCount += 1;
     }
 
+    if (submission.status === "draft") draft += 1;
+    if (submission.status === "validation_failed") formErrors += 1;
+    if (submission.status === "send_failed") sendFailures += 1;
+    if (submission.status === "mail_failed" || submission.mailStatus === "failed") {
+      mailFailures += 1;
+    }
+
     if (submissionOk(submission)) sent += 1;
     else if (submissionFailed(submission)) failed += 1;
     else pending += 1;
+
+    if (submissionFailed(submission)) {
+      incrementErrorRow(
+        errorRows,
+        submission.formErrorCode || submission.mailErrorCode || submission.status || "failed",
+        submission
+      );
+      incrementErrorRow(errorFormRows, statisticsTypeKey(submission), submission);
+    }
 
     const email = submission.email?.trim().toLowerCase();
     if (email) emails.add(email);
@@ -1069,6 +1151,11 @@ function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
     sent,
     failed,
     pending,
+    draft,
+    formErrors,
+    sendFailures,
+    mailFailures,
+    errorRate: sorted.length ? failed / sorted.length : 0,
     uniqueGuests: emails.size,
     bookingCount,
     bookingNights,
@@ -1084,6 +1171,9 @@ function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
     firstAtMs: sorted[sorted.length - 1]?.createdAtMs,
     formRows: sortedStatisticsRows(formRows),
     sourceRows: sortedStatisticsRows(sourceRows),
+    errorRows: sortedErrorRows(errorRows).slice(0, 12),
+    errorFormRows: sortedErrorRows(errorFormRows).slice(0, 8),
+    recentErrorRows: sorted.filter(submissionFailed).slice(0, 8),
     countryRows,
     recentRows: sorted.slice(0, 6),
   };
@@ -1094,7 +1184,11 @@ function statusClassName(status?: SubmissionStatus) {
     case "sent":
       return styles.statusSent;
     case "mail_failed":
+    case "validation_failed":
+    case "send_failed":
       return styles.statusFailed;
+    case "draft":
+      return styles.statusDraft;
     default:
       return styles.statusPending;
   }
@@ -4275,6 +4369,17 @@ export default function AdminForms() {
             {renderLoggedMeta(submission)}
           </section>
         ) : null}
+
+        {submission.formErrorMessage ? (
+          <section className={styles.detailSection}>
+            <h3>Form error</h3>
+            <p className={styles.detailMessage}>{submission.formErrorMessage}</p>
+            {submission.formErrorCode ? (
+              <p className={styles.detailMuted}>{submission.formErrorCode}</p>
+            ) : null}
+            {renderLoggedMeta(submission)}
+          </section>
+        ) : null}
       </>
     );
   }
@@ -4407,6 +4512,90 @@ export default function AdminForms() {
     );
   }
 
+  function renderErrorTable(title: string, rows: StatisticsErrorRow[]) {
+    return (
+      <section className={styles.statsPanel}>
+        <div className={styles.statsPanelHeader}>
+          <h2>{title}</h2>
+          <span>
+            {rows.length} row{rows.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className={styles.statsTableWrap}>
+          <table className={styles.statsTable}>
+            <thead>
+              <tr>
+                <th>Error</th>
+                <th>Count</th>
+                <th>Latest</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length ? (
+                rows.map((row) => (
+                  <tr key={row.label}>
+                    <td>{row.label}</td>
+                    <td>{row.count}</td>
+                    <td>{formatDateTime(row.latestAtMs)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3}>No form errors in this period.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  }
+
+  function renderRecentErrors(rows: Submission[]) {
+    return (
+      <section className={styles.statsPanel}>
+        <div className={styles.statsPanelHeader}>
+          <h2>Latest form errors</h2>
+          <span>{rows.length} shown</span>
+        </div>
+        <div className={styles.recentActivityList}>
+          {rows.length ? (
+            rows.map((submission) => (
+              <button
+                type="button"
+                className={styles.recentActivityRow}
+                key={submission.id}
+                onClick={() =>
+                  navigate(adminSubmissionPath(submission.id, "overview"))
+                }
+              >
+                <span>
+                  <strong>
+                    {displayNameWithCountry(submission) || "Unknown name"}
+                  </strong>
+                  <small>
+                    {submissionLabel(submission)} ·{" "}
+                    {submission.formErrorCode ||
+                      submission.mailErrorCode ||
+                      statusLabel(submission.status)}
+                  </small>
+                  {submission.formErrorMessage || submission.mailError ? (
+                    <small>
+                      {submission.formErrorMessage || submission.mailError}
+                    </small>
+                  ) : null}
+                </span>
+                <small>{formatDateTime(submission.createdAtMs)}</small>
+              </button>
+            ))
+          ) : (
+            <p className={styles.detailMuted}>No recent form errors in this period.</p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   function renderAnalyticsRows(
     title: string,
     rows: AnalyticsRow[] = [],
@@ -4519,7 +4708,7 @@ export default function AdminForms() {
   function renderStatisticsPage() {
     const stats = adminStatistics;
     const traffic = analytics?.totals;
-    const emailTotal = stats.sent + stats.failed + stats.pending;
+    const emailIssueTotal = stats.sent + stats.mailFailures + stats.pending;
     const knownRevenueMeta =
       stats.bookingCount > 0
         ? `Average booking ${formatMoney(stats.averageBookingDKK)}`
@@ -4703,10 +4892,17 @@ export default function AdminForms() {
                   )}
                   {renderStatisticsKpi(
                     "Email success",
-                    formatPercent(stats.sent, emailTotal),
-                    `${stats.sent} sent · ${stats.failed} failed · ${stats.pending} pending`,
+                    formatPercent(stats.sent, emailIssueTotal),
+                    `${stats.sent} sent · ${stats.mailFailures} email failed · ${stats.pending} pending`,
                     <FiMail aria-hidden="true" />,
-                    stats.failed ? "warning" : "success"
+                    stats.mailFailures ? "warning" : "success"
+                  )}
+                  {renderStatisticsKpi(
+                    "Form errors",
+                    stats.formErrors + stats.sendFailures + stats.mailFailures,
+                    `${formatRatio(stats.errorRate)} error rate · ${stats.draft} drafts`,
+                    <FiAlertCircle aria-hidden="true" />,
+                    stats.failed ? "danger" : "success"
                   )}
                   {renderStatisticsKpi(
                     "Unique guests",
@@ -4755,6 +4951,13 @@ export default function AdminForms() {
                     showValue: true,
                   })}
                 </div>
+
+                <div className={styles.statsGrid}>
+                  {renderErrorTable("Errors by code", stats.errorRows)}
+                  {renderErrorTable("Errors by form", stats.errorFormRows)}
+                </div>
+
+                {renderRecentErrors(stats.recentErrorRows)}
 
                 <div className={styles.statsGrid}>
                   <section className={styles.statsPanel}>
@@ -5873,6 +6076,11 @@ export default function AdminForms() {
                                   </span>
                                 ) : null}
                               </div>
+                            ) : null}
+                            {submission.formErrorMessage ? (
+                              <p className={styles.rowError}>
+                                {submission.formErrorMessage}
+                              </p>
                             ) : null}
                           </div>
                           <button
