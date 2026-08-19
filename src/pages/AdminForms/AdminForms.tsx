@@ -33,6 +33,7 @@ import {
 } from "react-icons/fi";
 import { FaWhatsapp } from "react-icons/fa";
 import QRCode from "qrcode";
+import { jsPDF } from "jspdf";
 import {
   GoogleAuthProvider,
   onAuthStateChanged,
@@ -55,7 +56,13 @@ import {
   isFirebaseClientConfigured,
 } from "../../lib/firebase";
 
-type SubmissionStatus = "pending" | "sent" | "mail_failed";
+type SubmissionStatus =
+  | "draft"
+  | "pending"
+  | "validation_failed"
+  | "send_failed"
+  | "sent"
+  | "mail_failed";
 type MeterKey = "electricity" | "waterHouse" | "waterPool";
 type MeterDraftKey = MeterKey | "";
 
@@ -167,6 +174,9 @@ type Submission = {
   mailStatus?: "pending" | "sent" | "failed";
   mailError?: string | null;
   mailErrorCode?: string | null;
+  formErrorCode?: string | null;
+  formErrorMessage?: string | null;
+  formLastAction?: string | null;
   adminMailSkipped?: boolean;
   createdAtMs?: number;
   updatedAtMs?: number;
@@ -256,6 +266,11 @@ type StatisticsBreakdownRow = {
   failed: number;
   valueDKK: number;
 };
+type StatisticsErrorRow = {
+  label: string;
+  count: number;
+  latestAtMs: number;
+};
 type AdminStatistics = {
   total: number;
   publicCount: number;
@@ -263,6 +278,11 @@ type AdminStatistics = {
   sent: number;
   failed: number;
   pending: number;
+  draft: number;
+  formErrors: number;
+  sendFailures: number;
+  mailFailures: number;
+  errorRate: number;
   uniqueGuests: number;
   bookingCount: number;
   bookingNights: number;
@@ -278,6 +298,9 @@ type AdminStatistics = {
   firstAtMs?: number;
   formRows: StatisticsBreakdownRow[];
   sourceRows: StatisticsBreakdownRow[];
+  errorRows: StatisticsErrorRow[];
+  errorFormRows: StatisticsErrorRow[];
+  recentErrorRows: Submission[];
   countryRows: Array<{ label: string; count: number }>;
   recentRows: Submission[];
 };
@@ -340,6 +363,7 @@ type SavedQrCode = {
   errorCorrection: QrErrorCorrectionLevel;
   overlayMode: QrOverlayMode;
   overlayText: string;
+  overlayImage?: string;
   overlayScale: number;
   overlayBackground: string;
   frameEnabled: boolean;
@@ -510,6 +534,8 @@ const QR_GUEST_LINK_PRESETS = [
     text2: "Manual",
   },
 ] as const;
+const LOCAL_QR_CODES_STORAGE_KEY = "fyrrehaven-local-saved-qr-codes";
+const QR_PRINT_COPIES_STORAGE_KEY = "fyrrehaven-qr-print-copies";
 const LOCAL_DASHBOARD_FALLBACK =
   import.meta.env.DEV &&
   typeof window !== "undefined" &&
@@ -764,10 +790,16 @@ function formatMeterDifference(value?: number | null) {
 
 function statusLabel(status?: SubmissionStatus) {
   switch (status) {
+    case "draft":
+      return "Draft";
     case "sent":
       return "Email sent";
     case "mail_failed":
       return "Email failed";
+    case "validation_failed":
+      return "Form error";
+    case "send_failed":
+      return "Send failed";
     default:
       return "Pending";
   }
@@ -880,7 +912,12 @@ function routeDetailSlug(value?: string) {
 }
 
 function submissionFailed(submission?: Submission | null) {
-  return submission?.status === "mail_failed" || submission?.mailStatus === "failed";
+  return (
+    submission?.status === "mail_failed" ||
+    submission?.status === "validation_failed" ||
+    submission?.status === "send_failed" ||
+    submission?.mailStatus === "failed"
+  );
 }
 
 function submissionOk(submission?: Submission | null) {
@@ -985,9 +1022,38 @@ function sortedStatisticsRows(map: Map<string, StatisticsBreakdownRow>) {
   });
 }
 
+function incrementErrorRow(
+  map: Map<string, StatisticsErrorRow>,
+  key: string,
+  submission: Submission
+) {
+  const label = key.trim() || "Unknown error";
+  const existing =
+    map.get(label) ||
+    {
+      label,
+      count: 0,
+      latestAtMs: 0,
+    };
+
+  existing.count += 1;
+  existing.latestAtMs = Math.max(existing.latestAtMs, submission.createdAtMs || 0);
+  map.set(label, existing);
+}
+
+function sortedErrorRows(map: Map<string, StatisticsErrorRow>) {
+  return [...map.values()].sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    if (b.latestAtMs !== a.latestAtMs) return b.latestAtMs - a.latestAtMs;
+    return a.label.localeCompare(b.label);
+  });
+}
+
 function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
   const formRows = new Map<string, StatisticsBreakdownRow>();
   const sourceRows = new Map<string, StatisticsBreakdownRow>();
+  const errorRows = new Map<string, StatisticsErrorRow>();
+  const errorFormRows = new Map<string, StatisticsErrorRow>();
   const countries = new Map<string, number>();
   const emails = new Set<string>();
   const sorted = [...submissions].sort(
@@ -999,6 +1065,10 @@ function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
   let sent = 0;
   let failed = 0;
   let pending = 0;
+  let draft = 0;
+  let formErrors = 0;
+  let sendFailures = 0;
+  let mailFailures = 0;
   let bookingCount = 0;
   let bookingNights = 0;
   let bookingRevenueDKK = 0;
@@ -1015,9 +1085,25 @@ function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
       privateCount += 1;
     }
 
+    if (submission.status === "draft") draft += 1;
+    if (submission.status === "validation_failed") formErrors += 1;
+    if (submission.status === "send_failed") sendFailures += 1;
+    if (submission.status === "mail_failed" || submission.mailStatus === "failed") {
+      mailFailures += 1;
+    }
+
     if (submissionOk(submission)) sent += 1;
     else if (submissionFailed(submission)) failed += 1;
     else pending += 1;
+
+    if (submissionFailed(submission)) {
+      incrementErrorRow(
+        errorRows,
+        submission.formErrorCode || submission.mailErrorCode || submission.status || "failed",
+        submission
+      );
+      incrementErrorRow(errorFormRows, statisticsTypeKey(submission), submission);
+    }
 
     const email = submission.email?.trim().toLowerCase();
     if (email) emails.add(email);
@@ -1069,6 +1155,11 @@ function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
     sent,
     failed,
     pending,
+    draft,
+    formErrors,
+    sendFailures,
+    mailFailures,
+    errorRate: sorted.length ? failed / sorted.length : 0,
     uniqueGuests: emails.size,
     bookingCount,
     bookingNights,
@@ -1084,6 +1175,9 @@ function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
     firstAtMs: sorted[sorted.length - 1]?.createdAtMs,
     formRows: sortedStatisticsRows(formRows),
     sourceRows: sortedStatisticsRows(sourceRows),
+    errorRows: sortedErrorRows(errorRows).slice(0, 12),
+    errorFormRows: sortedErrorRows(errorFormRows).slice(0, 8),
+    recentErrorRows: sorted.filter(submissionFailed).slice(0, 8),
     countryRows,
     recentRows: sorted.slice(0, 6),
   };
@@ -1094,7 +1188,11 @@ function statusClassName(status?: SubmissionStatus) {
     case "sent":
       return styles.statusSent;
     case "mail_failed":
+    case "validation_failed":
+    case "send_failed":
       return styles.statusFailed;
+    case "draft":
+      return styles.statusDraft;
     default:
       return styles.statusPending;
   }
@@ -1522,6 +1620,115 @@ function displayQrLink(value: string) {
   }
 }
 
+function savedQrFromPreset(
+  key: (typeof QR_GUEST_LINK_PRESETS)[number]["key"],
+  updatedAtMs: number
+): SavedQrCode {
+  const preset = QR_GUEST_LINK_PRESETS.find((item) => item.key === key);
+  const destination = preset?.destination || `${PUBLIC_SITE_URL}/en`;
+  const label = preset?.label || "Website";
+  const hasLinkText = Boolean(preset && "linkText" in preset && preset.linkText);
+  return {
+    id: qrCodeId(label, destination),
+    label,
+    destination,
+    tracked: preset && "tracked" in preset ? preset.tracked !== false : true,
+    foreground: DEFAULT_QR_GOLD,
+    background: "#ffffff",
+    size: 720,
+    margin: 3,
+    errorCorrection: "H",
+    overlayMode: "logo",
+    overlayText: "61",
+    overlayScale: 22,
+    overlayBackground: "#000000",
+    frameEnabled: true,
+    frameText1: preset?.text1 || "Fyrrehaven 61",
+    frameText2: preset?.text2 || "QR code",
+    frameLinkText:
+      hasLinkText && preset && "linkText" in preset
+        ? preset.linkText || displayQrLink(destination)
+        : displayQrLink(destination),
+    frameLinkAuto: !hasLinkText,
+    createdAtMs: updatedAtMs,
+    updatedAtMs,
+  };
+}
+
+function localSavedQrDefaults() {
+  const now = Date.now();
+  return [
+    savedQrFromPreset("check-inout", now - 1000 * 60 * 60 * 3),
+    savedQrFromPreset("fees", now - 1000 * 60 * 60 * 2),
+    savedQrFromPreset("wifi", now - 1000 * 60 * 60),
+    savedQrFromPreset("house-manual", now),
+  ];
+}
+
+function emptyQrStats(saved: SavedQrCode[] = []): AdminQrStats {
+  return {
+    totals: {
+      scans: 0,
+      uniqueVisitors: 0,
+      qrCodes: 0,
+      lastScanMs: 0,
+    },
+    qrCodes: [],
+    daily: [],
+    hourly: [],
+    devices: [],
+    countries: [],
+    referrers: [],
+    recent: [],
+    saved,
+  };
+}
+
+function readLocalSavedQrCodes() {
+  if (typeof window === "undefined") return localSavedQrDefaults();
+  try {
+    const stored = window.localStorage.getItem(LOCAL_QR_CODES_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as SavedQrCode[];
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {
+    // Local testing data can be regenerated if it becomes unreadable.
+  }
+
+  const defaults = localSavedQrDefaults();
+  window.localStorage.setItem(LOCAL_QR_CODES_STORAGE_KEY, JSON.stringify(defaults));
+  return defaults;
+}
+
+function writeLocalSavedQrCodes(saved: SavedQrCode[]) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LOCAL_QR_CODES_STORAGE_KEY, JSON.stringify(saved));
+}
+
+function readQrPrintCopies() {
+  if (typeof window === "undefined") return {};
+  try {
+    const stored = window.localStorage.getItem(QR_PRINT_COPIES_STORAGE_KEY);
+    if (!stored) return {};
+    const parsed = JSON.parse(stored) as Record<string, number>;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return Object.fromEntries(
+      Object.entries(parsed).map(([id, value]) => [
+        id,
+        Math.min(99, Math.max(0, Number(value) || 0)),
+      ])
+    );
+  } catch {
+    return {};
+  }
+}
+
+function writeQrPrintCopies(copies: Record<string, number>) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(QR_PRINT_COPIES_STORAGE_KEY, JSON.stringify(copies));
+}
+
 function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
@@ -1530,6 +1737,148 @@ function loadImage(src: string) {
     image.onerror = () => reject(new Error("The center image could not be loaded."));
     image.src = src;
   });
+}
+
+function qrEncodedValueFromConfig(config: SavedQrCode) {
+  const destination = config.destination.trim();
+  if (!destination || !config.tracked) return destination;
+  return qrTrackingUrl(config.id, config.label, destination);
+}
+
+function qrFrameLinkFromConfig(config: SavedQrCode, encodedValue: string) {
+  if (config.frameLinkAuto) return displayQrLink(config.destination);
+  return config.frameLinkText || config.destination || encodedValue;
+}
+
+async function renderQrPngFromConfig(config: SavedQrCode) {
+  const value = qrEncodedValueFromConfig(config).trim();
+  if (!value) throw new Error("Enter a URL or text value to generate a QR code.");
+
+  const size = Math.min(1800, Math.max(240, Number(config.size) || 720));
+  const foreground = config.foreground || DEFAULT_QR_GOLD;
+  const background = config.background || "#ffffff";
+  const overlayScale = Number(config.overlayScale) || 22;
+  const overlayMode = config.overlayMode || "logo";
+  const overlayBackground = config.overlayBackground || "#000000";
+  const options = {
+    errorCorrectionLevel: config.errorCorrection || "H",
+    margin: config.margin ?? 3,
+    width: size,
+    color: {
+      dark: foreground,
+      light: background,
+    },
+  } as const;
+
+  const qrCanvas = document.createElement("canvas");
+  await QRCode.toCanvas(qrCanvas, value, options);
+  const context = qrCanvas.getContext("2d");
+  if (!context) throw new Error("The QR canvas could not be created.");
+
+  const overlaySize = Math.round(
+    qrCanvas.width * Math.min(0.32, Math.max(0.08, overlayScale / 100))
+  );
+  const overlayX = Math.round((qrCanvas.width - overlaySize) / 2);
+  const overlayY = Math.round((qrCanvas.height - overlaySize) / 2);
+  const badgePadding = Math.max(10, Math.round(overlaySize * 0.16));
+  const badgeX = overlayX - badgePadding;
+  const badgeY = overlayY - badgePadding;
+  const badgeSize = overlaySize + badgePadding * 2;
+  const radius = Math.round(badgeSize * 0.22);
+
+  if (overlayMode !== "none") {
+    context.fillStyle = overlayBackground;
+    context.beginPath();
+    context.roundRect(badgeX, badgeY, badgeSize, badgeSize, radius);
+    context.fill();
+  }
+
+  if (overlayMode === "logo" || overlayMode === "image") {
+    const src =
+      overlayMode === "image" && config.overlayImage
+        ? config.overlayImage
+        : DEFAULT_QR_LOGO_SRC;
+    const image = await loadImage(src);
+    const ratio = Math.min(overlaySize / image.naturalWidth, overlaySize / image.naturalHeight);
+    const drawWidth = Math.round(image.naturalWidth * ratio);
+    const drawHeight = Math.round(image.naturalHeight * ratio);
+    context.drawImage(
+      image,
+      Math.round((qrCanvas.width - drawWidth) / 2),
+      Math.round((qrCanvas.height - drawHeight) / 2),
+      drawWidth,
+      drawHeight
+    );
+  } else if (overlayMode === "text") {
+    context.fillStyle = foreground;
+    context.font = `900 ${Math.round(overlaySize * 0.42)}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(config.overlayText?.slice(0, 8) || "61", qrCanvas.width / 2, qrCanvas.height / 2);
+  }
+
+  if (!config.frameEnabled) return qrCanvas.toDataURL("image/png");
+
+  const frameCanvas = document.createElement("canvas");
+  const frameWidth = size;
+  const frameHeight = Math.round(size * 1.36);
+  frameCanvas.width = frameWidth;
+  frameCanvas.height = frameHeight;
+  const frame = frameCanvas.getContext("2d");
+  if (!frame) throw new Error("The QR frame could not be created.");
+
+  const cornerCut = Math.round(frameWidth * 0.06);
+  const border = Math.round(frameWidth * 0.035);
+  const bottomHeight = Math.round(frameHeight * 0.18);
+  const qrPadding = Math.round(frameWidth * 0.055);
+  const qrAreaHeight = frameHeight - bottomHeight - border * 2;
+  const qrDrawSize = Math.min(frameWidth - qrPadding * 2, qrAreaHeight - qrPadding);
+  const qrX = Math.round((frameWidth - qrDrawSize) / 2);
+  const qrY = border + Math.round((qrAreaHeight - qrDrawSize) / 2);
+
+  frame.fillStyle = "#000000";
+  frame.beginPath();
+  frame.moveTo(cornerCut, 0);
+  frame.lineTo(frameWidth - cornerCut, 0);
+  frame.lineTo(frameWidth, cornerCut);
+  frame.lineTo(frameWidth, frameHeight - cornerCut);
+  frame.lineTo(frameWidth - cornerCut, frameHeight);
+  frame.lineTo(cornerCut, frameHeight);
+  frame.lineTo(0, frameHeight - cornerCut);
+  frame.lineTo(0, cornerCut);
+  frame.closePath();
+  frame.fill();
+
+  frame.fillStyle = background;
+  frame.fillRect(border, border, frameWidth - border * 2, qrAreaHeight);
+  frame.drawImage(qrCanvas, qrX, qrY, qrDrawSize, qrDrawSize);
+
+  const bottomTop = frameHeight - bottomHeight;
+  frame.fillStyle = "#000000";
+  frame.fillRect(border, bottomTop, frameWidth - border * 2, bottomHeight - border);
+  frame.textAlign = "center";
+  frame.textBaseline = "middle";
+  frame.font = `500 ${Math.round(frameWidth * 0.07)}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  const text1 = config.frameText1?.trim() || "Text 1";
+  const text2 = config.frameText2?.trim() || "Text 2";
+  const titleY = bottomTop + Math.round(bottomHeight * 0.42);
+  const gap = Math.round(frameWidth * 0.018);
+  const text1Width = frame.measureText(text1).width;
+  const text2Width = frame.measureText(text2).width;
+  const separatorWidth = frame.measureText("|").width;
+  const titleWidth = text1Width + text2Width + separatorWidth + gap * 2;
+  const titleStart = (frameWidth - titleWidth) / 2;
+  frame.fillStyle = DEFAULT_QR_GOLD;
+  frame.fillText("|", titleStart + text1Width + gap + separatorWidth / 2, titleY);
+  frame.fillStyle = "#ffffff";
+  frame.textAlign = "left";
+  frame.fillText(text1, titleStart, titleY);
+  frame.fillText(text2, titleStart + text1Width + separatorWidth + gap * 2, titleY);
+  frame.textAlign = "center";
+  frame.font = `700 ${Math.round(frameWidth * 0.035)}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  frame.fillText(qrFrameLinkFromConfig(config, value), frameWidth / 2, bottomTop + Math.round(bottomHeight * 0.72));
+
+  return frameCanvas.toDataURL("image/png");
 }
 
 export default function AdminForms() {
@@ -1574,8 +1923,8 @@ export default function AdminForms() {
     React.useState(SUBMISSION_BATCH_SIZE);
   const [testSubmissionType, setTestSubmissionType] =
     React.useState<TestSubmissionType>("all");
-  const [qrValue, setQrValue] = React.useState(`${PUBLIC_SITE_URL}/en/check-in-out`);
-  const [qrLabel, setQrLabel] = React.useState("Check-in and check-out");
+  const [qrValue, setQrValue] = React.useState("");
+  const [qrLabel, setQrLabel] = React.useState("Custom QR code");
   const [qrForeground, setQrForeground] = React.useState(DEFAULT_QR_GOLD);
   const [qrBackground, setQrBackground] = React.useState("#ffffff");
   const [qrSize, setQrSize] = React.useState(720);
@@ -1602,6 +1951,9 @@ export default function AdminForms() {
   const [qrStatsError, setQrStatsError] = React.useState<string | null>(null);
   const [qrSaveStatus, setQrSaveStatus] = React.useState("");
   const [qrDeleteStatus, setQrDeleteStatus] = React.useState("");
+  const [qrPrintStatus, setQrPrintStatus] = React.useState("");
+  const [qrPrintCopies, setQrPrintCopies] =
+    React.useState<Record<string, number>>(readQrPrintCopies);
   const qrDestination = qrValue.trim();
   const qrId = React.useMemo(
     () => qrCodeId(qrLabel, qrDestination || `${PUBLIC_SITE_URL}/en`),
@@ -1799,6 +2151,11 @@ export default function AdminForms() {
     setIsLoadingQrStats(true);
 
     try {
+      if (LOCAL_DASHBOARD_FALLBACK) {
+        setQrStats(emptyQrStats(readLocalSavedQrCodes()));
+        return;
+      }
+
       const auth = getFirebaseAuth();
       const token =
         DASHBOARD_AUTH_DISABLED || !auth?.currentUser
@@ -1831,6 +2188,11 @@ export default function AdminForms() {
       }
       setQrStats(data.stats || null);
     } catch (nextError) {
+      if (LOCAL_DASHBOARD_FALLBACK) {
+        setQrStats(emptyQrStats(readLocalSavedQrCodes()));
+        setQrStatsError(null);
+        return;
+      }
       setQrStats(null);
       setQrStatsError(
         String(nextError instanceof Error ? nextError.message : nextError)
@@ -1877,7 +2239,7 @@ export default function AdminForms() {
       if (!value) {
         setQrPng("");
         setQrSvg("");
-        setQrError("Enter a URL or text value to generate a QR code.");
+        setQrError("Add a destination manually to preview and download the QR code.");
         return;
       }
 
@@ -3066,7 +3428,7 @@ export default function AdminForms() {
     await navigator.clipboard.writeText(text);
   }
 
-  function qrFileName(extension: "png" | "svg") {
+  function qrFileName(extension: "png" | "svg" | "pdf") {
     const base = (qrLabel || "fyrrehaven-61-qr")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -3094,6 +3456,73 @@ export default function AdminForms() {
     URL.revokeObjectURL(url);
   }
 
+  function qrPrintCopyCount(id: string) {
+    return qrPrintCopies[id] ?? 1;
+  }
+
+  function setQrPrintCopyCount(id: string, value: number) {
+    setQrPrintCopies((current) => {
+      const next = {
+        ...current,
+        [id]: Math.min(99, Math.max(0, Number.isFinite(value) ? value : 0)),
+      };
+      writeQrPrintCopies(next);
+      return next;
+    });
+  }
+
+  async function downloadQrPdfSheet() {
+    const savedCodes = qrStats?.saved || [];
+    const printItems = savedCodes.flatMap((saved) =>
+      Array.from({ length: qrPrintCopyCount(saved.id) }, () => saved)
+    );
+
+    if (!printItems.length) {
+      setQrPrintStatus("Set at least one print copy before creating the PDF.");
+      return;
+    }
+
+    setQrPrintStatus("Creating PDF...");
+    try {
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const gap = 5;
+      const columns = 3;
+      const rows = 3;
+      const cellWidth = (pageWidth - margin * 2 - gap * (columns - 1)) / columns;
+      const cellHeight = (pageHeight - margin * 2 - gap * (rows - 1)) / rows;
+
+      for (let index = 0; index < printItems.length; index += 1) {
+        if (index > 0 && index % (columns * rows) === 0) {
+          pdf.addPage();
+        }
+
+        const pageIndex = index % (columns * rows);
+        const column = pageIndex % columns;
+        const row = Math.floor(pageIndex / columns);
+        const x = margin + column * (cellWidth + gap);
+        const y = margin + row * (cellHeight + gap);
+        const saved = printItems[index];
+        const image = await renderQrPngFromConfig(saved);
+        const imageAspect = saved.frameEnabled ? 1.36 : 1;
+        const imageWidth = Math.min(cellWidth, cellHeight / imageAspect);
+        const imageHeight = imageWidth * imageAspect;
+        const imageX = x + (cellWidth - imageWidth) / 2;
+        const imageY = y + (cellHeight - imageHeight) / 2;
+        pdf.addImage(image, "PNG", imageX, imageY, imageWidth, imageHeight);
+      }
+
+      pdf.save(qrFileName("pdf"));
+      setQrPrintStatus(`PDF ready with ${printItems.length} QR code copies.`);
+    } catch (nextError) {
+      setQrPrintStatus(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    }
+  }
+
   async function copyQrValue() {
     await copyText(qrEncodedValue);
     setQrCopyStatus("Copied");
@@ -3101,7 +3530,16 @@ export default function AdminForms() {
 
   function applyQrGuestPreset(key: string) {
     const preset = QR_GUEST_LINK_PRESETS.find((item) => item.key === key);
-    if (!preset) return;
+    if (!preset) {
+      setQrValue("");
+      setQrLabel("Custom QR code");
+      setQrFrameText1("Text 1");
+      setQrFrameText2("Text 2");
+      setQrFrameLinkText("");
+      setQrFrameLinkAuto(true);
+      setQrTracked(true);
+      return;
+    }
     setQrValue(preset.destination);
     setQrLabel(preset.label);
     setQrFrameText1(preset.text1);
@@ -3140,6 +3578,7 @@ export default function AdminForms() {
       errorCorrection: qrErrorCorrection,
       overlayMode: qrOverlayMode,
       overlayText: qrOverlayText,
+      overlayImage: qrOverlayImage,
       overlayScale: qrOverlayScale,
       overlayBackground: qrOverlayBackground,
       frameEnabled: qrFrameEnabled,
@@ -3154,6 +3593,25 @@ export default function AdminForms() {
     if (!qrDestination) return;
     setQrSaveStatus("Saving...");
     try {
+      if (LOCAL_DASHBOARD_FALLBACK) {
+        const now = Date.now();
+        const nextQrCode = {
+          ...currentQrConfig(),
+          createdAtMs:
+            readLocalSavedQrCodes().find((item) => item.id === qrId)?.createdAtMs ||
+            now,
+          updatedAtMs: now,
+        };
+        const saved = readLocalSavedQrCodes()
+          .filter((item) => item.id !== nextQrCode.id)
+          .concat(nextQrCode)
+          .sort((a, b) => (b.updatedAtMs || 0) - (a.updatedAtMs || 0));
+        writeLocalSavedQrCodes(saved);
+        setQrStats(emptyQrStats(saved));
+        setQrSaveStatus("Saved locally");
+        return;
+      }
+
       const auth = getFirebaseAuth();
       const token =
         DASHBOARD_AUTH_DISABLED || !auth?.currentUser
@@ -3183,6 +3641,14 @@ export default function AdminForms() {
   async function deleteSavedQrCode(id: string) {
     setQrDeleteStatus("Deleting...");
     try {
+      if (LOCAL_DASHBOARD_FALLBACK) {
+        const saved = readLocalSavedQrCodes().filter((item) => item.id !== id);
+        writeLocalSavedQrCodes(saved);
+        setQrStats(emptyQrStats(saved));
+        setQrDeleteStatus("Deleted locally");
+        return;
+      }
+
       const auth = getFirebaseAuth();
       const token =
         DASHBOARD_AUTH_DISABLED || !auth?.currentUser
@@ -3218,6 +3684,7 @@ export default function AdminForms() {
     setQrErrorCorrection(saved.errorCorrection || "H");
     setQrOverlayMode(saved.overlayMode || "logo");
     setQrOverlayText(saved.overlayText || "61");
+    setQrOverlayImage(saved.overlayImage || "");
     setQrOverlayScale(saved.overlayScale || 22);
     setQrOverlayBackground(saved.overlayBackground || "#000000");
     setQrFrameEnabled(saved.frameEnabled ?? true);
@@ -4275,6 +4742,17 @@ export default function AdminForms() {
             {renderLoggedMeta(submission)}
           </section>
         ) : null}
+
+        {submission.formErrorMessage ? (
+          <section className={styles.detailSection}>
+            <h3>Form error</h3>
+            <p className={styles.detailMessage}>{submission.formErrorMessage}</p>
+            {submission.formErrorCode ? (
+              <p className={styles.detailMuted}>{submission.formErrorCode}</p>
+            ) : null}
+            {renderLoggedMeta(submission)}
+          </section>
+        ) : null}
       </>
     );
   }
@@ -4407,6 +4885,90 @@ export default function AdminForms() {
     );
   }
 
+  function renderErrorTable(title: string, rows: StatisticsErrorRow[]) {
+    return (
+      <section className={styles.statsPanel}>
+        <div className={styles.statsPanelHeader}>
+          <h2>{title}</h2>
+          <span>
+            {rows.length} row{rows.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        <div className={styles.statsTableWrap}>
+          <table className={styles.statsTable}>
+            <thead>
+              <tr>
+                <th>Error</th>
+                <th>Count</th>
+                <th>Latest</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length ? (
+                rows.map((row) => (
+                  <tr key={row.label}>
+                    <td>{row.label}</td>
+                    <td>{row.count}</td>
+                    <td>{formatDateTime(row.latestAtMs)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3}>No form errors in this period.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  }
+
+  function renderRecentErrors(rows: Submission[]) {
+    return (
+      <section className={styles.statsPanel}>
+        <div className={styles.statsPanelHeader}>
+          <h2>Latest form errors</h2>
+          <span>{rows.length} shown</span>
+        </div>
+        <div className={styles.recentActivityList}>
+          {rows.length ? (
+            rows.map((submission) => (
+              <button
+                type="button"
+                className={styles.recentActivityRow}
+                key={submission.id}
+                onClick={() =>
+                  navigate(adminSubmissionPath(submission.id, "overview"))
+                }
+              >
+                <span>
+                  <strong>
+                    {displayNameWithCountry(submission) || "Unknown name"}
+                  </strong>
+                  <small>
+                    {submissionLabel(submission)} ·{" "}
+                    {submission.formErrorCode ||
+                      submission.mailErrorCode ||
+                      statusLabel(submission.status)}
+                  </small>
+                  {submission.formErrorMessage || submission.mailError ? (
+                    <small>
+                      {submission.formErrorMessage || submission.mailError}
+                    </small>
+                  ) : null}
+                </span>
+                <small>{formatDateTime(submission.createdAtMs)}</small>
+              </button>
+            ))
+          ) : (
+            <p className={styles.detailMuted}>No recent form errors in this period.</p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   function renderAnalyticsRows(
     title: string,
     rows: AnalyticsRow[] = [],
@@ -4519,7 +5081,7 @@ export default function AdminForms() {
   function renderStatisticsPage() {
     const stats = adminStatistics;
     const traffic = analytics?.totals;
-    const emailTotal = stats.sent + stats.failed + stats.pending;
+    const emailIssueTotal = stats.sent + stats.mailFailures + stats.pending;
     const knownRevenueMeta =
       stats.bookingCount > 0
         ? `Average booking ${formatMoney(stats.averageBookingDKK)}`
@@ -4703,10 +5265,17 @@ export default function AdminForms() {
                   )}
                   {renderStatisticsKpi(
                     "Email success",
-                    formatPercent(stats.sent, emailTotal),
-                    `${stats.sent} sent · ${stats.failed} failed · ${stats.pending} pending`,
+                    formatPercent(stats.sent, emailIssueTotal),
+                    `${stats.sent} sent · ${stats.mailFailures} email failed · ${stats.pending} pending`,
                     <FiMail aria-hidden="true" />,
-                    stats.failed ? "warning" : "success"
+                    stats.mailFailures ? "warning" : "success"
+                  )}
+                  {renderStatisticsKpi(
+                    "Form errors",
+                    stats.formErrors + stats.sendFailures + stats.mailFailures,
+                    `${formatRatio(stats.errorRate)} error rate · ${stats.draft} drafts`,
+                    <FiAlertCircle aria-hidden="true" />,
+                    stats.failed ? "danger" : "success"
                   )}
                   {renderStatisticsKpi(
                     "Unique guests",
@@ -4755,6 +5324,13 @@ export default function AdminForms() {
                     showValue: true,
                   })}
                 </div>
+
+                <div className={styles.statsGrid}>
+                  {renderErrorTable("Errors by code", stats.errorRows)}
+                  {renderErrorTable("Errors by form", stats.errorFormRows)}
+                </div>
+
+                {renderRecentErrors(stats.recentErrorRows)}
 
                 <div className={styles.statsGrid}>
                   <section className={styles.statsPanel}>
@@ -5116,7 +5692,7 @@ export default function AdminForms() {
 
                 <div className={styles.qrFormGrid}>
                   <label className={`${styles.manualField} ${styles.manualFull}`}>
-                    <span>English guest link</span>
+                    <span>Page</span>
                     <select
                       value={
                         QR_GUEST_LINK_PRESETS.find(
@@ -5410,7 +5986,9 @@ export default function AdminForms() {
                 <div className={styles.qrPreviewMeta}>
                   <strong>{qrLabel || "Untitled QR code"}</strong>
                   <span>{qrValue.trim() || "No destination entered"}</span>
-                  {qrTracked ? <span>Scan URL: {qrEncodedValue}</span> : null}
+                  {qrTracked && qrDestination ? (
+                    <span>Scan URL: {qrEncodedValue}</span>
+                  ) : null}
                   <span>ID: {qrId}</span>
                   {qrError ? <small>{qrError}</small> : null}
                 </div>
@@ -5419,8 +5997,19 @@ export default function AdminForms() {
 
             <section className={styles.statsPanel}>
               <div className={styles.statsPanelHeader}>
-                <h2>Saved QR codes</h2>
-                <span>{qrStats?.saved.length || 0} saved</span>
+                <div>
+                  <h2>Saved QR codes</h2>
+                  <span>{qrStats?.saved.length || 0} saved</span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.button}
+                  onClick={downloadQrPdfSheet}
+                  disabled={!qrStats?.saved.length}
+                >
+                  <FiDownload aria-hidden="true" />
+                  PDF sheet
+                </button>
               </div>
               <div className={styles.statsTableWrap}>
                 <table className={styles.statsTable}>
@@ -5429,6 +6018,7 @@ export default function AdminForms() {
                       <th>Name</th>
                       <th>Destination</th>
                       <th>Tracking</th>
+                      <th>Print copies</th>
                       <th>Updated</th>
                       <th>Actions</th>
                     </tr>
@@ -5440,6 +6030,22 @@ export default function AdminForms() {
                           <td>{saved.label}</td>
                           <td>{saved.destination}</td>
                           <td>{saved.tracked ? "Enabled" : "Disabled"}</td>
+                          <td>
+                            <input
+                              className={styles.qrCopyInput}
+                              type="number"
+                              min={0}
+                              max={99}
+                              value={qrPrintCopyCount(saved.id)}
+                              onChange={(event) =>
+                                setQrPrintCopyCount(
+                                  saved.id,
+                                  Number(event.target.value) || 0
+                                )
+                              }
+                              aria-label={`Print copies for ${saved.label}`}
+                            />
+                          </td>
                           <td>
                             {saved.updatedAtMs
                               ? formatDateTime(saved.updatedAtMs)
@@ -5467,12 +6073,15 @@ export default function AdminForms() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5}>No saved QR codes yet.</td>
+                        <td colSpan={6}>No saved QR codes yet.</td>
                       </tr>
                     )}
                   </tbody>
                 </table>
               </div>
+              {qrPrintStatus ? (
+                <p className={styles.detailMuted}>{qrPrintStatus}</p>
+              ) : null}
               {qrDeleteStatus ? (
                 <p className={styles.detailMuted}>{qrDeleteStatus}</p>
               ) : null}
@@ -5873,6 +6482,11 @@ export default function AdminForms() {
                                   </span>
                                 ) : null}
                               </div>
+                            ) : null}
+                            {submission.formErrorMessage ? (
+                              <p className={styles.rowError}>
+                                {submission.formErrorMessage}
+                              </p>
                             ) : null}
                           </div>
                           <button

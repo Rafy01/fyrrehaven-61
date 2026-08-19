@@ -314,10 +314,12 @@ export const de = {
       "submit": "Anfrage senden",
       "sending": "Anfrage wird gesendet...",
       "success": "Danke. Ihre Anfrage zu Zusatzleistungen wurde gesendet.",
+      "successFollowup": "Wir kümmern uns darum und melden uns nur, wenn etwas nicht möglich ist.",
       "summaryYes": "Der Gast möchte Zusatzleistungen.",
       "summaryNo": "Der Gast möchte derzeit keine Zusatzleistungen.",
       "noSpecificItems": "Keine konkreten Mengen ausgewählt.",
-      "dateHint": "Zusatzleistungen müssen spätestens 3 Tage vor Ankunft angefragt werden, damit wir Vorbereitung.",
+      "dateHint": "Zusatzleistungen werden normalerweise spätestens 3 Tage vor Ankunft angefragt, damit wir alles vorbereiten können.",
+      "lateNotice": "Späte Anfragen und Last-minute-Buchungen werden akzeptiert. Wir kümmern uns darum und melden uns nur, wenn etwas nicht möglich ist.",
       "bundleHint": "Komplettpaket mit Bettwaren, Bettwäsche und Handtüchern",
       "fields": {
         "name": "Name",
@@ -348,7 +350,7 @@ export const de = {
       "acceptAfter": "für mögliche Verstöße gelesen und akzeptiert haben. Der Code für den Schlüsselkasten wird 1 Stunde vor Ankunft gesendet, sobald dies bestätigt ist.",
       "errors": {
         "required": "Bitte füllen Sie Name, E-Mail, E-Mail-Bestätigung und Aufenthaltsdatum aus.",
-        "dateTooSoon": "Zusatzleistungen müssen spätestens 3 Tage vor Ankunft angefragt werden. Bitte wählen Sie ein späteres Anreisedatum oder kontaktieren Sie uns direkt, wenn Ihr Aufenthalt kurz bevorsteht.",
+        "dateTooSoon": "Bitte wählen Sie heute oder ein zukünftiges Anreisedatum.",
         "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
         "emailMismatch": "E-Mail und E-Mail-Bestätigung müssen übereinstimmen.",
         "dateNotBooked": "Wir können keine Buchung finden, die an diesem Datum beginnt. Bitte wählen Sie das Startdatum Ihrer Buchung.",
@@ -358,6 +360,13 @@ export const de = {
         "noSelection": "Bitte wählen Sie mindestens eine Zusatzleistung aus, wenn Sie mit Ja antworten.",
         "tooManyPeople": "Bettwaren, Bettwäsche, Handtücher und Pakete können insgesamt nur für bis zu 10 Personen bestellt werden.",
         "accept": "Bitte akzeptieren Sie Hausregeln und Gebührenübersicht vor dem Absenden.",
+        "rateLimited": "Es wurden zu viele Anfragen in kurzer Zeit gesendet. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+        "tooFast": "Bitte prüfen Sie das Formular noch einmal und senden Sie es in einem Moment erneut.",
+        "formExpired": "Diese Formularsitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie die Anfrage erneut.",
+        "security": "Die Anfrage konnte aus dieser Browsersitzung nicht angenommen werden. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
+        "lateSubmit": "Ihre späte Anfrage konnte nicht automatisch gesendet werden. Da Ihr Aufenthalt kurz bevorsteht, kontaktieren Sie uns bitte direkt, damit wir es arrangieren können.",
+        "network": "Die Verbindung wurde unterbrochen, bevor die Anfrage gesendet werden konnte. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+        "lateNetwork": "Die Verbindung wurde unterbrochen, bevor Ihre späte Anfrage gesendet werden konnte. Da Ihr Aufenthalt kurz bevorsteht, kontaktieren Sie uns bitte direkt, falls sie nicht durchgeht.",
         "submit": "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es gleich noch einmal."
       }
     }
@@ -633,6 +642,19 @@ export const de = {
       "submit": "Ablesung senden",
       "sending": "Ablesung wird gesendet...",
       "success": "Danke! Ihre Ablesung wurde gesendet.",
+      "errors": {
+        "rateLimited": "Es wurden zu viele Ablesungen in kurzer Zeit gesendet. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+        "tooFast": "Bitte prüfen Sie das Formular noch einmal und senden Sie es in einem Moment erneut.",
+        "formExpired": "Diese Formularsitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie die Ablesung erneut.",
+        "invalidFileType": "Bitte laden Sie nur Bilddateien hoch. Fotos von Ihrer Handykamera werden akzeptiert.",
+        "fileTooLarge": "Ein oder mehrere Fotos sind zu groß. Bitte laden Sie weniger Fotos hoch, oder öffnen Sie das Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen den Screenshot hoch.",
+        "tooManyFiles": "Es wurden zu viele Fotos hochgeladen. Bitte laden Sie nur die benötigten Zählerfotos hoch.",
+        "tooManyFields": "Es wurden zu viele Informationen gesendet. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
+        "missingFiles": "Bitte laden Sie mindestens ein Foto der Zählerablesung hoch.",
+        "validation": "Bitte prüfen Sie die Pflichtfelder und stellen Sie sicher, dass die Zählerstände korrekt eingetragen sind.",
+        "mail": "Ihre Ablesung wurde gespeichert, aber die E-Mail konnte nicht automatisch gesendet werden. Wir können sie trotzdem im Admin-System sehen.",
+        "network": "Die Verbindung wurde unterbrochen, bevor die Ablesung gesendet werden konnte. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
+      },
       "errorLabel": "Fehler:"
     },
     "manualPage": {

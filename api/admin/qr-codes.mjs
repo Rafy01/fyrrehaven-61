@@ -132,6 +132,7 @@ function cleanQrCodeConfig(value) {
       ? qr.overlayMode
       : "logo",
     overlayText: cleanString(qr.overlayText, 24) || "61",
+    overlayImage: cleanString(qr.overlayImage, 300000),
     overlayScale: cleanNumber(qr.overlayScale, 22, 8, 32),
     overlayBackground: cleanString(qr.overlayBackground, 24) || "#000000",
     frameEnabled: cleanBoolean(qr.frameEnabled, true),
