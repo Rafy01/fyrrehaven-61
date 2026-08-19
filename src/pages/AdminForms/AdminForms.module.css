@@ -667,6 +667,19 @@
   padding-inline: 12px;
 }
 
+.qrTypeBadge {
+  display: block;
+  width: fit-content;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gray-12) 8%, transparent);
+  color: var(--gray-10);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
 .qrCopyInput {
   box-sizing: border-box;
   width: 82px;

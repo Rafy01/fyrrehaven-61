@@ -1600,6 +1600,12 @@ function qrCodeId(label: string, destination: string) {
   return `${qrSlug(label)}-${qrHash(`${label}:${destination}`)}`;
 }
 
+function isPageQrCodeId(id: string) {
+  return QR_GUEST_LINK_PRESETS.some(
+    (preset) => qrCodeId(preset.label, preset.destination) === id
+  );
+}
+
 function qrTrackingUrl(id: string, label: string, destination: string) {
   const params = new URLSearchParams({
     id,
@@ -3639,6 +3645,10 @@ export default function AdminForms() {
   }
 
   async function deleteSavedQrCode(id: string) {
+    if (isPageQrCodeId(id)) {
+      setQrDeleteStatus("Page QR codes are permanent. Only custom QR codes can be deleted.");
+      return;
+    }
     setQrDeleteStatus("Deleting...");
     try {
       if (LOCAL_DASHBOARD_FALLBACK) {
@@ -6027,7 +6037,14 @@ export default function AdminForms() {
                     {qrStats?.saved.length ? (
                       qrStats.saved.map((saved) => (
                         <tr key={saved.id}>
-                          <td>{saved.label}</td>
+                          <td>
+                            {saved.label}
+                            {isPageQrCodeId(saved.id) ? (
+                              <span className={styles.qrTypeBadge}>Page QR</span>
+                            ) : (
+                              <span className={styles.qrTypeBadge}>Custom</span>
+                            )}
+                          </td>
                           <td>{saved.destination}</td>
                           <td>{saved.tracked ? "Enabled" : "Disabled"}</td>
                           <td>
@@ -6060,13 +6077,15 @@ export default function AdminForms() {
                               >
                                 Load
                               </button>
-                              <button
-                                type="button"
-                                className={styles.deleteButton}
-                                onClick={() => deleteSavedQrCode(saved.id)}
-                              >
-                                Delete
-                              </button>
+                              {isPageQrCodeId(saved.id) ? null : (
+                                <button
+                                  type="button"
+                                  className={styles.deleteButton}
+                                  onClick={() => deleteSavedQrCode(saved.id)}
+                                >
+                                  Delete
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

@@ -12,6 +12,19 @@ const DASHBOARD_AUTH_DISABLED =
 const QR_CODES_COLLECTION = "qrCodes";
 const MAX_QR_EVENTS = 15000;
 const DEFAULT_RANGE_DAYS = 180;
+const PROTECTED_PAGE_QR_CODE_IDS = new Set([
+  "check-in-out-1eiizsg",
+  "pool-h1vkm7",
+  "sauna-h6k3tr",
+  "activity-room-1ve48lu",
+  "website-homepage-np8zwo",
+  "espresso-machine-1qarliz",
+  "spa-thmw80",
+  "sofa-bed-j172q7",
+  "fees-oh0lkw",
+  "wifi-1o6mez9",
+  "house-manual-12by76j",
+]);
 
 function startOfDay(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
@@ -245,6 +258,23 @@ export default async function handler(req, res) {
     }
   }
 
+  const deleteId =
+    req.method === "DELETE" ? cleanString(req.query?.id, 140) : "";
+  if (req.method === "DELETE") {
+    if (!deleteId) {
+      sendJson(res, 400, { ok: false, error: "MISSING_QR_CODE_ID" });
+      return;
+    }
+    if (PROTECTED_PAGE_QR_CODE_IDS.has(deleteId)) {
+      sendJson(res, 403, {
+        ok: false,
+        error: "PAGE_QR_CODE_CANNOT_BE_DELETED",
+        detail: "Page QR codes are permanent. Only custom QR codes can be deleted.",
+      });
+      return;
+    }
+  }
+
   const db = await getFirestoreDb();
   if (!db) {
     sendJson(res, 503, {
@@ -281,13 +311,8 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "DELETE") {
-    const id = cleanString(req.query?.id, 140);
-    if (!id) {
-      sendJson(res, 400, { ok: false, error: "MISSING_QR_CODE_ID" });
-      return;
-    }
-    await db.collection(QR_CODES_COLLECTION).doc(id).delete();
-    sendJson(res, 200, { ok: true, deleted: id });
+    await db.collection(QR_CODES_COLLECTION).doc(deleteId).delete();
+    sendJson(res, 200, { ok: true, deleted: deleteId });
     return;
   }
 
