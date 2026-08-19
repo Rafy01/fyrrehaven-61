@@ -15,6 +15,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/qr", "destination": "/api/analytics" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
 
     {

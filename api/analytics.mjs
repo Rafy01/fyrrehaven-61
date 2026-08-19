@@ -4,10 +4,12 @@ import {
   getFirebaseAdminInitError,
 } from "./_lib/firebaseAdmin.mjs";
 import { applySecurityHeaders, sendJson } from "./_lib/httpSecurity.mjs";
+import { QR_SCAN_EVENTS_COLLECTION } from "./_lib/qrAnalytics.mjs";
 
 export const ANALYTICS_EVENTS_COLLECTION = "analyticsEvents";
 
 const MAX_STRING_LENGTH = 500;
+const FALLBACK_URL = "https://fyrrehaven-61.dk/en";
 const VALID_EVENTS = new Set([
   "page_view",
   "page_engagement",
@@ -45,6 +47,16 @@ function header(req, key) {
   return cleanString(req.headers[key.toLowerCase()]);
 }
 
+function safeDestination(value) {
+  try {
+    const url = new URL(cleanString(value, 1200));
+    if (url.protocol !== "http:" && url.protocol !== "https:") return FALLBACK_URL;
+    return url.toString();
+  } catch {
+    return FALLBACK_URL;
+  }
+}
+
 function deviceFromUserAgent(userAgent) {
   const ua = userAgent.toLowerCase();
   if (/bot|crawler|spider|preview|facebookexternalhit|slurp|bingpreview/.test(ua)) {
@@ -74,6 +86,14 @@ function osFromUserAgent(userAgent) {
   return "Other";
 }
 
+function referrerDomain(referrer) {
+  try {
+    return referrer ? new URL(referrer).hostname.replace(/^www\./, "") : "Direct";
+  } catch {
+    return "Unknown";
+  }
+}
+
 function siteArea(path) {
   if (path.startsWith("/admin")) return "Admin";
   if (path.startsWith("/guest")) return "Guest/private";
@@ -101,7 +121,52 @@ function requestBody(req) {
 
 export default async function handler(req, res) {
   applySecurityHeaders(res);
-  res.setHeader("Allow", "POST");
+  res.setHeader("Allow", "GET, POST");
+
+  if (req.method === "GET") {
+    const destination = safeDestination(req.query?.to);
+    const userAgent = header(req, "user-agent");
+    const deviceType = deviceFromUserAgent(userAgent);
+    const now = Date.now();
+    const id = cleanString(req.query?.id, 120) || "unknown";
+    const label = cleanString(req.query?.label, 180) || id;
+
+    try {
+      const db = await getFirestoreDb();
+      if (db) {
+        await db.collection(QR_SCAN_EVENTS_COLLECTION).add({
+          qrId: id,
+          label,
+          destination,
+          deviceType,
+          browser: browserFromUserAgent(userAgent),
+          isBot: deviceType === "Bot",
+          referrerDomain: referrerDomain(header(req, "referer")),
+          country:
+            header(req, "x-vercel-ip-country") ||
+            header(req, "cf-ipcountry") ||
+            "Unknown",
+          region: header(req, "x-vercel-ip-country-region"),
+          city: header(req, "x-vercel-ip-city"),
+          ipHash: hashIp(clientIp(req)),
+          createdAtMs: now,
+          createdAtIso: new Date(now).toISOString(),
+        });
+      } else {
+        console.error("QR_FIREBASE_NOT_CONFIGURED", getFirebaseAdminInitError());
+      }
+    } catch (error) {
+      console.error("QR_SCAN_WRITE_FAILED", error);
+    }
+
+    res.writeHead(302, {
+      Location: destination,
+      "Cache-Control": "no-store, max-age=0, must-revalidate",
+      "X-Robots-Tag": "noindex, nofollow",
+    });
+    res.end();
+    return;
+  }
 
   if (req.method !== "POST") {
     sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });

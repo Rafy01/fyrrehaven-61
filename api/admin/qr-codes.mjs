@@ -4,7 +4,7 @@ import {
   verifyAdminRequest,
 } from "../_lib/firebaseAdmin.mjs";
 import { applySecurityHeaders, sendJson } from "../_lib/httpSecurity.mjs";
-import { QR_SCAN_EVENTS_COLLECTION } from "../qr.mjs";
+import { QR_SCAN_EVENTS_COLLECTION } from "../_lib/qrAnalytics.mjs";
 
 const DASHBOARD_AUTH_DISABLED =
   process.env.NODE_ENV !== "production" ||
