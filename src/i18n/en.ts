@@ -365,6 +365,8 @@ export const en = {
         "formExpired": "This form session has expired. Please reload the page and send the request again.",
         "security": "The request could not be accepted from this browser session. Please reload the page and try again.",
         "lateSubmit": "Your late request could not be sent automatically. Because your stay is soon, please contact us directly so we can arrange it.",
+        "network": "The connection was interrupted before the request could be sent. Please check your internet connection and try again.",
+        "lateNetwork": "The connection was interrupted before your late request could be sent. Because your stay is soon, please contact us directly if it does not go through.",
         "submit": "Could not send your request. Please try again shortly."
       }
     }
@@ -640,6 +642,19 @@ export const en = {
       "submit": "Submit reading",
       "sending": "Submitting reading...",
       "success": "Thanks! Your reading has been sent.",
+      "errors": {
+        "rateLimited": "Too many readings were submitted in a short time. Please wait a moment and try again.",
+        "tooFast": "Please review the form once more and send it again in a moment.",
+        "formExpired": "This form session has expired. Please reload the page and send the reading again.",
+        "invalidFileType": "Please upload image files only. Photos from your phone camera are accepted.",
+        "fileTooLarge": "One or more photos are too large. Please upload smaller images or fewer photos.",
+        "tooManyFiles": "Too many photos were uploaded. Please upload only the meter photos needed for the reading.",
+        "tooManyFields": "Too much information was submitted. Please reload the page and try again.",
+        "missingFiles": "Please upload at least one photo of the meter reading.",
+        "validation": "Please check the required fields and make sure the meter readings are filled in correctly.",
+        "mail": "Your reading was recorded, but the email could not be sent automatically. We can still see it in the admin system.",
+        "network": "The connection was interrupted before the reading could be sent. Please check your internet connection and try again."
+      },
       "errorLabel": "Error:"
     },
     "manualPage": {

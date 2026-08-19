@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/guest/CheckInOut.tsx
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Head from "../../../lib/Head";
 import { useTranslation } from "react-i18next";
 import Accordion from "../../../components/Accordion/Accordion";
 import Form, { type Field } from "../../../components/Form/Form";
 import { guestPathOf } from "../../../lib/routes";
 import type { Lang } from "../../../lib/lang";
+import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import styles from "./CheckInOut.module.css";
 
 function isPoolOpen(today = new Date()) {
@@ -17,6 +18,42 @@ function isPoolOpen(today = new Date()) {
   return month > 5 && month < 10
     ? true
     : (month === 5 && date >= 1) || (month === 10 && date <= 1);
+}
+
+function checkinErrorMessage(
+  code: string,
+  detail: string,
+  tg: (key: string) => string
+) {
+  switch (code) {
+    case "RATE_LIMIT_EXCEEDED":
+      return tg("checkInOutPage.errors.rateLimited");
+    case "FORM_SUBMITTED_TOO_FAST":
+      return tg("checkInOutPage.errors.tooFast");
+    case "FORM_EXPIRED":
+    case "INVALID_FORM_STATE":
+      return tg("checkInOutPage.errors.formExpired");
+    case "INVALID_FILE_TYPE":
+      return tg("checkInOutPage.errors.invalidFileType");
+    case "FILE_TOO_LARGE":
+    case "PAYLOAD_TOO_LARGE":
+      return tg("checkInOutPage.errors.fileTooLarge");
+    case "TOO_MANY_FILES":
+      return tg("checkInOutPage.errors.tooManyFiles");
+    case "TOO_MANY_FIELDS":
+      return tg("checkInOutPage.errors.tooManyFields");
+    case "MISSING_FILES":
+      return tg("checkInOutPage.errors.missingFiles");
+    case "VALIDATION_ERROR":
+      return detail || tg("checkInOutPage.errors.validation");
+    case "MAIL_AUTH_FAILED":
+    case "MAIL_AUTOREPLY_FAILED":
+    case "MAIL_ERROR":
+    case "ENV_MISSING":
+      return tg("checkInOutPage.errors.mail");
+    default:
+      return detail || tg("checkInOutPage.unknownError");
+  }
 }
 
 export default function CheckInOut({
@@ -48,6 +85,10 @@ export default function CheckInOut({
   const [error, setError] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [formStartedAt, setFormStartedAt] = useState(() => String(Date.now()));
+  const [draftValues, setDraftValues] = useState<
+    Record<string, string | FileList | boolean>
+  >({});
+  const draftIdRef = useRef(createFormDraftId("guest-checkin"));
 
   useEffect(() => {
     setPoolOpen(isPoolOpen());
@@ -57,6 +98,68 @@ export default function CheckInOut({
       setIsMobile(mobile);
     }
   }, []);
+
+  const buildDraftPayload = useCallback(
+    (
+      values: Record<string, string | FileList | boolean>,
+      status: "draft" | "validation_failed" | "send_failed" = "draft",
+      formErrorMessage = "",
+      formErrorCode = ""
+    ) => {
+      const files =
+        values.meterImages instanceof FileList
+          ? Array.from(values.meterImages).map((file) => ({
+              filename: file.name,
+              contentType: file.type,
+              sizeBytes: file.size,
+            }))
+          : [];
+
+      return {
+        clientDraftId: draftIdRef.current,
+        intent: "guest-checkin",
+        lang,
+        status,
+        formErrorCode,
+        formErrorMessage,
+        formLastAction: status === "draft" ? "autosave" : status,
+        name: String(values.name || "").trim(),
+        email: String(values.email || "").trim(),
+        message: String(values.comment || "").trim(),
+        consent: values.consent === true,
+        checkin: {
+          type: String(values.checkType || "").trim(),
+          keycode: String(values.keycode || "").trim(),
+          meterReadings: {
+            electricity: String(values.elReading || "").trim(),
+            waterHouse: String(values.waterHouse || "").trim(),
+            waterPool: String(values.waterPool || "").trim() || null,
+          },
+          attachments: files,
+        },
+        createdAtMs: Number(formStartedAt) || Date.now(),
+      };
+    },
+    [formStartedAt, lang]
+  );
+
+  useEffect(() => {
+    if (adminManual || success) return;
+    const hasDraftData =
+      String(draftValues.name || "").trim() ||
+      String(draftValues.email || "").trim() ||
+      String(draftValues.keycode || "").trim() ||
+      String(draftValues.elReading || "").trim() ||
+      String(draftValues.waterHouse || "").trim() ||
+      draftValues.meterImages instanceof FileList;
+    if (!hasDraftData) return;
+
+    const timer = window.setTimeout(() => {
+      void saveFormDraft(buildDraftPayload(draftValues));
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [adminManual, buildDraftPayload, draftValues, success]);
 
   if (isMobile === null) {
     return null;
@@ -91,6 +194,7 @@ export default function CheckInOut({
           formData.append(key, String(value));
         }
       }
+      formData.set("clientDraftId", draftIdRef.current);
 
       const res = await fetch("/api/checkin", {
         method: "POST",
@@ -102,12 +206,21 @@ export default function CheckInOut({
 
       if (!res.ok) {
         let errorMessage = tg("checkInOutPage.unknownError");
+        let errorCode = "";
         try {
           const data = await res.json();
-          errorMessage = data?.detail || errorMessage;
+          errorCode = String(data?.error || "");
+          errorMessage = checkinErrorMessage(
+            errorCode,
+            String(data?.detail || ""),
+            tg
+          );
         } catch {
           // Keep the default message if the API does not return JSON.
         }
+        void saveFormDraft(
+          buildDraftPayload(values, "send_failed", errorMessage, errorCode)
+        );
         setError(errorMessage);
         return;
       }
@@ -115,9 +228,14 @@ export default function CheckInOut({
       setSuccess(true);
       setFormKey((k) => k + 1);
       setFormStartedAt(String(Date.now()));
+      draftIdRef.current = createFormDraftId("guest-checkin");
     } catch (err: any) {
       console.error("Submit error:", err);
-      setError(err?.message || tg("checkInOutPage.fallbackError"));
+      const errorMessage = tg("checkInOutPage.errors.network");
+      void saveFormDraft(
+        buildDraftPayload(values, "send_failed", errorMessage, "NETWORK_ERROR")
+      );
+      setError(errorMessage || err?.message || tg("checkInOutPage.fallbackError"));
     } finally {
       setIsSending(false);
     }
@@ -300,6 +418,19 @@ export default function CheckInOut({
           key={formKey}
           fields={fields}
           onSubmit={handleSubmit}
+          onValuesChange={setDraftValues}
+          onValidationError={(validationErrors) => {
+            const firstError = Object.values(validationErrors)[0];
+            if (!firstError) return;
+            void saveFormDraft(
+              buildDraftPayload(
+                draftValues,
+                "validation_failed",
+                firstError,
+                "CLIENT_VALIDATION_ERROR"
+              )
+            );
+          }}
           submitLabel={tg("checkInOutPage.submit")}
           lang={lang}
         />

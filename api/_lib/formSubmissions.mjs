@@ -17,6 +17,31 @@ export async function createFormSubmission(db, record) {
   return docRef;
 }
 
+export async function upsertFormSubmission(db, submissionId, record) {
+  if (!db || !submissionId) return null;
+
+  const cleanId = String(submissionId || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 120);
+  if (!cleanId) return null;
+
+  const docRef = db.collection(FORM_SUBMISSIONS_COLLECTION).doc(cleanId);
+  const snapshot = await docRef.get();
+  await docRef.set(
+    {
+      ...record,
+      id: cleanId,
+      createdAtMs: record.createdAtMs || snapshot.data()?.createdAtMs || Date.now(),
+      createdAt: snapshot.exists ? snapshot.data()?.createdAt : getServerTimestamp(),
+      updatedAtMs: Date.now(),
+      updatedAt: getServerTimestamp(),
+    },
+    { merge: true }
+  );
+  return docRef;
+}
+
 export async function updateFormSubmission(docRef, patch) {
   if (!docRef) return;
   await docRef.update({

@@ -25,6 +25,7 @@ import {
   DEFAULT_CLEANING_FEE_DKK,
   getCleaningFeeForDate,
 } from "../../data/pricing";
+import { createFormDraftId, saveFormDraft } from "../../lib/formDraftLog";
 
 type Purpose = "inquiry" | "booking" | "other";
 
@@ -56,12 +57,74 @@ type FormState = {
   stayPurpose: string;
 };
 
+type ContactSubmitResponse = {
+  ok?: boolean;
+  error?: string;
+  detail?: string | null;
+  mailStatus?: string;
+};
+
 const MAX_GUESTS = 10;
 const DIGITS_RE = /[^\d]/g;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function normalizeEmail(value: string) {
   return value.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+}
+
+function contactServerErrorMessage(
+  code: string,
+  fallback: string,
+  t: (da: string, en: string, de?: string) => string
+) {
+  switch (code) {
+    case "RATE_LIMIT_EXCEEDED":
+      return t(
+        "Der er sendt for mange forespørgsler på kort tid. Vent venligst et øjeblik, og prøv igen.",
+        "Too many requests were sent in a short time. Please wait a moment and try again.",
+        "Es wurden zu viele Anfragen in kurzer Zeit gesendet. Bitte warten Sie einen Moment und versuchen Sie es erneut."
+      );
+    case "FORM_SUBMITTED_TOO_FAST":
+      return t(
+        "Gennemgå venligst formularen én gang mere, og send den igen om et øjeblik.",
+        "Please review the form once more and send it again in a moment.",
+        "Bitte prüfen Sie das Formular noch einmal und senden Sie es in einem Moment erneut."
+      );
+    case "FORM_EXPIRED":
+    case "INVALID_FORM_STATE":
+      return t(
+        "Formularsessionen er udløbet. Genindlæs siden, og send forespørgslen igen.",
+        "This form session has expired. Please reload the page and send the request again.",
+        "Diese Formularsitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie die Anfrage erneut."
+      );
+    case "MISSING_CONSENT":
+    case "MISSING_FEES_ACCEPTANCE":
+      return t(
+        "Accepter venligst samtykke og nødvendige betingelser før du sender.",
+        "Please accept the required consent and terms before sending.",
+        "Bitte akzeptieren Sie die erforderliche Einwilligung und Bedingungen vor dem Absenden."
+      );
+    case "FORBIDDEN_ORIGIN":
+    case "FORBIDDEN_USER_AGENT":
+    case "BOT_DETECTED":
+    case "INVALID_PAYLOAD":
+      return t(
+        "Forespørgslen kunne ikke accepteres fra denne browsersession. Genindlæs siden, og prøv igen.",
+        "The request could not be accepted from this browser session. Please reload the page and try again.",
+        "Die Anfrage konnte aus dieser Browsersitzung nicht angenommen werden. Bitte laden Sie die Seite neu und versuchen Sie es erneut."
+      );
+    case "ENV_MISSING":
+    case "MAIL_AUTH_FAILED":
+    case "MAIL_AUTOREPLY_FAILED":
+    case "MAIL_ERROR":
+      return t(
+        "Forespørgslen blev registreret, men mailen kunne ikke sendes automatisk. Kontakt os direkte, hvis du ikke hører fra os.",
+        "Your request was recorded, but the email could not be sent automatically. Please contact us directly if you do not hear from us.",
+        "Ihre Anfrage wurde gespeichert, aber die E-Mail konnte nicht automatisch gesendet werden. Bitte kontaktieren Sie uns direkt, falls Sie nichts von uns hören."
+      );
+    default:
+      return fallback;
+  }
 }
 
 /** Resolve current UI language. */
@@ -152,6 +215,7 @@ export default function ContactForm({
   const [sent, setSent] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const formStartedAtRef = React.useRef<number>(Date.now());
+  const draftIdRef = React.useRef(createFormDraftId(isBooking ? "booking" : "contact"));
 
   const selectedCountry = findCountry(state.countryIso);
   const dial = selectedCountry?.dial ?? "";
@@ -276,6 +340,110 @@ export default function ContactForm({
   // === Min.-nætter: afledte værdier til UI og submit-validering ===
   const minReq = selPrice.minNightsRequired ?? 2;
 
+  const selectionPayload = React.useMemo(
+    () =>
+      isBooking
+        ? {
+            start: ymdLocal(selPrice.start),
+            endExclusive: ymdLocal(selPrice.endExclusive),
+            nights: selPrice.nights ?? null,
+            baseNightsTotalDKK: selPrice.total ?? null,
+            cleaningFeeDKK: includeCleaning ? cleaningFeeDKK : 0,
+            totalWithCleaningDKK: includeCleaning
+              ? (selPrice.total ?? 0) + cleaningFeeDKK
+              : selPrice.total ?? null,
+            airbnbServiceFeeSavingsDKK:
+              canShowStayPrice && (includeCleaning || selPrice.total != null)
+                ? airbnbServiceFeeSavingsDKK
+                : null,
+            totalAfterAirbnbDiscountDKK:
+              canShowStayPrice && (includeCleaning || selPrice.total != null)
+                ? totalAfterAirbnbDiscount
+                : null,
+            minNightsRequired: selPrice.minNightsRequired ?? 2,
+            isMinNightsSatisfied:
+              selPrice.isMinNightsSatisfied ?? selPrice.nights != null,
+            validationError: selPrice.validationError ?? null,
+            breakdown:
+              selPrice.breakdown?.map((b) => ({
+                date: ymdLocal(b.date)!,
+                price: b.price,
+              })) ?? [],
+          }
+        : null,
+    [
+      airbnbServiceFeeSavingsDKK,
+      canShowStayPrice,
+      cleaningFeeDKK,
+      includeCleaning,
+      isBooking,
+      selPrice,
+      totalAfterAirbnbDiscount,
+      ymdLocal,
+    ]
+  );
+
+  const draftPayload = React.useCallback(
+    (
+      status: "draft" | "validation_failed" | "send_failed" = "draft",
+      formErrorMessage = "",
+      formErrorCode = ""
+    ) => ({
+      clientDraftId: draftIdRef.current,
+      intent: isBooking ? "booking" : "contact",
+      lang,
+      status,
+      formErrorCode,
+      formErrorMessage,
+      formLastAction: status === "draft" ? "autosave" : status,
+      name: state.name.trim(),
+      email: normalizeEmail(state.email),
+      phone: fullPhone,
+      countryIso: state.countryIso,
+      message: isBooking ? "" : state.message.trim(),
+      consent: state.consent,
+      feesAccepted: isBooking ? state.feesAccepted : false,
+      guests: isBooking
+        ? {
+            adults: toInt(state.adults),
+            children: toInt(state.children),
+            babies: toInt(state.babies),
+            total:
+              toInt(state.adults) + toInt(state.children) + toInt(state.babies),
+          }
+        : null,
+      stayPurpose: isBooking ? state.stayPurpose.trim() : "",
+      selection: selectionPayload,
+      createdAtMs: formStartedAtRef.current,
+    }),
+    [fullPhone, isBooking, lang, selectionPayload, state]
+  );
+
+  React.useEffect(() => {
+    if (adminManual || sent) return;
+    const hasDraftData =
+      state.name.trim() ||
+      state.email.trim() ||
+      state.phone.trim() ||
+      state.message.trim() ||
+      state.stayPurpose.trim() ||
+      Boolean(selPrice.start);
+    if (!hasDraftData) return;
+
+    const timer = window.setTimeout(() => {
+      void saveFormDraft(draftPayload());
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [adminManual, draftPayload, selPrice.start, sent, state]);
+
+  function setValidationError(message: string, code: string) {
+    setError(message);
+    if (!adminManual) {
+      void saveFormDraft(draftPayload("validation_failed", message, code));
+    }
+  }
+
   // Submit
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -301,32 +469,35 @@ export default function ContactForm({
       !confirmEmail ||
       (!isBooking && !state.message.trim())
     ) {
-      setError(missingMsg);
+      setValidationError(missingMsg, "MISSING_REQUIRED_FIELDS");
       return;
     }
 
     if (!EMAIL_RE.test(email)) {
-      setError(
+      setValidationError(
         t(
           "Indtast venligst en gyldig e-mailadresse.",
           "Please enter a valid email address.",
           "Bitte geben Sie eine gültige E-Mail-Adresse ein."
-        )
+        ),
+        "INVALID_EMAIL"
       );
       return;
     }
 
     if (email.toLowerCase() !== confirmEmail.toLowerCase()) {
+      setValidationError(confirmEmailMismatchMessage, "EMAIL_MISMATCH");
       return;
     }
 
     if (!state.consent) {
-      setError(
+      setValidationError(
         t(
           "Sæt venligst flueben for samtykke til behandling af dine oplysninger.",
           "Please check the consent box to allow us to process your information.",
           "Bitte bestätigen Sie die Einwilligung zur Verarbeitung Ihrer Daten."
-        )
+        ),
+        "MISSING_CONSENT"
       );
       return;
     }
@@ -339,22 +510,24 @@ export default function ContactForm({
 
       const totalGuests = A + C + B;
       if (A < 1) {
-        setError(
+        setValidationError(
           t(
             "Angiv venligst antal voksne (mindst 1).",
             "Please enter number of adults (at least 1).",
             "Bitte geben Sie die Anzahl der Erwachsenen an (mindestens 1)."
-          )
+          ),
+          "INVALID_ADULTS"
         );
         return;
       }
       if (totalGuests > MAX_GUESTS) {
-        setError(
+        setValidationError(
           t(
             "Det samlede antal gæster må højst være 10.",
             "The total number of guests must not exceed 10.",
             "Die Gesamtzahl der Gäste darf höchstens 10 betragen."
-          )
+          ),
+          "TOO_MANY_GUESTS"
         );
         return;
       }
@@ -363,12 +536,13 @@ export default function ContactForm({
       const startYMD = ymdLocal(selPrice.start) ?? "";
       const endYMD = ymdLocal(selPrice.endExclusive) ?? "";
       if (!startYMD || !endYMD || !selPrice.nights || selPrice.nights <= 0) {
-        setError(
+        setValidationError(
           t(
             "Vælg venligst en periode i kalenderen (ankomst og afrejse).",
             "Please select a period in the calendar (check-in and check-out).",
             "Bitte wählen Sie einen Zeitraum im Kalender (Anreise und Abreise)."
-          )
+          ),
+          "MISSING_BOOKING_DATES"
         );
         return;
       }
@@ -394,27 +568,29 @@ export default function ContactForm({
               } required for arrival ${fmtDateLong.format(
                 selPrice.start!
               )}. Please choose a longer stay.`);
-        setError(msg);
+        setValidationError(msg, "MIN_NIGHTS_NOT_SATISFIED");
         return;
       }
 
       if (!state.feesAccepted) {
-        setError(
+        setValidationError(
           t(
             "Bekræft venligst at du har læst og accepterer gebyroversigten.",
             "Please confirm that you have read and accept the fee list.",
             "Bitte bestätigen Sie, dass Sie die Gebührenübersicht gelesen und akzeptiert haben."
-          )
+          ),
+          "MISSING_FEES_ACCEPTANCE"
         );
         return;
       }
       if (!state.stayPurpose.trim()) {
-        setError(
+        setValidationError(
           t(
             "Fortæl os venligst kort, hvad opholdet skal bruges til.",
             "Please briefly tell us the purpose of your stay.",
             "Bitte beschreiben Sie kurz den Zweck Ihres Aufenthalts."
-          )
+          ),
+          "MISSING_STAY_PURPOSE"
         );
         return;
       }
@@ -422,38 +598,6 @@ export default function ContactForm({
 
     setSending(true);
     try {
-      const selectionPayload = isBooking
-        ? {
-            // Brug lokal YYYY-MM-DD (ingen UTC-skift)
-            start: ymdLocal(selPrice.start),
-            endExclusive: ymdLocal(selPrice.endExclusive),
-            nights: selPrice.nights ?? null,
-            baseNightsTotalDKK: selPrice.total ?? null,
-            cleaningFeeDKK: includeCleaning ? cleaningFeeDKK : 0,
-            totalWithCleaningDKK: includeCleaning
-              ? (selPrice.total ?? 0) + cleaningFeeDKK
-              : selPrice.total ?? null,
-            airbnbServiceFeeSavingsDKK:
-              canShowStayPrice && (includeCleaning || selPrice.total != null)
-                ? airbnbServiceFeeSavingsDKK
-                : null,
-            totalAfterAirbnbDiscountDKK:
-              canShowStayPrice && (includeCleaning || selPrice.total != null)
-                ? totalAfterAirbnbDiscount
-                : null,
-            // min.-nætter metadata til server-side validering/logning
-            minNightsRequired: selPrice.minNightsRequired ?? 2,
-            isMinNightsSatisfied:
-              selPrice.isMinNightsSatisfied ?? selPrice.nights != null,
-            validationError: selPrice.validationError ?? null,
-            breakdown:
-              selPrice.breakdown?.map((b) => ({
-                date: ymdLocal(b.date)!, // lokal dato
-                price: b.price,
-              })) ?? [],
-          }
-        : null;
-
       const purposeForApi: Purpose = isBooking
         ? purpose === "other"
           ? "other"
@@ -472,6 +616,7 @@ export default function ContactForm({
           website: "",
           company: "",
           faxNumber: "",
+          clientDraftId: draftIdRef.current,
           formStartedAt: formStartedAtRef.current,
           purpose: purposeForApi,
           name: state.name.trim(),
@@ -497,49 +642,32 @@ export default function ContactForm({
         }),
       });
 
-      if (!res.ok) {
-        const detail = await res
-          .json()
-          .catch(() => ({ error: "", detail: "" }));
+      const detail = (await res
+        .json()
+        .catch(() => ({ error: "", detail: "" }))) as ContactSubmitResponse;
+
+      if (!res.ok || detail?.ok === false) {
         const serverError = String(detail?.error || "");
-        if (serverError === "INVALID_EMAIL") {
-          setError(
-            t(
-              "Indtast venligst en gyldig e-mailadresse.",
-              "Please enter a valid email address.",
-              "Bitte geben Sie eine gültige E-Mail-Adresse ein."
-            )
-          );
-          return;
-        }
-        if (serverError === "MAIL_AUTH_FAILED") {
-          setError(
-            t(
-              "Mailserveren kunne ikke logge ind. Kontakt os venligst direkte på e-mail, mens vi retter opsætningen.",
-              "The mail server could not sign in. Please contact us directly by email while we fix the setup.",
-              "Der Mailserver konnte sich nicht anmelden. Bitte kontaktieren Sie uns direkt per E-Mail, während wir die Einrichtung korrigieren."
-            )
-          );
-          return;
-        }
-        throw new Error(
-          `HTTP ${res.status}${
-            serverError ? ` – ${serverError}` : ""
-          }${
-            detail?.detail ? `: ${String(detail.detail)}` : ""
-          }`
+        const fallback = t(
+          "Kunne ikke sende forespørgslen. Prøv igen om lidt.",
+          "Could not send your request. Please try again shortly.",
+          "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es gleich noch einmal."
         );
+        const message = contactServerErrorMessage(serverError, fallback, t);
+        void saveFormDraft(draftPayload("send_failed", message, serverError));
+        setError(message);
+        return;
       }
       setSent(true);
     } catch (err) {
       console.error("ContactForm submit failed:", err);
-      setError(
-        t(
-          "Kunne ikke sende beskeden. Prøv igen om lidt.",
-          "Couldn't send your message. Please try again shortly.",
-          "Die Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es gleich noch einmal."
-        )
+      const message = t(
+        "Forbindelsen blev afbrudt, før forespørgslen kunne sendes. Tjek din internetforbindelse og prøv igen.",
+        "The connection was interrupted before the request could be sent. Please check your internet connection and try again.",
+        "Die Verbindung wurde unterbrochen, bevor die Anfrage gesendet werden konnte. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
       );
+      void saveFormDraft(draftPayload("send_failed", message, "NETWORK_ERROR"));
+      setError(message);
     } finally {
       setSending(false);
     }
