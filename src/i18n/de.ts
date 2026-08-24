@@ -648,6 +648,7 @@ export const de = {
         "formExpired": "Diese Formularsitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie die Ablesung erneut.",
         "invalidFileType": "Bitte laden Sie nur Bilddateien hoch. Fotos von Ihrer Handykamera werden akzeptiert.",
         "fileTooLarge": "Ein oder mehrere Fotos sind zu groß. Bitte laden Sie weniger Fotos hoch, oder öffnen Sie das Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen den Screenshot hoch.",
+        "totalUploadTooLarge": "Die ausgewählten Fotos sind zusammen zu groß zum Senden. Bitte laden Sie weniger Fotos hoch, oder öffnen Sie jedes Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen die Screenshots hoch.",
         "tooManyFiles": "Es wurden zu viele Fotos hochgeladen. Bitte laden Sie nur die benötigten Zählerfotos hoch.",
         "tooManyFields": "Es wurden zu viele Informationen gesendet. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
         "missingFiles": "Bitte laden Sie mindestens ein Foto der Zählerablesung hoch.",

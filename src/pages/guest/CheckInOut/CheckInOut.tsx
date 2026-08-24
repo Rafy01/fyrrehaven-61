@@ -11,6 +11,8 @@ import type { Lang } from "../../../lib/lang";
 import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import styles from "./CheckInOut.module.css";
 
+const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 4 * 1024 * 1024;
+
 function isPoolOpen(today = new Date()) {
   const month = today.getMonth() + 1;
   const date = today.getDate();
@@ -54,6 +56,11 @@ function checkinErrorMessage(
     default:
       return detail || tg("checkInOutPage.unknownError");
   }
+}
+
+function fileListTotalSize(value: unknown) {
+  if (!(value instanceof FileList)) return 0;
+  return Array.from(value).reduce((total, file) => total + file.size, 0);
 }
 
 export default function CheckInOut({
@@ -182,6 +189,21 @@ export default function CheckInOut({
     setError(null);
 
     try {
+      const totalUploadSize = fileListTotalSize(values.meterImages);
+      if (totalUploadSize > MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
+        const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");
+        void saveFormDraft(
+          buildDraftPayload(
+            values,
+            "validation_failed",
+            errorMessage,
+            "CLIENT_UPLOAD_TOTAL_TOO_LARGE"
+          )
+        );
+        setError(errorMessage);
+        return;
+      }
+
       const formData = new FormData();
 
       for (const key in values) {
@@ -341,6 +363,7 @@ export default function CheckInOut({
       label: tg("checkInOutPage.fields.meterImages.label"),
       required: true,
       multiple: true,
+      accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
       description: tg("checkInOutPage.fields.meterImages.description"),
     },
     {

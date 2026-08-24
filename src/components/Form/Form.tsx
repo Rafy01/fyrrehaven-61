@@ -60,6 +60,7 @@ export type Field =
       description?: string;
       required?: boolean;
       multiple?: boolean;
+      accept?: string;
     }
   | {
       type: "hidden";
@@ -282,6 +283,7 @@ export default function Form({
                   {...common}
                   type="file"
                   multiple={field.multiple}
+                  accept={field.accept}
                   className={styles.hiddenFileInput}
                   id={field.name}
                   onChange={handleChange}

@@ -63,9 +63,9 @@ const SHOULD_EXPOSE_INTERNAL_ERRORS =
   "true";
 const MAX_UPLOAD_FILES = Number(process.env.CHECKIN_MAX_UPLOAD_FILES || 6);
 const MAX_UPLOAD_FILE_SIZE =
-  Number(process.env.CHECKIN_MAX_UPLOAD_FILE_SIZE_MB || 8) * 1024 * 1024;
+  Number(process.env.CHECKIN_MAX_UPLOAD_FILE_SIZE_MB || 4) * 1024 * 1024;
 const MAX_TOTAL_UPLOAD_SIZE =
-  Number(process.env.CHECKIN_MAX_TOTAL_UPLOAD_SIZE_MB || 20) * 1024 * 1024;
+  Number(process.env.CHECKIN_MAX_TOTAL_UPLOAD_SIZE_MB || 4) * 1024 * 1024;
 const ALLOWED_UPLOAD_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",

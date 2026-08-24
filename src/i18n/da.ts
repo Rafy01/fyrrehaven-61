@@ -648,6 +648,7 @@ export const da = {
         "formExpired": "Formularsessionen er udløbet. Genindlæs siden, og send aflæsningen igen.",
         "invalidFileType": "Upload venligst kun billedfiler. Fotos fra telefonens kamera accepteres.",
         "fileTooLarge": "Et eller flere billeder er for store. Upload venligst færre billeder, eller åbn målerbilledet, tag et screenshot, og upload screenshottet i stedet.",
+        "totalUploadTooLarge": "De valgte billeder er for store til at sende samlet. Upload venligst færre billeder, eller åbn hvert målerbillede, tag et screenshot, og upload screenshots i stedet.",
         "tooManyFiles": "Der er uploadet for mange billeder. Upload kun de nødvendige målerfotos.",
         "tooManyFields": "Der blev sendt for meget information. Genindlæs siden, og prøv igen.",
         "missingFiles": "Upload venligst mindst ét billede af måleraflæsningen.",
