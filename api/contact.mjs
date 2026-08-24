@@ -1,5 +1,9 @@
 import nodemailer from "nodemailer";
-import { getFirestoreDb, verifyAdminRequest } from "./_lib/firebaseAdmin.mjs";
+import {
+  getFirebaseAdminInitError,
+  getFirestoreDb,
+  verifyAdminRequest,
+} from "./_lib/firebaseAdmin.mjs";
 import {
   createFormSubmission,
   upsertFormSubmission,
@@ -148,6 +152,16 @@ const sanitizeErrorMessage = (value) =>
     .trim()
     .slice(0, 500);
 
+function isExtraServiceValidationRoute(req) {
+  if (req.query?.route === "validate-booking") return true;
+  try {
+    const url = new URL(req.url || "", "https://fyrrehaven-61.dk");
+    return url.searchParams.get("route") === "validate-booking";
+  } catch {
+    return false;
+  }
+}
+
 /** —— Din faste signatur (uforandret) —— */
 const SIGNATURE_HTML = `
 <div data-spark-custom-html="true">
@@ -243,6 +257,28 @@ export default async function handler(req, res) {
 
     const requestIp = getRequesterIp(req);
     const db = await getFirestoreDb();
+
+    if (isExtraServiceValidationRoute(req)) {
+      if (!db && getFirebaseAdminInitError()) {
+        console.warn("EXTRA_SERVICE_BOOKING_DB_UNAVAILABLE", {
+          detail: getFirebaseAdminInitError(),
+        });
+      }
+
+      const result = await validateExtraServiceBooking({
+        db,
+        stayDate: req.body?.stayDate,
+        name: req.body?.name,
+      });
+
+      if (!result.ok) {
+        sendJson(res, result.status || 400, result);
+        return;
+      }
+
+      sendJson(res, 200, result);
+      return;
+    }
 
     const headerValidation = validateContactHeaders(req);
     if (!headerValidation.ok) {
