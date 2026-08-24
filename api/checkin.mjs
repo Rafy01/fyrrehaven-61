@@ -76,15 +76,6 @@ const ALLOWED_UPLOAD_MIME_TYPES = new Set([
 const ALLOWED_UPLOAD_EXTENSIONS = /\.(jpe?g|png|webp|heic|heif)$/i;
 const READING_RE = /^\d{1,10}(?:[.,]\d{1,3})?$/;
 
-function isPoolOpen(today = new Date()) {
-  const month = today.getMonth() + 1;
-  const date = today.getDate();
-
-  return month > 5 && month < 10
-    ? true
-    : (month === 5 && date >= 1) || (month === 10 && date <= 1);
-}
-
 const sanitizeStorageSegment = (value) =>
   String(value || "file")
     .trim()
@@ -553,23 +544,6 @@ export default async function handler(req, res) {
             ok: false,
             error: "MISSING_FILES",
             detail: "At least one meter image is required.",
-          });
-          return;
-        }
-
-        const minimumMeterImages = isPoolOpen() ? 3 : 2;
-        if (files.length < minimumMeterImages) {
-          await logCheckinSubmitError(
-            db,
-            fields,
-            req,
-            "MISSING_REQUIRED_IMAGES",
-            `Please upload at least ${minimumMeterImages} meter photos.`
-          );
-          sendJson(res, 400, {
-            ok: false,
-            error: "MISSING_REQUIRED_IMAGES",
-            detail: `Please upload at least ${minimumMeterImages} meter photos.`,
           });
           return;
         }

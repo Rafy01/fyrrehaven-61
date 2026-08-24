@@ -52,8 +52,6 @@ function checkinErrorMessage(
       return tg("checkInOutPage.errors.tooManyFields");
     case "MISSING_FILES":
       return tg("checkInOutPage.errors.missingFiles");
-    case "MISSING_REQUIRED_IMAGES":
-      return detail || tg("checkInOutPage.errors.missingRequiredImages");
     case "VALIDATION_ERROR":
       return detail || tg("checkInOutPage.errors.validation");
     case "MAIL_AUTH_FAILED":
@@ -276,21 +274,6 @@ export default function CheckInOut({
 
     try {
       const preparedMeterImages = await prepareCheckinImages(values.meterImages);
-      const requiredImageCount = poolOpen ? 3 : 2;
-      if (preparedMeterImages.length < requiredImageCount) {
-        const errorMessage = tg("checkInOutPage.errors.missingRequiredImages");
-        void saveFormDraft(
-          buildDraftPayload(
-            values,
-            "validation_failed",
-            errorMessage,
-            "MISSING_REQUIRED_IMAGES"
-          )
-        );
-        setError(errorMessage);
-        return;
-      }
-
       const totalUploadSize = filesTotalSize(preparedMeterImages);
       if (totalUploadSize > MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
         const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");

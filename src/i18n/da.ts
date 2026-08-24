@@ -652,7 +652,6 @@ export const da = {
         "tooManyFiles": "Der er uploadet for mange billeder. Upload kun de nødvendige målerfotos.",
         "tooManyFields": "Der blev sendt for meget information. Genindlæs siden, og prøv igen.",
         "missingFiles": "Upload venligst mindst ét billede af måleraflæsningen.",
-        "missingRequiredImages": "Upload venligst billeder af alle påkrævede målere: el, vand i huset og poolvand, når poolen er åben.",
         "validation": "Tjek venligst de påkrævede felter, og sørg for at måleraflæsningerne er udfyldt korrekt.",
         "mail": "Din aflæsning blev registreret, men mailen kunne ikke sendes automatisk. Vi kan stadig se den i admin-systemet.",
         "network": "Forbindelsen blev afbrudt, før aflæsningen kunne sendes. Tjek din internetforbindelse, og prøv igen.",
