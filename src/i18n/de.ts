@@ -656,7 +656,7 @@ export const de = {
         "formExpired": "Diese Formularsitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie die Ablesung erneut.",
         "invalidFileType": "Bitte laden Sie nur Bilddateien hoch. Fotos von Ihrer Handykamera werden akzeptiert.",
         "fileTooLarge": "Ein oder mehrere Fotos sind zu groß. Bitte öffnen Sie jedes Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen die Screenshots hoch.",
-        "totalUploadTooLarge": "Die ausgewählten Zählerfotos sind nach der automatischen Komprimierung noch zu groß. Bitte öffnen Sie jedes Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen die Screenshots hoch.",
+        "totalUploadTooLarge": "Die Fotos sind zu groß. Bitte laden Sie stattdessen Screenshots der Zählerfotos hoch.",
         "tooManyFiles": "Es wurden zu viele Fotos hochgeladen. Bitte laden Sie nur die benötigten Zählerfotos hoch.",
         "tooManyFields": "Es wurden zu viele Informationen gesendet. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
         "missingFiles": "Bitte laden Sie mindestens ein Foto der Zählerablesung hoch.",
@@ -665,7 +665,8 @@ export const de = {
         "network": "Die Verbindung wurde unterbrochen, bevor die Ablesung gesendet werden konnte. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
         "serverResponse": "Die Ablesung konnte nicht gesendet werden, weil der Server einen unlesbaren Fehler zurückgegeben hat. Bitte versuchen Sie es erneut mit Screenshots der Zählerfotos."
       },
-      "errorLabel": "Fehler:"
+      "errorLabel": "Fehler:",
+      "errorTitle": "Die Ablesung konnte nicht gesendet werden"
     },
     "manualPage": {
       "title": "Anleitung 🧭 Fyrrehaven 61",

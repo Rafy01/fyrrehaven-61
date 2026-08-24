@@ -420,6 +420,41 @@ export default function CheckInOut({
     [prepareSelectedImages]
   );
 
+  const progressPanel =
+    imageProgress.phase !== "idle" || uploadProgress.phase !== "idle" ? (
+      <div className={styles.progressPanel} aria-live="polite">
+        {[imageProgress, uploadProgress]
+          .filter((item) => item.phase !== "idle")
+          .map((item) => (
+            <div className={styles.progressItem} key={item.phase}>
+              <div className={styles.progressMeta}>
+                <strong>{item.message}</strong>
+                <span>{item.percent}%</span>
+              </div>
+              <div
+                className={styles.progressTrack}
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={item.percent}
+              >
+                <span
+                  className={styles.progressBar}
+                  style={
+                    {
+                      "--progress": `${item.percent}%`,
+                    } as CSSProperties
+                  }
+                />
+              </div>
+              {item.detail ? (
+                <p className={styles.progressDetail}>{item.detail}</p>
+              ) : null}
+            </div>
+          ))}
+      </div>
+    ) : null;
+
   if (isMobile === null) {
     return null;
   }
@@ -660,6 +695,7 @@ export default function CheckInOut({
       multiple: true,
       accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
       description: tg("checkInOutPage.fields.meterImages.description"),
+      after: progressPanel,
     },
     {
       type: "textarea",
@@ -753,40 +789,6 @@ export default function CheckInOut({
           lang={lang}
         />
 
-        {(imageProgress.phase !== "idle" || uploadProgress.phase !== "idle") && (
-          <div className={styles.progressPanel} aria-live="polite">
-            {[imageProgress, uploadProgress]
-              .filter((item) => item.phase !== "idle")
-              .map((item) => (
-                <div className={styles.progressItem} key={item.phase}>
-                  <div className={styles.progressMeta}>
-                    <strong>{item.message}</strong>
-                    <span>{item.percent}%</span>
-                  </div>
-                  <div
-                    className={styles.progressTrack}
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={item.percent}
-                  >
-                    <span
-                      className={styles.progressBar}
-                      style={
-                        {
-                          "--progress": `${item.percent}%`,
-                        } as CSSProperties
-                      }
-                    />
-                  </div>
-                  {item.detail ? (
-                    <p className={styles.progressDetail}>{item.detail}</p>
-                  ) : null}
-                </div>
-              ))}
-          </div>
-        )}
-
         {isSending && (
           <p style={{ textAlign: "center", color: "#888", marginTop: "1rem" }}>
             {tg("checkInOutPage.sending")}
@@ -800,9 +802,15 @@ export default function CheckInOut({
         )}
 
         {error && (
-          <p style={{ textAlign: "center", color: "red", marginTop: "1rem" }}>
-            ❌ {tg("checkInOutPage.errorLabel")} {error}
-          </p>
+          <div className={styles.errorNotice} role="alert" aria-live="assertive">
+            <div className={styles.errorIcon} aria-hidden="true">
+              !
+            </div>
+            <div>
+              <strong>{tg("checkInOutPage.errorTitle")}</strong>
+              <p>{error}</p>
+            </div>
+          </div>
         )}
 
         <Accordion items={accordionItems as any} i18nNs="guest" lang={lang} />

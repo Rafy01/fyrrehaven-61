@@ -656,7 +656,7 @@ export const en = {
         "formExpired": "This form session has expired. Please reload the page and send the reading again.",
         "invalidFileType": "Please upload image files only. Photos from your phone camera are accepted.",
         "fileTooLarge": "One or more photos are too large. Please open each meter photo, take a screenshot, and upload the screenshots instead.",
-        "totalUploadTooLarge": "The selected meter photos are still too large after automatic compression. Please open each meter photo, take a screenshot, and upload the screenshots instead.",
+        "totalUploadTooLarge": "The photos are too large. Please upload screenshots of the meter photos instead.",
         "tooManyFiles": "Too many photos were uploaded. Please upload only the meter photos needed for the reading.",
         "tooManyFields": "Too much information was submitted. Please reload the page and try again.",
         "missingFiles": "Please upload at least one photo of the meter reading.",
@@ -665,7 +665,8 @@ export const en = {
         "network": "The connection was interrupted before the reading could be sent. Please check your internet connection and try again.",
         "serverResponse": "The reading could not be sent because the server returned an unreadable error. Please try again with screenshots of the meter photos."
       },
-      "errorLabel": "Error:"
+      "errorLabel": "Error:",
+      "errorTitle": "Reading could not be sent"
     },
     "manualPage": {
       "title": "Manual 🧭 Fyrrehaven 61",

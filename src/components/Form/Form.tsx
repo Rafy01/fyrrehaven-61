@@ -58,6 +58,7 @@ export type Field =
       name: string;
       label: string;
       description?: string;
+      after?: React.ReactNode;
       required?: boolean;
       multiple?: boolean;
       accept?: string;
@@ -216,6 +217,7 @@ export default function Form({
 
         const error = errors[field.name];
         const description = "description" in field ? field.description : null;
+        const after = "after" in field ? field.after : null;
 
         const common = {
           id: field.name,
@@ -322,6 +324,7 @@ export default function Form({
             {description && (
               <div className={styles.description}>{description}</div>
             )}
+            {after}
             {error && <div className={styles.error}>{error}</div>}
           </div>
         );
