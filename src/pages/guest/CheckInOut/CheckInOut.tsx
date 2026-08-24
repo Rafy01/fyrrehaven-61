@@ -38,6 +38,16 @@ type PreuploadedAttachment = {
   storagePath: string;
 };
 
+type PreparedImageEntry = {
+  sourceSignature: string;
+  sourceFile: File;
+  preparedFile: File;
+  label: string;
+  status?: "success" | "error";
+  message?: string;
+  progress?: number;
+};
+
 const MIN_FAST_PROGRESS_DURATION_MS = 1200;
 
 function isPoolOpen(today = new Date()) {
@@ -107,10 +117,14 @@ function fileUploadMessage(file: File, message: string) {
   return file.size <= MAX_CHECKIN_IMAGE_UPLOAD_BYTES ? undefined : message;
 }
 
+function fileItemSignature(file: File) {
+  return [file.name, file.size, file.type, file.lastModified].join(":");
+}
+
 function fileListSignature(value: unknown) {
   if (!(value instanceof FileList)) return "";
   return Array.from(value)
-    .map((file) => [file.name, file.size, file.type, file.lastModified].join(":"))
+    .map(fileItemSignature)
     .join("|");
 }
 
@@ -396,7 +410,7 @@ export default function CheckInOut({
   });
   const [preparedImageLabels, setPreparedImageLabels] = useState<string[]>([]);
   const [preparedImageStatuses, setPreparedImageStatuses] = useState<
-    ("success" | "error")[]
+    ("success" | "error" | undefined)[]
   >([]);
   const [preparedImageMessages, setPreparedImageMessages] = useState<
     (string | undefined)[]
@@ -413,6 +427,7 @@ export default function CheckInOut({
   const preparedMeterImagesRef = useRef<{
     signature: string;
     files: File[];
+    entries: PreparedImageEntry[];
   } | null>(null);
 
   useEffect(() => {
@@ -491,27 +506,48 @@ export default function CheckInOut({
       const signature = fileListSignature(value);
       imagePreparationJobRef.current += 1;
       const jobId = imagePreparationJobRef.current;
-      preparedMeterImagesRef.current = null;
-      setPreparedImageLabels([]);
-      setPreparedImageStatuses([]);
-      setPreparedImageMessages([]);
-      setFileUploadProgresses([]);
 
       if (!signature) {
+        preparedMeterImagesRef.current = null;
+        setPreparedImageLabels([]);
+        setPreparedImageStatuses([]);
+        setPreparedImageMessages([]);
+        setFileUploadProgresses([]);
         setImageProgress({ phase: "idle", percent: 0, message: "" });
         setError(null);
         return;
       }
 
       const originalFiles = value instanceof FileList ? Array.from(value) : [];
-      setPreparedImageLabels(originalFiles.map(fileDisplayLabel));
-      setPreparedImageStatuses([]);
-      setPreparedImageMessages([]);
-      setFileUploadProgresses(originalFiles.map(() => 1));
+      const previousEntries = new Map(
+        (preparedMeterImagesRef.current?.entries || []).map((entry) => [
+          entry.sourceSignature,
+          entry,
+        ])
+      );
+      let entries: PreparedImageEntry[] = originalFiles.map((file) => {
+        const sourceSignature = fileItemSignature(file);
+        const previous = previousEntries.get(sourceSignature);
+        if (previous) return { ...previous, sourceFile: file };
+        return {
+          sourceSignature,
+          sourceFile: file,
+          preparedFile: file,
+          label: fileDisplayLabel(file),
+          progress: file.size > MAX_CLIENT_IMAGE_SOURCE_BYTES ? undefined : 1,
+        };
+      });
 
-      const oversizedFileIndexes = originalFiles.reduce<number[]>(
-        (indexes, file, index) =>
-          file.size > MAX_CLIENT_IMAGE_SOURCE_BYTES
+      const publishEntries = (nextEntries: PreparedImageEntry[]) => {
+        setPreparedImageLabels(nextEntries.map((entry) => entry.label));
+        setPreparedImageStatuses(nextEntries.map((entry) => entry.status));
+        setPreparedImageMessages(nextEntries.map((entry) => entry.message));
+        setFileUploadProgresses(nextEntries.map((entry) => entry.progress));
+      };
+
+      const oversizedFileIndexes = entries.reduce<number[]>(
+        (indexes, entry, index) =>
+          entry.sourceFile.size > MAX_CLIENT_IMAGE_SOURCE_BYTES
             ? [...indexes, index]
             : indexes,
         []
@@ -523,99 +559,153 @@ export default function CheckInOut({
         const stillTooLargeMessage = tg(
           "checkInOutPage.errors.fileStillTooLargeInline"
         );
-        const safeEntries = originalFiles
-          .map((file, index) => ({ file, index }))
-          .filter(({ index }) => !oversizedFileIndexes.includes(index));
-        setFileUploadProgresses(
-          originalFiles.map((_, index) =>
-            oversizedFileIndexes.includes(index) ? undefined : 1
-          )
+        entries = entries.map((entry, index) =>
+          oversizedFileIndexes.includes(index)
+            ? {
+                ...entry,
+                preparedFile: entry.sourceFile,
+                label: fileDisplayLabel(entry.sourceFile),
+                status: "error",
+                message: inlineErrorMessage,
+                progress: undefined,
+              }
+            : entry
         );
+        publishEntries(entries);
+
+        const newSafeEntries = entries
+          .map((entry, index) => ({ entry, index }))
+          .filter(
+            ({ entry, index }) =>
+              !oversizedFileIndexes.includes(index) &&
+              !previousEntries.has(entry.sourceSignature)
+          );
         const preparedSafeFiles = await prepareImageFiles(
-          safeEntries.map(({ file }) => file),
+          newSafeEntries.map(({ entry }) => entry.sourceFile),
           (safeFileIndex, percent) => {
             if (imagePreparationJobRef.current !== jobId) return;
-            const originalIndex = safeEntries[safeFileIndex]?.index;
+            const originalIndex = newSafeEntries[safeFileIndex]?.index;
             if (typeof originalIndex !== "number") return;
-            setFileUploadProgresses((prev) => {
-              const next = [...prev];
-              next[originalIndex] = percent;
-              return next;
-            });
+            entries = entries.map((entry, index) =>
+              index === originalIndex ? { ...entry, progress: percent } : entry
+            );
+            publishEntries(entries);
           }
         );
         if (imagePreparationJobRef.current !== jobId) return;
 
         let safeIndex = 0;
-        const displayFiles = originalFiles.map((file, index) =>
-          oversizedFileIndexes.includes(index)
-            ? file
-            : preparedSafeFiles[safeIndex++] || file
-        );
-        preparedMeterImagesRef.current = { signature, files: displayFiles };
-        setPreparedImageLabels(displayFiles.map(fileDisplayLabel));
-        setPreparedImageStatuses(
-          displayFiles.map((file, index) =>
-            oversizedFileIndexes.includes(index)
-              ? "error"
-              : fileUploadStatus(file)
-          )
-        );
-        setPreparedImageMessages(
-          displayFiles.map((file, index) =>
-            oversizedFileIndexes.includes(index)
-              ? inlineErrorMessage
-              : fileUploadMessage(file, stillTooLargeMessage)
-          )
-        );
+        entries = entries.map((entry, index) => {
+          if (
+            oversizedFileIndexes.includes(index) ||
+            previousEntries.has(entry.sourceSignature)
+          ) {
+            return entry;
+          }
+          const preparedFile = preparedSafeFiles[safeIndex++] || entry.sourceFile;
+          return {
+            ...entry,
+            preparedFile,
+            label: fileDisplayLabel(preparedFile),
+            status: fileUploadStatus(preparedFile),
+            message: fileUploadMessage(preparedFile, stillTooLargeMessage),
+            progress: 100,
+          };
+        });
+        preparedMeterImagesRef.current = {
+          signature,
+          files: entries.map((entry) => entry.preparedFile),
+          entries,
+        };
+        publishEntries(entries);
         setImageProgress({ phase: "idle", percent: 0, message: "" });
         setError(errorMessage);
         return;
       }
 
       setError(null);
+      publishEntries(entries);
 
       try {
-        const files = await prepareCheckinImages(value, (fileIndex, percent) => {
-          if (imagePreparationJobRef.current !== jobId) return;
-          setFileUploadProgresses((prev) => {
-            const next = [...prev];
-            next[fileIndex] = percent;
-            return next;
-          });
-        });
+        const newEntries = entries
+          .map((entry, index) => ({ entry, index }))
+          .filter(({ entry }) => !previousEntries.has(entry.sourceSignature));
+        const files = await prepareImageFiles(
+          newEntries.map(({ entry }) => entry.sourceFile),
+          (newFileIndex, percent) => {
+            if (imagePreparationJobRef.current !== jobId) return;
+            const originalIndex = newEntries[newFileIndex]?.index;
+            if (typeof originalIndex !== "number") return;
+            entries = entries.map((entry, index) =>
+              index === originalIndex ? { ...entry, progress: percent } : entry
+            );
+            publishEntries(entries);
+          }
+        );
         if (imagePreparationJobRef.current !== jobId) return;
 
-        const stillTooLargeMessage = tg(
-          "checkInOutPage.errors.fileStillTooLargeInline"
-        );
-        preparedMeterImagesRef.current = { signature, files };
-        setPreparedImageLabels(files.map(fileDisplayLabel));
-        setPreparedImageStatuses(files.map(fileUploadStatus));
-        setPreparedImageMessages(
-          files.map((file) => fileUploadMessage(file, stillTooLargeMessage))
-        );
-        if (files.some((file) => file.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES)) {
+        let preparedIndex = 0;
+        entries = entries.map((entry) => {
+          if (previousEntries.has(entry.sourceSignature)) return entry;
+          const preparedFile = files[preparedIndex++] || entry.sourceFile;
+          return {
+            ...entry,
+            preparedFile,
+            label: fileDisplayLabel(preparedFile),
+            status: fileUploadStatus(preparedFile),
+            message: fileUploadMessage(
+              preparedFile,
+              tg("checkInOutPage.errors.fileStillTooLargeInline")
+            ),
+            progress: 100,
+          };
+        });
+
+        preparedMeterImagesRef.current = {
+          signature,
+          files: entries.map((entry) => entry.preparedFile),
+          entries,
+        };
+        publishEntries(entries);
+        if (
+          entries.some(
+            (entry) => entry.preparedFile.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES
+          )
+        ) {
           setError(tg("checkInOutPage.errors.totalUploadTooLarge"));
         }
         setImageProgress({ phase: "idle", percent: 0, message: "" });
       } catch (prepareError) {
         console.error("Image preparation failed:", prepareError);
         if (imagePreparationJobRef.current !== jobId) return;
-        setImageProgress({ phase: "idle", percent: 0, message: "" });
-        preparedMeterImagesRef.current = { signature, files: originalFiles };
-        setPreparedImageLabels(originalFiles.map(fileDisplayLabel));
-        setPreparedImageStatuses(originalFiles.map(fileUploadStatus));
-        setPreparedImageMessages(
-          originalFiles.map((file) =>
-            fileUploadMessage(
-              file,
+        entries = entries.map((entry) => {
+          if (previousEntries.has(entry.sourceSignature)) return entry;
+          return {
+            ...entry,
+            preparedFile: entry.sourceFile,
+            label: fileDisplayLabel(entry.sourceFile),
+            status: fileUploadStatus(entry.sourceFile),
+            message: fileUploadMessage(
+              entry.sourceFile,
               tg("checkInOutPage.errors.fileStillTooLargeInline")
-            )
-          )
-        );
+            ),
+            progress:
+              entry.sourceFile.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES
+                ? undefined
+                : 100,
+          };
+        });
+        preparedMeterImagesRef.current = {
+          signature,
+          files: entries.map((entry) => entry.preparedFile),
+          entries,
+        };
+        publishEntries(entries);
+        setImageProgress({ phase: "idle", percent: 0, message: "" });
         if (
-          originalFiles.some((file) => file.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES)
+          entries.some(
+            (entry) => entry.preparedFile.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES
+          )
         ) {
           setError(tg("checkInOutPage.errors.totalUploadTooLarge"));
         }

@@ -103,7 +103,7 @@ export type FormProps = {
   onValuesChange?: (values: Record<string, string | FileList | boolean>) => void;
   onValidationError?: (errors: Record<string, string>) => void;
   fileDisplayLabels?: Record<string, string[]>;
-  fileDisplayStatuses?: Record<string, ("success" | "error")[]>;
+  fileDisplayStatuses?: Record<string, ("success" | "error" | undefined)[]>;
   fileDisplayMessages?: Record<string, (string | undefined)[]>;
   fileUploadProgresses?: Record<string, (number | undefined)[]>;
   submitLabel: string;
