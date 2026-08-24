@@ -11,6 +11,7 @@ import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useTranslation } from "react-i18next";
+import { onAuthStateChanged, type User } from "firebase/auth";
 import styles from "./Header.module.css";
 
 import { type Lang, saveLang } from "../../lib/lang";
@@ -19,6 +20,7 @@ import Buttons from "../Buttons";
 import type { ResolvedAppearance } from "../../app/App";
 import { UI_ICONS } from "../../lib/icons";
 import { isPoolSeason } from "../../data/pricing";
+import { getFirebaseAuth, isFirebaseClientConfigured } from "../../lib/firebase";
 
 type Props = {
   lang: Lang;
@@ -59,6 +61,7 @@ export default function Header({
   const menuOpenAnimationTimer = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [adminUser, setAdminUser] = useState<User | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   const [isTrackingMenuDrag, setIsTrackingMenuDrag] = useState(false);
   const [isDraggingMenu, setIsDraggingMenu] = useState(false);
@@ -75,6 +78,16 @@ export default function Header({
     offset: 0,
     moved: false,
   });
+
+  useEffect(() => {
+    if (!isFirebaseClientConfigured()) return;
+    const auth = getFirebaseAuth();
+    if (!auth) return;
+
+    return onAuthStateChanged(auth, (nextUser) => {
+      setAdminUser(nextUser);
+    });
+  }, []);
 
 useEffect(() => {
   const onScroll = () => {
@@ -236,6 +249,7 @@ useEffect(() => {
   const isDark = resolvedAppearance === "dark";
   const ThemeActionIcon = isDark ? UI_ICONS.LightMode : UI_ICONS.DarkMode;
   const logoSrc = isDark ? DARK_LOGO_SRC : LIGHT_LOGO_SRC;
+  const adminLabel = adminUser?.email || "Admin logged in";
 
   const changeAppearance = (next: ResolvedAppearance) => {
     onAppearanceChange(next);
@@ -481,6 +495,18 @@ useEffect(() => {
             />
           )}
 
+          {adminUser ? (
+            <Link
+              to="/admin"
+              className={styles.adminShortcut}
+              aria-label="Admin logged in. Go to admin page."
+              title={adminLabel}
+            >
+              <UI_ICONS.Settings aria-hidden="true" />
+              <span>Admin logged in</span>
+            </Link>
+          ) : null}
+
           <button
             type="button"
             className={styles.themeButton}
@@ -611,6 +637,20 @@ useEffect(() => {
                 onPointerDownCapture={beginMenuDragFromReact}
                 onMouseDownCapture={beginMenuMouseDragFromReact}
               >
+                {adminUser ? (
+                  <Link
+                    to="/admin"
+                    draggable={false}
+                    className={styles.panelAdminShortcut}
+                    aria-label="Admin logged in. Go to admin page."
+                    onClick={() => setOpen(false)}
+                  >
+                    <UI_ICONS.Settings aria-hidden="true" />
+                    <span>Admin logged in</span>
+                    <UI_ICONS.ChevronForward aria-hidden="true" />
+                  </Link>
+                ) : null}
+
                 {!guest && (
                   <Buttons
                     to={pathOf(lang, "book")}

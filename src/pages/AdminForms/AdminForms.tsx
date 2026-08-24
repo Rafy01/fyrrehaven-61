@@ -55,6 +55,7 @@ import {
   getFirebaseAuth,
   isFirebaseClientConfigured,
 } from "../../lib/firebase";
+import { guestPathOf, pathOf } from "../../lib/routes";
 
 type SubmissionStatus =
   | "draft"
@@ -3431,7 +3432,25 @@ export default function AdminForms() {
             <h1>{title}</h1>
             {subtitle ? <p className={styles.heroSubtitle}>{subtitle}</p> : null}
           </div>
-          <div className={styles.heroActions}>{renderAccountTools()}</div>
+          <div className={styles.heroActions}>
+            <button
+              type="button"
+              className={styles.ghostButton}
+              onClick={() => navigate(pathOf("en", "home"))}
+            >
+              <FiGlobe aria-hidden="true" />
+              Public site
+            </button>
+            <button
+              type="button"
+              className={styles.ghostButton}
+              onClick={() => navigate(guestPathOf("en", "welcome"))}
+            >
+              <FiUser aria-hidden="true" />
+              Guest pages
+            </button>
+            {renderAccountTools()}
+          </div>
         </div>
         {renderAdminNav(active)}
       </div>
