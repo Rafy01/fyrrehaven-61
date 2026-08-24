@@ -658,6 +658,7 @@ export const en = {
         "invalidFileType": "Please upload image files only. Photos from your phone camera are accepted.",
         "fileTooLarge": "One or more photos are too large. Please open each meter photo, take a screenshot, and upload the screenshots instead.",
         "fileTooLargeInline": "This photo is too large. Please take a screenshot of it and add the screenshot instead.",
+        "fileStillTooLargeInline": "This photo is still too large after preparation. Please take a screenshot of it and add the screenshot instead.",
         "totalUploadTooLarge": "The photos are too large. Please upload screenshots of the meter photos instead.",
         "tooManyFiles": "Too many photos were uploaded. Please upload only the meter photos needed for the reading.",
         "tooManyFields": "Too much information was submitted. Please reload the page and try again.",

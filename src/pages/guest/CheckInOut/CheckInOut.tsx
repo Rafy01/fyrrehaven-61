@@ -13,6 +13,7 @@ import styles from "./CheckInOut.module.css";
 
 const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 2.6 * 1024 * 1024;
 const MAX_CLIENT_IMAGE_SOURCE_BYTES = 40 * 1024 * 1024;
+const MAX_CHECKIN_IMAGE_UPLOAD_BYTES = 4 * 1024 * 1024;
 const MAX_CHECKIN_IMAGE_FILES = 6;
 const CHECKIN_IMAGE_TARGET_DIMENSION = 1080;
 const CHECKIN_IMAGE_COMPRESSION_STEPS = [
@@ -96,6 +97,14 @@ function formatBytes(bytes: number) {
 
 function fileDisplayLabel(file: File) {
   return `${file.name} (${formatBytes(file.size)})`;
+}
+
+function fileUploadStatus(file: File): "success" | "error" {
+  return file.size <= MAX_CHECKIN_IMAGE_UPLOAD_BYTES ? "success" : "error";
+}
+
+function fileUploadMessage(file: File, message: string) {
+  return file.size <= MAX_CHECKIN_IMAGE_UPLOAD_BYTES ? undefined : message;
 }
 
 function fileListSignature(value: unknown) {
@@ -400,6 +409,7 @@ export default function CheckInOut({
   >({});
   const draftIdRef = useRef(createFormDraftId("guest-checkin"));
   const imagePreparationJobRef = useRef(0);
+  const imagePreparationPromiseRef = useRef<Promise<void> | null>(null);
   const preparedMeterImagesRef = useRef<{
     signature: string;
     files: File[];
@@ -509,6 +519,9 @@ export default function CheckInOut({
       if (oversizedFileIndexes.length) {
         const errorMessage = tg("checkInOutPage.errors.fileTooLarge");
         const inlineErrorMessage = tg("checkInOutPage.errors.fileTooLargeInline");
+        const stillTooLargeMessage = tg(
+          "checkInOutPage.errors.fileStillTooLargeInline"
+        );
         const safeEntries = originalFiles
           .map((file, index) => ({ file, index }))
           .filter(({ index }) => !oversizedFileIndexes.includes(index));
@@ -545,13 +558,17 @@ export default function CheckInOut({
         preparedMeterImagesRef.current = { signature, files: displayFiles };
         setPreparedImageLabels(displayFiles.map(fileDisplayLabel));
         setPreparedImageStatuses(
-          originalFiles.map((_, index) =>
-            oversizedFileIndexes.includes(index) ? "error" : "success"
+          displayFiles.map((file, index) =>
+            oversizedFileIndexes.includes(index)
+              ? "error"
+              : fileUploadStatus(file)
           )
         );
         setPreparedImageMessages(
-          originalFiles.map((_, index) =>
-            oversizedFileIndexes.includes(index) ? inlineErrorMessage : undefined
+          displayFiles.map((file, index) =>
+            oversizedFileIndexes.includes(index)
+              ? inlineErrorMessage
+              : fileUploadMessage(file, stillTooLargeMessage)
           )
         );
         setImageProgress({ phase: "idle", percent: 0, message: "" });
@@ -582,16 +599,26 @@ export default function CheckInOut({
         if (imagePreparationJobRef.current !== jobId) return;
 
         const preparedBytes = filesTotalSize(files);
+        const stillTooLargeMessage = tg(
+          "checkInOutPage.errors.fileStillTooLargeInline"
+        );
         preparedMeterImagesRef.current = { signature, files };
         setPreparedImageLabels(files.map(fileDisplayLabel));
-        setPreparedImageStatuses(files.map(() => "success"));
-        setPreparedImageMessages([]);
-        setImageProgress({
-          phase: "ready",
-          percent: 100,
-          message: tg("checkInOutPage.progress.ready"),
-          detail: `${formatBytes(originalBytes)} → ${formatBytes(preparedBytes)}`,
-        });
+        setPreparedImageStatuses(files.map(fileUploadStatus));
+        setPreparedImageMessages(
+          files.map((file) => fileUploadMessage(file, stillTooLargeMessage))
+        );
+        if (files.some((file) => file.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES)) {
+          setError(tg("checkInOutPage.errors.totalUploadTooLarge"));
+          setImageProgress({ phase: "idle", percent: 0, message: "" });
+        } else {
+          setImageProgress({
+            phase: "ready",
+            percent: 100,
+            message: tg("checkInOutPage.progress.ready"),
+            detail: `${formatBytes(originalBytes)} → ${formatBytes(preparedBytes)}`,
+          });
+        }
       } catch (prepareError) {
         console.error("Image preparation failed:", prepareError);
         if (imagePreparationJobRef.current !== jobId) return;
@@ -606,8 +633,20 @@ export default function CheckInOut({
         });
         preparedMeterImagesRef.current = { signature, files: originalFiles };
         setPreparedImageLabels(originalFiles.map(fileDisplayLabel));
-        setPreparedImageStatuses(originalFiles.map(() => "success"));
-        setPreparedImageMessages([]);
+        setPreparedImageStatuses(originalFiles.map(fileUploadStatus));
+        setPreparedImageMessages(
+          originalFiles.map((file) =>
+            fileUploadMessage(
+              file,
+              tg("checkInOutPage.errors.fileStillTooLargeInline")
+            )
+          )
+        );
+        if (
+          originalFiles.some((file) => file.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES)
+        ) {
+          setError(tg("checkInOutPage.errors.totalUploadTooLarge"));
+        }
       }
     },
     [tg]
@@ -618,7 +657,13 @@ export default function CheckInOut({
       setDraftValues(values);
       const nextSignature = fileListSignature(values.meterImages);
       if (nextSignature === preparedMeterImagesRef.current?.signature) return;
-      void prepareSelectedImages(values.meterImages);
+      const preparation = prepareSelectedImages(values.meterImages);
+      imagePreparationPromiseRef.current = preparation;
+      void preparation.finally(() => {
+        if (imagePreparationPromiseRef.current === preparation) {
+          imagePreparationPromiseRef.current = null;
+        }
+      });
     },
     [prepareSelectedImages]
   );
@@ -655,6 +700,10 @@ export default function CheckInOut({
     setError(null);
 
     try {
+      if (imagePreparationPromiseRef.current) {
+        await imagePreparationPromiseRef.current;
+      }
+
       const meterImagesSignature = fileListSignature(values.meterImages);
       const preparedMeterImages =
         preparedMeterImagesRef.current?.signature === meterImagesSignature
@@ -666,6 +715,25 @@ export default function CheckInOut({
                 message: tg("checkInOutPage.progress.compressing"),
               });
             });
+      if (
+        !preparedMeterImages.length ||
+        preparedMeterImages.some(
+          (file) => file.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES
+        )
+      ) {
+        const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");
+        void saveFormDraft(
+          buildDraftPayload(
+            values,
+            "validation_failed",
+            errorMessage,
+            "CLIENT_UPLOAD_FILE_TOO_LARGE"
+          )
+        );
+        setError(errorMessage);
+        return;
+      }
+
       const uploadSize = filesTotalSize(preparedMeterImages);
       const requestHeaders = getRequestHeaders ? await getRequestHeaders() : {};
 
