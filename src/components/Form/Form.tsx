@@ -72,6 +72,7 @@ export type Field =
       required?: boolean;
       multiple?: boolean;
       accept?: string;
+      maxFiles?: number;
     }
   | {
       type: "hidden";
@@ -142,20 +143,36 @@ export default function Form({
       nextValues = { ...values, [name]: (e.target as HTMLInputElement).checked };
       setValues(nextValues);
     } else if (type === "file") {
-      const files = (e.target as HTMLInputElement).files;
+      const input = e.target as HTMLInputElement;
+      const selectedFiles = input.files ? Array.from(input.files) : [];
+      const field = fields.find((item) => item.name === name);
+      const currentFiles =
+        field?.type === "file" &&
+        field.multiple &&
+        values[name] instanceof FileList
+          ? Array.from(values[name])
+          : [];
+      const allFiles =
+        field?.type === "file" && field.multiple
+          ? [...currentFiles, ...selectedFiles]
+          : selectedFiles;
+      const limitedFiles =
+        field?.type === "file" && field.maxFiles
+          ? allFiles.slice(-field.maxFiles)
+          : allFiles;
+      const transfer = new DataTransfer();
+      limitedFiles.forEach((file) => transfer.items.add(file));
+      input.files = transfer.files;
+
       nextValues = {
         ...values,
-        [name]: files ?? new DataTransfer().files,
+        [name]: transfer.files,
       };
       setValues(nextValues);
 
       setFileNames({
         ...fileNames,
-        [name]: files
-          ? Array.from(files).map(
-              (file) => `${file.name} (${formatFileSize(file.size)})`
-            )
-          : [],
+        [name]: Array.from(transfer.files).map(fileLabel),
       });
     } else {
       nextValues = { ...values, [name]: e.target.value };

@@ -14,6 +14,7 @@ import styles from "./CheckInOut.module.css";
 const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 3 * 1024 * 1024;
 const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 2.6 * 1024 * 1024;
 const MAX_CLIENT_IMAGE_SOURCE_BYTES = 40 * 1024 * 1024;
+const MAX_CHECKIN_IMAGE_FILES = 6;
 const CHECKIN_IMAGE_TARGET_DIMENSION = 1080;
 const CHECKIN_IMAGE_COMPRESSION_STEPS = [
   { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.78 },
@@ -157,12 +158,10 @@ async function compressImageFile(
   });
 }
 
-async function prepareCheckinImages(
-  value: unknown,
+async function prepareImageFiles(
+  originalFiles: File[],
   onProgress?: (percent: number) => void
 ) {
-  if (!(value instanceof FileList)) return [];
-  const originalFiles = Array.from(value);
   if (!originalFiles.length) return [];
 
   let currentFiles = originalFiles;
@@ -188,6 +187,14 @@ async function prepareCheckinImages(
 
   onProgress?.(100);
   return currentFiles;
+}
+
+async function prepareCheckinImages(
+  value: unknown,
+  onProgress?: (percent: number) => void
+) {
+  if (!(value instanceof FileList)) return [];
+  return prepareImageFiles(Array.from(value), onProgress);
 }
 
 function postFormDataWithProgress(
@@ -440,20 +447,60 @@ export default function CheckInOut({
       setPreparedImageStatuses([]);
       setPreparedImageMessages([]);
 
-      if (originalFiles.some((file) => file.size > MAX_CLIENT_IMAGE_SOURCE_BYTES)) {
+      const oversizedFileIndexes = originalFiles.reduce<number[]>(
+        (indexes, file, index) =>
+          file.size > MAX_CLIENT_IMAGE_SOURCE_BYTES
+            ? [...indexes, index]
+            : indexes,
+        []
+      );
+
+      if (oversizedFileIndexes.length) {
         const errorMessage = tg("checkInOutPage.errors.fileTooLarge");
         const inlineErrorMessage = tg("checkInOutPage.errors.fileTooLargeInline");
-        preparedMeterImagesRef.current = { signature, files: originalFiles };
+        const safeEntries = originalFiles
+          .map((file, index) => ({ file, index }))
+          .filter(({ index }) => !oversizedFileIndexes.includes(index));
+        if (safeEntries.length) {
+          setImageProgress({
+            phase: "compressing",
+            percent: 1,
+            message: tg("checkInOutPage.progress.compressing"),
+            detail: tg("checkInOutPage.progress.originalSize").replace(
+              "{{size}}",
+              formatBytes(filesTotalSize(safeEntries.map(({ file }) => file)))
+            ),
+          });
+        }
+        const preparedSafeFiles = await prepareImageFiles(
+          safeEntries.map(({ file }) => file),
+          (percent) => {
+            if (imagePreparationJobRef.current !== jobId) return;
+            setImageProgress((prev) => ({
+              ...prev,
+              phase: "compressing",
+              percent,
+            }));
+          }
+        );
+        if (imagePreparationJobRef.current !== jobId) return;
+
+        let safeIndex = 0;
+        const displayFiles = originalFiles.map((file, index) =>
+          oversizedFileIndexes.includes(index)
+            ? file
+            : preparedSafeFiles[safeIndex++] || file
+        );
+        preparedMeterImagesRef.current = { signature, files: displayFiles };
+        setPreparedImageLabels(displayFiles.map(fileDisplayLabel));
         setPreparedImageStatuses(
-          originalFiles.map((file) =>
-            file.size > MAX_CLIENT_IMAGE_SOURCE_BYTES ? "error" : "success"
+          originalFiles.map((_, index) =>
+            oversizedFileIndexes.includes(index) ? "error" : "success"
           )
         );
         setPreparedImageMessages(
-          originalFiles.map((file) =>
-            file.size > MAX_CLIENT_IMAGE_SOURCE_BYTES
-              ? inlineErrorMessage
-              : undefined
+          originalFiles.map((_, index) =>
+            oversizedFileIndexes.includes(index) ? inlineErrorMessage : undefined
           )
         );
         setImageProgress({ phase: "idle", percent: 0, message: "" });
@@ -777,6 +824,7 @@ export default function CheckInOut({
       label: tg("checkInOutPage.fields.meterImages.label"),
       required: true,
       multiple: true,
+      maxFiles: MAX_CHECKIN_IMAGE_FILES,
       accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
       description: tg("checkInOutPage.fields.meterImages.description"),
       after: progressPanel,
