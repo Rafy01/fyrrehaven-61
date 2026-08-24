@@ -652,6 +652,7 @@ export const en = {
         "tooManyFiles": "Too many photos were uploaded. Please upload only the meter photos needed for the reading.",
         "tooManyFields": "Too much information was submitted. Please reload the page and try again.",
         "missingFiles": "Please upload at least one photo of the meter reading.",
+        "missingRequiredImages": "Please upload photos of all required meters: electricity, house water, and pool water when the pool is open.",
         "validation": "Please check the required fields and make sure the meter readings are filled in correctly.",
         "mail": "Your reading was recorded, but the email could not be sent automatically. We can still see it in the admin system.",
         "network": "The connection was interrupted before the reading could be sent. Please check your internet connection and try again.",

@@ -652,6 +652,7 @@ export const de = {
         "tooManyFiles": "Es wurden zu viele Fotos hochgeladen. Bitte laden Sie nur die benötigten Zählerfotos hoch.",
         "tooManyFields": "Es wurden zu viele Informationen gesendet. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
         "missingFiles": "Bitte laden Sie mindestens ein Foto der Zählerablesung hoch.",
+        "missingRequiredImages": "Bitte laden Sie Fotos aller erforderlichen Zähler hoch: Strom, Hauswasser und Poolwasser, wenn der Pool geöffnet ist.",
         "validation": "Bitte prüfen Sie die Pflichtfelder und stellen Sie sicher, dass die Zählerstände korrekt eingetragen sind.",
         "mail": "Ihre Ablesung wurde gespeichert, aber die E-Mail konnte nicht automatisch gesendet werden. Wir können sie trotzdem im Admin-System sehen.",
         "network": "Die Verbindung wurde unterbrochen, bevor die Ablesung gesendet werden konnte. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",

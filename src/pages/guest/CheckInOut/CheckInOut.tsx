@@ -11,11 +11,12 @@ import type { Lang } from "../../../lib/lang";
 import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import styles from "./CheckInOut.module.css";
 
-const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 4 * 1024 * 1024;
+const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 3 * 1024 * 1024;
 const CHECKIN_IMAGE_COMPRESSION_STEPS = [
   { maxDimension: 1800, quality: 0.78 },
   { maxDimension: 1500, quality: 0.7 },
   { maxDimension: 1200, quality: 0.62 },
+  { maxDimension: 1000, quality: 0.55 },
 ];
 
 function isPoolOpen(today = new Date()) {
@@ -51,6 +52,8 @@ function checkinErrorMessage(
       return tg("checkInOutPage.errors.tooManyFields");
     case "MISSING_FILES":
       return tg("checkInOutPage.errors.missingFiles");
+    case "MISSING_REQUIRED_IMAGES":
+      return detail || tg("checkInOutPage.errors.missingRequiredImages");
     case "VALIDATION_ERROR":
       return detail || tg("checkInOutPage.errors.validation");
     case "MAIL_AUTH_FAILED":
@@ -273,6 +276,21 @@ export default function CheckInOut({
 
     try {
       const preparedMeterImages = await prepareCheckinImages(values.meterImages);
+      const requiredImageCount = poolOpen ? 3 : 2;
+      if (preparedMeterImages.length < requiredImageCount) {
+        const errorMessage = tg("checkInOutPage.errors.missingRequiredImages");
+        void saveFormDraft(
+          buildDraftPayload(
+            values,
+            "validation_failed",
+            errorMessage,
+            "MISSING_REQUIRED_IMAGES"
+          )
+        );
+        setError(errorMessage);
+        return;
+      }
+
       const totalUploadSize = filesTotalSize(preparedMeterImages);
       if (totalUploadSize > MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
         const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");
