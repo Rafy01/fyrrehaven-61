@@ -176,7 +176,7 @@ async function compressImageFile(
 
 async function prepareImageFiles(
   originalFiles: File[],
-  onProgress?: (percent: number) => void
+  onProgress?: (fileIndex: number, percent: number) => void
 ) {
   if (!originalFiles.length) return [];
 
@@ -189,25 +189,31 @@ async function prepareImageFiles(
       nextFiles.push(
         await compressImageFile(file, step.maxDimension, step.quality)
       );
-      const completed = stepIndex * currentFiles.length + fileIndex + 1;
-      const total = CHECKIN_IMAGE_COMPRESSION_STEPS.length * currentFiles.length;
-      onProgress?.(Math.min(95, Math.round((completed / total) * 95)));
+      onProgress?.(
+        fileIndex,
+        Math.min(
+          95,
+          Math.round(
+            ((stepIndex + 1) / CHECKIN_IMAGE_COMPRESSION_STEPS.length) * 95
+          )
+        )
+      );
     }
 
     currentFiles = nextFiles;
     if (filesTotalSize(currentFiles) <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES) {
-      onProgress?.(100);
+      currentFiles.forEach((_, fileIndex) => onProgress?.(fileIndex, 100));
       return currentFiles;
     }
   }
 
-  onProgress?.(100);
+  currentFiles.forEach((_, fileIndex) => onProgress?.(fileIndex, 100));
   return currentFiles;
 }
 
 async function prepareCheckinImages(
   value: unknown,
-  onProgress?: (percent: number) => void
+  onProgress?: (fileIndex: number, percent: number) => void
 ) {
   if (!(value instanceof FileList)) return [];
   return prepareImageFiles(Array.from(value), onProgress);
@@ -395,9 +401,9 @@ export default function CheckInOut({
   const [preparedImageMessages, setPreparedImageMessages] = useState<
     (string | undefined)[]
   >([]);
-  const [fileUploadProgresses, setFileUploadProgresses] = useState<number[]>(
-    []
-  );
+  const [fileUploadProgresses, setFileUploadProgresses] = useState<
+    (number | undefined)[]
+  >([]);
   const [draftValues, setDraftValues] = useState<
     Record<string, string | FileList | boolean>
   >({});
@@ -498,10 +504,10 @@ export default function CheckInOut({
       }
 
       const originalFiles = value instanceof FileList ? Array.from(value) : [];
-      const originalBytes = filesTotalSize(originalFiles);
       setPreparedImageLabels(originalFiles.map(fileDisplayLabel));
       setPreparedImageStatuses([]);
       setPreparedImageMessages([]);
+      setFileUploadProgresses(originalFiles.map(() => 1));
 
       const oversizedFileIndexes = originalFiles.reduce<number[]>(
         (indexes, file, index) =>
@@ -520,26 +526,22 @@ export default function CheckInOut({
         const safeEntries = originalFiles
           .map((file, index) => ({ file, index }))
           .filter(({ index }) => !oversizedFileIndexes.includes(index));
-        if (safeEntries.length) {
-          setImageProgress({
-            phase: "compressing",
-            percent: 1,
-            message: tg("checkInOutPage.progress.compressing"),
-            detail: tg("checkInOutPage.progress.originalSize").replace(
-              "{{size}}",
-              formatBytes(filesTotalSize(safeEntries.map(({ file }) => file)))
-            ),
-          });
-        }
+        setFileUploadProgresses(
+          originalFiles.map((_, index) =>
+            oversizedFileIndexes.includes(index) ? undefined : 1
+          )
+        );
         const preparedSafeFiles = await prepareImageFiles(
           safeEntries.map(({ file }) => file),
-          (percent) => {
+          (safeFileIndex, percent) => {
             if (imagePreparationJobRef.current !== jobId) return;
-            setImageProgress((prev) => ({
-              ...prev,
-              phase: "compressing",
-              percent,
-            }));
+            const originalIndex = safeEntries[safeFileIndex]?.index;
+            if (typeof originalIndex !== "number") return;
+            setFileUploadProgresses((prev) => {
+              const next = [...prev];
+              next[originalIndex] = percent;
+              return next;
+            });
           }
         );
         if (imagePreparationJobRef.current !== jobId) return;
@@ -572,28 +574,18 @@ export default function CheckInOut({
       }
 
       setError(null);
-      setImageProgress({
-        phase: "compressing",
-        percent: 1,
-        message: tg("checkInOutPage.progress.compressing"),
-        detail: tg("checkInOutPage.progress.originalSize").replace(
-          "{{size}}",
-          formatBytes(originalBytes)
-        ),
-      });
 
       try {
-        const files = await prepareCheckinImages(value, (percent) => {
+        const files = await prepareCheckinImages(value, (fileIndex, percent) => {
           if (imagePreparationJobRef.current !== jobId) return;
-          setImageProgress((prev) => ({
-            ...prev,
-            phase: "compressing",
-            percent,
-          }));
+          setFileUploadProgresses((prev) => {
+            const next = [...prev];
+            next[fileIndex] = percent;
+            return next;
+          });
         });
         if (imagePreparationJobRef.current !== jobId) return;
 
-        const preparedBytes = filesTotalSize(files);
         const stillTooLargeMessage = tg(
           "checkInOutPage.errors.fileStillTooLargeInline"
         );
@@ -605,27 +597,12 @@ export default function CheckInOut({
         );
         if (files.some((file) => file.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES)) {
           setError(tg("checkInOutPage.errors.totalUploadTooLarge"));
-          setImageProgress({ phase: "idle", percent: 0, message: "" });
-        } else {
-          setImageProgress({
-            phase: "ready",
-            percent: 100,
-            message: tg("checkInOutPage.progress.ready"),
-            detail: `${formatBytes(originalBytes)} → ${formatBytes(preparedBytes)}`,
-          });
         }
+        setImageProgress({ phase: "idle", percent: 0, message: "" });
       } catch (prepareError) {
         console.error("Image preparation failed:", prepareError);
         if (imagePreparationJobRef.current !== jobId) return;
-        setImageProgress({
-          phase: "ready",
-          percent: 100,
-          message: tg("checkInOutPage.progress.readyOriginal"),
-          detail: tg("checkInOutPage.progress.originalSize").replace(
-            "{{size}}",
-            formatBytes(originalBytes)
-          ),
-        });
+        setImageProgress({ phase: "idle", percent: 0, message: "" });
         preparedMeterImagesRef.current = { signature, files: originalFiles };
         setPreparedImageLabels(originalFiles.map(fileDisplayLabel));
         setPreparedImageStatuses(originalFiles.map(fileUploadStatus));
@@ -703,11 +680,11 @@ export default function CheckInOut({
       const preparedMeterImages =
         preparedMeterImagesRef.current?.signature === meterImagesSignature
           ? preparedMeterImagesRef.current.files
-          : await prepareCheckinImages(values.meterImages, (percent) => {
-              setImageProgress({
-                phase: "compressing",
-                percent,
-                message: tg("checkInOutPage.progress.compressing"),
+          : await prepareCheckinImages(values.meterImages, (fileIndex, percent) => {
+              setFileUploadProgresses((prev) => {
+                const next = [...prev];
+                next[fileIndex] = percent;
+                return next;
               });
             });
       if (
