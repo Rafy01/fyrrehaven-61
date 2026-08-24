@@ -258,10 +258,9 @@ async function preuploadCheckinImages(
   values: Record<string, string | FileList | boolean>,
   clientDraftId: string,
   headers: Record<string, string>,
-  onProgress: (percent: number) => void
+  onProgress: (fileIndex: number, percent: number) => void
 ) {
   const attachments: PreuploadedAttachment[] = [];
-  const fileCount = Math.max(1, files.length);
 
   for (const [index, file] of files.entries()) {
     const formData = new FormData();
@@ -278,10 +277,7 @@ async function preuploadCheckinImages(
       formData,
       headers,
       (filePercent) => {
-        const totalPercent = Math.round(
-          ((index + filePercent / 100) / fileCount) * 90
-        );
-        onProgress(Math.max(1, Math.min(90, totalPercent)));
+        onProgress(index, Math.max(1, Math.min(99, filePercent)));
       }
     );
 
@@ -291,9 +287,9 @@ async function preuploadCheckinImages(
     }
 
     attachments.push(data.attachment);
+    onProgress(index, 100);
   }
 
-  onProgress(90);
   return attachments;
 }
 
@@ -399,11 +395,9 @@ export default function CheckInOut({
   const [preparedImageMessages, setPreparedImageMessages] = useState<
     (string | undefined)[]
   >([]);
-  const [uploadProgress, setUploadProgress] = useState<ProgressState>({
-    phase: "idle",
-    percent: 0,
-    message: "",
-  });
+  const [fileUploadProgresses, setFileUploadProgresses] = useState<number[]>(
+    []
+  );
   const [draftValues, setDraftValues] = useState<
     Record<string, string | FileList | boolean>
   >({});
@@ -495,6 +489,7 @@ export default function CheckInOut({
       setPreparedImageLabels([]);
       setPreparedImageStatuses([]);
       setPreparedImageMessages([]);
+      setFileUploadProgresses([]);
 
       if (!signature) {
         setImageProgress({ phase: "idle", percent: 0, message: "" });
@@ -669,9 +664,9 @@ export default function CheckInOut({
   );
 
   const progressPanel =
-    imageProgress.phase !== "idle" || uploadProgress.phase !== "idle" ? (
+    imageProgress.phase !== "idle" ? (
       <div className={styles.progressPanel} aria-live="polite">
-        {[imageProgress, uploadProgress]
+        {[imageProgress]
           .filter((item) => item.phase !== "idle")
           .map((item) => (
             <ProgressMeter item={item} key={item.phase} />
@@ -734,30 +729,21 @@ export default function CheckInOut({
         return;
       }
 
-      const uploadSize = filesTotalSize(preparedMeterImages);
       const requestHeaders = getRequestHeaders ? await getRequestHeaders() : {};
 
-      setUploadProgress({
-        phase: "uploading",
-        percent: 1,
-        message: tg("checkInOutPage.progress.uploading"),
-        detail: tg("checkInOutPage.progress.uploadSize").replace(
-          "{{size}}",
-          formatBytes(uploadSize)
-        ),
-      });
+      setFileUploadProgresses(preparedMeterImages.map(() => 1));
 
       const preuploadedAttachments = await preuploadCheckinImages(
         preparedMeterImages,
         values,
         draftIdRef.current,
         requestHeaders,
-        (percent) =>
-          setUploadProgress((prev) => ({
-            ...prev,
-            phase: "uploading",
-            percent,
-          }))
+        (fileIndex, percent) =>
+          setFileUploadProgresses((prev) => {
+            const next = [...prev];
+            next[fileIndex] = percent;
+            return next;
+          })
       );
 
       const formData = new FormData();
@@ -784,12 +770,7 @@ export default function CheckInOut({
         "/api/checkin",
         formData,
         requestHeaders,
-        (percent) =>
-          setUploadProgress((prev) => ({
-            ...prev,
-            phase: "uploading",
-            percent: Math.max(90, percent),
-          }))
+        () => undefined
       );
 
       if (!res.ok) {
@@ -814,11 +795,7 @@ export default function CheckInOut({
       }
 
       setSuccess(true);
-      setUploadProgress({
-        phase: "idle",
-        percent: 0,
-        message: "",
-      });
+      setFileUploadProgresses([]);
       setImageProgress({
         phase: "idle",
         percent: 0,
@@ -827,6 +804,7 @@ export default function CheckInOut({
       setPreparedImageLabels([]);
       setPreparedImageStatuses([]);
       setPreparedImageMessages([]);
+      setFileUploadProgresses([]);
       setFormKey((k) => k + 1);
       setFormStartedAt(String(Date.now()));
       draftIdRef.current = createFormDraftId("guest-checkin");
@@ -845,11 +823,6 @@ export default function CheckInOut({
       setError(errorMessage || err?.message || tg("checkInOutPage.fallbackError"));
     } finally {
       setIsSending(false);
-      setUploadProgress((prev) =>
-        prev.phase === "uploading"
-          ? { phase: "idle", percent: 0, message: "" }
-          : prev
-      );
     }
   };
 
@@ -1059,6 +1032,11 @@ export default function CheckInOut({
           fileDisplayMessages={
             preparedImageMessages.length
               ? { meterImages: preparedImageMessages }
+              : undefined
+          }
+          fileUploadProgresses={
+            fileUploadProgresses.length
+              ? { meterImages: fileUploadProgresses }
               : undefined
           }
           submitLabel={tg("checkInOutPage.submit")}

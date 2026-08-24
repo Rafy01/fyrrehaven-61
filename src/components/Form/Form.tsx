@@ -105,6 +105,7 @@ export type FormProps = {
   fileDisplayLabels?: Record<string, string[]>;
   fileDisplayStatuses?: Record<string, ("success" | "error")[]>;
   fileDisplayMessages?: Record<string, (string | undefined)[]>;
+  fileUploadProgresses?: Record<string, (number | undefined)[]>;
   submitLabel: string;
   lang?: Lang;
 };
@@ -117,6 +118,7 @@ export default function Form({
   fileDisplayLabels,
   fileDisplayStatuses,
   fileDisplayMessages,
+  fileUploadProgresses,
   submitLabel,
   lang,
 }: FormProps) {
@@ -422,6 +424,8 @@ export default function Form({
                         duplicateFileMessages[field.name]?.[signature],
                       ].filter(Boolean);
                       const hiddenMessageCount = Math.max(0, messages.length - 1);
+                      const uploadProgress =
+                        fileUploadProgresses?.[field.name]?.[i];
 
                       return (
                         <div key={`${selectedFiles[i]?.name || name}-${i}`}>
@@ -459,6 +463,30 @@ export default function Form({
                                 count: hiddenMessageCount,
                               })}
                             </p>
+                          )}
+                          {typeof uploadProgress === "number" && (
+                            <div className={styles.fileProgressLine}>
+                              <div
+                                className={styles.fileProgressTrack}
+                                role="progressbar"
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-valuenow={uploadProgress}
+                              >
+                                <span
+                                  className={styles.fileProgressBar}
+                                  style={{
+                                    width: `${Math.max(
+                                      0,
+                                      Math.min(100, uploadProgress)
+                                    )}%`,
+                                  }}
+                                />
+                              </div>
+                              <span className={styles.fileProgressPercent}>
+                                {Math.round(uploadProgress)}%
+                              </span>
+                            </div>
                           )}
                         </div>
                       );
