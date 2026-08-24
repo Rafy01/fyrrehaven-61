@@ -314,10 +314,12 @@ export const en = {
       "submit": "Send request",
       "sending": "Sending request...",
       "success": "Thank you. Your extra service request has been sent.",
+      "successFollowup": "We will arrange it and only contact you if something cannot be done.",
       "summaryYes": "The guest would like extra services.",
       "summaryNo": "The guest does not want extra services at this time.",
       "noSpecificItems": "No specific quantities selected.",
-      "dateHint": "Extra services must be requested at least 3 days before arrival, so we have time to prepare.",
+      "dateHint": "Extra services are normally requested at least 3 days before arrival, so we have time to prepare.",
+      "lateNotice": "Late and last-minute requests are accepted. We will arrange it and only contact you if something cannot be done.",
       "bundleHint": "Complete package of bedding, sheets and towels",
       "fields": {
         "name": "Name",
@@ -348,7 +350,7 @@ export const en = {
       "acceptAfter": "for potential violations. The code for the key box will be sent 1 hour before arrival, once this is confirmed.",
       "errors": {
         "required": "Please fill in name, email, confirm email and date of stay.",
-        "dateTooSoon": "Extra services must be requested at least 3 days before arrival. Please choose a later arrival date, or contact us directly if your stay is soon.",
+        "dateTooSoon": "Please choose today or a future arrival date.",
         "email": "Please enter a valid email address.",
         "emailMismatch": "Email and confirm email must match.",
         "dateNotBooked": "We cannot find a booking starting on that date. Please choose your booking start date.",
@@ -358,6 +360,13 @@ export const en = {
         "noSelection": "Please select at least one extra service when you answer yes.",
         "tooManyPeople": "Bed linen, sheets, towels and bundles can only be ordered for up to 10 people in total.",
         "accept": "Please accept the house rules and fee list before submitting.",
+        "rateLimited": "Too many requests were sent in a short time. Please wait a moment and try again.",
+        "tooFast": "Please review the form once more and send it again in a moment.",
+        "formExpired": "This form session has expired. Please reload the page and send the request again.",
+        "security": "The request could not be accepted from this browser session. Please reload the page and try again.",
+        "lateSubmit": "Your late request could not be sent automatically. Because your stay is soon, please contact us directly so we can arrange it.",
+        "network": "The connection was interrupted before the request could be sent. Please check your internet connection and try again.",
+        "lateNetwork": "The connection was interrupted before your late request could be sent. Because your stay is soon, please contact us directly if it does not go through.",
         "submit": "Could not send your request. Please try again shortly."
       }
     }
@@ -633,6 +642,21 @@ export const en = {
       "submit": "Submit reading",
       "sending": "Submitting reading...",
       "success": "Thanks! Your reading has been sent.",
+      "errors": {
+        "rateLimited": "Too many readings were submitted in a short time. Please wait a moment and try again.",
+        "tooFast": "Please review the form once more and send it again in a moment.",
+        "formExpired": "This form session has expired. Please reload the page and send the reading again.",
+        "invalidFileType": "Please upload image files only. Photos from your phone camera are accepted.",
+        "fileTooLarge": "One or more photos are too large. Please open each meter photo, take a screenshot, and upload the screenshots instead.",
+        "totalUploadTooLarge": "The selected meter photos are still too large after automatic compression. Please open each meter photo, take a screenshot, and upload the screenshots instead.",
+        "tooManyFiles": "Too many photos were uploaded. Please upload only the meter photos needed for the reading.",
+        "tooManyFields": "Too much information was submitted. Please reload the page and try again.",
+        "missingFiles": "Please upload at least one photo of the meter reading.",
+        "validation": "Please check the required fields and make sure the meter readings are filled in correctly.",
+        "mail": "Your reading was recorded, but the email could not be sent automatically. We can still see it in the admin system.",
+        "network": "The connection was interrupted before the reading could be sent. Please check your internet connection and try again.",
+        "serverResponse": "The reading could not be sent because the server returned an unreadable error. Please try again with screenshots of the meter photos."
+      },
       "errorLabel": "Error:"
     },
     "manualPage": {

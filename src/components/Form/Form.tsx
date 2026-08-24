@@ -60,6 +60,7 @@ export type Field =
       description?: string;
       required?: boolean;
       multiple?: boolean;
+      accept?: string;
     }
   | {
       type: "hidden";
@@ -70,11 +71,20 @@ export type Field =
 export type FormProps = {
   fields: Field[];
   onSubmit: (values: Record<string, string | FileList | boolean>) => void;
+  onValuesChange?: (values: Record<string, string | FileList | boolean>) => void;
+  onValidationError?: (errors: Record<string, string>) => void;
   submitLabel: string;
   lang?: Lang;
 };
 
-export default function Form({ fields, onSubmit, submitLabel, lang }: FormProps) {
+export default function Form({
+  fields,
+  onSubmit,
+  onValuesChange,
+  onValidationError,
+  submitLabel,
+  lang,
+}: FormProps) {
   const { i18n, t: currentT } = useTranslation("common");
   const t = lang ? i18n.getFixedT(lang, "common") : currentT;
   const [values, setValues] = React.useState<
@@ -130,6 +140,7 @@ export default function Form({ fields, onSubmit, submitLabel, lang }: FormProps)
       nextValues = { ...values, [name]: e.target.value };
       setValues(nextValues);
     }
+    onValuesChange?.(nextValues);
 
     if (name === "email" || name === "confirmEmail") {
       const email = normalizeEmail(nextValues.email);
@@ -175,6 +186,9 @@ export default function Form({ fields, onSubmit, submitLabel, lang }: FormProps)
     }
 
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      onValidationError?.(newErrors);
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -269,6 +283,7 @@ export default function Form({ fields, onSubmit, submitLabel, lang }: FormProps)
                   {...common}
                   type="file"
                   multiple={field.multiple}
+                  accept={field.accept}
                   className={styles.hiddenFileInput}
                   id={field.name}
                   onChange={handleChange}

@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import { getFirestoreDb, verifyAdminRequest } from "./_lib/firebaseAdmin.mjs";
 import {
   createFormSubmission,
+  upsertFormSubmission,
   updateFormSubmission,
 } from "./_lib/formSubmissions.mjs";
 import { validateExtraServiceBooking } from "./_lib/extraServiceBookingValidation.mjs";
@@ -41,6 +42,58 @@ const normalizeSmtpUser = (user, from) => {
 
 const randomBookingNumber = (hasBookingInfo) =>
   `${hasBookingInfo ? "9" : "7"}${String(Math.floor(Math.random() * 10000)).padStart(4, "0")}`;
+
+const cleanDraftId = (value) =>
+  String(value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 120);
+
+async function logContactSubmitError(db, req, error, detail, status = "validation_failed") {
+  const clientDraftId = cleanDraftId(req.body?.clientDraftId);
+  if (!db || !clientDraftId) return null;
+
+  const intent = String(req.body?.purpose || req.body?.context || "contact");
+  const record = {
+    intent,
+    lang: normalizeLang(req.body?.lang),
+    name: String(req.body?.name || "").trim().slice(0, 180),
+    email: normalizeEmail(req.body?.email),
+    phone: String(req.body?.phone || "").trim().slice(0, 80),
+    country: String(req.body?.country || "").trim().slice(0, 120) || null,
+    countryIso: String(req.body?.countryIso || "").trim().slice(0, 4) || null,
+    message: String(req.body?.message || "").trim().slice(0, 4000),
+    consent: req.body?.consent === true,
+    feesAccepted: req.body?.feesAccepted === true,
+    stayPurpose: String(req.body?.stayPurpose || "").trim().slice(0, 600) || null,
+    guests:
+      req.body?.guests && typeof req.body.guests === "object"
+        ? req.body.guests
+        : null,
+    selection:
+      req.body?.selection && typeof req.body.selection === "object"
+        ? req.body.selection
+        : null,
+    extras:
+      req.body?.extras && typeof req.body.extras === "object" ? req.body.extras : null,
+    source: "website",
+    status,
+    mailStatus: "pending",
+    formErrorCode: String(error || "FORM_ERROR"),
+    formErrorMessage: String(detail || "The form could not be submitted."),
+    formLastAction: status,
+    createdAtMs: Number(req.body?.formStartedAt) || Date.now(),
+    updatedAtMs: Date.now(),
+    requestMeta: {
+      ip: getRequesterIp(req) || null,
+      origin: req.headers.origin || null,
+      referer: req.headers.referer || null,
+      userAgent: req.headers["user-agent"] || null,
+    },
+  };
+
+  return upsertFormSubmission(db, clientDraftId, record);
+}
 
 const fmtMoney = (n, lang = "da") => {
   if (n == null || Number.isNaN(Number(n))) return "—";
@@ -189,6 +242,7 @@ export default async function handler(req, res) {
     }
 
     const requestIp = getRequesterIp(req);
+    const db = await getFirestoreDb();
 
     const headerValidation = validateContactHeaders(req);
     if (!headerValidation.ok) {
@@ -202,6 +256,12 @@ export default async function handler(req, res) {
 
     const rateLimit = checkRateLimit(requestIp, "contact");
     if (!rateLimit.ok) {
+      await logContactSubmitError(
+        db,
+        req,
+        "RATE_LIMIT_EXCEEDED",
+        `Too many submissions from this IP. Try again in ${rateLimit.retryAfter || 60} seconds.`
+      );
       res.setHeader("Retry-After", String(rateLimit.retryAfter || 60));
       sendJson(res, 429, {
         ok: false,
@@ -213,6 +273,12 @@ export default async function handler(req, res) {
 
     const humanValidation = validateHumanSignals(req.body);
     if (!humanValidation.ok) {
+      await logContactSubmitError(
+        db,
+        req,
+        humanValidation.error,
+        humanValidation.detail
+      );
       sendJson(res, humanValidation.status, {
         ok: false,
         error: humanValidation.error,
@@ -223,6 +289,12 @@ export default async function handler(req, res) {
 
     const payloadValidation = validateContactPayload(req.body);
     if (!payloadValidation.ok) {
+      await logContactSubmitError(
+        db,
+        req,
+        payloadValidation.error,
+        payloadValidation.detail
+      );
       sendJson(res, payloadValidation.status, {
         ok: false,
         error: payloadValidation.error,
@@ -246,6 +318,7 @@ export default async function handler(req, res) {
       // kontekst
       purpose, // "booking" | "inquiry" | "other"
       context,
+      clientDraftId,
 
       // godkendelser
       consent = false,
@@ -281,12 +354,35 @@ export default async function handler(req, res) {
     const extrasItemsRaw = Array.isArray(extras?.items) ? extras.items : [];
     const isExtraServicesReq =
       intent === "extra-services" || extrasItemsRaw.length > 0;
+    const extraServiceStayDate = String(extras?.stayDate || "");
+    const isLateExtraServiceReq =
+      /^\d{4}-\d{2}-\d{2}$/.test(extraServiceStayDate) &&
+      (() => {
+        const today = new Date();
+        const todayStart = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate()
+        );
+        const [year, month, day] = extraServiceStayDate.split("-").map(Number);
+        const stayStart = new Date(year, month - 1, day);
+        const diffDays = Math.round(
+          (stayStart.getTime() - todayStart.getTime()) / 86400000
+        );
+        return diffDays >= 0 && diffDays < 3;
+      })();
     const hasRequestedExtras = extrasItemsRaw.length > 0;
     const isBookingReq =
       intent === "booking" || !!selection || !!guests || !!stayPurpose;
 
     // Validering
     if (!name || !email) {
+      await logContactSubmitError(
+        db,
+        req,
+        "VALIDATION_ERROR",
+        "Missing name or email"
+      );
       sendJson(res, 400, {
         ok: false,
         error: "VALIDATION_ERROR",
@@ -295,26 +391,18 @@ export default async function handler(req, res) {
       return;
     }
     if (!isBookingReq && !isExtraServicesReq && !message) {
+      await logContactSubmitError(
+        db,
+        req,
+        "VALIDATION_ERROR",
+        "Missing message"
+      );
       sendJson(res, 400, {
         ok: false,
         error: "VALIDATION_ERROR",
         detail: "Missing message",
       });
       return;
-    }
-
-    const db = await getFirestoreDb();
-    if (isExtraServicesReq && !manualGuestOnly) {
-      const bookingValidation = await validateExtraServiceBooking({
-        db,
-        stayDate: extras?.stayDate,
-        name,
-      });
-
-      if (!bookingValidation.ok) {
-        sendJson(res, bookingValidation.status || 400, bookingValidation);
-        return;
-      }
     }
 
     const bookingNumber = randomBookingNumber(isBookingReq);
@@ -340,6 +428,7 @@ export default async function handler(req, res) {
               totalDKK:
                 typeof extras.totalDKK === "number" ? extras.totalDKK : null,
               items: Array.isArray(extras.items) ? extras.items : [],
+              lateRequest: isLateExtraServiceReq || extras.lateRequest === true,
             }
           : null,
       source: "website",
@@ -358,10 +447,32 @@ export default async function handler(req, res) {
     let submissionRef = null;
     if (db) {
       try {
-        submissionRef = await createFormSubmission(db, submissionRecord);
+        submissionRef = cleanDraftId(clientDraftId)
+          ? await upsertFormSubmission(db, clientDraftId, submissionRecord)
+          : await createFormSubmission(db, submissionRecord);
       } catch (storageError) {
         submissionRef = null;
         console.error("FIRESTORE_WRITE_FAILED", storageError);
+      }
+    }
+
+    if (isExtraServicesReq && !manualGuestOnly && !isLateExtraServiceReq) {
+      const bookingValidation = await validateExtraServiceBooking({
+        db,
+        stayDate: extras?.stayDate,
+        name,
+      });
+
+      if (!bookingValidation.ok) {
+        await updateFormSubmission(submissionRef, {
+          status: "validation_failed",
+          formErrorCode: bookingValidation.error,
+          formErrorMessage: bookingValidation.detail || bookingValidation.error,
+          formLastAction: "booking_validation_failed",
+          updatedAtMs: Date.now(),
+        });
+        sendJson(res, bookingValidation.status || 400, bookingValidation);
+        return;
       }
     }
 
@@ -549,6 +660,11 @@ export default async function handler(req, res) {
       <h3 style="margin:16px 0 8px;font-size:16px;">
         ${esc(adminT("contact.extraServices"))}
       </h3>
+      ${
+        isLateExtraServiceReq
+          ? `<p style="margin:0 0 10px;color:#8a6400"><b>Late request:</b> arrival is within 3 days. Arrange it if possible and contact the guest only if it cannot be done.</p>`
+          : ""
+      }
       <table style="border-collapse:collapse">
         ${extrasItems
           .map((it) => {

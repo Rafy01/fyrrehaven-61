@@ -8,6 +8,7 @@ import type { Lang } from "../../lib/lang";
 import { guestPathOf, pathOf } from "../../lib/routes";
 import { getSeoMeta } from "../../i18n/seo";
 import { extraServices } from "../../data/extraServices";
+import { createFormDraftId, saveFormDraft } from "../../lib/formDraftLog";
 import formStyles from "../../components/ContactForm/ContactForm.module.css";
 import styles from "./ExtraServices.module.css";
 
@@ -46,6 +47,10 @@ function earliestArrivalYmd() {
   return localYmd(date);
 }
 
+function todayYmd() {
+  return localYmd(new Date());
+}
+
 function parseYmd(value: string) {
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day);
@@ -58,6 +63,44 @@ function addMonths(date: Date, amount: number) {
 type BookingValidationResponse =
   | { ok: true }
   | { ok: false; error?: string; detail?: string | null };
+type ContactSubmitResponse = {
+  ok?: boolean;
+  error?: string;
+  detail?: string | null;
+  mailStatus?: string;
+};
+
+function submitErrorKey(code: string, isLateRequest: boolean) {
+  switch (code) {
+    case "RATE_LIMIT_EXCEEDED":
+      return "form.errors.rateLimited";
+    case "FORM_SUBMITTED_TOO_FAST":
+      return "form.errors.tooFast";
+    case "FORM_EXPIRED":
+    case "INVALID_FORM_STATE":
+      return "form.errors.formExpired";
+    case "INVALID_EMAIL":
+      return "form.errors.email";
+    case "INVALID_NAME":
+    case "VALIDATION_ERROR":
+      return "form.errors.required";
+    case "MISSING_CONSENT":
+    case "MISSING_FEES_ACCEPTANCE":
+      return "form.errors.accept";
+    case "FORBIDDEN_ORIGIN":
+    case "FORBIDDEN_USER_AGENT":
+    case "BOT_DETECTED":
+    case "INVALID_PAYLOAD":
+      return "form.errors.security";
+    case "ENV_MISSING":
+    case "MAIL_AUTH_FAILED":
+    case "MAIL_AUTOREPLY_FAILED":
+    case "MAIL_ERROR":
+      return isLateRequest ? "form.errors.lateSubmit" : "form.errors.submit";
+    default:
+      return isLateRequest ? "form.errors.lateSubmit" : "form.errors.submit";
+  }
+}
 
 export default function ExtraServices({
   lang,
@@ -93,6 +136,7 @@ export default function ExtraServices({
   const [error, setError] = React.useState<string | null>(null);
   const datePickerRef = React.useRef<HTMLDivElement>(null);
   const formStartedAtRef = React.useRef<number>(Date.now());
+  const draftIdRef = React.useRef(createFormDraftId("extra-services"));
   const confirmEmailError =
     normalizeEmail(confirmEmail) &&
     normalizeEmail(email).toLowerCase() !==
@@ -194,7 +238,7 @@ export default function ExtraServices({
 
   function selectStayDate(date: Date) {
     const next = localYmd(date);
-    if (next < earliestArrivalYmd()) return;
+    if (next < todayYmd()) return;
     setStayDate(next);
     setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
     setCalendarOpen(false);
@@ -243,6 +287,82 @@ export default function ExtraServices({
     (sum, item) => sum + item.qty * item.unitPriceDKK,
     0
   );
+  const isLateRequest = stayDate >= todayYmd() && stayDate < earliestArrivalYmd();
+  const draftPayload = React.useCallback(
+    (
+      status: "draft" | "validation_failed" | "send_failed" = "draft",
+      formErrorMessage = "",
+      formErrorCode = ""
+    ) => ({
+      clientDraftId: draftIdRef.current,
+      intent: "extra-services",
+      lang,
+      status,
+      formErrorCode,
+      formErrorMessage,
+      formLastAction: status === "draft" ? "autosave" : status,
+      name: name.trim(),
+      email: normalizeEmail(email),
+      message: message.trim(),
+      consent: accepted,
+      feesAccepted: accepted,
+      extras: {
+        stayDate,
+        items: selectedItems,
+        totalDKK,
+        lateRequest: isLateRequest,
+        wantsExtras,
+      },
+      createdAtMs: formStartedAtRef.current,
+    }),
+    [
+      accepted,
+      email,
+      isLateRequest,
+      lang,
+      message,
+      name,
+      selectedItems,
+      stayDate,
+      totalDKK,
+      wantsExtras,
+    ]
+  );
+
+  React.useEffect(() => {
+    if (adminManual || sent) return;
+    const hasDraftData =
+      name.trim() ||
+      email.trim() ||
+      confirmEmail.trim() ||
+      message.trim() ||
+      wantsExtras === "yes" ||
+      stayDate !== earliestArrivalYmd();
+    if (!hasDraftData) return;
+
+    const timer = window.setTimeout(() => {
+      void saveFormDraft(draftPayload());
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    adminManual,
+    confirmEmail,
+    draftPayload,
+    email,
+    message,
+    name,
+    sent,
+    stayDate,
+    wantsExtras,
+  ]);
+
+  function setValidationError(message: string, code: string) {
+    setError(message);
+    if (!adminManual) {
+      void saveFormDraft(draftPayload("validation_failed", message, code));
+    }
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -254,36 +374,37 @@ export default function ExtraServices({
     const trimmedMessage = message.trim();
 
     if (!trimmedName || !replyEmail || !confirmedEmail || !stayDate) {
-      setError(t("form.errors.required"));
+      setValidationError(t("form.errors.required"), "MISSING_REQUIRED_FIELDS");
       return;
     }
-    if (stayDate < earliestArrivalYmd()) {
-      setError(t("form.errors.dateTooSoon"));
+    if (stayDate < todayYmd()) {
+      setValidationError(t("form.errors.dateTooSoon"), "PAST_STAY_DATE");
       return;
     }
     if (!EMAIL_RE.test(replyEmail)) {
-      setError(t("form.errors.email"));
+      setValidationError(t("form.errors.email"), "INVALID_EMAIL");
       return;
     }
     if (replyEmail.toLowerCase() !== confirmedEmail.toLowerCase()) {
+      setValidationError(t("form.errors.emailMismatch"), "EMAIL_MISMATCH");
       return;
     }
     if (wantsExtras === "yes" && selectedItems.length === 0) {
-      setError(t("form.errors.noSelection"));
+      setValidationError(t("form.errors.noSelection"), "NO_EXTRA_SERVICES_SELECTED");
       return;
     }
     if (totalPersonServices > MAX_GUEST_SERVICE_PEOPLE) {
-      setError(t("form.errors.tooManyPeople"));
+      setValidationError(t("form.errors.tooManyPeople"), "TOO_MANY_PEOPLE");
       return;
     }
     if (!accepted) {
-      setError(t("form.errors.accept"));
+      setValidationError(t("form.errors.accept"), "MISSING_CONSENT");
       return;
     }
 
     setSending(true);
     try {
-      if (!adminManual) {
+      if (!adminManual && !isLateRequest) {
         const validationRes = await fetch("/api/extra-services/validate-booking", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -310,7 +431,7 @@ export default function ExtraServices({
                 : code === "BOOKING_CALENDAR_UNAVAILABLE"
                   ? t("form.errors.bookingCheckUnavailable")
                   : validationError?.detail || t("form.errors.bookingCheck");
-          setError(message);
+          setValidationError(message, code || "BOOKING_VALIDATION_FAILED");
           return;
         }
       }
@@ -327,6 +448,7 @@ export default function ExtraServices({
           website: "",
           company: "",
           faxNumber: "",
+          clientDraftId: draftIdRef.current,
           formStartedAt: formStartedAtRef.current,
           purpose: "extra-services",
           context: "extra-services",
@@ -339,11 +461,22 @@ export default function ExtraServices({
             stayDate,
             items: selectedItems,
             totalDKK,
+            lateRequest: isLateRequest,
           },
         }),
       });
 
-      if (!res.ok) throw new Error("submit failed");
+      const submitResult =
+        (await res.json().catch(() => null)) as ContactSubmitResponse | null;
+
+      if (!res.ok || submitResult?.ok === false) {
+        const code = submitResult?.error || "";
+        const key = submitErrorKey(code, isLateRequest);
+        const message = t(key);
+        void saveFormDraft(draftPayload("send_failed", message, code));
+        setError(message);
+        return;
+      }
 
       setSent(true);
       setName("");
@@ -357,7 +490,11 @@ export default function ExtraServices({
       setMessage("");
       setAccepted(false);
     } catch {
-      setError(t("form.errors.submit"));
+      const message = t(
+        isLateRequest ? "form.errors.lateNetwork" : "form.errors.network"
+      );
+      void saveFormDraft(draftPayload("send_failed", message, "NETWORK_ERROR"));
+      setError(message);
     } finally {
       setSending(false);
     }
@@ -536,7 +673,7 @@ export default function ExtraServices({
                       <div className={styles.days}>
                         {calendarDays.map((date) => {
                           const ymd = localYmd(date);
-                          const disabled = ymd < earliestArrivalYmd();
+                          const disabled = ymd < todayYmd();
                           const muted =
                             date.getMonth() !== calendarMonth.getMonth();
                           const selected = ymd === stayDate;
@@ -565,6 +702,9 @@ export default function ExtraServices({
                 <small id="extra-stay-date-hint" className={styles.hint}>
                   {t("form.dateHint")}
                 </small>
+                {isLateRequest ? (
+                  <small className={styles.hint}>{t("form.lateNotice")}</small>
+                ) : null}
               </div>
 
               <div className={formStyles.row}>
@@ -744,7 +884,7 @@ export default function ExtraServices({
               )}
               {sent && (
                 <p className={styles.success} role="status">
-                  {t("form.success")}
+                  {t("form.success")} {t("form.successFollowup")}
                 </p>
               )}
 

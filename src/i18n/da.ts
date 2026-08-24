@@ -314,10 +314,12 @@ export const da = {
       "submit": "Send forespørgsel",
       "sending": "Sender forespørgsel...",
       "success": "Tak. Din forespørgsel om ekstra services er sendt.",
+      "successFollowup": "Vi sørger for det og kontakter dig kun, hvis noget ikke kan lade sig gøre.",
       "summaryYes": "Gæsten ønsker ekstra services.",
       "summaryNo": "Gæsten ønsker ikke ekstra services på nuværende tidspunkt.",
       "noSpecificItems": "Der er ikke valgt specifikke antal.",
-      "dateHint": "Ekstra services skal bestilles senest 3 dage før ankomst, så vi kan nå at klargøre.",
+      "dateHint": "Ekstra services bestilles normalt senest 3 dage før ankomst, så vi kan nå at klargøre.",
+      "lateNotice": "Sene forespørgsler og last minute-bookinger accepteres. Vi sørger for det og kontakter dig kun, hvis noget ikke kan lade sig gøre.",
       "bundleHint": "Komplet pakke med sengetøj, sengelinned og håndklæder",
       "fields": {
         "name": "Navn",
@@ -348,7 +350,7 @@ export const da = {
       "acceptAfter": "ved eventuelle overtrædelser. Koden til nøgleboksen sendes 1 time før ankomst, når dette er bekræftet.",
       "errors": {
         "required": "Udfyld venligst navn, e-mail, bekræft e-mail og dato for ophold.",
-        "dateTooSoon": "Ekstra services skal bestilles senest 3 dage før ankomst. Vælg venligst en senere ankomstdato, eller kontakt os direkte, hvis opholdet er tæt på.",
+        "dateTooSoon": "Vælg venligst i dag eller en fremtidig ankomstdato.",
         "email": "Indtast venligst en gyldig e-mailadresse.",
         "emailMismatch": "E-mail og bekræft e-mail skal være ens.",
         "dateNotBooked": "Vi kan ikke finde en booking, der starter på den dato. Vælg venligst bookingens startdato.",
@@ -358,6 +360,13 @@ export const da = {
         "noSelection": "Vælg venligst mindst én ekstra service.",
         "tooManyPeople": "Sengetøj, sengelinned, håndklæder og pakker kan samlet højst bestilles til 10 personer.",
         "accept": "Accepter venligst husregler og gebyroversigt før indsendelse.",
+        "rateLimited": "Der er sendt for mange forespørgsler på kort tid. Vent venligst et øjeblik, og prøv igen.",
+        "tooFast": "Gennemgå venligst formularen én gang mere, og send den igen om et øjeblik.",
+        "formExpired": "Formularsessionen er udløbet. Genindlæs siden, og send forespørgslen igen.",
+        "security": "Forespørgslen kunne ikke accepteres fra denne browsersession. Genindlæs siden, og prøv igen.",
+        "lateSubmit": "Din sene forespørgsel kunne ikke sendes automatisk. Da opholdet er tæt på, bedes du kontakte os direkte, så vi kan arrangere det.",
+        "network": "Forbindelsen blev afbrudt, før forespørgslen kunne sendes. Tjek din internetforbindelse, og prøv igen.",
+        "lateNetwork": "Forbindelsen blev afbrudt, før din sene forespørgsel kunne sendes. Da opholdet er tæt på, bedes du kontakte os direkte, hvis den ikke går igennem.",
         "submit": "Kunne ikke sende forespørgslen. Prøv igen om lidt."
       }
     }
@@ -633,6 +642,21 @@ export const da = {
       "submit": "Send aflæsning",
       "sending": "Sender aflæsning...",
       "success": "Tak! Din aflæsning er sendt.",
+      "errors": {
+        "rateLimited": "Der er sendt for mange aflæsninger på kort tid. Vent venligst et øjeblik, og prøv igen.",
+        "tooFast": "Gennemgå venligst formularen én gang mere, og send den igen om et øjeblik.",
+        "formExpired": "Formularsessionen er udløbet. Genindlæs siden, og send aflæsningen igen.",
+        "invalidFileType": "Upload venligst kun billedfiler. Fotos fra telefonens kamera accepteres.",
+        "fileTooLarge": "Et eller flere billeder er for store. Åbn venligst hvert målerbillede, tag et screenshot, og upload screenshots i stedet.",
+        "totalUploadTooLarge": "De valgte målerbilleder er stadig for store efter automatisk komprimering. Åbn venligst hvert målerbillede, tag et screenshot, og upload screenshots i stedet.",
+        "tooManyFiles": "Der er uploadet for mange billeder. Upload kun de nødvendige målerfotos.",
+        "tooManyFields": "Der blev sendt for meget information. Genindlæs siden, og prøv igen.",
+        "missingFiles": "Upload venligst mindst ét billede af måleraflæsningen.",
+        "validation": "Tjek venligst de påkrævede felter, og sørg for at måleraflæsningerne er udfyldt korrekt.",
+        "mail": "Din aflæsning blev registreret, men mailen kunne ikke sendes automatisk. Vi kan stadig se den i admin-systemet.",
+        "network": "Forbindelsen blev afbrudt, før aflæsningen kunne sendes. Tjek din internetforbindelse, og prøv igen.",
+        "serverResponse": "Aflæsningen kunne ikke sendes, fordi serveren returnerede en ulæselig fejl. Prøv igen med screenshots af målerbillederne."
+      },
       "errorLabel": "Fejl:"
     },
     "manualPage": {

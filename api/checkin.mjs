@@ -8,6 +8,7 @@ import {
 import {
   FORM_SUBMISSION_FILES_COLLECTION,
   createFormSubmission,
+  upsertFormSubmission,
   updateFormSubmission,
 } from "./_lib/formSubmissions.mjs";
 import {
@@ -44,6 +45,12 @@ const normalizeSmtpUser = (user, from) => {
 const randomBookingNumber = (hasBookingInfo) =>
   `${hasBookingInfo ? "9" : "7"}${String(Math.floor(Math.random() * 10000)).padStart(4, "0")}`;
 
+const cleanDraftId = (value) =>
+  String(value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 120);
+
 const esc = (s = "") =>
   String(s)
     .replaceAll("&", "&amp;")
@@ -56,9 +63,9 @@ const SHOULD_EXPOSE_INTERNAL_ERRORS =
   "true";
 const MAX_UPLOAD_FILES = Number(process.env.CHECKIN_MAX_UPLOAD_FILES || 6);
 const MAX_UPLOAD_FILE_SIZE =
-  Number(process.env.CHECKIN_MAX_UPLOAD_FILE_SIZE_MB || 8) * 1024 * 1024;
+  Number(process.env.CHECKIN_MAX_UPLOAD_FILE_SIZE_MB || 4) * 1024 * 1024;
 const MAX_TOTAL_UPLOAD_SIZE =
-  Number(process.env.CHECKIN_MAX_TOTAL_UPLOAD_SIZE_MB || 20) * 1024 * 1024;
+  Number(process.env.CHECKIN_MAX_TOTAL_UPLOAD_SIZE_MB || 4) * 1024 * 1024;
 const ALLOWED_UPLOAD_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -241,6 +248,47 @@ function checkinImageUploadStatus(files, attachments) {
   return "not-configured";
 }
 
+async function logCheckinSubmitError(db, fields, req, error, detail) {
+  const clientDraftId = cleanDraftId(fields.clientDraftId);
+  if (!db || !clientDraftId) return null;
+
+  return upsertFormSubmission(db, clientDraftId, {
+    intent: "guest-checkin",
+    lang: normalizeLang(fields.lang),
+    name: String(fields.name || "").trim().slice(0, 180),
+    email: normalizeEmail(fields.email),
+    message: String(fields.comment || "").trim().slice(0, 4000),
+    consent:
+      fields.consent === true ||
+      String(fields.consent || "").toLowerCase() === "true",
+    checkin: {
+      type: String(fields.checkType || "").trim(),
+      keycode: String(fields.keycode || "").trim(),
+      meterReadings: {
+        electricity: String(fields.elReading || "").trim(),
+        waterHouse: String(fields.waterHouse || "").trim(),
+        waterPool: String(fields.waterPool || "").trim() || null,
+      },
+    },
+    source: "guest-form",
+    status: "validation_failed",
+    mailStatus: "pending",
+    formErrorCode: String(error || "CHECKIN_FORM_ERROR"),
+    formErrorMessage: String(
+      detail || "The check-in/out form could not be submitted."
+    ),
+    formLastAction: "checkin_validation_failed",
+    createdAtMs: Number(fields.formStartedAt) || Date.now(),
+    updatedAtMs: Date.now(),
+    requestMeta: {
+      ip: getRequesterIp(req) || null,
+      origin: req.headers.origin || null,
+      referer: req.headers.referer || null,
+      userAgent: req.headers["user-agent"] || null,
+    },
+  });
+}
+
 // Vercel handler
 export default async function handler(req, res) {
   applySecurityHeaders(res);
@@ -366,7 +414,15 @@ export default async function handler(req, res) {
       let submissionRef = null;
 
       try {
+        const db = await getFirestoreDb();
         if (uploadError) {
+          await logCheckinSubmitError(
+            db,
+            fields,
+            req,
+            uploadError.error,
+            uploadError.detail
+          );
           sendJson(res, uploadError.status, {
             ok: false,
             error: uploadError.error,
@@ -377,6 +433,13 @@ export default async function handler(req, res) {
 
         const humanValidation = validateHumanSignals(fields);
         if (!humanValidation.ok) {
+          await logCheckinSubmitError(
+            db,
+            fields,
+            req,
+            humanValidation.error,
+            humanValidation.detail
+          );
           sendJson(res, humanValidation.status, {
             ok: false,
             error: humanValidation.error,
@@ -425,6 +488,13 @@ export default async function handler(req, res) {
           !waterHouse ||
           !consent
         ) {
+          await logCheckinSubmitError(
+            db,
+            fields,
+            req,
+            "VALIDATION_ERROR",
+            "Missing required fields"
+          );
           sendJson(res, 400, {
             ok: false,
             error: "VALIDATION_ERROR",
@@ -447,6 +517,13 @@ export default async function handler(req, res) {
           String(comment || "").trim().length > 2000 ||
           !consentAccepted
         ) {
+          await logCheckinSubmitError(
+            db,
+            fields,
+            req,
+            "VALIDATION_ERROR",
+            "One or more fields are invalid."
+          );
           sendJson(res, 400, {
             ok: false,
             error: "VALIDATION_ERROR",
@@ -456,6 +533,13 @@ export default async function handler(req, res) {
         }
 
         if (!files.length) {
+          await logCheckinSubmitError(
+            db,
+            fields,
+            req,
+            "MISSING_FILES",
+            "At least one meter image is required."
+          );
           sendJson(res, 400, {
             ok: false,
             error: "MISSING_FILES",
@@ -486,7 +570,6 @@ export default async function handler(req, res) {
         });
         const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
         const submittedStayDate = new Date().toISOString().slice(0, 10);
-        const db = await getFirestoreDb();
         let storedAttachments = files.map((file) => ({
           fieldname: file.fieldname,
           filename: file.filename,
@@ -532,7 +615,9 @@ export default async function handler(req, res) {
 
         if (db) {
           try {
-            submissionRef = await createFormSubmission(db, submissionRecord);
+            submissionRef = cleanDraftId(fields.clientDraftId)
+              ? await upsertFormSubmission(db, fields.clientDraftId, submissionRecord)
+              : await createFormSubmission(db, submissionRecord);
           } catch (firestoreError) {
             console.error("FIRESTORE_WRITE_FAILED", firestoreError);
           }

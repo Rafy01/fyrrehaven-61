@@ -1,14 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/guest/CheckInOut.tsx
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Head from "../../../lib/Head";
 import { useTranslation } from "react-i18next";
 import Accordion from "../../../components/Accordion/Accordion";
 import Form, { type Field } from "../../../components/Form/Form";
 import { guestPathOf } from "../../../lib/routes";
 import type { Lang } from "../../../lib/lang";
+import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import styles from "./CheckInOut.module.css";
+
+const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 4 * 1024 * 1024;
+const CHECKIN_IMAGE_COMPRESSION_STEPS = [
+  { maxDimension: 1800, quality: 0.78 },
+  { maxDimension: 1500, quality: 0.7 },
+  { maxDimension: 1200, quality: 0.62 },
+];
 
 function isPoolOpen(today = new Date()) {
   const month = today.getMonth() + 1;
@@ -17,6 +25,125 @@ function isPoolOpen(today = new Date()) {
   return month > 5 && month < 10
     ? true
     : (month === 5 && date >= 1) || (month === 10 && date <= 1);
+}
+
+function checkinErrorMessage(
+  code: string,
+  detail: string,
+  tg: (key: string) => string
+) {
+  switch (code) {
+    case "RATE_LIMIT_EXCEEDED":
+      return tg("checkInOutPage.errors.rateLimited");
+    case "FORM_SUBMITTED_TOO_FAST":
+      return tg("checkInOutPage.errors.tooFast");
+    case "FORM_EXPIRED":
+    case "INVALID_FORM_STATE":
+      return tg("checkInOutPage.errors.formExpired");
+    case "INVALID_FILE_TYPE":
+      return tg("checkInOutPage.errors.invalidFileType");
+    case "FILE_TOO_LARGE":
+    case "PAYLOAD_TOO_LARGE":
+      return tg("checkInOutPage.errors.fileTooLarge");
+    case "TOO_MANY_FILES":
+      return tg("checkInOutPage.errors.tooManyFiles");
+    case "TOO_MANY_FIELDS":
+      return tg("checkInOutPage.errors.tooManyFields");
+    case "MISSING_FILES":
+      return tg("checkInOutPage.errors.missingFiles");
+    case "VALIDATION_ERROR":
+      return detail || tg("checkInOutPage.errors.validation");
+    case "MAIL_AUTH_FAILED":
+    case "MAIL_AUTOREPLY_FAILED":
+    case "MAIL_ERROR":
+    case "ENV_MISSING":
+      return tg("checkInOutPage.errors.mail");
+    default:
+      return detail || tg("checkInOutPage.unknownError");
+  }
+}
+
+function filesTotalSize(files: File[]) {
+  return files.reduce((total, file) => total + file.size, 0);
+}
+
+function canCompressImage(file: File) {
+  return ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+}
+
+function loadImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Image could not be prepared for upload."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+async function compressImageFile(
+  file: File,
+  maxDimension: number,
+  quality: number
+) {
+  if (
+    typeof document === "undefined" ||
+    !canCompressImage(file)
+  ) {
+    return file;
+  }
+
+  const image = await loadImage(file);
+  const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  if (!context) return file;
+  context.drawImage(image, 0, 0, width, height);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", quality);
+  });
+  if (!blob || blob.size >= file.size) return file;
+
+  const filename = file.name.replace(/\.(heic|heif|jpe?g|png|webp)$/i, ".jpg");
+  return new File([blob], filename, {
+    type: "image/jpeg",
+    lastModified: file.lastModified,
+  });
+}
+
+async function prepareCheckinImages(value: unknown) {
+  if (!(value instanceof FileList)) return [];
+  const originalFiles = Array.from(value);
+  if (filesTotalSize(originalFiles) <= MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
+    return originalFiles;
+  }
+
+  let currentFiles = originalFiles;
+  for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
+    currentFiles = await Promise.all(
+      currentFiles.map((file) =>
+        compressImageFile(file, step.maxDimension, step.quality)
+      )
+    );
+    if (filesTotalSize(currentFiles) <= MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
+      return currentFiles;
+    }
+  }
+
+  return currentFiles;
 }
 
 export default function CheckInOut({
@@ -48,6 +175,10 @@ export default function CheckInOut({
   const [error, setError] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [formStartedAt, setFormStartedAt] = useState(() => String(Date.now()));
+  const [draftValues, setDraftValues] = useState<
+    Record<string, string | FileList | boolean>
+  >({});
+  const draftIdRef = useRef(createFormDraftId("guest-checkin"));
 
   useEffect(() => {
     setPoolOpen(isPoolOpen());
@@ -57,6 +188,68 @@ export default function CheckInOut({
       setIsMobile(mobile);
     }
   }, []);
+
+  const buildDraftPayload = useCallback(
+    (
+      values: Record<string, string | FileList | boolean>,
+      status: "draft" | "validation_failed" | "send_failed" = "draft",
+      formErrorMessage = "",
+      formErrorCode = ""
+    ) => {
+      const files =
+        values.meterImages instanceof FileList
+          ? Array.from(values.meterImages).map((file) => ({
+              filename: file.name,
+              contentType: file.type,
+              sizeBytes: file.size,
+            }))
+          : [];
+
+      return {
+        clientDraftId: draftIdRef.current,
+        intent: "guest-checkin",
+        lang,
+        status,
+        formErrorCode,
+        formErrorMessage,
+        formLastAction: status === "draft" ? "autosave" : status,
+        name: String(values.name || "").trim(),
+        email: String(values.email || "").trim(),
+        message: String(values.comment || "").trim(),
+        consent: values.consent === true,
+        checkin: {
+          type: String(values.checkType || "").trim(),
+          keycode: String(values.keycode || "").trim(),
+          meterReadings: {
+            electricity: String(values.elReading || "").trim(),
+            waterHouse: String(values.waterHouse || "").trim(),
+            waterPool: String(values.waterPool || "").trim() || null,
+          },
+          attachments: files,
+        },
+        createdAtMs: Number(formStartedAt) || Date.now(),
+      };
+    },
+    [formStartedAt, lang]
+  );
+
+  useEffect(() => {
+    if (adminManual || success) return;
+    const hasDraftData =
+      String(draftValues.name || "").trim() ||
+      String(draftValues.email || "").trim() ||
+      String(draftValues.keycode || "").trim() ||
+      String(draftValues.elReading || "").trim() ||
+      String(draftValues.waterHouse || "").trim() ||
+      draftValues.meterImages instanceof FileList;
+    if (!hasDraftData) return;
+
+    const timer = window.setTimeout(() => {
+      void saveFormDraft(buildDraftPayload(draftValues));
+    }, 900);
+
+    return () => window.clearTimeout(timer);
+  }, [adminManual, buildDraftPayload, draftValues, success]);
 
   if (isMobile === null) {
     return null;
@@ -79,6 +272,22 @@ export default function CheckInOut({
     setError(null);
 
     try {
+      const preparedMeterImages = await prepareCheckinImages(values.meterImages);
+      const totalUploadSize = filesTotalSize(preparedMeterImages);
+      if (totalUploadSize > MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
+        const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");
+        void saveFormDraft(
+          buildDraftPayload(
+            values,
+            "validation_failed",
+            errorMessage,
+            "CLIENT_UPLOAD_TOTAL_TOO_LARGE"
+          )
+        );
+        setError(errorMessage);
+        return;
+      }
+
       const formData = new FormData();
 
       for (const key in values) {
@@ -86,11 +295,14 @@ export default function CheckInOut({
 
         const value = values[key];
         if (value instanceof FileList) {
-          Array.from(value).forEach((file) => formData.append(key, file));
+          const files =
+            key === "meterImages" ? preparedMeterImages : Array.from(value);
+          files.forEach((file) => formData.append(key, file));
         } else {
           formData.append(key, String(value));
         }
       }
+      formData.set("clientDraftId", draftIdRef.current);
 
       const res = await fetch("/api/checkin", {
         method: "POST",
@@ -102,12 +314,21 @@ export default function CheckInOut({
 
       if (!res.ok) {
         let errorMessage = tg("checkInOutPage.unknownError");
+        let errorCode = "UNREADABLE_SERVER_RESPONSE";
         try {
           const data = await res.json();
-          errorMessage = data?.detail || errorMessage;
+          errorCode = String(data?.error || "");
+          errorMessage = checkinErrorMessage(
+            errorCode,
+            String(data?.detail || ""),
+            tg
+          );
         } catch {
-          // Keep the default message if the API does not return JSON.
+          errorMessage = tg("checkInOutPage.errors.serverResponse");
         }
+        void saveFormDraft(
+          buildDraftPayload(values, "send_failed", errorMessage, errorCode)
+        );
         setError(errorMessage);
         return;
       }
@@ -115,9 +336,14 @@ export default function CheckInOut({
       setSuccess(true);
       setFormKey((k) => k + 1);
       setFormStartedAt(String(Date.now()));
+      draftIdRef.current = createFormDraftId("guest-checkin");
     } catch (err: any) {
       console.error("Submit error:", err);
-      setError(err?.message || tg("checkInOutPage.fallbackError"));
+      const errorMessage = tg("checkInOutPage.errors.network");
+      void saveFormDraft(
+        buildDraftPayload(values, "send_failed", errorMessage, "NETWORK_ERROR")
+      );
+      setError(errorMessage || err?.message || tg("checkInOutPage.fallbackError"));
     } finally {
       setIsSending(false);
     }
@@ -223,6 +449,7 @@ export default function CheckInOut({
       label: tg("checkInOutPage.fields.meterImages.label"),
       required: true,
       multiple: true,
+      accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
       description: tg("checkInOutPage.fields.meterImages.description"),
     },
     {
@@ -300,6 +527,19 @@ export default function CheckInOut({
           key={formKey}
           fields={fields}
           onSubmit={handleSubmit}
+          onValuesChange={setDraftValues}
+          onValidationError={(validationErrors) => {
+            const firstError = Object.values(validationErrors)[0];
+            if (!firstError) return;
+            void saveFormDraft(
+              buildDraftPayload(
+                draftValues,
+                "validation_failed",
+                firstError,
+                "CLIENT_VALIDATION_ERROR"
+              )
+            );
+          }}
           submitLabel={tg("checkInOutPage.submit")}
           lang={lang}
         />

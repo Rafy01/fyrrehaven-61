@@ -667,6 +667,37 @@
   padding-inline: 12px;
 }
 
+.qrTypeBadge {
+  display: block;
+  width: fit-content;
+  margin-top: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gray-12) 8%, transparent);
+  color: var(--gray-10);
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.qrCopyInput {
+  box-sizing: border-box;
+  width: 82px;
+  min-height: 38px;
+  border: 1px solid var(--gray-5);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gray-1) 88%, transparent);
+  color: var(--gray-12);
+  font: inherit;
+  font-weight: 800;
+  padding: 0 10px;
+}
+
+.qrCopyInput:focus {
+  outline: 3px solid color-mix(in srgb, var(--accent-9) 28%, transparent);
+  outline-offset: 2px;
+}
+
 .loadingState {
   min-height: min(68vh, 680px);
   display: flex;
@@ -674,6 +705,10 @@
   justify-content: center;
   gap: 18px;
   text-align: left;
+}
+
+.loadingStateFullScreen {
+  min-height: calc(100dvh - 48px);
 }
 
 .loadingState h1 {
@@ -684,6 +719,15 @@
 .loadingState p {
   margin: 0;
   color: var(--gray-10);
+}
+
+@media (max-width: 760px) {
+  .loadingStateFullScreen {
+    min-height: 100dvh;
+    flex-direction: column;
+    padding: 24px;
+    text-align: center;
+  }
 }
 
 .loader,
@@ -1256,6 +1300,14 @@
   color: var(--gray-10);
 }
 
+.rowError {
+  margin: 8px 0 0;
+  color: #d9485f;
+  font-size: 0.88rem;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
 .badgeRow {
   display: flex;
   flex-wrap: wrap;
@@ -1289,6 +1341,11 @@
 .statusPending {
   background: color-mix(in srgb, #d08c00 18%, transparent);
   border-color: color-mix(in srgb, #d08c00 42%, var(--gray-6));
+}
+
+.statusDraft {
+  background: color-mix(in srgb, var(--gray-12) 9%, transparent);
+  border-color: color-mix(in srgb, var(--gray-9) 42%, var(--gray-6));
 }
 
 .detailCard {
@@ -2354,6 +2411,7 @@
 }
 
 .imagePreviewMissing {
+  position: relative;
   min-height: 360px;
   display: flex;
   align-items: center;
