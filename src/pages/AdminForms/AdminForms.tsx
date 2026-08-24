@@ -310,6 +310,7 @@ type AnalyticsRow = {
 };
 type AnalyticsPageRow = {
   path: string;
+  siteArea?: string;
   views: number;
   visitors: number;
   averageTimeMs: number;
@@ -1047,6 +1048,13 @@ function sortedErrorRows(map: Map<string, StatisticsErrorRow>) {
     if (b.latestAtMs !== a.latestAtMs) return b.latestAtMs - a.latestAtMs;
     return a.label.localeCompare(b.label);
   });
+}
+
+function analyticsPageArea(page: AnalyticsPageRow) {
+  if (page.siteArea) return page.siteArea;
+  if (page.path.startsWith("/admin")) return "Admin";
+  if (page.path.startsWith("/guest")) return "Guest/private";
+  return "Public";
 }
 
 function buildAdminStatistics(submissions: Submission[]): AdminStatistics {
@@ -5018,11 +5026,15 @@ export default function AdminForms() {
     );
   }
 
-  function renderTopPagesTable(pages: AnalyticsPageRow[] = []) {
+  function renderTopPagesTable(
+    title: string,
+    pages: AnalyticsPageRow[] = [],
+    emptyLabel = "No page visits in this period yet."
+  ) {
     return (
       <section className={styles.statsPanel}>
         <div className={styles.statsPanelHeader}>
-          <h2>Top visited pages</h2>
+          <h2>{title}</h2>
           <span>{pages.length} shown</span>
         </div>
         <div className={styles.statsTableWrap}>
@@ -5051,7 +5063,7 @@ export default function AdminForms() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6}>No page visits in this period yet.</td>
+                  <td colSpan={6}>{emptyLabel}</td>
                 </tr>
               )}
             </tbody>
@@ -5093,6 +5105,12 @@ export default function AdminForms() {
   function renderStatisticsPage() {
     const stats = adminStatistics;
     const traffic = analytics?.totals;
+    const publicPages = (analytics?.pages || []).filter(
+      (page) => analyticsPageArea(page) === "Public"
+    );
+    const guestPages = (analytics?.pages || []).filter(
+      (page) => analyticsPageArea(page) === "Guest/private"
+    );
     const emailIssueTotal = stats.sent + stats.mailFailures + stats.pending;
     const knownRevenueMeta =
       stats.bookingCount > 0
@@ -5232,7 +5250,18 @@ export default function AdminForms() {
                   )}
                 </section>
 
-                {renderTopPagesTable(analytics?.pages)}
+                <div className={styles.statsGrid}>
+                  {renderTopPagesTable(
+                    "Top public pages",
+                    publicPages,
+                    "No public page visits in this period yet."
+                  )}
+                  {renderTopPagesTable(
+                    "Top guest pages",
+                    guestPages,
+                    "No guest page visits in this period yet."
+                  )}
+                </div>
 
                 <div className={styles.statsGrid}>
                   {renderAnalyticsRows("Countries", analytics?.countries)}

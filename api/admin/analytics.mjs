@@ -97,6 +97,12 @@ function formatPath(path) {
   return String(path || "/").split("?")[0] || "/";
 }
 
+function siteAreaFromPath(path) {
+  if (path.startsWith("/admin")) return "Admin";
+  if (path.startsWith("/guest")) return "Guest/private";
+  return "Public";
+}
+
 function buildAnalytics(events) {
   const now = Date.now();
   const visitors = new Set();
@@ -132,6 +138,7 @@ function buildAnalytics(events) {
     const visitorId = label(event.visitorId || event.ipHash, "Anonymous");
     const sessionId = label(event.sessionId || `${visitorId}:unknown`, "Unknown");
     const path = formatPath(event.path);
+    const siteArea = label(event.siteArea || siteAreaFromPath(path));
     const createdAtMs = number(event.createdAtMs);
     const durationMs = Math.min(number(event.durationMs), 30 * 60 * 1000);
 
@@ -165,7 +172,7 @@ function buildAnalytics(events) {
       increment(browsers, event.browser);
       increment(os, event.os);
       increment(referrers, event.referrerDomain || "Direct");
-      increment(siteAreas, event.siteArea);
+      increment(siteAreas, siteArea);
       increment(languages, event.lang || event.locale);
       if (event.utmSource || event.utmCampaign) {
         increment(
@@ -180,6 +187,7 @@ function buildAnalytics(events) {
         pageMap.get(path) ||
         {
           path,
+          siteArea,
           views: 0,
           visitors: new Set(),
           durationMs: 0,
@@ -188,6 +196,7 @@ function buildAnalytics(events) {
           entries: 0,
         };
       page.views += 1;
+      page.siteArea = page.siteArea || siteArea;
       page.visitors.add(visitorId);
       pageMap.set(path, page);
 
@@ -231,6 +240,7 @@ function buildAnalytics(events) {
   const pages = [...pageMap.values()]
     .map((page) => ({
       path: page.path,
+      siteArea: page.siteArea || siteAreaFromPath(page.path),
       views: page.views,
       visitors: page.visitors.size,
       averageTimeMs: avg(page.durationMs, page.durationSamples),
