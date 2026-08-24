@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/guest/CheckInOut.tsx
 
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Head from "../../../lib/Head";
 import { useTranslation } from "react-i18next";
 import Accordion from "../../../components/Accordion/Accordion";
@@ -23,13 +23,6 @@ const CHECKIN_IMAGE_COMPRESSION_STEPS = [
   { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.48 },
 ];
 
-type ProgressState = {
-  phase: "idle" | "compressing" | "ready" | "uploading";
-  percent: number;
-  message: string;
-  detail?: string;
-};
-
 type PreuploadedAttachment = {
   fieldname: "meterImages";
   filename: string;
@@ -45,10 +38,7 @@ type PreparedImageEntry = {
   label: string;
   status?: "success" | "error";
   message?: string;
-  progress?: number;
 };
-
-const MIN_FAST_PROGRESS_DURATION_MS = 1200;
 
 function isPoolOpen(today = new Date()) {
   const month = today.getMonth() + 1;
@@ -188,56 +178,37 @@ async function compressImageFile(
   });
 }
 
-async function prepareImageFiles(
-  originalFiles: File[],
-  onProgress?: (fileIndex: number, percent: number) => void
-) {
+async function prepareImageFiles(originalFiles: File[]) {
   if (!originalFiles.length) return [];
 
   let currentFiles = originalFiles;
   for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
-    const stepIndex = CHECKIN_IMAGE_COMPRESSION_STEPS.indexOf(step);
     const nextFiles: File[] = [];
 
-    for (const [fileIndex, file] of currentFiles.entries()) {
+    for (const file of currentFiles) {
       nextFiles.push(
         await compressImageFile(file, step.maxDimension, step.quality)
-      );
-      onProgress?.(
-        fileIndex,
-        Math.min(
-          95,
-          Math.round(
-            ((stepIndex + 1) / CHECKIN_IMAGE_COMPRESSION_STEPS.length) * 95
-          )
-        )
       );
     }
 
     currentFiles = nextFiles;
     if (filesTotalSize(currentFiles) <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES) {
-      currentFiles.forEach((_, fileIndex) => onProgress?.(fileIndex, 100));
       return currentFiles;
     }
   }
 
-  currentFiles.forEach((_, fileIndex) => onProgress?.(fileIndex, 100));
   return currentFiles;
 }
 
-async function prepareCheckinImages(
-  value: unknown,
-  onProgress?: (fileIndex: number, percent: number) => void
-) {
+async function prepareCheckinImages(value: unknown) {
   if (!(value instanceof FileList)) return [];
-  return prepareImageFiles(Array.from(value), onProgress);
+  return prepareImageFiles(Array.from(value));
 }
 
-function postFormDataWithProgress(
+function postFormData(
   url: string,
   body: FormData,
-  headers: Record<string, string>,
-  onProgress: (percent: number) => void
+  headers: Record<string, string>
 ) {
   return new Promise<{
     ok: boolean;
@@ -251,14 +222,9 @@ function postFormDataWithProgress(
       xhr.setRequestHeader(key, value);
     }
 
-    xhr.upload.onprogress = (event) => {
-      if (!event.lengthComputable) return;
-      onProgress(Math.max(1, Math.min(99, Math.round((event.loaded / event.total) * 100))));
-    };
     xhr.onerror = () => reject(new Error("UPLOAD_NETWORK_ERROR"));
     xhr.ontimeout = () => reject(new Error("UPLOAD_TIMEOUT"));
     xhr.onload = () => {
-      onProgress(100);
       resolve({
         ok: xhr.status >= 200 && xhr.status < 300,
         status: xhr.status,
@@ -277,8 +243,7 @@ async function preuploadCheckinImages(
   files: File[],
   values: Record<string, string | FileList | boolean>,
   clientDraftId: string,
-  headers: Record<string, string>,
-  onProgress: (fileIndex: number, percent: number) => void
+  headers: Record<string, string>
 ) {
   const attachments: PreuploadedAttachment[] = [];
 
@@ -292,13 +257,10 @@ async function preuploadCheckinImages(
     formData.set("fileIndex", String(index + 1));
     formData.append("meterImage", file);
 
-    const res = await postFormDataWithProgress(
+    const res = await postFormData(
       "/api/checkin-image",
       formData,
-      headers,
-      (filePercent) => {
-        onProgress(index, Math.max(1, Math.min(99, filePercent)));
-      }
+      headers
     );
 
     const data = await res.json();
@@ -307,71 +269,9 @@ async function preuploadCheckinImages(
     }
 
     attachments.push(data.attachment);
-    onProgress(index, 100);
   }
 
   return attachments;
-}
-
-function ProgressMeter({ item }: { item: ProgressState }) {
-  const [displayPercent, setDisplayPercent] = useState(0);
-  const displayPercentRef = useRef(0);
-
-  const setAnimatedPercent = (nextPercent: number) => {
-    displayPercentRef.current = nextPercent;
-    setDisplayPercent(nextPercent);
-  };
-
-  useEffect(() => {
-    let frameId = 0;
-    const from = displayPercentRef.current;
-    const to = Math.max(0, Math.min(100, item.percent));
-    const distance = Math.abs(to - from);
-    const duration =
-      to === 100 && from < 30
-        ? MIN_FAST_PROGRESS_DURATION_MS
-        : Math.max(360, Math.min(MIN_FAST_PROGRESS_DURATION_MS, distance * 16));
-    const startedAt = performance.now();
-
-    const tick = (now: number) => {
-      const elapsed = now - startedAt;
-      const progress = Math.min(1, elapsed / duration);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setAnimatedPercent(Math.round(from + (to - from) * eased));
-
-      if (progress < 1) {
-        frameId = requestAnimationFrame(tick);
-      }
-    };
-
-    frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
-  }, [item.percent]);
-
-  return (
-    <div className={styles.progressItem}>
-      <div className={styles.progressLine}>
-        <div
-          className={styles.progressTrack}
-          role="progressbar"
-          aria-label={item.message}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={displayPercent}
-        >
-          <span
-            className={styles.progressBar}
-            style={
-              {
-                "--progress": `${displayPercent}%`,
-              } as CSSProperties
-            }
-          />
-        </div>
-        <span className={styles.progressPercent}>{displayPercent}%</span>
-      </div>
-    </div>
-  );
 }
 
 export default function CheckInOut({
@@ -403,20 +303,12 @@ export default function CheckInOut({
   const [error, setError] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [formStartedAt, setFormStartedAt] = useState(() => String(Date.now()));
-  const [imageProgress, setImageProgress] = useState<ProgressState>({
-    phase: "idle",
-    percent: 0,
-    message: "",
-  });
   const [preparedImageLabels, setPreparedImageLabels] = useState<string[]>([]);
   const [preparedImageStatuses, setPreparedImageStatuses] = useState<
     ("success" | "error" | undefined)[]
   >([]);
   const [preparedImageMessages, setPreparedImageMessages] = useState<
     (string | undefined)[]
-  >([]);
-  const [fileUploadProgresses, setFileUploadProgresses] = useState<
-    (number | undefined)[]
   >([]);
   const [draftValues, setDraftValues] = useState<
     Record<string, string | FileList | boolean>
@@ -512,8 +404,6 @@ export default function CheckInOut({
         setPreparedImageLabels([]);
         setPreparedImageStatuses([]);
         setPreparedImageMessages([]);
-        setFileUploadProgresses([]);
-        setImageProgress({ phase: "idle", percent: 0, message: "" });
         setError(null);
         return;
       }
@@ -534,7 +424,6 @@ export default function CheckInOut({
           sourceFile: file,
           preparedFile: file,
           label: fileDisplayLabel(file),
-          progress: file.size > MAX_CLIENT_IMAGE_SOURCE_BYTES ? undefined : 1,
         };
       });
 
@@ -542,7 +431,6 @@ export default function CheckInOut({
         setPreparedImageLabels(nextEntries.map((entry) => entry.label));
         setPreparedImageStatuses(nextEntries.map((entry) => entry.status));
         setPreparedImageMessages(nextEntries.map((entry) => entry.message));
-        setFileUploadProgresses(nextEntries.map((entry) => entry.progress));
       };
 
       const oversizedFileIndexes = entries.reduce<number[]>(
@@ -567,10 +455,9 @@ export default function CheckInOut({
                 label: fileDisplayLabel(entry.sourceFile),
                 status: "error",
                 message: inlineErrorMessage,
-                progress: undefined,
               }
             : previousEntries.has(entry.sourceSignature)
-              ? { ...entry, progress: undefined }
+              ? entry
               : {
                   ...entry,
                   preparedFile: entry.sourceFile,
@@ -580,7 +467,6 @@ export default function CheckInOut({
                     entry.sourceFile,
                     stillTooLargeMessage
                   ),
-                  progress: undefined,
                 }
         );
         preparedMeterImagesRef.current = {
@@ -589,7 +475,6 @@ export default function CheckInOut({
           entries,
         };
         publishEntries(entries);
-        setImageProgress({ phase: "idle", percent: 0, message: "" });
         setError(errorMessage);
         return;
       }
@@ -602,16 +487,7 @@ export default function CheckInOut({
           .map((entry, index) => ({ entry, index }))
           .filter(({ entry }) => !previousEntries.has(entry.sourceSignature));
         const files = await prepareImageFiles(
-          newEntries.map(({ entry }) => entry.sourceFile),
-          (newFileIndex, percent) => {
-            if (imagePreparationJobRef.current !== jobId) return;
-            const originalIndex = newEntries[newFileIndex]?.index;
-            if (typeof originalIndex !== "number") return;
-            entries = entries.map((entry, index) =>
-              index === originalIndex ? { ...entry, progress: percent } : entry
-            );
-            publishEntries(entries);
-          }
+          newEntries.map(({ entry }) => entry.sourceFile)
         );
         if (imagePreparationJobRef.current !== jobId) return;
 
@@ -628,7 +504,6 @@ export default function CheckInOut({
               preparedFile,
               tg("checkInOutPage.errors.fileStillTooLargeInline")
             ),
-            progress: 100,
           };
         });
 
@@ -645,7 +520,6 @@ export default function CheckInOut({
         ) {
           setError(tg("checkInOutPage.errors.totalUploadTooLarge"));
         }
-        setImageProgress({ phase: "idle", percent: 0, message: "" });
       } catch (prepareError) {
         console.error("Image preparation failed:", prepareError);
         if (imagePreparationJobRef.current !== jobId) return;
@@ -660,10 +534,6 @@ export default function CheckInOut({
               entry.sourceFile,
               tg("checkInOutPage.errors.fileStillTooLargeInline")
             ),
-            progress:
-              entry.sourceFile.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES
-                ? undefined
-                : 100,
           };
         });
         preparedMeterImagesRef.current = {
@@ -672,7 +542,6 @@ export default function CheckInOut({
           entries,
         };
         publishEntries(entries);
-        setImageProgress({ phase: "idle", percent: 0, message: "" });
         if (
           entries.some(
             (entry) => entry.preparedFile.size > MAX_CHECKIN_IMAGE_UPLOAD_BYTES
@@ -700,17 +569,6 @@ export default function CheckInOut({
     },
     [prepareSelectedImages]
   );
-
-  const progressPanel =
-    imageProgress.phase !== "idle" ? (
-      <div className={styles.progressPanel} aria-live="polite">
-        {[imageProgress]
-          .filter((item) => item.phase !== "idle")
-          .map((item) => (
-            <ProgressMeter item={item} key={item.phase} />
-          ))}
-      </div>
-    ) : null;
 
   if (isMobile === null) {
     return null;
@@ -741,13 +599,7 @@ export default function CheckInOut({
       const preparedMeterImages =
         preparedMeterImagesRef.current?.signature === meterImagesSignature
           ? preparedMeterImagesRef.current.files
-          : await prepareCheckinImages(values.meterImages, (fileIndex, percent) => {
-              setFileUploadProgresses((prev) => {
-                const next = [...prev];
-                next[fileIndex] = percent;
-                return next;
-              });
-            });
+          : await prepareCheckinImages(values.meterImages);
       if (
         !preparedMeterImages.length ||
         preparedMeterImages.some(
@@ -769,19 +621,11 @@ export default function CheckInOut({
 
       const requestHeaders = getRequestHeaders ? await getRequestHeaders() : {};
 
-      setFileUploadProgresses(preparedMeterImages.map(() => 1));
-
       const preuploadedAttachments = await preuploadCheckinImages(
         preparedMeterImages,
         values,
         draftIdRef.current,
-        requestHeaders,
-        (fileIndex, percent) =>
-          setFileUploadProgresses((prev) => {
-            const next = [...prev];
-            next[fileIndex] = percent;
-            return next;
-          })
+        requestHeaders
       );
 
       const formData = new FormData();
@@ -804,11 +648,10 @@ export default function CheckInOut({
         JSON.stringify(preuploadedAttachments)
       );
 
-      const res = await postFormDataWithProgress(
+      const res = await postFormData(
         "/api/checkin",
         formData,
-        requestHeaders,
-        () => undefined
+        requestHeaders
       );
 
       if (!res.ok) {
@@ -833,16 +676,9 @@ export default function CheckInOut({
       }
 
       setSuccess(true);
-      setFileUploadProgresses([]);
-      setImageProgress({
-        phase: "idle",
-        percent: 0,
-        message: "",
-      });
       setPreparedImageLabels([]);
       setPreparedImageStatuses([]);
       setPreparedImageMessages([]);
-      setFileUploadProgresses([]);
       setFormKey((k) => k + 1);
       setFormStartedAt(String(Date.now()));
       draftIdRef.current = createFormDraftId("guest-checkin");
@@ -967,7 +803,6 @@ export default function CheckInOut({
       maxFiles: MAX_CHECKIN_IMAGE_FILES,
       accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
       description: tg("checkInOutPage.fields.meterImages.description"),
-      after: progressPanel,
     },
     {
       type: "textarea",
@@ -1070,11 +905,6 @@ export default function CheckInOut({
           fileDisplayMessages={
             preparedImageMessages.length
               ? { meterImages: preparedImageMessages }
-              : undefined
-          }
-          fileUploadProgresses={
-            fileUploadProgresses.length
-              ? { meterImages: fileUploadProgresses }
               : undefined
           }
           submitLabel={tg("checkInOutPage.submit")}
