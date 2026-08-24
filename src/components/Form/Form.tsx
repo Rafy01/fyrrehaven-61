@@ -24,6 +24,20 @@ function fileLabel(file: File) {
   return `${file.name} (${formatFileSize(file.size)})`;
 }
 
+function fileSignature(file: File) {
+  return [file.name, file.size, file.type].join(":");
+}
+
+function uniqueFiles(files: File[]) {
+  const seen = new Set<string>();
+  return files.filter((file) => {
+    const signature = fileSignature(file);
+    if (seen.has(signature)) return false;
+    seen.add(signature);
+    return true;
+  });
+}
+
 export type Field =
   | {
       type: "text" | "email" | "tel" | "number";
@@ -156,10 +170,11 @@ export default function Form({
         field?.type === "file" && field.multiple
           ? [...currentFiles, ...selectedFiles]
           : selectedFiles;
+      const uniqueSelectedFiles = uniqueFiles(allFiles);
       const limitedFiles =
         field?.type === "file" && field.maxFiles
-          ? allFiles.slice(-field.maxFiles)
-          : allFiles;
+          ? uniqueSelectedFiles.slice(-field.maxFiles)
+          : uniqueSelectedFiles;
       const transfer = new DataTransfer();
       limitedFiles.forEach((file) => transfer.items.add(file));
       input.files = transfer.files;
