@@ -229,6 +229,14 @@ input[type="file"] {
   font-weight: 700;
 }
 
+.fileMessageError {
+  margin: 0.12rem 0 0;
+  color: #d9485f;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .fileRemoveButton {
   appearance: none;
   display: inline-grid;

@@ -86,6 +86,7 @@ export type FormProps = {
   onValidationError?: (errors: Record<string, string>) => void;
   fileDisplayLabels?: Record<string, string[]>;
   fileDisplayStatuses?: Record<string, ("success" | "error")[]>;
+  fileDisplayMessages?: Record<string, (string | undefined)[]>;
   submitLabel: string;
   lang?: Lang;
 };
@@ -97,6 +98,7 @@ export default function Form({
   onValidationError,
   fileDisplayLabels,
   fileDisplayStatuses,
+  fileDisplayMessages,
   submitLabel,
   lang,
 }: FormProps) {
@@ -355,29 +357,35 @@ export default function Form({
                     {(
                       fileDisplayLabels?.[field.name] || fileNames[field.name]
                     ).map((name, i) => (
-                      <div
-                        key={`${selectedFiles[i]?.name || name}-${i}`}
-                        className={[
-                          styles.fileName,
-                          fileDisplayStatuses?.[field.name]?.[i] === "success"
-                            ? styles.fileNameSuccess
-                            : "",
-                          fileDisplayStatuses?.[field.name]?.[i] === "error"
-                            ? styles.fileNameError
-                            : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                      >
-                        <span>{name}</span>
-                        <button
-                          type="button"
-                          className={styles.fileRemoveButton}
-                          onClick={() => removeFile(field.name, i)}
-                          aria-label={`Remove ${selectedFiles[i]?.name || name}`}
+                      <div key={`${selectedFiles[i]?.name || name}-${i}`}>
+                        <div
+                          className={[
+                            styles.fileName,
+                            fileDisplayStatuses?.[field.name]?.[i] === "success"
+                              ? styles.fileNameSuccess
+                              : "",
+                            fileDisplayStatuses?.[field.name]?.[i] === "error"
+                              ? styles.fileNameError
+                              : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
                         >
-                          ×
-                        </button>
+                          <span>{name}</span>
+                          <button
+                            type="button"
+                            className={styles.fileRemoveButton}
+                            onClick={() => removeFile(field.name, i)}
+                            aria-label={`Remove ${selectedFiles[i]?.name || name}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                        {fileDisplayMessages?.[field.name]?.[i] && (
+                          <p className={styles.fileMessageError}>
+                            {fileDisplayMessages[field.name][i]}
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
