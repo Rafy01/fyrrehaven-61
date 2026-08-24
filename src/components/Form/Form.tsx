@@ -20,6 +20,10 @@ function formatFileSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function fileLabel(file: File) {
+  return `${file.name} (${formatFileSize(file.size)})`;
+}
+
 export type Field =
   | {
       type: "text" | "email" | "tel" | "number";
@@ -171,6 +175,32 @@ export default function Form({
     }
   };
 
+  const removeFile = (fieldName: string, removeIndex: number) => {
+    const currentFiles = values[fieldName];
+    if (!(currentFiles instanceof FileList)) return;
+
+    const transfer = new DataTransfer();
+    Array.from(currentFiles).forEach((file, index) => {
+      if (index !== removeIndex) transfer.items.add(file);
+    });
+
+    const input = document.getElementById(fieldName);
+    if (input instanceof HTMLInputElement) {
+      input.files = transfer.files;
+    }
+
+    const nextValues = {
+      ...values,
+      [fieldName]: transfer.files,
+    };
+    setValues(nextValues);
+    setFileNames({
+      ...fileNames,
+      [fieldName]: Array.from(transfer.files).map(fileLabel),
+    });
+    onValuesChange?.(nextValues);
+  };
+
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
@@ -228,6 +258,9 @@ export default function Form({
         const error = errors[field.name];
         const description = "description" in field ? field.description : null;
         const after = "after" in field ? field.after : null;
+        const fileValue = field.type === "file" ? values[field.name] : null;
+        const selectedFiles: File[] =
+          fileValue instanceof FileList ? Array.from(fileValue) : [];
 
         const common = {
           id: field.name,
@@ -316,8 +349,19 @@ export default function Form({
                 {fileNames[field.name]?.length > 0 && (
                   <div className={styles.fileList}>
                     {fileNames[field.name].map((name, i) => (
-                      <div key={i} className={styles.fileName}>
-                        {name}
+                      <div
+                        key={`${selectedFiles[i]?.name || name}-${i}`}
+                        className={styles.fileName}
+                      >
+                        <span>{name}</span>
+                        <button
+                          type="button"
+                          className={styles.fileRemoveButton}
+                          onClick={() => removeFile(field.name, i)}
+                          aria-label={`Remove ${selectedFiles[i]?.name || name}`}
+                        >
+                          ×
+                        </button>
                       </div>
                     ))}
                   </div>
