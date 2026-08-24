@@ -647,15 +647,15 @@ export const en = {
         "tooFast": "Please review the form once more and send it again in a moment.",
         "formExpired": "This form session has expired. Please reload the page and send the reading again.",
         "invalidFileType": "Please upload image files only. Photos from your phone camera are accepted.",
-        "fileTooLarge": "One or more photos are too large. Please upload fewer photos, or open the meter photo, take a screenshot, and upload the screenshot instead.",
-        "totalUploadTooLarge": "The selected photos are too large to send together. Please upload fewer photos, or open each meter photo, take a screenshot, and upload the screenshots instead.",
+        "fileTooLarge": "One or more photos are too large. Please open each meter photo, take a screenshot, and upload the screenshots instead.",
+        "totalUploadTooLarge": "The selected meter photos are still too large after automatic compression. Please open each meter photo, take a screenshot, and upload the screenshots instead.",
         "tooManyFiles": "Too many photos were uploaded. Please upload only the meter photos needed for the reading.",
         "tooManyFields": "Too much information was submitted. Please reload the page and try again.",
         "missingFiles": "Please upload at least one photo of the meter reading.",
         "validation": "Please check the required fields and make sure the meter readings are filled in correctly.",
         "mail": "Your reading was recorded, but the email could not be sent automatically. We can still see it in the admin system.",
         "network": "The connection was interrupted before the reading could be sent. Please check your internet connection and try again.",
-        "serverResponse": "The reading could not be sent because the server returned an unreadable error. Please try again with fewer or smaller photos."
+        "serverResponse": "The reading could not be sent because the server returned an unreadable error. Please try again with screenshots of the meter photos."
       },
       "errorLabel": "Error:"
     },

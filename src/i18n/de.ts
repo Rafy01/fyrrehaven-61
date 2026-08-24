@@ -647,15 +647,15 @@ export const de = {
         "tooFast": "Bitte prüfen Sie das Formular noch einmal und senden Sie es in einem Moment erneut.",
         "formExpired": "Diese Formularsitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie die Ablesung erneut.",
         "invalidFileType": "Bitte laden Sie nur Bilddateien hoch. Fotos von Ihrer Handykamera werden akzeptiert.",
-        "fileTooLarge": "Ein oder mehrere Fotos sind zu groß. Bitte laden Sie weniger Fotos hoch, oder öffnen Sie das Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen den Screenshot hoch.",
-        "totalUploadTooLarge": "Die ausgewählten Fotos sind zusammen zu groß zum Senden. Bitte laden Sie weniger Fotos hoch, oder öffnen Sie jedes Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen die Screenshots hoch.",
+        "fileTooLarge": "Ein oder mehrere Fotos sind zu groß. Bitte öffnen Sie jedes Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen die Screenshots hoch.",
+        "totalUploadTooLarge": "Die ausgewählten Zählerfotos sind nach der automatischen Komprimierung noch zu groß. Bitte öffnen Sie jedes Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen die Screenshots hoch.",
         "tooManyFiles": "Es wurden zu viele Fotos hochgeladen. Bitte laden Sie nur die benötigten Zählerfotos hoch.",
         "tooManyFields": "Es wurden zu viele Informationen gesendet. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
         "missingFiles": "Bitte laden Sie mindestens ein Foto der Zählerablesung hoch.",
         "validation": "Bitte prüfen Sie die Pflichtfelder und stellen Sie sicher, dass die Zählerstände korrekt eingetragen sind.",
         "mail": "Ihre Ablesung wurde gespeichert, aber die E-Mail konnte nicht automatisch gesendet werden. Wir können sie trotzdem im Admin-System sehen.",
         "network": "Die Verbindung wurde unterbrochen, bevor die Ablesung gesendet werden konnte. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
-        "serverResponse": "Die Ablesung konnte nicht gesendet werden, weil der Server einen unlesbaren Fehler zurückgegeben hat. Bitte versuchen Sie es mit weniger oder kleineren Fotos erneut."
+        "serverResponse": "Die Ablesung konnte nicht gesendet werden, weil der Server einen unlesbaren Fehler zurückgegeben hat. Bitte versuchen Sie es erneut mit Screenshots der Zählerfotos."
       },
       "errorLabel": "Fehler:"
     },

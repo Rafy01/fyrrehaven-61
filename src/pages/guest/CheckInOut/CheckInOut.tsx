@@ -12,6 +12,11 @@ import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import styles from "./CheckInOut.module.css";
 
 const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 4 * 1024 * 1024;
+const CHECKIN_IMAGE_COMPRESSION_STEPS = [
+  { maxDimension: 1800, quality: 0.78 },
+  { maxDimension: 1500, quality: 0.7 },
+  { maxDimension: 1200, quality: 0.62 },
+];
 
 function isPoolOpen(today = new Date()) {
   const month = today.getMonth() + 1;
@@ -58,9 +63,87 @@ function checkinErrorMessage(
   }
 }
 
-function fileListTotalSize(value: unknown) {
-  if (!(value instanceof FileList)) return 0;
-  return Array.from(value).reduce((total, file) => total + file.size, 0);
+function filesTotalSize(files: File[]) {
+  return files.reduce((total, file) => total + file.size, 0);
+}
+
+function canCompressImage(file: File) {
+  return ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+}
+
+function loadImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Image could not be prepared for upload."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+async function compressImageFile(
+  file: File,
+  maxDimension: number,
+  quality: number
+) {
+  if (
+    typeof document === "undefined" ||
+    !canCompressImage(file)
+  ) {
+    return file;
+  }
+
+  const image = await loadImage(file);
+  const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d");
+  if (!context) return file;
+  context.drawImage(image, 0, 0, width, height);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", quality);
+  });
+  if (!blob || blob.size >= file.size) return file;
+
+  const filename = file.name.replace(/\.(heic|heif|jpe?g|png|webp)$/i, ".jpg");
+  return new File([blob], filename, {
+    type: "image/jpeg",
+    lastModified: file.lastModified,
+  });
+}
+
+async function prepareCheckinImages(value: unknown) {
+  if (!(value instanceof FileList)) return [];
+  const originalFiles = Array.from(value);
+  if (filesTotalSize(originalFiles) <= MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
+    return originalFiles;
+  }
+
+  let currentFiles = originalFiles;
+  for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
+    currentFiles = await Promise.all(
+      currentFiles.map((file) =>
+        compressImageFile(file, step.maxDimension, step.quality)
+      )
+    );
+    if (filesTotalSize(currentFiles) <= MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
+      return currentFiles;
+    }
+  }
+
+  return currentFiles;
 }
 
 export default function CheckInOut({
@@ -189,7 +272,8 @@ export default function CheckInOut({
     setError(null);
 
     try {
-      const totalUploadSize = fileListTotalSize(values.meterImages);
+      const preparedMeterImages = await prepareCheckinImages(values.meterImages);
+      const totalUploadSize = filesTotalSize(preparedMeterImages);
       if (totalUploadSize > MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
         const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");
         void saveFormDraft(
@@ -211,7 +295,9 @@ export default function CheckInOut({
 
         const value = values[key];
         if (value instanceof FileList) {
-          Array.from(value).forEach((file) => formData.append(key, file));
+          const files =
+            key === "meterImages" ? preparedMeterImages : Array.from(value);
+          files.forEach((file) => formData.append(key, file));
         } else {
           formData.append(key, String(value));
         }
