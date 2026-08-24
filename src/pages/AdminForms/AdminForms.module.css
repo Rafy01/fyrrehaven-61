@@ -2398,6 +2398,7 @@
 }
 
 .imagePreviewMissing {
+  position: relative;
   min-height: 360px;
   display: flex;
   align-items: center;

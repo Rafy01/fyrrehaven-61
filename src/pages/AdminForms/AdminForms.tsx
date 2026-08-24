@@ -6685,6 +6685,16 @@ export default function AdminForms() {
                       </div>
                     ) : (
                       <div className={styles.imagePreviewMissing}>
+                        {hasMultipleImages ? (
+                          <button
+                            type="button"
+                            className={`${styles.imagePreviewArrow} ${styles.imagePreviewArrowLeft}`}
+                            aria-label="Previous image"
+                            onClick={() => switchPreviewImage(-1)}
+                          >
+                            <FiChevronLeft aria-hidden="true" />
+                          </button>
+                        ) : null}
                         <FiAlertCircle aria-hidden="true" />
                         <div>
                           <h3>Image was not stored</h3>
@@ -6698,6 +6708,16 @@ export default function AdminForms() {
                             screenshots of the meter photos.
                           </p>
                         </div>
+                        {hasMultipleImages ? (
+                          <button
+                            type="button"
+                            className={`${styles.imagePreviewArrow} ${styles.imagePreviewArrowRight}`}
+                            aria-label="Next image"
+                            onClick={() => switchPreviewImage(1)}
+                          >
+                            <FiChevronRight aria-hidden="true" />
+                          </button>
+                        ) : null}
                       </div>
                     )}
                     <div className={styles.imagePreviewMeta}>
