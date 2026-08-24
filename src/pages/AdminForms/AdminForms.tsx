@@ -1924,6 +1924,7 @@ export default function AdminForms() {
     null
   );
   const [isLoadingAnalytics, setIsLoadingAnalytics] = React.useState(false);
+  const [hasLoadedAnalytics, setHasLoadedAnalytics] = React.useState(false);
   const [analyticsError, setAnalyticsError] = React.useState<string | null>(null);
   const [renderedGroupCount, setRenderedGroupCount] =
     React.useState(SUBMISSION_BATCH_SIZE);
@@ -2148,6 +2149,7 @@ export default function AdminForms() {
         String(nextError instanceof Error ? nextError.message : nextError)
       );
     } finally {
+      setHasLoadedAnalytics(true);
       setIsLoadingAnalytics(false);
     }
   }, [statisticsDateFilter]);
@@ -6272,17 +6274,26 @@ export default function AdminForms() {
   }
 
   if (isStatisticsPage) {
-    if (isLoadingSubmissions && !hasLoadedSubmissions) {
+    const shouldShowStatisticsLoader =
+      (isLoadingSubmissions && !hasLoadedSubmissions) ||
+      isLoadingAnalytics ||
+      (!hasLoadedAnalytics && !analyticsError);
+
+    if (shouldShowStatisticsLoader) {
       return (
         <Theme appearance={appearance} accentColor="gray" radius="large">
+          <Helmet>
+            <title>Loading statistics | Fyrrehaven 61 admin</title>
+            <meta name="robots" content="noindex,nofollow,noarchive" />
+          </Helmet>
           <div className={styles.page}>
             <div className={styles.shell}>
-              <div className={styles.loadingState}>
+              <div className={`${styles.loadingState} ${styles.loadingStateFullScreen}`}>
                 <span className={styles.loader} aria-hidden="true" />
                 <div>
                   <p className={styles.eyebrow}>Statistics</p>
                   <h1>Loading statistics...</h1>
-                  <p>Fetching submissions once so the overview can be calculated.</p>
+                  <p>Fetching submissions and private analytics before showing the overview.</p>
                 </div>
               </div>
             </div>

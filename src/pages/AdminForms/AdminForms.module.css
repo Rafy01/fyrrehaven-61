@@ -707,6 +707,10 @@
   text-align: left;
 }
 
+.loadingStateFullScreen {
+  min-height: calc(100dvh - 48px);
+}
+
 .loadingState h1 {
   margin: 0 0 8px;
   font-size: clamp(1.8rem, 4vw, 3rem);
@@ -715,6 +719,15 @@
 .loadingState p {
   margin: 0;
   color: var(--gray-10);
+}
+
+@media (max-width: 760px) {
+  .loadingStateFullScreen {
+    min-height: 100dvh;
+    flex-direction: column;
+    padding: 24px;
+    text-align: center;
+  }
 }
 
 .loader,
