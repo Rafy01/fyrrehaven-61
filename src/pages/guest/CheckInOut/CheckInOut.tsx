@@ -326,6 +326,9 @@ export default function CheckInOut({
     message: "",
   });
   const [preparedImageLabels, setPreparedImageLabels] = useState<string[]>([]);
+  const [preparedImageStatuses, setPreparedImageStatuses] = useState<
+    ("success" | "error")[]
+  >([]);
   const [uploadProgress, setUploadProgress] = useState<ProgressState>({
     phase: "idle",
     percent: 0,
@@ -419,6 +422,7 @@ export default function CheckInOut({
       const jobId = imagePreparationJobRef.current;
       preparedMeterImagesRef.current = null;
       setPreparedImageLabels([]);
+      setPreparedImageStatuses([]);
 
       if (!signature) {
         setImageProgress({ phase: "idle", percent: 0, message: "" });
@@ -429,10 +433,12 @@ export default function CheckInOut({
       const originalFiles = value instanceof FileList ? Array.from(value) : [];
       const originalBytes = filesTotalSize(originalFiles);
       setPreparedImageLabels(originalFiles.map(fileDisplayLabel));
+      setPreparedImageStatuses([]);
 
       if (originalFiles.some((file) => file.size > MAX_CLIENT_IMAGE_SOURCE_BYTES)) {
         const errorMessage = tg("checkInOutPage.errors.fileTooLarge");
         preparedMeterImagesRef.current = { signature, files: originalFiles };
+        setPreparedImageStatuses(originalFiles.map(() => "error"));
         setImageProgress({ phase: "idle", percent: 0, message: "" });
         setError(errorMessage);
         return;
@@ -463,6 +469,7 @@ export default function CheckInOut({
         const preparedBytes = filesTotalSize(files);
         preparedMeterImagesRef.current = { signature, files };
         setPreparedImageLabels(files.map(fileDisplayLabel));
+        setPreparedImageStatuses(files.map(() => "success"));
         setImageProgress({
           phase: "ready",
           percent: 100,
@@ -483,6 +490,7 @@ export default function CheckInOut({
         });
         preparedMeterImagesRef.current = { signature, files: originalFiles };
         setPreparedImageLabels(originalFiles.map(fileDisplayLabel));
+        setPreparedImageStatuses(originalFiles.map(() => "success"));
       }
     },
     [tg]
@@ -627,6 +635,7 @@ export default function CheckInOut({
         message: "",
       });
       setPreparedImageLabels([]);
+      setPreparedImageStatuses([]);
       setFormKey((k) => k + 1);
       setFormStartedAt(String(Date.now()));
       draftIdRef.current = createFormDraftId("guest-checkin");
@@ -843,6 +852,11 @@ export default function CheckInOut({
           fileDisplayLabels={
             preparedImageLabels.length
               ? { meterImages: preparedImageLabels }
+              : undefined
+          }
+          fileDisplayStatuses={
+            preparedImageStatuses.length
+              ? { meterImages: preparedImageStatuses }
               : undefined
           }
           submitLabel={tg("checkInOutPage.submit")}

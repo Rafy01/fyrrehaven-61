@@ -85,6 +85,7 @@ export type FormProps = {
   onValuesChange?: (values: Record<string, string | FileList | boolean>) => void;
   onValidationError?: (errors: Record<string, string>) => void;
   fileDisplayLabels?: Record<string, string[]>;
+  fileDisplayStatuses?: Record<string, ("success" | "error")[]>;
   submitLabel: string;
   lang?: Lang;
 };
@@ -95,6 +96,7 @@ export default function Form({
   onValuesChange,
   onValidationError,
   fileDisplayLabels,
+  fileDisplayStatuses,
   submitLabel,
   lang,
 }: FormProps) {
@@ -355,7 +357,17 @@ export default function Form({
                     ).map((name, i) => (
                       <div
                         key={`${selectedFiles[i]?.name || name}-${i}`}
-                        className={styles.fileName}
+                        className={[
+                          styles.fileName,
+                          fileDisplayStatuses?.[field.name]?.[i] === "success"
+                            ? styles.fileNameSuccess
+                            : "",
+                          fileDisplayStatuses?.[field.name]?.[i] === "error"
+                            ? styles.fileNameError
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
                       >
                         <span>{name}</span>
                         <button

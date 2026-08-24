@@ -219,6 +219,16 @@ input[type="file"] {
   max-width: min(100%, 100vw - 6rem);
 }
 
+.fileNameSuccess span {
+  color: #1f9d55;
+  font-weight: 700;
+}
+
+.fileNameError span {
+  color: #d9485f;
+  font-weight: 700;
+}
+
 .fileRemoveButton {
   appearance: none;
   display: inline-grid;
