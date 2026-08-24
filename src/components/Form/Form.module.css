@@ -196,23 +196,27 @@ input[type="file"] {
 }
 
 .fileList {
+  display: grid;
+  gap: 0.3rem;
   font-size: 0.85rem;
   color: var(--muted);
   margin-top: -0.2rem;
 }
 
 .fileName {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: minmax(0, max-content) auto;
   align-items: center;
   gap: 0.35rem;
-  max-width: 100%;
+  justify-content: start;
+  width: 100%;
   min-height: 24px;
   overflow-wrap: anywhere;
 }
 
 .fileName span {
   min-width: 0;
-  max-width: 100%;
+  max-width: min(100%, 100vw - 6rem);
 }
 
 .fileRemoveButton {
