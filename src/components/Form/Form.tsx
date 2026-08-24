@@ -28,11 +28,14 @@ function fileSignature(file: File) {
   return [file.name, file.size, file.type].join(":");
 }
 
-function uniqueFiles(files: File[]) {
+function uniqueFiles(files: File[], onDuplicate?: (file: File) => void) {
   const seen = new Set<string>();
   return files.filter((file) => {
     const signature = fileSignature(file);
-    if (seen.has(signature)) return false;
+    if (seen.has(signature)) {
+      onDuplicate?.(file);
+      return false;
+    }
     seen.add(signature);
     return true;
   });
@@ -132,6 +135,9 @@ export default function Form({
   const [fileNames, setFileNames] = React.useState<Record<string, string[]>>(
     {}
   );
+  const [duplicateFileMessages, setDuplicateFileMessages] = React.useState<
+    Record<string, Record<string, string>>
+  >({});
 
   React.useEffect(() => {
     setValues((prev) => {
@@ -170,7 +176,10 @@ export default function Form({
         field?.type === "file" && field.multiple
           ? [...currentFiles, ...selectedFiles]
           : selectedFiles;
-      const uniqueSelectedFiles = uniqueFiles(allFiles);
+      const duplicateSignatures = new Set<string>();
+      const uniqueSelectedFiles = uniqueFiles(allFiles, (file) => {
+        duplicateSignatures.add(fileSignature(file));
+      });
       const limitedFiles =
         field?.type === "file" && field.maxFiles
           ? uniqueSelectedFiles.slice(-field.maxFiles)
@@ -188,6 +197,18 @@ export default function Form({
       setFileNames({
         ...fileNames,
         [name]: Array.from(transfer.files).map(fileLabel),
+      });
+      setDuplicateFileMessages((prev) => {
+        const nextForField: Record<string, string> = {};
+        Array.from(transfer.files).forEach((file) => {
+          if (duplicateSignatures.has(fileSignature(file))) {
+            nextForField[fileSignature(file)] = t("form.fileAlreadyAdded");
+          }
+        });
+        return {
+          ...prev,
+          [name]: nextForField,
+        };
       });
     } else {
       nextValues = { ...values, [name]: e.target.value };
@@ -236,6 +257,10 @@ export default function Form({
       ...fileNames,
       [fieldName]: Array.from(transfer.files).map(fileLabel),
     });
+    setDuplicateFileMessages((prev) => ({
+      ...prev,
+      [fieldName]: {},
+    }));
     onValuesChange?.(nextValues);
   };
 
@@ -388,38 +413,48 @@ export default function Form({
                   <div className={styles.fileList}>
                     {(
                       fileDisplayLabels?.[field.name] || fileNames[field.name]
-                    ).map((name, i) => (
-                      <div key={`${selectedFiles[i]?.name || name}-${i}`}>
-                        <div
-                          className={[
-                            styles.fileName,
-                            fileDisplayStatuses?.[field.name]?.[i] === "success"
-                              ? styles.fileNameSuccess
-                              : "",
-                            fileDisplayStatuses?.[field.name]?.[i] === "error"
-                              ? styles.fileNameError
-                              : "",
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                        >
-                          <span>{name}</span>
-                          <button
-                            type="button"
-                            className={styles.fileRemoveButton}
-                            onClick={() => removeFile(field.name, i)}
-                            aria-label={`Remove ${selectedFiles[i]?.name || name}`}
+                    ).map((name, i) => {
+                      const signature = selectedFiles[i]
+                        ? fileSignature(selectedFiles[i])
+                        : "";
+                      const messages = [
+                        fileDisplayMessages?.[field.name]?.[i],
+                        duplicateFileMessages[field.name]?.[signature],
+                      ].filter(Boolean);
+
+                      return (
+                        <div key={`${selectedFiles[i]?.name || name}-${i}`}>
+                          <div
+                            className={[
+                              styles.fileName,
+                              fileDisplayStatuses?.[field.name]?.[i] === "success"
+                                ? styles.fileNameSuccess
+                                : "",
+                              fileDisplayStatuses?.[field.name]?.[i] === "error"
+                                ? styles.fileNameError
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
                           >
-                            ×
-                          </button>
+                            <span>{name}</span>
+                            <button
+                              type="button"
+                              className={styles.fileRemoveButton}
+                              onClick={() => removeFile(field.name, i)}
+                              aria-label={`Remove ${selectedFiles[i]?.name || name}`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          {messages.map((message) => (
+                            <p className={styles.fileMessageError} key={message}>
+                              {message}
+                            </p>
+                          ))}
                         </div>
-                        {fileDisplayMessages?.[field.name]?.[i] && (
-                          <p className={styles.fileMessageError}>
-                            {fileDisplayMessages[field.name][i]}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

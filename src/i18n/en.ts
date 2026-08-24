@@ -8,7 +8,8 @@ export const en = {
       "chooseFile": "Choose file",
       "chooseFiles": "Choose files",
       "required": "This field is required",
-      "emailMismatch": "Email and confirm email must match."
+      "emailMismatch": "Email and confirm email must match.",
+      "fileAlreadyAdded": "This photo is already added. Remove it first if you want to choose another photo."
     }
   },
   "home": {
