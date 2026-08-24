@@ -238,7 +238,7 @@ async function uploadCheckinFiles(db, submissionId, files) {
 }
 
 function checkinImageUploadStatus(files, attachments) {
-  if (!files.length) return "none";
+  if (!files.length && !attachments.length) return "none";
   if (attachments.some((attachment) => attachment.storagePath || attachment.firestoreFileId)) {
     return "stored";
   }
@@ -246,6 +246,56 @@ function checkinImageUploadStatus(files, attachments) {
     return "failed";
   }
   return "not-configured";
+}
+
+function parsePreuploadedMeterImages(fields) {
+  const raw = String(fields.preuploadedMeterImages || "").trim();
+  if (!raw) return [];
+
+  let parsed = [];
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+
+  if (!Array.isArray(parsed) || parsed.length > MAX_UPLOAD_FILES) return null;
+
+  const clientDraftId = cleanDraftId(fields.clientDraftId);
+  const allowedPrefix = [
+    "form-submissions",
+    "preuploads",
+    sanitizeStorageSegment(clientDraftId),
+    "checkin-images",
+  ].join("/");
+
+  return parsed.map((attachment) => {
+    const filename = String(attachment?.filename || "").trim();
+    const contentType = String(attachment?.contentType || "").toLowerCase();
+    const storagePath = String(attachment?.storagePath || "").trim();
+    const sizeBytes = Number(attachment?.sizeBytes || 0);
+
+    if (
+      !clientDraftId ||
+      !filename ||
+      !ALLOWED_UPLOAD_EXTENSIONS.test(filename) ||
+      !ALLOWED_UPLOAD_MIME_TYPES.has(contentType) ||
+      !storagePath.startsWith(`${allowedPrefix}/`) ||
+      !Number.isFinite(sizeBytes) ||
+      sizeBytes <= 0 ||
+      sizeBytes > MAX_UPLOAD_FILE_SIZE
+    ) {
+      return null;
+    }
+
+    return {
+      fieldname: "meterImages",
+      filename,
+      contentType,
+      sizeBytes,
+      storagePath,
+    };
+  });
 }
 
 async function logCheckinSubmitError(db, fields, req, error, detail) {
@@ -532,7 +582,27 @@ export default async function handler(req, res) {
           return;
         }
 
-        if (!files.length) {
+        const preuploadedAttachments = parsePreuploadedMeterImages(fields);
+        if (
+          preuploadedAttachments === null ||
+          preuploadedAttachments.some((attachment) => attachment === null)
+        ) {
+          await logCheckinSubmitError(
+            db,
+            fields,
+            req,
+            "INVALID_FILE_REFERENCE",
+            "One or more saved image references are invalid."
+          );
+          sendJson(res, 400, {
+            ok: false,
+            error: "INVALID_FILE_REFERENCE",
+            detail: "One or more saved image references are invalid.",
+          });
+          return;
+        }
+
+        if (!files.length && !preuploadedAttachments.length) {
           await logCheckinSubmitError(
             db,
             fields,
@@ -570,12 +640,14 @@ export default async function handler(req, res) {
         });
         const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
         const submittedStayDate = new Date().toISOString().slice(0, 10);
-        let storedAttachments = files.map((file) => ({
-          fieldname: file.fieldname,
-          filename: file.filename,
-          contentType: file.contentType,
-          sizeBytes: file.content.length,
-        }));
+        let storedAttachments = preuploadedAttachments.length
+          ? preuploadedAttachments
+          : files.map((file) => ({
+              fieldname: file.fieldname,
+              filename: file.filename,
+              contentType: file.contentType,
+              sizeBytes: file.content.length,
+            }));
         const submissionRecord = {
           intent: "guest-checkin",
           bookingNumber: randomBookingNumber(false),
@@ -623,7 +695,7 @@ export default async function handler(req, res) {
           }
         }
 
-        if (db && submissionRef) {
+        if (db && submissionRef && files.length) {
           try {
             storedAttachments = await uploadCheckinFiles(db, submissionRef.id, files);
             await updateFormSubmission(submissionRef, {
@@ -665,6 +737,22 @@ export default async function handler(req, res) {
                 error: String(updateError?.message || updateError),
               });
             }
+          }
+        } else if (db && submissionRef && preuploadedAttachments.length) {
+          try {
+            await updateFormSubmission(submissionRef, {
+              checkin: {
+                ...submissionRecord.checkin,
+                attachments: storedAttachments,
+                imageUploadStatus: checkinImageUploadStatus(files, storedAttachments),
+              },
+              updatedAtMs: Date.now(),
+            });
+          } catch (updateError) {
+            console.error("CHECKIN_PREUPLOADED_IMAGE_SAVE_FAILED", {
+              submissionId: submissionRef.id,
+              error: String(updateError?.message || updateError),
+            });
           }
         }
 

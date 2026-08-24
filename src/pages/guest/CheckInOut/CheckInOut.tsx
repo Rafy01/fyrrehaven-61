@@ -11,7 +11,6 @@ import type { Lang } from "../../../lib/lang";
 import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import styles from "./CheckInOut.module.css";
 
-const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 3 * 1024 * 1024;
 const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 2.6 * 1024 * 1024;
 const MAX_CLIENT_IMAGE_SOURCE_BYTES = 40 * 1024 * 1024;
 const MAX_CHECKIN_IMAGE_FILES = 6;
@@ -28,6 +27,14 @@ type ProgressState = {
   percent: number;
   message: string;
   detail?: string;
+};
+
+type PreuploadedAttachment = {
+  fieldname: "meterImages";
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  storagePath: string;
 };
 
 const MIN_FAST_PROGRESS_DURATION_MS = 1200;
@@ -235,6 +242,50 @@ function postFormDataWithProgress(
 
     xhr.send(body);
   });
+}
+
+async function preuploadCheckinImages(
+  files: File[],
+  values: Record<string, string | FileList | boolean>,
+  clientDraftId: string,
+  headers: Record<string, string>,
+  onProgress: (percent: number) => void
+) {
+  const attachments: PreuploadedAttachment[] = [];
+  const fileCount = Math.max(1, files.length);
+
+  for (const [index, file] of files.entries()) {
+    const formData = new FormData();
+    formData.set("website", String(values.website || ""));
+    formData.set("company", String(values.company || ""));
+    formData.set("faxNumber", String(values.faxNumber || ""));
+    formData.set("clientDraftId", clientDraftId);
+    formData.set("formStartedAt", String(values.formStartedAt || ""));
+    formData.set("fileIndex", String(index + 1));
+    formData.append("meterImage", file);
+
+    const res = await postFormDataWithProgress(
+      "/api/checkin-image",
+      formData,
+      headers,
+      (filePercent) => {
+        const totalPercent = Math.round(
+          ((index + filePercent / 100) / fileCount) * 90
+        );
+        onProgress(Math.max(1, Math.min(90, totalPercent)));
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok || !data?.attachment) {
+      throw new Error(String(data?.detail || data?.error || "IMAGE_UPLOAD_FAILED"));
+    }
+
+    attachments.push(data.attachment);
+  }
+
+  onProgress(90);
+  return attachments;
 }
 
 function ProgressMeter({ item }: { item: ProgressState }) {
@@ -615,20 +666,31 @@ export default function CheckInOut({
                 message: tg("checkInOutPage.progress.compressing"),
               });
             });
-      const totalUploadSize = filesTotalSize(preparedMeterImages);
-      if (totalUploadSize > MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
-        const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");
-        void saveFormDraft(
-          buildDraftPayload(
-            values,
-            "validation_failed",
-            errorMessage,
-            "CLIENT_UPLOAD_TOTAL_TOO_LARGE"
-          )
-        );
-        setError(errorMessage);
-        return;
-      }
+      const uploadSize = filesTotalSize(preparedMeterImages);
+      const requestHeaders = getRequestHeaders ? await getRequestHeaders() : {};
+
+      setUploadProgress({
+        phase: "uploading",
+        percent: 1,
+        message: tg("checkInOutPage.progress.uploading"),
+        detail: tg("checkInOutPage.progress.uploadSize").replace(
+          "{{size}}",
+          formatBytes(uploadSize)
+        ),
+      });
+
+      const preuploadedAttachments = await preuploadCheckinImages(
+        preparedMeterImages,
+        values,
+        draftIdRef.current,
+        requestHeaders,
+        (percent) =>
+          setUploadProgress((prev) => ({
+            ...prev,
+            phase: "uploading",
+            percent,
+          }))
+      );
 
       const formData = new FormData();
 
@@ -637,34 +699,28 @@ export default function CheckInOut({
 
         const value = values[key];
         if (value instanceof FileList) {
-          const files =
-            key === "meterImages" ? preparedMeterImages : Array.from(value);
-          files.forEach((file) => formData.append(key, file));
+          if (key !== "meterImages") {
+            Array.from(value).forEach((file) => formData.append(key, file));
+          }
         } else {
           formData.append(key, String(value));
         }
       }
       formData.set("clientDraftId", draftIdRef.current);
-
-      setUploadProgress({
-        phase: "uploading",
-        percent: 1,
-        message: tg("checkInOutPage.progress.uploading"),
-        detail: tg("checkInOutPage.progress.uploadSize").replace(
-          "{{size}}",
-          formatBytes(totalUploadSize)
-        ),
-      });
+      formData.set(
+        "preuploadedMeterImages",
+        JSON.stringify(preuploadedAttachments)
+      );
 
       const res = await postFormDataWithProgress(
         "/api/checkin",
         formData,
-        getRequestHeaders ? await getRequestHeaders() : {},
+        requestHeaders,
         (percent) =>
           setUploadProgress((prev) => ({
             ...prev,
             phase: "uploading",
-            percent,
+            percent: Math.max(90, percent),
           }))
       );
 
@@ -709,7 +765,12 @@ export default function CheckInOut({
       preparedMeterImagesRef.current = null;
     } catch (err: any) {
       console.error("Submit error:", err);
-      const errorMessage = tg("checkInOutPage.errors.network");
+      const rawErrorMessage = String(err?.message || "").trim();
+      const errorMessage =
+        rawErrorMessage &&
+        !["UPLOAD_NETWORK_ERROR", "UPLOAD_TIMEOUT"].includes(rawErrorMessage)
+          ? rawErrorMessage
+          : tg("checkInOutPage.errors.network");
       void saveFormDraft(
         buildDraftPayload(values, "send_failed", errorMessage, "NETWORK_ERROR")
       );
