@@ -642,6 +642,14 @@ export const en = {
       "submit": "Submit reading",
       "sending": "Submitting reading...",
       "success": "Thanks! Your reading has been sent.",
+      "progress": {
+        "compressing": "Preparing photos",
+        "ready": "Photos ready to upload",
+        "readyOriginal": "Photos ready to upload",
+        "originalSize": "Selected size: {{size}}",
+        "uploading": "Uploading reading",
+        "uploadSize": "Upload size: {{size}}"
+      },
       "errors": {
         "rateLimited": "Too many readings were submitted in a short time. Please wait a moment and try again.",
         "tooFast": "Please review the form once more and send it again in a moment.",

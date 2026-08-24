@@ -642,6 +642,14 @@ export const de = {
       "submit": "Ablesung senden",
       "sending": "Ablesung wird gesendet...",
       "success": "Danke! Ihre Ablesung wurde gesendet.",
+      "progress": {
+        "compressing": "Fotos werden vorbereitet",
+        "ready": "Fotos bereit zum Hochladen",
+        "readyOriginal": "Fotos bereit zum Hochladen",
+        "originalSize": "Ausgewählte Größe: {{size}}",
+        "uploading": "Ablesung wird hochgeladen",
+        "uploadSize": "Upload-Größe: {{size}}"
+      },
       "errors": {
         "rateLimited": "Es wurden zu viele Ablesungen in kurzer Zeit gesendet. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
         "tooFast": "Bitte prüfen Sie das Formular noch einmal und senden Sie es in einem Moment erneut.",

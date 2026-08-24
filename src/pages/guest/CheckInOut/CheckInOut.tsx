@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/guest/CheckInOut.tsx
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import Head from "../../../lib/Head";
 import { useTranslation } from "react-i18next";
 import Accordion from "../../../components/Accordion/Accordion";
@@ -12,12 +12,20 @@ import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import styles from "./CheckInOut.module.css";
 
 const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 3 * 1024 * 1024;
+const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 2.6 * 1024 * 1024;
 const CHECKIN_IMAGE_COMPRESSION_STEPS = [
   { maxDimension: 1800, quality: 0.78 },
   { maxDimension: 1500, quality: 0.7 },
   { maxDimension: 1200, quality: 0.62 },
   { maxDimension: 1000, quality: 0.55 },
 ];
+
+type ProgressState = {
+  phase: "idle" | "compressing" | "ready" | "uploading";
+  percent: number;
+  message: string;
+  detail?: string;
+};
 
 function isPoolOpen(today = new Date()) {
   const month = today.getMonth() + 1;
@@ -66,6 +74,19 @@ function checkinErrorMessage(
 
 function filesTotalSize(files: File[]) {
   return files.reduce((total, file) => total + file.size, 0);
+}
+
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function fileListSignature(value: unknown) {
+  if (!(value instanceof FileList)) return "";
+  return Array.from(value)
+    .map((file) => [file.name, file.size, file.type, file.lastModified].join(":"))
+    .join("|");
 }
 
 function canCompressImage(file: File) {
@@ -125,26 +146,87 @@ async function compressImageFile(
   });
 }
 
-async function prepareCheckinImages(value: unknown) {
+async function prepareCheckinImages(
+  value: unknown,
+  onProgress?: (percent: number) => void
+) {
   if (!(value instanceof FileList)) return [];
   const originalFiles = Array.from(value);
-  if (filesTotalSize(originalFiles) <= MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
+  if (!originalFiles.length) return [];
+
+  const originalTotalSize = filesTotalSize(originalFiles);
+  const maxOriginalFileSize = Math.max(...originalFiles.map((file) => file.size));
+  if (
+    originalTotalSize <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES &&
+    maxOriginalFileSize <= 1.2 * 1024 * 1024
+  ) {
+    onProgress?.(100);
     return originalFiles;
   }
 
   let currentFiles = originalFiles;
   for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
-    currentFiles = await Promise.all(
-      currentFiles.map((file) =>
-        compressImageFile(file, step.maxDimension, step.quality)
-      )
-    );
-    if (filesTotalSize(currentFiles) <= MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
+    const stepIndex = CHECKIN_IMAGE_COMPRESSION_STEPS.indexOf(step);
+    const nextFiles: File[] = [];
+
+    for (const [fileIndex, file] of currentFiles.entries()) {
+      nextFiles.push(
+        await compressImageFile(file, step.maxDimension, step.quality)
+      );
+      const completed = stepIndex * currentFiles.length + fileIndex + 1;
+      const total = CHECKIN_IMAGE_COMPRESSION_STEPS.length * currentFiles.length;
+      onProgress?.(Math.min(95, Math.round((completed / total) * 95)));
+    }
+
+    currentFiles = nextFiles;
+    if (filesTotalSize(currentFiles) <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES) {
+      onProgress?.(100);
       return currentFiles;
     }
   }
 
+  onProgress?.(100);
   return currentFiles;
+}
+
+function postFormDataWithProgress(
+  url: string,
+  body: FormData,
+  headers: Record<string, string>,
+  onProgress: (percent: number) => void
+) {
+  return new Promise<{
+    ok: boolean;
+    status: number;
+    json: () => Promise<any>;
+  }>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+
+    for (const [key, value] of Object.entries(headers)) {
+      xhr.setRequestHeader(key, value);
+    }
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+      onProgress(Math.max(1, Math.min(99, Math.round((event.loaded / event.total) * 100))));
+    };
+    xhr.onerror = () => reject(new Error("UPLOAD_NETWORK_ERROR"));
+    xhr.ontimeout = () => reject(new Error("UPLOAD_TIMEOUT"));
+    xhr.onload = () => {
+      onProgress(100);
+      resolve({
+        ok: xhr.status >= 200 && xhr.status < 300,
+        status: xhr.status,
+        json: async () => {
+          if (!xhr.responseText) return {};
+          return JSON.parse(xhr.responseText);
+        },
+      });
+    };
+
+    xhr.send(body);
+  });
 }
 
 export default function CheckInOut({
@@ -176,10 +258,25 @@ export default function CheckInOut({
   const [error, setError] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
   const [formStartedAt, setFormStartedAt] = useState(() => String(Date.now()));
+  const [imageProgress, setImageProgress] = useState<ProgressState>({
+    phase: "idle",
+    percent: 0,
+    message: "",
+  });
+  const [uploadProgress, setUploadProgress] = useState<ProgressState>({
+    phase: "idle",
+    percent: 0,
+    message: "",
+  });
   const [draftValues, setDraftValues] = useState<
     Record<string, string | FileList | boolean>
   >({});
   const draftIdRef = useRef(createFormDraftId("guest-checkin"));
+  const imagePreparationJobRef = useRef(0);
+  const preparedMeterImagesRef = useRef<{
+    signature: string;
+    files: File[];
+  } | null>(null);
 
   useEffect(() => {
     setPoolOpen(isPoolOpen());
@@ -252,6 +349,77 @@ export default function CheckInOut({
     return () => window.clearTimeout(timer);
   }, [adminManual, buildDraftPayload, draftValues, success]);
 
+  const prepareSelectedImages = useCallback(
+    async (value: unknown) => {
+      const signature = fileListSignature(value);
+      imagePreparationJobRef.current += 1;
+      const jobId = imagePreparationJobRef.current;
+      preparedMeterImagesRef.current = null;
+
+      if (!signature) {
+        setImageProgress({ phase: "idle", percent: 0, message: "" });
+        return;
+      }
+
+      const originalFiles = value instanceof FileList ? Array.from(value) : [];
+      const originalBytes = filesTotalSize(originalFiles);
+      setImageProgress({
+        phase: "compressing",
+        percent: 1,
+        message: tg("checkInOutPage.progress.compressing"),
+        detail: tg("checkInOutPage.progress.originalSize").replace(
+          "{{size}}",
+          formatBytes(originalBytes)
+        ),
+      });
+
+      try {
+        const files = await prepareCheckinImages(value, (percent) => {
+          if (imagePreparationJobRef.current !== jobId) return;
+          setImageProgress((prev) => ({
+            ...prev,
+            phase: "compressing",
+            percent,
+          }));
+        });
+        if (imagePreparationJobRef.current !== jobId) return;
+
+        const preparedBytes = filesTotalSize(files);
+        preparedMeterImagesRef.current = { signature, files };
+        setImageProgress({
+          phase: "ready",
+          percent: 100,
+          message: tg("checkInOutPage.progress.ready"),
+          detail: `${formatBytes(originalBytes)} → ${formatBytes(preparedBytes)}`,
+        });
+      } catch (prepareError) {
+        console.error("Image preparation failed:", prepareError);
+        if (imagePreparationJobRef.current !== jobId) return;
+        setImageProgress({
+          phase: "ready",
+          percent: 100,
+          message: tg("checkInOutPage.progress.readyOriginal"),
+          detail: tg("checkInOutPage.progress.originalSize").replace(
+            "{{size}}",
+            formatBytes(originalBytes)
+          ),
+        });
+        preparedMeterImagesRef.current = { signature, files: originalFiles };
+      }
+    },
+    [tg]
+  );
+
+  const handleValuesChange = useCallback(
+    (values: Record<string, string | FileList | boolean>) => {
+      setDraftValues(values);
+      const nextSignature = fileListSignature(values.meterImages);
+      if (nextSignature === preparedMeterImagesRef.current?.signature) return;
+      void prepareSelectedImages(values.meterImages);
+    },
+    [prepareSelectedImages]
+  );
+
   if (isMobile === null) {
     return null;
   }
@@ -273,7 +441,17 @@ export default function CheckInOut({
     setError(null);
 
     try {
-      const preparedMeterImages = await prepareCheckinImages(values.meterImages);
+      const meterImagesSignature = fileListSignature(values.meterImages);
+      const preparedMeterImages =
+        preparedMeterImagesRef.current?.signature === meterImagesSignature
+          ? preparedMeterImagesRef.current.files
+          : await prepareCheckinImages(values.meterImages, (percent) => {
+              setImageProgress({
+                phase: "compressing",
+                percent,
+                message: tg("checkInOutPage.progress.compressing"),
+              });
+            });
       const totalUploadSize = filesTotalSize(preparedMeterImages);
       if (totalUploadSize > MAX_CHECKIN_UPLOAD_TOTAL_BYTES) {
         const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");
@@ -305,13 +483,27 @@ export default function CheckInOut({
       }
       formData.set("clientDraftId", draftIdRef.current);
 
-      const res = await fetch("/api/checkin", {
-        method: "POST",
-        headers: {
-          ...(getRequestHeaders ? await getRequestHeaders() : {}),
-        },
-        body: formData,
+      setUploadProgress({
+        phase: "uploading",
+        percent: 1,
+        message: tg("checkInOutPage.progress.uploading"),
+        detail: tg("checkInOutPage.progress.uploadSize").replace(
+          "{{size}}",
+          formatBytes(totalUploadSize)
+        ),
       });
+
+      const res = await postFormDataWithProgress(
+        "/api/checkin",
+        formData,
+        getRequestHeaders ? await getRequestHeaders() : {},
+        (percent) =>
+          setUploadProgress((prev) => ({
+            ...prev,
+            phase: "uploading",
+            percent,
+          }))
+      );
 
       if (!res.ok) {
         let errorMessage = tg("checkInOutPage.unknownError");
@@ -335,9 +527,20 @@ export default function CheckInOut({
       }
 
       setSuccess(true);
+      setUploadProgress({
+        phase: "idle",
+        percent: 0,
+        message: "",
+      });
+      setImageProgress({
+        phase: "idle",
+        percent: 0,
+        message: "",
+      });
       setFormKey((k) => k + 1);
       setFormStartedAt(String(Date.now()));
       draftIdRef.current = createFormDraftId("guest-checkin");
+      preparedMeterImagesRef.current = null;
     } catch (err: any) {
       console.error("Submit error:", err);
       const errorMessage = tg("checkInOutPage.errors.network");
@@ -347,6 +550,11 @@ export default function CheckInOut({
       setError(errorMessage || err?.message || tg("checkInOutPage.fallbackError"));
     } finally {
       setIsSending(false);
+      setUploadProgress((prev) =>
+        prev.phase === "uploading"
+          ? { phase: "idle", percent: 0, message: "" }
+          : prev
+      );
     }
   };
 
@@ -528,7 +736,7 @@ export default function CheckInOut({
           key={formKey}
           fields={fields}
           onSubmit={handleSubmit}
-          onValuesChange={setDraftValues}
+          onValuesChange={handleValuesChange}
           onValidationError={(validationErrors) => {
             const firstError = Object.values(validationErrors)[0];
             if (!firstError) return;
@@ -544,6 +752,40 @@ export default function CheckInOut({
           submitLabel={tg("checkInOutPage.submit")}
           lang={lang}
         />
+
+        {(imageProgress.phase !== "idle" || uploadProgress.phase !== "idle") && (
+          <div className={styles.progressPanel} aria-live="polite">
+            {[imageProgress, uploadProgress]
+              .filter((item) => item.phase !== "idle")
+              .map((item) => (
+                <div className={styles.progressItem} key={item.phase}>
+                  <div className={styles.progressMeta}>
+                    <strong>{item.message}</strong>
+                    <span>{item.percent}%</span>
+                  </div>
+                  <div
+                    className={styles.progressTrack}
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={item.percent}
+                  >
+                    <span
+                      className={styles.progressBar}
+                      style={
+                        {
+                          "--progress": `${item.percent}%`,
+                        } as CSSProperties
+                      }
+                    />
+                  </div>
+                  {item.detail ? (
+                    <p className={styles.progressDetail}>{item.detail}</p>
+                  ) : null}
+                </div>
+              ))}
+          </div>
+        )}
 
         {isSending && (
           <p style={{ textAlign: "center", color: "#888", marginTop: "1rem" }}>

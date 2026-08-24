@@ -642,6 +642,14 @@ export const da = {
       "submit": "Send aflæsning",
       "sending": "Sender aflæsning...",
       "success": "Tak! Din aflæsning er sendt.",
+      "progress": {
+        "compressing": "Klargør billeder",
+        "ready": "Billeder klar til upload",
+        "readyOriginal": "Billeder klar til upload",
+        "originalSize": "Valgt størrelse: {{size}}",
+        "uploading": "Uploader aflæsning",
+        "uploadSize": "Uploadstørrelse: {{size}}"
+      },
       "errors": {
         "rateLimited": "Der er sendt for mange aflæsninger på kort tid. Vent venligst et øjeblik, og prøv igen.",
         "tooFast": "Gennemgå venligst formularen én gang mere, og send den igen om et øjeblik.",
