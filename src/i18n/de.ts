@@ -9,7 +9,8 @@ export const de = {
       "chooseFiles": "Dateien auswählen",
       "required": "Dieses Feld ist erforderlich",
       "emailMismatch": "E-Mail und E-Mail-Bestätigung müssen übereinstimmen.",
-      "fileAlreadyAdded": "Dieses Foto wurde bereits hinzugefügt. Entfernen Sie es zuerst, wenn Sie ein anderes Foto auswählen möchten."
+      "fileAlreadyAdded": "Dieses Foto wurde bereits hinzugefügt. Entfernen Sie es zuerst, wenn Sie ein anderes Foto auswählen möchten.",
+      "moreFileIssues": "{{count}} weiteres Problem benötigt Aufmerksamkeit."
     }
   },
   "home": {

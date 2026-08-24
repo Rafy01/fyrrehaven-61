@@ -421,6 +421,7 @@ export default function Form({
                         fileDisplayMessages?.[field.name]?.[i],
                         duplicateFileMessages[field.name]?.[signature],
                       ].filter(Boolean);
+                      const hiddenMessageCount = Math.max(0, messages.length - 1);
 
                       return (
                         <div key={`${selectedFiles[i]?.name || name}-${i}`}>
@@ -447,11 +448,18 @@ export default function Form({
                               ×
                             </button>
                           </div>
-                          {messages.map((message) => (
-                            <p className={styles.fileMessageError} key={message}>
-                              {message}
+                          {messages[0] && (
+                            <p className={styles.fileMessageError}>
+                              {messages[0]}
                             </p>
-                          ))}
+                          )}
+                          {hiddenMessageCount > 0 && (
+                            <p className={styles.fileMessageMore}>
+                              {t("form.moreFileIssues", {
+                                count: hiddenMessageCount,
+                              })}
+                            </p>
+                          )}
                         </div>
                       );
                     })}

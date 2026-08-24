@@ -9,7 +9,8 @@ export const da = {
       "chooseFiles": "Vælg filer",
       "required": "Dette felt er påkrævet",
       "emailMismatch": "E-mail og bekræft e-mail skal være ens.",
-      "fileAlreadyAdded": "Dette billede er allerede tilføjet. Fjern det først, hvis du vil vælge et andet billede."
+      "fileAlreadyAdded": "Dette billede er allerede tilføjet. Fjern det først, hvis du vil vælge et andet billede.",
+      "moreFileIssues": "{{count}} problem mere kræver opmærksomhed."
     }
   },
   "home": {
