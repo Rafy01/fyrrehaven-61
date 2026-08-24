@@ -653,7 +653,8 @@ export const en = {
         "missingFiles": "Please upload at least one photo of the meter reading.",
         "validation": "Please check the required fields and make sure the meter readings are filled in correctly.",
         "mail": "Your reading was recorded, but the email could not be sent automatically. We can still see it in the admin system.",
-        "network": "The connection was interrupted before the reading could be sent. Please check your internet connection and try again."
+        "network": "The connection was interrupted before the reading could be sent. Please check your internet connection and try again.",
+        "serverResponse": "The reading could not be sent because the server returned an unreadable error. Please try again with fewer or smaller photos."
       },
       "errorLabel": "Error:"
     },

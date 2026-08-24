@@ -653,7 +653,8 @@ export const de = {
         "missingFiles": "Bitte laden Sie mindestens ein Foto der Zählerablesung hoch.",
         "validation": "Bitte prüfen Sie die Pflichtfelder und stellen Sie sicher, dass die Zählerstände korrekt eingetragen sind.",
         "mail": "Ihre Ablesung wurde gespeichert, aber die E-Mail konnte nicht automatisch gesendet werden. Wir können sie trotzdem im Admin-System sehen.",
-        "network": "Die Verbindung wurde unterbrochen, bevor die Ablesung gesendet werden konnte. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
+        "network": "Die Verbindung wurde unterbrochen, bevor die Ablesung gesendet werden konnte. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+        "serverResponse": "Die Ablesung konnte nicht gesendet werden, weil der Server einen unlesbaren Fehler zurückgegeben hat. Bitte versuchen Sie es mit weniger oder kleineren Fotos erneut."
       },
       "errorLabel": "Fehler:"
     },

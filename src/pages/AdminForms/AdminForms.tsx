@@ -6687,14 +6687,15 @@ export default function AdminForms() {
                       <div className={styles.imagePreviewMissing}>
                         <FiAlertCircle aria-hidden="true" />
                         <div>
-                          <h3>Image source missing</h3>
+                          <h3>Image was not stored</h3>
                           <p>
                             {imagePreview.attachment.viewError ||
-                              "This submission has the filename and file size, but no stored image URL or Firebase Storage path."}
+                              "The form saved the filename and size before submit finished, but the upload did not complete with a retrievable image path."}
                           </p>
                           <p>
-                            Older submissions may need to be submitted again so the
-                            uploaded image can be stored with a retrievable path.
+                            Ask the guest to resend the check-in/out form. If the
+                            photos are large, ask them to upload fewer photos or
+                            screenshots of the meter photos.
                           </p>
                         </div>
                       </div>

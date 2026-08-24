@@ -653,7 +653,8 @@ export const da = {
         "missingFiles": "Upload venligst mindst ét billede af måleraflæsningen.",
         "validation": "Tjek venligst de påkrævede felter, og sørg for at måleraflæsningerne er udfyldt korrekt.",
         "mail": "Din aflæsning blev registreret, men mailen kunne ikke sendes automatisk. Vi kan stadig se den i admin-systemet.",
-        "network": "Forbindelsen blev afbrudt, før aflæsningen kunne sendes. Tjek din internetforbindelse, og prøv igen."
+        "network": "Forbindelsen blev afbrudt, før aflæsningen kunne sendes. Tjek din internetforbindelse, og prøv igen.",
+        "serverResponse": "Aflæsningen kunne ikke sendes, fordi serveren returnerede en ulæselig fejl. Prøv igen med færre eller mindre billeder."
       },
       "errorLabel": "Fejl:"
     },

@@ -206,7 +206,7 @@ export default function CheckInOut({
 
       if (!res.ok) {
         let errorMessage = tg("checkInOutPage.unknownError");
-        let errorCode = "";
+        let errorCode = "UNREADABLE_SERVER_RESPONSE";
         try {
           const data = await res.json();
           errorCode = String(data?.error || "");
@@ -216,7 +216,7 @@ export default function CheckInOut({
             tg
           );
         } catch {
-          // Keep the default message if the API does not return JSON.
+          errorMessage = tg("checkInOutPage.errors.serverResponse");
         }
         void saveFormDraft(
           buildDraftPayload(values, "send_failed", errorMessage, errorCode)
