@@ -13,6 +13,7 @@ import styles from "./CheckInOut.module.css";
 
 const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 3 * 1024 * 1024;
 const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 2.6 * 1024 * 1024;
+const MAX_CLIENT_IMAGE_SOURCE_BYTES = 40 * 1024 * 1024;
 const CHECKIN_IMAGE_TARGET_DIMENSION = 1080;
 const CHECKIN_IMAGE_COMPRESSION_STEPS = [
   { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.78 },
@@ -91,7 +92,10 @@ function fileListSignature(value: unknown) {
 }
 
 function canCompressImage(file: File) {
-  return ["image/jpeg", "image/png", "image/webp"].includes(file.type);
+  return (
+    file.size <= MAX_CLIENT_IMAGE_SOURCE_BYTES &&
+    ["image/jpeg", "image/png", "image/webp"].includes(file.type)
+  );
 }
 
 function loadImage(file: File) {
@@ -418,22 +422,25 @@ export default function CheckInOut({
           .filter((item) => item.phase !== "idle")
           .map((item) => (
             <div className={styles.progressItem} key={item.phase}>
-              <div
-                className={styles.progressTrack}
-                role="progressbar"
-                aria-label={item.message}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={item.percent}
-              >
-                <span
-                  className={styles.progressBar}
-                  style={
-                    {
-                      "--progress": `${item.percent}%`,
-                    } as CSSProperties
-                  }
-                />
+              <div className={styles.progressLine}>
+                <div
+                  className={styles.progressTrack}
+                  role="progressbar"
+                  aria-label={item.message}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={item.percent}
+                >
+                  <span
+                    className={styles.progressBar}
+                    style={
+                      {
+                        "--progress": `${item.percent}%`,
+                      } as CSSProperties
+                    }
+                  />
+                </div>
+                <span className={styles.progressPercent}>{item.percent}%</span>
               </div>
             </div>
           ))}

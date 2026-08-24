@@ -48,6 +48,13 @@
   gap: 0;
 }
 
+.progressLine {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+}
+
 .progressTrack {
   position: relative;
   height: 10px;
@@ -62,7 +69,26 @@
   width: var(--progress, 0%);
   border-radius: inherit;
   background: var(--gold-500, #9d951c);
-  transition: width 180ms ease;
+  animation: progressFill 680ms ease both;
+  transition: width 220ms ease;
+}
+
+.progressPercent {
+  min-width: 4ch;
+  color: var(--muted, #6b7280);
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: right;
+}
+
+@keyframes progressFill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--progress, 0%);
+  }
 }
 
 .errorNotice {
