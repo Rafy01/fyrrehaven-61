@@ -29,6 +29,8 @@ type ProgressState = {
   detail?: string;
 };
 
+const MIN_FAST_PROGRESS_DURATION_MS = 1200;
+
 function isPoolOpen(today = new Date()) {
   const month = today.getMonth() + 1;
   const date = today.getDate();
@@ -222,6 +224,67 @@ function postFormDataWithProgress(
 
     xhr.send(body);
   });
+}
+
+function ProgressMeter({ item }: { item: ProgressState }) {
+  const [displayPercent, setDisplayPercent] = useState(0);
+  const displayPercentRef = useRef(0);
+
+  const setAnimatedPercent = (nextPercent: number) => {
+    displayPercentRef.current = nextPercent;
+    setDisplayPercent(nextPercent);
+  };
+
+  useEffect(() => {
+    let frameId = 0;
+    const from = displayPercentRef.current;
+    const to = Math.max(0, Math.min(100, item.percent));
+    const distance = Math.abs(to - from);
+    const duration =
+      to === 100 && from < 30
+        ? MIN_FAST_PROGRESS_DURATION_MS
+        : Math.max(360, Math.min(MIN_FAST_PROGRESS_DURATION_MS, distance * 16));
+    const startedAt = performance.now();
+
+    const tick = (now: number) => {
+      const elapsed = now - startedAt;
+      const progress = Math.min(1, elapsed / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setAnimatedPercent(Math.round(from + (to - from) * eased));
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick);
+      }
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [item.percent]);
+
+  return (
+    <div className={styles.progressItem}>
+      <div className={styles.progressLine}>
+        <div
+          className={styles.progressTrack}
+          role="progressbar"
+          aria-label={item.message}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={displayPercent}
+        >
+          <span
+            className={styles.progressBar}
+            style={
+              {
+                "--progress": `${displayPercent}%`,
+              } as CSSProperties
+            }
+          />
+        </div>
+        <span className={styles.progressPercent}>{displayPercent}%</span>
+      </div>
+    </div>
+  );
 }
 
 export default function CheckInOut({
@@ -421,28 +484,7 @@ export default function CheckInOut({
         {[imageProgress, uploadProgress]
           .filter((item) => item.phase !== "idle")
           .map((item) => (
-            <div className={styles.progressItem} key={item.phase}>
-              <div className={styles.progressLine}>
-                <div
-                  className={styles.progressTrack}
-                  role="progressbar"
-                  aria-label={item.message}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={item.percent}
-                >
-                  <span
-                    className={styles.progressBar}
-                    style={
-                      {
-                        "--progress": `${item.percent}%`,
-                      } as CSSProperties
-                    }
-                  />
-                </div>
-                <span className={styles.progressPercent}>{item.percent}%</span>
-              </div>
-            </div>
+            <ProgressMeter item={item} key={item.phase} />
           ))}
       </div>
     ) : null;
