@@ -84,6 +84,7 @@ export type FormProps = {
   onSubmit: (values: Record<string, string | FileList | boolean>) => void;
   onValuesChange?: (values: Record<string, string | FileList | boolean>) => void;
   onValidationError?: (errors: Record<string, string>) => void;
+  fileDisplayLabels?: Record<string, string[]>;
   submitLabel: string;
   lang?: Lang;
 };
@@ -93,6 +94,7 @@ export default function Form({
   onSubmit,
   onValuesChange,
   onValidationError,
+  fileDisplayLabels,
   submitLabel,
   lang,
 }: FormProps) {
@@ -348,7 +350,9 @@ export default function Form({
 
                 {fileNames[field.name]?.length > 0 && (
                   <div className={styles.fileList}>
-                    {fileNames[field.name].map((name, i) => (
+                    {(
+                      fileDisplayLabels?.[field.name] || fileNames[field.name]
+                    ).map((name, i) => (
                       <div
                         key={`${selectedFiles[i]?.name || name}-${i}`}
                         className={styles.fileName}
