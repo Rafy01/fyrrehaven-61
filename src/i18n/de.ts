@@ -8,7 +8,9 @@ export const de = {
       "chooseFile": "Datei auswählen",
       "chooseFiles": "Dateien auswählen",
       "required": "Dieses Feld ist erforderlich",
-      "emailMismatch": "E-Mail und E-Mail-Bestätigung müssen übereinstimmen."
+      "emailMismatch": "E-Mail und E-Mail-Bestätigung müssen übereinstimmen.",
+      "fileAlreadyAdded": "Dieses Foto wurde bereits hinzugefügt. Entfernen Sie es zuerst, wenn Sie ein anderes Foto auswählen möchten.",
+      "moreFileIssues": "{{count}} weiteres Problem benötigt Aufmerksamkeit."
     }
   },
   "home": {
@@ -642,13 +644,23 @@ export const de = {
       "submit": "Ablesung senden",
       "sending": "Ablesung wird gesendet...",
       "success": "Danke! Ihre Ablesung wurde gesendet.",
+      "progress": {
+        "compressing": "Fotos werden vorbereitet",
+        "ready": "Fotos bereit zum Hochladen",
+        "readyOriginal": "Fotos bereit zum Hochladen",
+        "originalSize": "Ausgewählte Größe: {{size}}",
+        "uploading": "Ablesung wird hochgeladen",
+        "uploadSize": "Upload-Größe: {{size}}"
+      },
       "errors": {
         "rateLimited": "Es wurden zu viele Ablesungen in kurzer Zeit gesendet. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
         "tooFast": "Bitte prüfen Sie das Formular noch einmal und senden Sie es in einem Moment erneut.",
         "formExpired": "Diese Formularsitzung ist abgelaufen. Bitte laden Sie die Seite neu und senden Sie die Ablesung erneut.",
         "invalidFileType": "Bitte laden Sie nur Bilddateien hoch. Fotos von Ihrer Handykamera werden akzeptiert.",
         "fileTooLarge": "Ein oder mehrere Fotos sind zu groß. Bitte öffnen Sie jedes Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen die Screenshots hoch.",
-        "totalUploadTooLarge": "Die ausgewählten Zählerfotos sind nach der automatischen Komprimierung noch zu groß. Bitte öffnen Sie jedes Zählerfoto, machen Sie einen Screenshot und laden Sie stattdessen die Screenshots hoch.",
+        "fileTooLargeInline": "Dieses Foto ist zu groß. Bitte machen Sie einen Screenshot davon und fügen Sie stattdessen den Screenshot hinzu.",
+        "fileStillTooLargeInline": "Dieses Foto ist nach der Vorbereitung immer noch zu groß. Bitte machen Sie einen Screenshot davon und fügen Sie stattdessen den Screenshot hinzu.",
+        "totalUploadTooLarge": "Die Fotos sind zu groß. Bitte laden Sie stattdessen Screenshots der Zählerfotos hoch.",
         "tooManyFiles": "Es wurden zu viele Fotos hochgeladen. Bitte laden Sie nur die benötigten Zählerfotos hoch.",
         "tooManyFields": "Es wurden zu viele Informationen gesendet. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
         "missingFiles": "Bitte laden Sie mindestens ein Foto der Zählerablesung hoch.",
@@ -657,7 +669,8 @@ export const de = {
         "network": "Die Verbindung wurde unterbrochen, bevor die Ablesung gesendet werden konnte. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
         "serverResponse": "Die Ablesung konnte nicht gesendet werden, weil der Server einen unlesbaren Fehler zurückgegeben hat. Bitte versuchen Sie es erneut mit Screenshots der Zählerfotos."
       },
-      "errorLabel": "Fehler:"
+      "errorLabel": "Fehler:",
+      "errorTitle": "Die Ablesung konnte nicht gesendet werden"
     },
     "manualPage": {
       "title": "Anleitung 🧭 Fyrrehaven 61",

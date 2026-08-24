@@ -16,6 +16,10 @@
   ],
   "rewrites": [
     { "source": "/api/qr", "destination": "/api/analytics" },
+    {
+      "source": "/api/extra-services/validate-booking",
+      "destination": "/api/contact?route=validate-booking"
+    },
     { "source": "/api/(.*)", "destination": "/api/$1" },
 
     {

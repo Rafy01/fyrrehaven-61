@@ -8,7 +8,9 @@ export const da = {
       "chooseFile": "Vælg fil",
       "chooseFiles": "Vælg filer",
       "required": "Dette felt er påkrævet",
-      "emailMismatch": "E-mail og bekræft e-mail skal være ens."
+      "emailMismatch": "E-mail og bekræft e-mail skal være ens.",
+      "fileAlreadyAdded": "Dette billede er allerede tilføjet. Fjern det først, hvis du vil vælge et andet billede.",
+      "moreFileIssues": "{{count}} problem mere kræver opmærksomhed."
     }
   },
   "home": {
@@ -642,13 +644,23 @@ export const da = {
       "submit": "Send aflæsning",
       "sending": "Sender aflæsning...",
       "success": "Tak! Din aflæsning er sendt.",
+      "progress": {
+        "compressing": "Klargør billeder",
+        "ready": "Billeder klar til upload",
+        "readyOriginal": "Billeder klar til upload",
+        "originalSize": "Valgt størrelse: {{size}}",
+        "uploading": "Uploader aflæsning",
+        "uploadSize": "Uploadstørrelse: {{size}}"
+      },
       "errors": {
         "rateLimited": "Der er sendt for mange aflæsninger på kort tid. Vent venligst et øjeblik, og prøv igen.",
         "tooFast": "Gennemgå venligst formularen én gang mere, og send den igen om et øjeblik.",
         "formExpired": "Formularsessionen er udløbet. Genindlæs siden, og send aflæsningen igen.",
         "invalidFileType": "Upload venligst kun billedfiler. Fotos fra telefonens kamera accepteres.",
         "fileTooLarge": "Et eller flere billeder er for store. Åbn venligst hvert målerbillede, tag et screenshot, og upload screenshots i stedet.",
-        "totalUploadTooLarge": "De valgte målerbilleder er stadig for store efter automatisk komprimering. Åbn venligst hvert målerbillede, tag et screenshot, og upload screenshots i stedet.",
+        "fileTooLargeInline": "Dette billede er for stort. Tag venligst et screenshot af billedet, og tilføj screenshottet i stedet.",
+        "fileStillTooLargeInline": "Dette billede er stadig for stort efter klargøring. Tag venligst et screenshot af billedet, og tilføj screenshottet i stedet.",
+        "totalUploadTooLarge": "Billederne er for store. Upload venligst screenshots af målerbillederne i stedet.",
         "tooManyFiles": "Der er uploadet for mange billeder. Upload kun de nødvendige målerfotos.",
         "tooManyFields": "Der blev sendt for meget information. Genindlæs siden, og prøv igen.",
         "missingFiles": "Upload venligst mindst ét billede af måleraflæsningen.",
@@ -657,7 +669,8 @@ export const da = {
         "network": "Forbindelsen blev afbrudt, før aflæsningen kunne sendes. Tjek din internetforbindelse, og prøv igen.",
         "serverResponse": "Aflæsningen kunne ikke sendes, fordi serveren returnerede en ulæselig fejl. Prøv igen med screenshots af målerbillederne."
       },
-      "errorLabel": "Fejl:"
+      "errorLabel": "Fejl:",
+      "errorTitle": "Aflæsningen kunne ikke sendes"
     },
     "manualPage": {
       "title": "Manual 🧭 Fyrrehaven 61",

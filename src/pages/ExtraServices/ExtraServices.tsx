@@ -405,7 +405,7 @@ export default function ExtraServices({
     setSending(true);
     try {
       if (!adminManual && !isLateRequest) {
-        const validationRes = await fetch("/api/extra-services/validate-booking", {
+        const validationRes = await fetch("/api/contact?route=validate-booking", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -14,6 +14,33 @@ function normalizeEmail(value: unknown) {
     .toLowerCase();
 }
 
+function formatFileSize(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function fileLabel(file: File) {
+  return `${file.name} (${formatFileSize(file.size)})`;
+}
+
+function fileSignature(file: File) {
+  return [file.name, file.size, file.type].join(":");
+}
+
+function uniqueFiles(files: File[], onDuplicate?: (file: File) => void) {
+  const seen = new Set<string>();
+  return files.filter((file) => {
+    const signature = fileSignature(file);
+    if (seen.has(signature)) {
+      onDuplicate?.(file);
+      return false;
+    }
+    seen.add(signature);
+    return true;
+  });
+}
+
 export type Field =
   | {
       type: "text" | "email" | "tel" | "number";
@@ -58,9 +85,11 @@ export type Field =
       name: string;
       label: string;
       description?: string;
+      after?: React.ReactNode;
       required?: boolean;
       multiple?: boolean;
       accept?: string;
+      maxFiles?: number;
     }
   | {
       type: "hidden";
@@ -73,6 +102,9 @@ export type FormProps = {
   onSubmit: (values: Record<string, string | FileList | boolean>) => void;
   onValuesChange?: (values: Record<string, string | FileList | boolean>) => void;
   onValidationError?: (errors: Record<string, string>) => void;
+  fileDisplayLabels?: Record<string, string[]>;
+  fileDisplayStatuses?: Record<string, ("success" | "error" | undefined)[]>;
+  fileDisplayMessages?: Record<string, (string | undefined)[]>;
   submitLabel: string;
   lang?: Lang;
 };
@@ -82,6 +114,9 @@ export default function Form({
   onSubmit,
   onValuesChange,
   onValidationError,
+  fileDisplayLabels,
+  fileDisplayStatuses,
+  fileDisplayMessages,
   submitLabel,
   lang,
 }: FormProps) {
@@ -100,6 +135,9 @@ export default function Form({
   const [fileNames, setFileNames] = React.useState<Record<string, string[]>>(
     {}
   );
+  const [duplicateFileMessages, setDuplicateFileMessages] = React.useState<
+    Record<string, Record<string, string>>
+  >({});
 
   React.useEffect(() => {
     setValues((prev) => {
@@ -125,16 +163,52 @@ export default function Form({
       nextValues = { ...values, [name]: (e.target as HTMLInputElement).checked };
       setValues(nextValues);
     } else if (type === "file") {
-      const files = (e.target as HTMLInputElement).files;
+      const input = e.target as HTMLInputElement;
+      const selectedFiles = input.files ? Array.from(input.files) : [];
+      const field = fields.find((item) => item.name === name);
+      const currentFiles =
+        field?.type === "file" &&
+        field.multiple &&
+        values[name] instanceof FileList
+          ? Array.from(values[name])
+          : [];
+      const allFiles =
+        field?.type === "file" && field.multiple
+          ? [...currentFiles, ...selectedFiles]
+          : selectedFiles;
+      const duplicateSignatures = new Set<string>();
+      const uniqueSelectedFiles = uniqueFiles(allFiles, (file) => {
+        duplicateSignatures.add(fileSignature(file));
+      });
+      const limitedFiles =
+        field?.type === "file" && field.maxFiles
+          ? uniqueSelectedFiles.slice(-field.maxFiles)
+          : uniqueSelectedFiles;
+      const transfer = new DataTransfer();
+      limitedFiles.forEach((file) => transfer.items.add(file));
+      input.files = transfer.files;
+
       nextValues = {
         ...values,
-        [name]: files ?? new DataTransfer().files,
+        [name]: transfer.files,
       };
       setValues(nextValues);
 
       setFileNames({
         ...fileNames,
-        [name]: files ? Array.from(files).map((f) => f.name) : [],
+        [name]: Array.from(transfer.files).map(fileLabel),
+      });
+      setDuplicateFileMessages((prev) => {
+        const nextForField: Record<string, string> = {};
+        Array.from(transfer.files).forEach((file) => {
+          if (duplicateSignatures.has(fileSignature(file))) {
+            nextForField[fileSignature(file)] = t("form.fileAlreadyAdded");
+          }
+        });
+        return {
+          ...prev,
+          [name]: nextForField,
+        };
       });
     } else {
       nextValues = { ...values, [name]: e.target.value };
@@ -158,6 +232,36 @@ export default function Form({
         return next;
       });
     }
+  };
+
+  const removeFile = (fieldName: string, removeIndex: number) => {
+    const currentFiles = values[fieldName];
+    if (!(currentFiles instanceof FileList)) return;
+
+    const transfer = new DataTransfer();
+    Array.from(currentFiles).forEach((file, index) => {
+      if (index !== removeIndex) transfer.items.add(file);
+    });
+
+    const input = document.getElementById(fieldName);
+    if (input instanceof HTMLInputElement) {
+      input.files = transfer.files;
+    }
+
+    const nextValues = {
+      ...values,
+      [fieldName]: transfer.files,
+    };
+    setValues(nextValues);
+    setFileNames({
+      ...fileNames,
+      [fieldName]: Array.from(transfer.files).map(fileLabel),
+    });
+    setDuplicateFileMessages((prev) => ({
+      ...prev,
+      [fieldName]: {},
+    }));
+    onValuesChange?.(nextValues);
   };
 
   const validate = () => {
@@ -216,6 +320,10 @@ export default function Form({
 
         const error = errors[field.name];
         const description = "description" in field ? field.description : null;
+        const after = "after" in field ? field.after : null;
+        const fileValue = field.type === "file" ? values[field.name] : null;
+        const selectedFiles: File[] =
+          fileValue instanceof FileList ? Array.from(fileValue) : [];
 
         const common = {
           id: field.name,
@@ -303,11 +411,58 @@ export default function Form({
 
                 {fileNames[field.name]?.length > 0 && (
                   <div className={styles.fileList}>
-                    {fileNames[field.name].map((name, i) => (
-                      <div key={i} className={styles.fileName}>
-                        {name}
-                      </div>
-                    ))}
+                    {(
+                      fileDisplayLabels?.[field.name] || fileNames[field.name]
+                    ).map((name, i) => {
+                      const signature = selectedFiles[i]
+                        ? fileSignature(selectedFiles[i])
+                        : "";
+                      const messages = [
+                        fileDisplayMessages?.[field.name]?.[i],
+                        duplicateFileMessages[field.name]?.[signature],
+                      ].filter(Boolean);
+                      const hiddenMessageCount = Math.max(0, messages.length - 1);
+
+                      return (
+                        <div key={`${selectedFiles[i]?.name || name}-${i}`}>
+                          <div
+                            className={[
+                              styles.fileName,
+                              fileDisplayStatuses?.[field.name]?.[i] === "success"
+                                ? styles.fileNameSuccess
+                                : "",
+                              fileDisplayStatuses?.[field.name]?.[i] === "error"
+                                ? styles.fileNameError
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                          >
+                            <span>{name}</span>
+                            <button
+                              type="button"
+                              className={styles.fileRemoveButton}
+                              onClick={() => removeFile(field.name, i)}
+                              aria-label={`Remove ${selectedFiles[i]?.name || name}`}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          {messages[0] && (
+                            <p className={styles.fileMessageError}>
+                              {messages[0]}
+                            </p>
+                          )}
+                          {hiddenMessageCount > 0 && (
+                            <p className={styles.fileMessageMore}>
+                              {t("form.moreFileIssues", {
+                                count: hiddenMessageCount,
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -322,6 +477,7 @@ export default function Form({
             {description && (
               <div className={styles.description}>{description}</div>
             )}
+            {after}
             {error && <div className={styles.error}>{error}</div>}
           </div>
         );
