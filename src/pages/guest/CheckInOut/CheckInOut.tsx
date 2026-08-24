@@ -13,11 +13,12 @@ import styles from "./CheckInOut.module.css";
 
 const MAX_CHECKIN_UPLOAD_TOTAL_BYTES = 3 * 1024 * 1024;
 const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 2.6 * 1024 * 1024;
+const CHECKIN_IMAGE_TARGET_DIMENSION = 1080;
 const CHECKIN_IMAGE_COMPRESSION_STEPS = [
-  { maxDimension: 1800, quality: 0.78 },
-  { maxDimension: 1500, quality: 0.7 },
-  { maxDimension: 1200, quality: 0.62 },
-  { maxDimension: 1000, quality: 0.55 },
+  { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.78 },
+  { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.66 },
+  { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.56 },
+  { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.48 },
 ];
 
 type ProgressState = {
@@ -153,16 +154,6 @@ async function prepareCheckinImages(
   if (!(value instanceof FileList)) return [];
   const originalFiles = Array.from(value);
   if (!originalFiles.length) return [];
-
-  const originalTotalSize = filesTotalSize(originalFiles);
-  const maxOriginalFileSize = Math.max(...originalFiles.map((file) => file.size));
-  if (
-    originalTotalSize <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES &&
-    maxOriginalFileSize <= 1.2 * 1024 * 1024
-  ) {
-    onProgress?.(100);
-    return originalFiles;
-  }
 
   let currentFiles = originalFiles;
   for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
@@ -427,13 +418,10 @@ export default function CheckInOut({
           .filter((item) => item.phase !== "idle")
           .map((item) => (
             <div className={styles.progressItem} key={item.phase}>
-              <div className={styles.progressMeta}>
-                <strong>{item.message}</strong>
-                <span>{item.percent}%</span>
-              </div>
               <div
                 className={styles.progressTrack}
                 role="progressbar"
+                aria-label={item.message}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={item.percent}
@@ -447,9 +435,6 @@ export default function CheckInOut({
                   }
                 />
               </div>
-              {item.detail ? (
-                <p className={styles.progressDetail}>{item.detail}</p>
-              ) : null}
             </div>
           ))}
       </div>

@@ -14,6 +14,12 @@ function normalizeEmail(value: unknown) {
     .toLowerCase();
 }
 
+function formatFileSize(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 export type Field =
   | {
       type: "text" | "email" | "tel" | "number";
@@ -135,7 +141,11 @@ export default function Form({
 
       setFileNames({
         ...fileNames,
-        [name]: files ? Array.from(files).map((f) => f.name) : [],
+        [name]: files
+          ? Array.from(files).map(
+              (file) => `${file.name} (${formatFileSize(file.size)})`
+            )
+          : [],
       });
     } else {
       nextValues = { ...values, [name]: e.target.value };
