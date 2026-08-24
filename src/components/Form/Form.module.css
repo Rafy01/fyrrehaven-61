@@ -202,37 +202,44 @@ input[type="file"] {
 }
 
 .fileName {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  min-height: 32px;
+  gap: 0.35rem;
+  max-width: 100%;
+  min-height: 24px;
   overflow-wrap: anywhere;
 }
 
 .fileName span {
   min-width: 0;
+  max-width: 100%;
 }
 
 .fileRemoveButton {
   appearance: none;
   display: inline-grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
-  color: var(--form-text);
+  flex: 0 0 auto;
+  width: 22px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  box-sizing: border-box;
+  background: transparent;
+  color: color-mix(in srgb, var(--form-text) 68%, transparent);
   cursor: pointer;
   font: inherit;
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
   line-height: 1;
+  transform: translateY(1px);
 }
 
 .fileRemoveButton:hover {
-  background: var(--surface-hover);
+  background: color-mix(in srgb, var(--form-text) 10%, transparent);
+  color: var(--form-text);
 }
 
 .fileRemoveButton:focus-visible {
