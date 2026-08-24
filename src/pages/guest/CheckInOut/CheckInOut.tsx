@@ -569,49 +569,20 @@ export default function CheckInOut({
                 message: inlineErrorMessage,
                 progress: undefined,
               }
-            : entry
+            : previousEntries.has(entry.sourceSignature)
+              ? { ...entry, progress: undefined }
+              : {
+                  ...entry,
+                  preparedFile: entry.sourceFile,
+                  label: fileDisplayLabel(entry.sourceFile),
+                  status: fileUploadStatus(entry.sourceFile),
+                  message: fileUploadMessage(
+                    entry.sourceFile,
+                    stillTooLargeMessage
+                  ),
+                  progress: undefined,
+                }
         );
-        publishEntries(entries);
-
-        const newSafeEntries = entries
-          .map((entry, index) => ({ entry, index }))
-          .filter(
-            ({ entry, index }) =>
-              !oversizedFileIndexes.includes(index) &&
-              !previousEntries.has(entry.sourceSignature)
-          );
-        const preparedSafeFiles = await prepareImageFiles(
-          newSafeEntries.map(({ entry }) => entry.sourceFile),
-          (safeFileIndex, percent) => {
-            if (imagePreparationJobRef.current !== jobId) return;
-            const originalIndex = newSafeEntries[safeFileIndex]?.index;
-            if (typeof originalIndex !== "number") return;
-            entries = entries.map((entry, index) =>
-              index === originalIndex ? { ...entry, progress: percent } : entry
-            );
-            publishEntries(entries);
-          }
-        );
-        if (imagePreparationJobRef.current !== jobId) return;
-
-        let safeIndex = 0;
-        entries = entries.map((entry, index) => {
-          if (
-            oversizedFileIndexes.includes(index) ||
-            previousEntries.has(entry.sourceSignature)
-          ) {
-            return entry;
-          }
-          const preparedFile = preparedSafeFiles[safeIndex++] || entry.sourceFile;
-          return {
-            ...entry,
-            preparedFile,
-            label: fileDisplayLabel(preparedFile),
-            status: fileUploadStatus(preparedFile),
-            message: fileUploadMessage(preparedFile, stillTooLargeMessage),
-            progress: 100,
-          };
-        });
         preparedMeterImagesRef.current = {
           signature,
           files: entries.map((entry) => entry.preparedFile),
