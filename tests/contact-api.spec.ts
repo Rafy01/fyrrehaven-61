@@ -43,8 +43,10 @@ type MockMailResult = {
 
 const validBookingPayload = {
   lang: 'en',
+  formStartedAt: Date.now() - 5000,
   name: 'Playwright Booker',
   email: 'test+api@example.com',
+  confirmEmail: 'test+api@example.com',
   phone: '+45 12345678',
   country: 'Denmark',
   countryIso: 'DK',
@@ -81,7 +83,10 @@ const makeRequest = (
       origin,
       'user-agent': userAgent,
     },
-    body,
+    body:
+      body && typeof body === 'object' && !Array.isArray(body)
+        ? { formStartedAt: Date.now() - 5000, ...body }
+        : body,
     socket: { remoteAddress },
   });
 

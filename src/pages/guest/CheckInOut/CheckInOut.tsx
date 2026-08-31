@@ -17,6 +17,7 @@ const MAX_CLIENT_IMAGE_SOURCE_BYTES = 40 * 1024 * 1024;
 const MAX_CHECKIN_IMAGE_UPLOAD_BYTES = 4 * 1024 * 1024;
 const MAX_CHECKIN_IMAGE_FILES = 6;
 const CHECKIN_IMAGE_TARGET_DIMENSION = 1080;
+const CHECKIN_UPLOAD_TIMEOUT_MS = 45000;
 const CHECKIN_IMAGE_COMPRESSION_STEPS = [
   { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.78 },
   { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.66 },
@@ -184,15 +185,11 @@ async function prepareImageFiles(originalFiles: File[]) {
 
   let currentFiles = originalFiles;
   for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
-    const nextFiles: File[] = [];
-
-    for (const file of currentFiles) {
-      nextFiles.push(
-        await compressImageFile(file, step.maxDimension, step.quality)
-      );
-    }
-
-    currentFiles = nextFiles;
+    currentFiles = await Promise.all(
+      currentFiles.map((file) =>
+        compressImageFile(file, step.maxDimension, step.quality)
+      )
+    );
     if (filesTotalSize(currentFiles) <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES) {
       return currentFiles;
     }
@@ -218,6 +215,7 @@ function postFormData(
   }>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
+    xhr.timeout = CHECKIN_UPLOAD_TIMEOUT_MS;
 
     for (const [key, value] of Object.entries(headers)) {
       xhr.setRequestHeader(key, value);

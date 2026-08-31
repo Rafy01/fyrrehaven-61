@@ -16,6 +16,9 @@ async function clickCalendarDate(page: Page, date: Date) {
   const en = formatDate(date, 'en-GB');
   const da = formatDate(date, 'da-DK');
   const locator = page.locator(`button[aria-label="${en}"], button[aria-label="${da}"]`);
+  for (let i = 0; i < 12 && (await locator.count()) === 0; i += 1) {
+    await page.getByRole('button', { name: /Next month|Næste måned/i }).click();
+  }
   await expect(locator).toHaveCount(1);
   await locator.click();
 }
@@ -38,6 +41,7 @@ test.describe('contact and booking forms', () => {
     await page.goto('/en/contact');
     await page.fill('#cf-name', 'Playwright Tester');
     await page.fill('#cf-email', 'test+contact@example.com');
+    await page.fill('#cf-confirm-email', 'test+contact@example.com');
     await page.selectOption('#cf-country', 'DK');
     await page.fill('#cf-phone', '12345678');
     await page.fill('#cf-msg', 'This is a contact form test. Please ignore.');
@@ -77,6 +81,7 @@ test.describe('contact and booking forms', () => {
     await page.goto('/de/kontakt');
     await page.fill('#cf-name', 'Email Tester');
     await page.fill('#cf-email', 'not-an-email');
+    await page.fill('#cf-confirm-email', 'not-an-email');
     await page.selectOption('#cf-country', 'DK');
     await page.fill('#cf-phone', '12345678');
     await page.fill('#cf-msg', 'Invalid email validation test');
@@ -109,7 +114,7 @@ test.describe('contact and booking forms', () => {
     const checkIn = new Date(now);
     checkIn.setDate(now.getDate() + 2);
     const checkOut = new Date(now);
-    checkOut.setDate(now.getDate() + 5);
+    checkOut.setDate(now.getDate() + 8);
 
     await clickCalendarDate(page, checkIn);
     await clickCalendarDate(page, checkOut);
@@ -117,6 +122,7 @@ test.describe('contact and booking forms', () => {
     await page.fill('#cf-staypurpose', 'Family holiday test');
     await page.fill('#cf-name', 'Playwright Booker');
     await page.fill('#cf-email', 'test+booking@example.com');
+    await page.fill('#cf-confirm-email', 'test+booking@example.com');
     await page.selectOption('#cf-country', 'DK');
     await page.fill('#cf-phone', '12345678');
     await page.fill('#cf-adults', '2');
@@ -146,7 +152,7 @@ test.describe('contact and booking forms', () => {
     expect(requests[0].selection).toMatchObject({
       start: checkIn.toISOString().slice(0, 10),
       endExclusive: checkOut.toISOString().slice(0, 10),
-      nights: 3,
+      nights: 6,
     });
   });
 
@@ -167,6 +173,7 @@ test.describe('contact and booking forms', () => {
     await page.goto('/en/contact');
     await page.fill('#cf-name', 'Consent Tester');
     await page.fill('#cf-email', 'test+consent@example.com');
+    await page.fill('#cf-confirm-email', 'test+consent@example.com');
     await page.selectOption('#cf-country', 'DK');
     await page.fill('#cf-phone', '12345678');
     await page.fill('#cf-msg', 'Consent validation test');
