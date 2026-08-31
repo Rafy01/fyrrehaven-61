@@ -613,6 +613,11 @@ export const en = {
       "mobileOnly": "– This page is only accessible via a mobile device",
       "unknownError": "Unknown error",
       "fallbackError": "Something went wrong.",
+      "meterLocationPrompt": {
+        "eyebrow": "Meter guide",
+        "text": "Find the meters before entering your readings. We recommend tapping the upload button and taking each photo directly from there.",
+        "button": "View locations"
+      },
       "fields": {
         "name": {
           "label": "Name",
@@ -629,11 +634,12 @@ export const en = {
         },
         "confirmEmail": "Confirm email",
         "elReading": "Electricity meter reading",
+        "elReadingDescription": "Use flash for the electricity meter photo so the numbers are clearly visible.",
         "waterHouse": "Water (house)",
         "waterPool": "Water (pool)",
         "meterImages": {
           "label": "Reading photo",
-          "description": "Verify with photos of your reading. Use flash on the electricity meter."
+          "description": "You can upload more than one photo. Verify each reading with clear photos, and use flash on the electricity meter."
         },
         "comment": {
           "label": "Comment",

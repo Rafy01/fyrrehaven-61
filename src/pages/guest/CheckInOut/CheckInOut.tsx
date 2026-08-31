@@ -9,6 +9,7 @@ import Form, { type Field } from "../../../components/Form/Form";
 import { guestPathOf } from "../../../lib/routes";
 import type { Lang } from "../../../lib/lang";
 import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
+import { UI_ICONS } from "../../../lib/icons";
 import styles from "./CheckInOut.module.css";
 
 const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 2.6 * 1024 * 1024;
@@ -321,6 +322,7 @@ export default function CheckInOut({
     files: File[];
     entries: PreparedImageEntry[];
   } | null>(null);
+  const meterGuideRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setPoolOpen(isPoolOpen());
@@ -700,6 +702,13 @@ export default function CheckInOut({
     }
   };
 
+  const scrollToMeterGuide = () => {
+    meterGuideRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   const fields: Field[] = [
     {
       type: "hidden",
@@ -773,6 +782,7 @@ export default function CheckInOut({
       type: "number",
       name: "elReading",
       label: tg("checkInOutPage.fields.elReading"),
+      description: tg("checkInOutPage.fields.elReadingDescription"),
       required: true,
       placeholder: "12345",
     },
@@ -875,6 +885,24 @@ export default function CheckInOut({
         <h1 style={{ textAlign: "center", marginBottom: "1rem" }}>
           {tg("checkInOutPage.title")}
         </h1>
+        <div className={styles.meterLocationPrompt}>
+          <div>
+            <p className={styles.meterLocationEyebrow}>
+              {tg("checkInOutPage.meterLocationPrompt.eyebrow")}
+            </p>
+            <p className={styles.meterLocationText}>
+              {tg("checkInOutPage.meterLocationPrompt.text")}
+            </p>
+          </div>
+          <button
+            type="button"
+            className={styles.meterGuideButton}
+            onClick={scrollToMeterGuide}
+          >
+            <span>{tg("checkInOutPage.meterLocationPrompt.button")}</span>
+            <UI_ICONS.ChevronForward aria-hidden />
+          </button>
+        </div>
         <Form
           key={formKey}
           fields={fields}
@@ -935,7 +963,13 @@ export default function CheckInOut({
           </div>
         )}
 
-        <Accordion items={accordionItems as any} i18nNs="guest" lang={lang} />
+        <div
+          id="meter-location-guide"
+          ref={meterGuideRef}
+          className={styles.accordionBlock}
+        >
+          <Accordion items={accordionItems as any} i18nNs="guest" lang={lang} />
+        </div>
       </div>
     </>
   );

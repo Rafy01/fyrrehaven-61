@@ -613,6 +613,11 @@ export const da = {
       "mobileOnly": "– Denne side er kun tilgænglig via en mobil telefon",
       "unknownError": "Ukendt fejl",
       "fallbackError": "Noget gik galt.",
+      "meterLocationPrompt": {
+        "eyebrow": "Målerguide",
+        "text": "Find målerne, før du indtaster aflæsningerne. Vi anbefaler, at du trykker på upload-knappen og tager hvert billede direkte derfra.",
+        "button": "Vis placeringer"
+      },
       "fields": {
         "name": {
           "label": "Navn",
@@ -629,11 +634,12 @@ export const da = {
         },
         "confirmEmail": "Bekræft e-mail",
         "elReading": "EL måler aflæsning",
+        "elReadingDescription": "Brug blitz til billedet af elmåleren, så tallene er tydelige.",
         "waterHouse": "Vand (huset)",
         "waterPool": "Vand (pool)",
         "meterImages": {
           "label": "Billede af aflæsning",
-          "description": "Verificer med billeder af jeres aflæsning og brug blitz på el-måleren."
+          "description": "Du kan uploade mere end ét billede. Verificer hver aflæsning med tydelige billeder, og brug blitz på elmåleren."
         },
         "comment": {
           "label": "Kommentar",
