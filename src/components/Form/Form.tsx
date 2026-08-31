@@ -47,8 +47,10 @@ export type Field =
       name: string;
       label: string;
       description?: string;
+      after?: React.ReactNode;
       required?: boolean;
       placeholder?: string;
+      inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
       max?: number;
     }
   | {
@@ -350,6 +352,7 @@ export default function Form({
                 {...common}
                 type={field.type}
                 placeholder={field.placeholder}
+                inputMode={field.inputMode}
                 max={field.type === "number" ? field.max : undefined}
               />
             ) : field.type === "textarea" ? (

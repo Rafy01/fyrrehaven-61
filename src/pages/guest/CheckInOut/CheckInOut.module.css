@@ -112,6 +112,23 @@
   line-height: 1.5;
 }
 
+.meterReadingHint {
+  margin: -0.2rem 0 0;
+  color: var(--muted, #4b5563);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.meterWhiteDigits {
+  color: var(--form-text, #111827);
+  font-weight: 800;
+}
+
+.meterRedDigits {
+  color: #d9485f;
+  font-weight: 900;
+}
+
 .image {
   width: auto;
   max-width: 500px;

@@ -324,7 +324,7 @@ export const de = {
       "lateNotice": "Späte Anfragen und Last-minute-Buchungen werden akzeptiert. Wir kümmern uns darum und melden uns nur, wenn etwas nicht möglich ist.",
       "bundleHint": "Komplettpaket mit Bettwaren, Bettwäsche und Handtüchern",
       "fields": {
-        "name": "Name",
+        "name": "Buchende Person",
         "email": "E-Mail-Adresse",
         "confirmEmail": "E-Mail bestätigen",
         "stayDate": "Aufenthaltsdatum",
@@ -332,7 +332,7 @@ export const de = {
         "otherRequests": "Weitere Wünsche?"
       },
       "placeholders": {
-        "name": "Name des Mieters",
+        "name": "Name der Person, die den Aufenthalt gebucht hat",
         "email": "name@email.de",
         "amount": "Gewünschte Anzahl",
         "otherRequests": "Schreiben Sie Ihre Wünsche hier, dann finden wir eine Lösung"
@@ -636,6 +636,8 @@ export const de = {
         "elReading": "Stromzählerstand",
         "elReadingDescription": "Verwenden Sie Blitz für das Foto des Stromzählers, damit die Zahlen gut lesbar sind.",
         "waterHouse": "Wasser (Haus)",
+        "waterHouseExamplePrefix": "Beispiel:",
+        "waterHouseExampleSuffix": ". Die weißen Zahlen stehen vor dem Komma, die roten Zahlen nach dem Komma.",
         "waterPool": "Wasser (Pool)",
         "meterImages": {
           "label": "Foto der Ablesung",

@@ -38,13 +38,16 @@ id=<submission-id>
 limit=1..500
 sinceMs=<createdAtMs lower bound>
 intent=booking|extra-services|guest-checkin
-status=sent|mail_failed|pending
+status=draft|sent|mail_failed|pending
 mailStatus=sent|failed|pending
 ```
 
 The integration response is English-only and only includes data intended for the
 external dashboard. Contact submissions are not shared. Check-in/out submissions
 are not shared until an admin approves the meter readings.
+Draft submissions are shared as `type: "draft"` when their status is `draft`,
+including partial guest, date, price, extra-service, and check-in/out data when
+available.
 
 Response:
 
@@ -104,6 +107,45 @@ Extra service submissions return the selected service list:
       "totalDKK": 450
     }
   ]
+}
+```
+
+Draft submissions return partial data:
+
+```json
+{
+  "id": "guest-checkin-abc123",
+  "type": "draft",
+  "status": "draft",
+  "intent": "guest-checkin",
+  "bookingNumber": "91234",
+  "guest": {
+    "name": "Guest Name",
+    "email": "guest@example.com",
+    "phone": null,
+    "country": null,
+    "countryIso": null
+  },
+  "dates": {
+    "checkIn": null,
+    "checkOut": null,
+    "nights": null,
+    "stayDate": null,
+    "checkInOrOut": null
+  },
+  "price": {
+    "totalDKK": null
+  },
+  "checkin": {
+    "type": "checkin",
+    "keycode": "1234",
+    "meters": {
+      "electricity": "055540",
+      "waterHouse": "123,456",
+      "waterPool": null
+    },
+    "attachmentCount": 0
+  }
 }
 ```
 
