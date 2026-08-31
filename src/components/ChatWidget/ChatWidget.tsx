@@ -60,14 +60,12 @@ function bestMatch(q: string): { snippet: Snippet | null; confidence: number } {
 /* -------- types -------- */
 type Msg = {
   id: string;
-  role: "user" | "bot" | "card";
+  role: "user" | "bot";
   text?: string;
   lang: Lang;
   meta?: {
     snippetId?: string;
     confidence?: number;
-    unknownId?: string;
-    q?: string;
   };
 };
 
@@ -193,65 +191,7 @@ export default function ChatWidget({ lang }: Props) {
 
   if (hidden) return null;
 
-  const CONTACT_EMAIL = "kontakt@fyrrehaven-61.dk";
-
   function renderMessage(m: Msg) {
-    if (m.role === "card" && m.meta?.q) {
-      const mailSubject = t(
-        "Spørgsmål fra chat (ukendt)",
-        "Chat question (unknown)",
-        "Chatfrage (unbekannt)"
-      );
-      const mailBody =
-        t(
-          "Hej Fyrrehaven 61,\n\nJeg har dette spørgsmål fra chatten:\n\n",
-          "Hi Fyrrehaven 61,\n\nI have this question from the chat:\n\n",
-          "Hallo Fyrrehaven 61,\n\nIch habe diese Frage aus dem Chat:\n\n"
-        ) +
-        `"${m.meta.q}"\n\n`;
-
-      const mailto = `mailto:${encodeURIComponent(
-        CONTACT_EMAIL
-      )}?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(
-        mailBody
-      )}`;
-
-      return (
-        <div className={styles.msgBot}>
-          <div className={styles.card}>
-            <div className={styles.cardTitle}>
-              {t(
-                "Vil du kontakte os direkte?",
-                "Want to contact us directly?",
-                "Möchten Sie uns direkt kontaktieren?"
-              )}
-            </div>
-            <div className={styles.cardText}>
-              {t(
-                "Du kan sende spørgsmålet på mail – eller kopiere det til udklipsholderen.",
-                "You can send your question by email – or copy it to your clipboard.",
-                "Sie können Ihre Frage per E-Mail senden – oder in die Zwischenablage kopieren."
-              )}
-            </div>
-            <div className={styles.btnRow}>
-              <a className={styles.ctaBtn} href={mailto}>
-                📧 {t("Send pr. mail", "Send email", "Per E-Mail senden")}
-              </a>
-              <button
-                type="button"
-                className={styles.ghostBtn}
-                onClick={() => {
-                  navigator.clipboard?.writeText(m.meta?.q ?? "");
-                }}
-              >
-                📋 {t("Kopiér", "Copy", "Kopieren")}
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     const isUser = m.role === "user";
     const text = m.text ?? "";
     // Simpel **bold** og afsnit

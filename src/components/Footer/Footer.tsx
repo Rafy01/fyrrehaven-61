@@ -505,7 +505,6 @@ export default function Footer({
             </Flex>
 
             <ul className={styles.bottomLinks}>
-              {/* Erstat # med rigtige ruter når klar */}
               <li>
                 <Link
                   className={styles.bottomLink}
@@ -522,14 +521,6 @@ export default function Footer({
                 >
                   {t("links.cookies")}
                 </button>
-              </li>
-              <li>
-                <Link
-                  className={styles.bottomLink}
-                  to={pathOf(currentLang, "sitemap")}
-                >
-                  {t("links.sitemap")}
-                </Link>
               </li>
               <li>
                 <Link

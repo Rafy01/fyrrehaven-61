@@ -11,9 +11,7 @@ export type PageKey =
   | "contact"
   | "book"
   | "fees"
-  | "chat"
-  | "privacy"
-  | "sitemap";
+  | "privacy";
 
 // Public slugs pr. side pr. sprog
 export const SLUGS: Record<PageKey, Record<Lang, string>> = {
@@ -29,9 +27,7 @@ export const SLUGS: Record<PageKey, Record<Lang, string>> = {
   contact: { da: "kontakt", en: "contact", de: "kontakt" },
   book: { da: "booking", en: "book", de: "buchung" },
   fees: { da: "gebyrer", en: "fees", de: "gebuehren" },
-  chat: { da: "chat-ukendte-sporgsmal", en: "chat-unknown-questions", de: "chat-unbekannte-fragen" },
   privacy: { da: "privatlivspolitik", en: "privacy-policy", de: "datenschutzrichtlinie" },
-  sitemap: { da: "sitemap", en: "sitemap", de: "sitemap" },
 };
 
 // Gæste-sider (separat fordi de har præfikset `/guest`)

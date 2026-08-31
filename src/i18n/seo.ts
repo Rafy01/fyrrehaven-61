@@ -4,7 +4,7 @@ import { da } from "./da";
 import { de } from "./de";
 import { en } from "./en";
 
-export type SeoPageKey = PageKey | "extraServices" | "notFound";
+export type SeoPageKey = PageKey | "extraServices";
 
 export type SeoPack = {
   title: string;

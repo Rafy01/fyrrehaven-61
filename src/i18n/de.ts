@@ -904,7 +904,6 @@ export const de = {
       "extraServices": "Zusatzleistungen",
       "privacy": "Datenschutz",
       "cookies": "Cookie-Einstellungen",
-      "sitemap": "Sitemap",
       "fees": "Gebühren"
     },
     "socialAria": "Soziale Medien",
@@ -1136,34 +1135,6 @@ export const de = {
       ],
       "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
       "imageAlt": "Datenschutzerklärung",
-      "robots": {
-        "index": false,
-        "follow": true,
-        "noarchive": true
-      }
-    },
-    "sitemap": {
-      "title": "Sitemap | Fyrrehaven 61",
-      "description": "Übersicht über Seiten, Bereiche und nützliche Links für die schnelle Navigation.",
-      "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
-      "imageAlt": "Sitemap"
-    },
-    "chat": {
-      "title": "Chat | Fyrrehaven 61",
-      "description": "Stellen Sie Fragen zum Haus, zur Umgebung und zur Buchung.",
-      "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
-      "imageAlt": "Chat",
-      "robots": {
-        "index": false,
-        "follow": false,
-        "noarchive": true
-      }
-    },
-    "notFound": {
-      "title": "Seite nicht gefunden | Fyrrehaven 61",
-      "description": "Die angeforderte Seite konnte nicht gefunden werden.",
-      "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
-      "imageAlt": "Seite nicht gefunden",
       "robots": {
         "index": false,
         "follow": true,

@@ -142,38 +142,6 @@ input[type="file"] {
   cursor: pointer;
 }
 
-.fileInput {
-  padding: 0.6rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  font-size: 1rem;
-  background: var(--surface);
-  color: var(--form-text);
-  width: 100%;
-  box-sizing: border-box;
-  cursor: pointer;
-}
-
-.fileInput::file-selector-button {
-  background-color: var(--surface-soft);
-  color: var(--form-text);
-  border: none;
-  padding: 0.5rem 0.75rem;
-  margin-right: 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-
-.fileInput::file-selector-button:hover {
-  background-color: var(--surface-hover);
-}
-}
-
 .fileList {
   font-size: 0.85rem;
   color: var(--muted);

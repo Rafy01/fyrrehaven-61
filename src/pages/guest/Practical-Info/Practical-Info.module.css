@@ -57,10 +57,3 @@
   color: var(--gold-700);
   text-decoration: underline;
 }
-
-.caption {
-  font-size: 0.875rem;
-  color: var(--muted);
-  margin-top: 0.5rem;
-  text-align: center;
-}
