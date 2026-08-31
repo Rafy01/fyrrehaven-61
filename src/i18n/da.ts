@@ -324,7 +324,7 @@ export const da = {
       "lateNotice": "Sene forespørgsler og last minute-bookinger accepteres. Vi sørger for det og kontakter dig kun, hvis noget ikke kan lade sig gøre.",
       "bundleHint": "Komplet pakke med sengetøj, sengelinned og håndklæder",
       "fields": {
-        "name": "Navn",
+        "name": "Booker",
         "email": "E-mailadresse",
         "confirmEmail": "Bekræft e-mail",
         "stayDate": "Dato for ophold",
@@ -332,7 +332,7 @@ export const da = {
         "otherRequests": "Andre ønsker?"
       },
       "placeholders": {
-        "name": "Lejers navn",
+        "name": "Navn på personen der har booket opholdet",
         "email": "navn@email.dk",
         "amount": "Ønsket antal",
         "otherRequests": "Skriv dine ønsker her, så finder vi en løsning"

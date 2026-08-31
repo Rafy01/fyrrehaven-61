@@ -324,7 +324,7 @@ export const en = {
       "lateNotice": "Late and last-minute requests are accepted. We will arrange it and only contact you if something cannot be done.",
       "bundleHint": "Complete package of bedding, sheets and towels",
       "fields": {
-        "name": "Name",
+        "name": "Booker",
         "email": "Email Address",
         "confirmEmail": "Confirm email",
         "stayDate": "Date of stay",
@@ -332,7 +332,7 @@ export const en = {
         "otherRequests": "Any other requests?"
       },
       "placeholders": {
-        "name": "Tenant name",
+        "name": "Name of the person who booked the stay",
         "email": "john@doe.com",
         "amount": "Desired amount",
         "otherRequests": "Write your requests here and we will find a solution"
