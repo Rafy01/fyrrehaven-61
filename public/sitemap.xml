@@ -162,22 +162,4 @@
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
-  <url>
-    <loc>https://fyrrehaven-61.dk/da/sitemap</loc>
-    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/sitemap" />
-    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/sitemap" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/sitemap" />
-    <lastmod>2026-05-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.1</priority>
-  </url>
-  <url>
-    <loc>https://fyrrehaven-61.dk/en/sitemap</loc>
-    <xhtml:link rel="alternate" hreflang="da-DK" href="https://fyrrehaven-61.dk/da/sitemap" />
-    <xhtml:link rel="alternate" hreflang="en-GB" href="https://fyrrehaven-61.dk/en/sitemap" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://fyrrehaven-61.dk/en/sitemap" />
-    <lastmod>2026-05-29</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.1</priority>
-  </url>
 </urlset>

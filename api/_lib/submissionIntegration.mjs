@@ -154,6 +154,8 @@ function checkinPayload(submission, checkin) {
     status: cleanString(submission.status),
     bookingNumber: cleanString(submission.bookingNumber),
     dates: {
+      checkIn: cleanString(checkin.bookingStartDate),
+      checkOut: cleanString(checkin.bookingEndDate),
       checkInOrOut: cleanString(checkin.stayDate || checkin.submittedStayDate),
       approvedAtMs: cleanNumber(approval.approvedAtMs),
     },
@@ -180,6 +182,8 @@ function draftPayload(submission, intent) {
       checkOut: cleanString(submission.selection?.endExclusive),
       nights: cleanNumber(submission.selection?.nights),
       stayDate: cleanString(submission.extras?.stayDate),
+      bookingStartDate: cleanString(submission.checkin?.bookingStartDate),
+      bookingEndDate: cleanString(submission.checkin?.bookingEndDate),
       checkInOrOut: cleanString(
         submission.checkin?.stayDate || submission.checkin?.submittedStayDate
       ),

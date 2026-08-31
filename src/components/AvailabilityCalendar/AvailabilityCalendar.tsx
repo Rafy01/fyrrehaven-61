@@ -264,17 +264,13 @@ async function loadIcal(apiPath: string): Promise<CacheEntry> {
       try {
         const res = await fetch(apiPath, { method: "GET" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        // Prøv JSON først – hvis det fejler, læs tekst og kast en pæn fejl
-        let json: ApiResponse | null = null;
+        const text = await res.text();
+        let json: ApiResponse;
         try {
-          json = (await res.json()) as ApiResponse;
+          json = JSON.parse(text) as ApiResponse;
         } catch {
-          const txt = await res.text();
           throw new Error(
-            `Ugyldigt JSON-svar fra ${apiPath}. Første bytes: ${txt.slice(
-              0,
-              80
-            )}`
+            "Calendar availability could not be loaded right now."
           );
         }
         const norm = normalizeBookingsFromApi(json);
@@ -336,7 +332,6 @@ export default function AvailabilityCalendar({
   const today = todayRef.current;
   const minMonth = startOfMonth(today);
 
-  const WEEKS = 5;
   const WEEKNUM_COL = weekNumberColWidth;
   const weekColTemplate = `minmax(${WEEKNUM_COL}px, ${WEEKNUM_COL}px) repeat(7, 1fr)`;
 
@@ -345,6 +340,14 @@ export default function AvailabilityCalendar({
     () => startOfWeek(startOfMonth(monthBase), weekStartsOn),
     [monthBase, weekStartsOn]
   );
+  const weeks = React.useMemo(() => {
+    const lastDayOfMonth = new Date(
+      monthBase.getFullYear(),
+      monthBase.getMonth() + 1,
+      0
+    );
+    return Math.ceil((daysBetween(gridStart, lastDayOfMonth) + 1) / 7);
+  }, [gridStart, monthBase]);
 
   const [bookings, setBookings] = React.useState<Booking[] | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -401,10 +404,10 @@ export default function AvailabilityCalendar({
     setMonthBase((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
   }
 
-  // cells (5 uger)
+  // cells (5 or 6 weeks, depending on the month)
   const weekStarts: Date[] = React.useMemo(
-    () => Array.from({ length: WEEKS }, (_, r) => addDays(gridStart, r * 7)),
-    [gridStart]
+    () => Array.from({ length: weeks }, (_, r) => addDays(gridStart, r * 7)),
+    [gridStart, weeks]
   );
 
   const cells: Date[][] = React.useMemo(
@@ -420,16 +423,16 @@ export default function AvailabilityCalendar({
     if (!bookings) return [];
     const segs: Segment[] = [];
     for (const b of bookings)
-      segs.push(...splitIntoSegments(b, gridStart, WEEKS));
+      segs.push(...splitIntoSegments(b, gridStart, weeks));
     return segs;
-  }, [bookings, gridStart]);
+  }, [bookings, gridStart, weeks]);
 
   /* Bookede dage i viewporten (YYYY-MM-DD) */
   const bookedDays = React.useMemo(() => {
     const set = new Set<string>();
     if (!bookings) return set;
 
-    const gridEnd = addDays(gridStart, WEEKS * 7); // eksklusiv
+    const gridEnd = addDays(gridStart, weeks * 7); // eksklusiv
     for (const b of bookings) {
       const s = clampDate(b.startDay, gridStart, gridEnd);
       const e = clampDate(b.endDay, gridStart, gridEnd); // eksklusiv
@@ -438,33 +441,33 @@ export default function AvailabilityCalendar({
       }
     }
     return set;
-  }, [bookings, gridStart]);
+  }, [bookings, gridStart, weeks]);
 
   const checkoutDays = React.useMemo(() => {
     const set = new Set<string>();
     if (!bookings) return set;
 
-    const gridEnd = addDays(gridStart, WEEKS * 7);
+    const gridEnd = addDays(gridStart, weeks * 7);
     for (const b of bookings) {
       if (b.endDay >= gridStart && b.endDay < gridEnd) {
         set.add(b.endDay.toISOString().slice(0, 10));
       }
     }
     return set;
-  }, [bookings, gridStart]);
+  }, [bookings, gridStart, weeks]);
 
   const checkinDays = React.useMemo(() => {
     const set = new Set<string>();
     if (!bookings) return set;
 
-    const gridEnd = addDays(gridStart, WEEKS * 7);
+    const gridEnd = addDays(gridStart, weeks * 7);
     for (const b of bookings) {
       if (b.startDay >= gridStart && b.startDay < gridEnd) {
         set.add(b.startDay.toISOString().slice(0, 10));
       }
     }
     return set;
-  }, [bookings, gridStart]);
+  }, [bookings, gridStart, weeks]);
 
   // selection overlay segments
   const selSegments = React.useMemo(() => {
@@ -475,8 +478,8 @@ export default function AvailabilityCalendar({
       startDay: startOfDay(sel.start),
       endDay: startOfDay(sel.end),
     };
-    return splitIntoSegments(b, gridStart, WEEKS);
-  }, [sel, gridStart, selectionMode]);
+    return splitIntoSegments(b, gridStart, weeks);
+  }, [sel, gridStart, selectionMode, weeks]);
 
   const monthTitle = formatMonthTitle(monthBase, lang);
   const reservedLabel = t("Reserveret", "Reserved", "Reserviert");
@@ -689,7 +692,7 @@ export default function AvailabilityCalendar({
         className={styles.grid}
         style={
           {
-            ["--weeks"]: 5,
+            ["--weeks"]: weeks,
             gridTemplateColumns: weekColTemplate,
           } as CSSVars
         }

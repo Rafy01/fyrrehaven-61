@@ -17,6 +17,7 @@ const MAX_CLIENT_IMAGE_SOURCE_BYTES = 40 * 1024 * 1024;
 const MAX_CHECKIN_IMAGE_UPLOAD_BYTES = 4 * 1024 * 1024;
 const MAX_CHECKIN_IMAGE_FILES = 6;
 const CHECKIN_IMAGE_TARGET_DIMENSION = 1080;
+const CHECKIN_UPLOAD_TIMEOUT_MS = 45000;
 const CHECKIN_IMAGE_COMPRESSION_STEPS = [
   { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.78 },
   { maxDimension: CHECKIN_IMAGE_TARGET_DIMENSION, quality: 0.66 },
@@ -184,15 +185,11 @@ async function prepareImageFiles(originalFiles: File[]) {
 
   let currentFiles = originalFiles;
   for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
-    const nextFiles: File[] = [];
-
-    for (const file of currentFiles) {
-      nextFiles.push(
-        await compressImageFile(file, step.maxDimension, step.quality)
-      );
-    }
-
-    currentFiles = nextFiles;
+    currentFiles = await Promise.all(
+      currentFiles.map((file) =>
+        compressImageFile(file, step.maxDimension, step.quality)
+      )
+    );
     if (filesTotalSize(currentFiles) <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES) {
       return currentFiles;
     }
@@ -218,6 +215,7 @@ function postFormData(
   }>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
+    xhr.timeout = CHECKIN_UPLOAD_TIMEOUT_MS;
 
     for (const [key, value] of Object.entries(headers)) {
       xhr.setRequestHeader(key, value);
@@ -231,7 +229,17 @@ function postFormData(
         status: xhr.status,
         json: async () => {
           if (!xhr.responseText) return {};
-          return JSON.parse(xhr.responseText);
+          try {
+            return JSON.parse(xhr.responseText);
+          } catch {
+            return {
+              ok: false,
+              error: "UNREADABLE_SERVER_RESPONSE",
+              detail: `The upload server returned an unreadable response${
+                xhr.status ? ` (HTTP ${xhr.status})` : ""
+              }. Please try again with screenshots of the meter photos.`,
+            };
+          }
         },
       });
     };
@@ -245,34 +253,34 @@ async function preuploadCheckinImages(
   values: Record<string, string | FileList | boolean>,
   clientDraftId: string,
   headers: Record<string, string>
-) {
-  const attachments: PreuploadedAttachment[] = [];
+): Promise<PreuploadedAttachment[]> {
+  return Promise.all(
+    files.map(async (file, index) => {
+      const formData = new FormData();
+      formData.set("website", String(values.website || ""));
+      formData.set("company", String(values.company || ""));
+      formData.set("faxNumber", String(values.faxNumber || ""));
+      formData.set("clientDraftId", clientDraftId);
+      formData.set("formStartedAt", String(values.formStartedAt || ""));
+      formData.set("fileIndex", String(index + 1));
+      formData.append("meterImage", file);
 
-  for (const [index, file] of files.entries()) {
-    const formData = new FormData();
-    formData.set("website", String(values.website || ""));
-    formData.set("company", String(values.company || ""));
-    formData.set("faxNumber", String(values.faxNumber || ""));
-    formData.set("clientDraftId", clientDraftId);
-    formData.set("formStartedAt", String(values.formStartedAt || ""));
-    formData.set("fileIndex", String(index + 1));
-    formData.append("meterImage", file);
+      const res = await postFormData(
+        "/api/checkin-image",
+        formData,
+        headers
+      );
 
-    const res = await postFormData(
-      "/api/checkin-image",
-      formData,
-      headers
-    );
+      const data = await res.json();
+      if (!res.ok || !data?.attachment) {
+        throw new Error(
+          String(data?.detail || data?.error || "IMAGE_UPLOAD_FAILED")
+        );
+      }
 
-    const data = await res.json();
-    if (!res.ok || !data?.attachment) {
-      throw new Error(String(data?.detail || data?.error || "IMAGE_UPLOAD_FAILED"));
-    }
-
-    attachments.push(data.attachment);
-  }
-
-  return attachments;
+      return data.attachment;
+    })
+  );
 }
 
 export default function CheckInOut({

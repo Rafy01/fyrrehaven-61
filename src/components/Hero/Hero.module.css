@@ -54,12 +54,6 @@
   object-fit: cover;
 }
 
-.caption{
-  margin-top: .5rem;
-  font-size: .9rem;
-  color: color-mix(in srgb, var(--ink-900) 60%, transparent);
-}
-
 /* Responsive */
 @media (max-width: 1024px){
   .row{ flex-direction: column; }

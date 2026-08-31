@@ -9,35 +9,12 @@
   margin-bottom: 2rem;
 }
 
-.subtext {
-  color: var(--muted);
-  margin-bottom: 1rem;
-}
-
 .quickLinks {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 1rem;
   margin-bottom: 2rem;
-}
-
-.linkButton {
-  padding: 0.5rem 1rem;
-  border: 2px solid var(--gold-500);
-  border-radius: 4px;
-  text-decoration: none;
-  color: var(--form-text);
-  background-color: transparent;
-  font-weight: 500;
-  transition: background-color 0.2s ease;
-}
-
-@media (hover: hover) and (pointer: fine) {
-
-.linkButton:hover {
-  background-color: color-mix(in srgb, var(--gold-500) 14%, var(--surface));
-}
 }
 
 .noticeBox {
@@ -90,16 +67,4 @@
   outline: 3px solid var(--focus);
   outline-offset: 4px;
   border-radius: 4px;
-}
-
-.mapBlock {
-  text-align: center;
-  margin-top: 1rem;
-}
-
-.mapImage {
-  width: 100%;
-  max-width: 600px;
-  border-radius: 4px;
-  margin-top: 0.5rem;
 }

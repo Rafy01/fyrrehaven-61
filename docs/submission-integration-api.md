@@ -131,6 +131,8 @@ Draft submissions return partial data:
     "checkOut": null,
     "nights": null,
     "stayDate": null,
+    "bookingStartDate": "2026-08-12",
+    "bookingEndDate": null,
     "checkInOrOut": null
   },
   "price": {
@@ -158,6 +160,8 @@ and meter numbers:
   "type": "checkin",
   "bookingNumber": "91234",
   "dates": {
+    "checkIn": "2026-08-12",
+    "checkOut": null,
     "checkInOrOut": "2026-08-12",
     "approvedAtMs": 1760000000000
   },

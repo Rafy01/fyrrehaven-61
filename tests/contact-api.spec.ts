@@ -43,8 +43,10 @@ type MockMailResult = {
 
 const validBookingPayload = {
   lang: 'en',
+  formStartedAt: Date.now() - 5000,
   name: 'Playwright Booker',
   email: 'test+api@example.com',
+  confirmEmail: 'test+api@example.com',
   phone: '+45 12345678',
   country: 'Denmark',
   countryIso: 'DK',
@@ -81,7 +83,10 @@ const makeRequest = (
       origin,
       'user-agent': userAgent,
     },
-    body,
+    body:
+      body && typeof body === 'object' && !Array.isArray(body)
+        ? { formStartedAt: Date.now() - 5000, ...body }
+        : body,
     socket: { remoteAddress },
   });
 
@@ -468,6 +473,8 @@ test('api/contact allows submissions from Vercel project previews', async () => 
 });
 
 test('api/contact enforces rate limits for repeated submissions', async () => {
+  const originalRateLimit = process.env.CONTACT_RATE_LIMIT;
+  const originalRateWindowMs = process.env.CONTACT_RATE_WINDOW_MS;
   process.env.CONTACT_RATE_LIMIT = '1';
   process.env.CONTACT_RATE_WINDOW_MS = '60000';
   const contactModule = await loadContactModule();
@@ -514,6 +521,10 @@ test('api/contact enforces rate limits for repeated submissions', async () => {
     });
   } finally {
     nodemailer.createTransport = originalTransport;
+    if (originalRateLimit === undefined) delete process.env.CONTACT_RATE_LIMIT;
+    else process.env.CONTACT_RATE_LIMIT = originalRateLimit;
+    if (originalRateWindowMs === undefined) delete process.env.CONTACT_RATE_WINDOW_MS;
+    else process.env.CONTACT_RATE_WINDOW_MS = originalRateWindowMs;
   }
 });
 

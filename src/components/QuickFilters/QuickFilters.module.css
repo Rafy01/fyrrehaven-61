@@ -6,13 +6,13 @@
   --chip-ink-active: #fff;
 }
 
-.group {
+.row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
 }
 
-.dense .group {
+.dense .row {
   gap: 0.35rem;
 }
 
@@ -40,13 +40,6 @@
 .chip:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
-}
-
-.ico {
-  width: 16px;
-  height: 16px;
-  display: block;
-  color: currentColor;
 }
 
 .active {

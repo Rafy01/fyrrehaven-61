@@ -44,7 +44,6 @@ const Area = React.lazy(() => import("./pages/Area"));
 const Gallery = React.lazy(() => import("./pages/Gallery"));
 const Faq = React.lazy(() => import("./pages/Faq"));
 const Contact = React.lazy(() => import("./pages/Contact"));
-const ChatDebug = React.lazy(() => import("./pages/ChatDebug"));
 const Book = React.lazy(() => import("./pages/Book"));
 const Privacy = React.lazy(() => import("./pages/Privacy"));
 const Fees = React.lazy(() => import("./pages/Fees"));
@@ -178,7 +177,6 @@ const router = createBrowserRouter([
     children: guestRoutes("de"),
   },
 
-  { path: "/debug/chat", element: lazyElement(<ChatDebug />, "chat-debug") },
   { path: "/admin/*", element: lazyElement(<AdminForms />, "admin") },
   { path: "*", element: <Navigate to="/" replace /> },
 ]);

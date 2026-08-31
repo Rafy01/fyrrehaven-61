@@ -15,11 +15,6 @@
   letter-spacing: -0.01em;
 }
 
-.subtitle {
-  margin: 0;
-  color: var(--gray-700, #5f6b76);
-}
-
 /* Grid af kategorier */
 .grid {
   display: grid;
@@ -66,12 +61,4 @@
 
 @media (min-width: 1060px) {
   .card { grid-column: span 4; }
-}
-
-/* Kompakt variant */
-.compact .card {
-  padding: .8rem;
-}
-.compact .list {
-  gap: .3rem;
 }

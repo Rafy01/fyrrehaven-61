@@ -166,9 +166,7 @@ const breadcrumbNames: Record<
     | "contact"
     | "book"
     | "fees"
-    | "chat"
-    | "privacy"
-    | "sitemap",
+    | "privacy",
     string
   >
 > = {
@@ -181,9 +179,7 @@ const breadcrumbNames: Record<
     contact: "Kontakt",
     book: "Booking",
     fees: "Gebyrer",
-    chat: "Chat",
     privacy: "Privatlivspolitik",
-    sitemap: "Sitemap",
   },
   en: {
     home: "Home",
@@ -194,9 +190,7 @@ const breadcrumbNames: Record<
     contact: "Contact",
     book: "Book",
     fees: "Fees",
-    chat: "Chat",
     privacy: "Privacy Policy",
-    sitemap: "Sitemap",
   },
   de: {
     home: "Startseite",
@@ -207,9 +201,7 @@ const breadcrumbNames: Record<
     contact: "Kontakt",
     book: "Buchung",
     fees: "Gebühren",
-    chat: "Chat",
     privacy: "Datenschutzrichtlinie",
-    sitemap: "Sitemap",
   },
 };
 

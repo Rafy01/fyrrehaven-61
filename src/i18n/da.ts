@@ -650,7 +650,7 @@ export const da = {
         "consent": "Jeg giver samtykke til, at mine oplysninger må bruges til at behandle min henvendelse."
       },
       "submit": "Send aflæsning",
-      "sending": "Sender aflæsning...",
+      "sending": "Uploader billeder og sender aflæsningen. Det kan tage et øjeblik...",
       "success": "Tak! Din aflæsning er sendt.",
       "progress": {
         "compressing": "Klargør billeder",
@@ -904,7 +904,6 @@ export const da = {
       "extraServices": "Ekstra services",
       "privacy": "Privatliv",
       "cookies": "Cookieindstillinger",
-      "sitemap": "Sitemap",
       "fees": "Gebyr"
     },
     "socialAria": "Sociale medier",
@@ -1139,34 +1138,6 @@ export const da = {
       ],
       "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
       "imageAlt": "Privatlivspolitik",
-      "robots": {
-        "index": false,
-        "follow": true,
-        "noarchive": true
-      }
-    },
-    "sitemap": {
-      "title": "Sitemap | Fyrrehaven 61",
-      "description": "Oversigt over sider, sektioner og nyttige links for hurtig navigation.",
-      "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
-      "imageAlt": "Sitemap"
-    },
-    "chat": {
-      "title": "Chat | Fyrrehaven 61",
-      "description": "Stil spørgsmål om huset, området og booking.",
-      "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
-      "imageAlt": "Chat",
-      "robots": {
-        "index": false,
-        "follow": false,
-        "noarchive": true
-      }
-    },
-    "notFound": {
-      "title": "Side ikke fundet | Fyrrehaven 61",
-      "description": "Den ønskede side findes ikke.",
-      "image": "https://media.fyrrehaven-61.dk/wp-content/uploads/2025/09/ogimage2.jpg",
-      "imageAlt": "Side ikke fundet",
       "robots": {
         "index": false,
         "follow": true,

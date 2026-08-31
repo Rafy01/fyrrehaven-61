@@ -2518,7 +2518,7 @@ export default function AdminForms() {
       setMeterSaveState("idle");
       setMeterSaveError(null);
     }
-  }, [imagePreview]);
+  }, [imagePreview, meterDraftByImage]);
 
   const dateFilteredSubmissions = React.useMemo(() => {
     const range = dateFilterRange(dateFilter);
@@ -2611,6 +2611,93 @@ export default function AdminForms() {
         selectedSubmission
       : selectedGroup?.items.find((submission) => submission.id === activeGroupDetail) ||
         selectedSubmission;
+
+  const openSubmissionDetail = React.useCallback(
+    (
+      submissionId: string,
+      detailSlug?: string | null,
+      options?: { replace?: boolean }
+    ) => {
+      if (!detailSlug || detailSlug === "overview") {
+        setActiveGroupDetail("overview");
+        setActiveCheckinDetail("checkin");
+      }
+      setSelectedId(submissionId);
+      navigate(adminSubmissionPath(submissionId, detailSlug), {
+        replace: options?.replace,
+      });
+    },
+    [navigate]
+  );
+
+  const openGroupDetail = React.useCallback(
+    (
+      group: SubmissionGroup,
+      detail: GroupDetailSelection,
+      options?: { replace?: boolean }
+    ) => {
+      if (detail === "overview") {
+        setActiveGroupDetail("overview");
+        openSubmissionDetail(group.id, "overview", options);
+        return;
+      }
+
+      if (detail === CONTACT_GROUP_DETAIL) {
+        setActiveGroupDetail(CONTACT_GROUP_DETAIL);
+        openSubmissionDetail(group.id, "contact", options);
+        return;
+      }
+
+      if (detail === CHECKIN_GROUP_DETAIL) {
+        const checkinSubmission =
+          group.items.find(
+            (submission) => submission.checkin?.type === activeCheckinDetail
+          ) || group.items.find(isCheckinSubmission);
+        const checkinDetail =
+          checkinSubmission?.checkin?.type || activeCheckinDetail;
+        setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
+        if (checkinDetail === "checkin" || checkinDetail === "checkout") {
+          setActiveCheckinDetail(checkinDetail);
+        }
+        openSubmissionDetail(group.id, checkinDetail || "checkin", options);
+        return;
+      }
+
+      const submission = group.items.find((item) => item.id === detail);
+      setActiveGroupDetail(detail);
+      openSubmissionDetail(
+        group.id,
+        submission ? detailSlugForSubmission(submission) : detail,
+        options
+      );
+    },
+    [activeCheckinDetail, openSubmissionDetail]
+  );
+
+  const openCheckinDetail = React.useCallback(
+    (type: CheckinDetailSelection) => {
+      if (!selectedGroup) {
+        setActiveCheckinDetail(type);
+        return;
+      }
+
+      setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
+      setActiveCheckinDetail(type);
+      openSubmissionDetail(selectedGroup.id, type);
+    },
+    [openSubmissionDetail, selectedGroup]
+  );
+
+  const closeMobileDetail = React.useCallback(() => {
+    mobileDetailDrag.current.active = false;
+    mobileDetailDrag.current.pointerId = -1;
+    mobileDetailDrag.current.offset = 0;
+    mobileDetailDrag.current.velocity = 0;
+    setIsDraggingMobileDetail(false);
+    setMobileDetailDragOffset(0);
+    setSelectedId(null);
+    navigate("/admin/forms");
+  }, [navigate]);
 
   function detailSelectionForSlug(
     group: SubmissionGroup,
@@ -2712,7 +2799,7 @@ export default function AdminForms() {
       return;
     }
     openGroupDetail(selectedGroup, "overview", { replace: true });
-  }, [activeGroupDetail, selectedGroup]);
+  }, [activeGroupDetail, openGroupDetail, selectedGroup]);
 
   React.useEffect(() => {
     if (!selectedGroup) return;
@@ -2730,7 +2817,13 @@ export default function AdminForms() {
       ? "checkin"
       : "checkout";
     openCheckinDetail(nextType);
-  }, [activeCheckinDetail, activeGroupDetail, checkinSubmissions, selectedGroup]);
+  }, [
+    activeCheckinDetail,
+    activeGroupDetail,
+    checkinSubmissions,
+    openCheckinDetail,
+    selectedGroup,
+  ]);
 
   React.useEffect(() => {
     if (visibleGroups.length === 0) {
@@ -2818,7 +2911,7 @@ export default function AdminForms() {
       window.removeEventListener("pointerup", endDrag);
       window.removeEventListener("pointercancel", endDrag);
     };
-  }, [isDraggingMobileDetail]);
+  }, [closeMobileDetail, isDraggingMobileDetail]);
 
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -2858,6 +2951,8 @@ export default function AdminForms() {
     deleting,
     imagePreview,
     isMobileLayout,
+    closeMobileDetail,
+    openGroupDetail,
     selectedGroup,
   ]);
 
@@ -2877,76 +2972,6 @@ export default function AdminForms() {
       element.scrollHeight - element.scrollTop - element.clientHeight;
     if (distanceFromBottom > 360) return;
     showNextSubmissionBatch();
-  }
-
-  function openSubmissionDetail(
-    submissionId: string,
-    detailSlug?: string | null,
-    options?: { replace?: boolean }
-  ) {
-    if (!detailSlug || detailSlug === "overview") {
-      setActiveGroupDetail("overview");
-      setActiveCheckinDetail("checkin");
-    }
-    setSelectedId(submissionId);
-    navigate(adminSubmissionPath(submissionId, detailSlug), {
-      replace: options?.replace,
-    });
-  }
-
-  function openGroupDetail(
-    group: SubmissionGroup,
-    detail: GroupDetailSelection,
-    options?: { replace?: boolean }
-  ) {
-    if (detail === "overview") {
-      setActiveGroupDetail("overview");
-      openSubmissionDetail(group.id, "overview", options);
-      return;
-    }
-
-    if (detail === CONTACT_GROUP_DETAIL) {
-      setActiveGroupDetail(CONTACT_GROUP_DETAIL);
-      openSubmissionDetail(group.id, "contact", options);
-      return;
-    }
-
-    if (detail === CHECKIN_GROUP_DETAIL) {
-      const checkinSubmission =
-        group.items.find(
-          (submission) => submission.checkin?.type === activeCheckinDetail
-        ) || group.items.find(isCheckinSubmission);
-      const checkinDetail = checkinSubmission?.checkin?.type || activeCheckinDetail;
-      setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
-      if (checkinDetail === "checkin" || checkinDetail === "checkout") {
-        setActiveCheckinDetail(checkinDetail);
-      }
-      openSubmissionDetail(
-        group.id,
-        checkinDetail || "checkin",
-        options
-      );
-      return;
-    }
-
-    const submission = group.items.find((item) => item.id === detail);
-    setActiveGroupDetail(detail);
-    openSubmissionDetail(
-      group.id,
-      submission ? detailSlugForSubmission(submission) : detail,
-      options
-    );
-  }
-
-  function openCheckinDetail(type: CheckinDetailSelection) {
-    if (!selectedGroup) {
-      setActiveCheckinDetail(type);
-      return;
-    }
-
-    setActiveGroupDetail(CHECKIN_GROUP_DETAIL);
-    setActiveCheckinDetail(type);
-    openSubmissionDetail(selectedGroup.id, type);
   }
 
   async function adminAuthHeaders() {
@@ -3230,17 +3255,6 @@ export default function AdminForms() {
     } finally {
       setCreatingTestSubmission(false);
     }
-  }
-
-  function closeMobileDetail() {
-    mobileDetailDrag.current.active = false;
-    mobileDetailDrag.current.pointerId = -1;
-    mobileDetailDrag.current.offset = 0;
-    mobileDetailDrag.current.velocity = 0;
-    setIsDraggingMobileDetail(false);
-    setMobileDetailDragOffset(0);
-    setSelectedId(null);
-    navigate("/admin/forms");
   }
 
   function startMobileDetailDrag(event: React.PointerEvent<HTMLButtonElement>) {
@@ -4130,7 +4144,7 @@ export default function AdminForms() {
     };
   }
 
-  function replaceSubmission(nextSubmission: Submission) {
+  const replaceSubmission = React.useCallback((nextSubmission: Submission) => {
     setSubmissions((current) =>
       current.map((submission) =>
         submission.id === nextSubmission.id ? nextSubmission : submission
@@ -4145,86 +4159,98 @@ export default function AdminForms() {
         index: current.index,
       };
     });
-  }
+  }, []);
 
-  async function saveMeterCorrection(options?: {
-    meter?: MeterDraftKey;
-    value?: string;
-    signature?: string;
-  }) {
-    if (!imagePreview || meterSaveState === "saving") return;
-    const selectedMeter = options?.meter ?? meterDraftKey;
-    const correctedValue = (options?.value ?? meterDraftValue).trim();
+  const saveMeterCorrection = React.useCallback(
+    async (options?: {
+      meter?: MeterDraftKey;
+      value?: string;
+      signature?: string;
+    }) => {
+      if (!imagePreview || meterSaveState === "saving") return;
+      const selectedMeter = options?.meter ?? meterDraftKey;
+      const correctedValue = (options?.value ?? meterDraftValue).trim();
 
-    if (!selectedMeter) {
-      setMeterSaveState("error");
-      setMeterSaveError("Select which meter this image belongs to.");
-      return;
-    }
+      if (!selectedMeter) {
+        setMeterSaveState("error");
+        setMeterSaveError("Select which meter this image belongs to.");
+        return;
+      }
 
-    if (!correctedValue) {
-      setMeterSaveState("error");
-      setMeterSaveError("Enter the correct meter amount.");
-      return;
-    }
+      if (!correctedValue) {
+        setMeterSaveState("error");
+        setMeterSaveError("Enter the correct meter amount.");
+        return;
+      }
 
-    if (parseMeterNumber(correctedValue) == null) {
-      setMeterSaveState("error");
-      setMeterSaveError("Use a number, for example 055540 or 1.234,5.");
-      return;
-    }
+      if (parseMeterNumber(correctedValue) == null) {
+        setMeterSaveState("error");
+        setMeterSaveError("Use a number, for example 055540 or 1.234,5.");
+        return;
+      }
 
-    setMeterSaveState("saving");
-    setMeterSaveError(null);
+      setMeterSaveState("saving");
+      setMeterSaveError(null);
 
-    try {
-      if (DASHBOARD_AUTH_DISABLED) {
-        const updatedSubmission = buildCorrectedSubmission(
-          imagePreview.submission,
-          selectedMeter,
-          correctedValue,
-          adminEmail || "local@fyrrehaven-61.dk"
-        );
-        replaceSubmission(updatedSubmission);
+      try {
+        if (DASHBOARD_AUTH_DISABLED) {
+          const updatedSubmission = buildCorrectedSubmission(
+            imagePreview.submission,
+            selectedMeter,
+            correctedValue,
+            adminEmail || "local@fyrrehaven-61.dk"
+          );
+          replaceSubmission(updatedSubmission);
+          lastMeterSaveSignature.current =
+            options?.signature ||
+            `${imagePreview.submission.id}:${imagePreviewKey(imagePreview) || imagePreview.index}:${selectedMeter}:${correctedValue}`;
+          setMeterSaveState("saved");
+          return;
+        }
+
+        const auth = getFirebaseAuth();
+        const token = auth?.currentUser
+          ? await auth.currentUser.getIdToken(true)
+          : null;
+        const res = await fetch("/api/admin/forms", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            action: "correct-meter",
+            id: imagePreview.submission.id,
+            meter: selectedMeter,
+            correctedValue,
+          }),
+        });
+        const data = (await res.json()) as ApiResponse;
+        if (!res.ok || !data.ok || !data.submission) {
+          throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+        }
+
+        replaceSubmission(data.submission);
         lastMeterSaveSignature.current =
           options?.signature ||
           `${imagePreview.submission.id}:${imagePreviewKey(imagePreview) || imagePreview.index}:${selectedMeter}:${correctedValue}`;
         setMeterSaveState("saved");
-        return;
+      } catch (nextError) {
+        setMeterSaveState("error");
+        setMeterSaveError(
+          String(nextError instanceof Error ? nextError.message : nextError)
+        );
       }
-
-      const auth = getFirebaseAuth();
-      const token = auth?.currentUser ? await auth.currentUser.getIdToken(true) : null;
-      const res = await fetch("/api/admin/forms", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          action: "correct-meter",
-          id: imagePreview.submission.id,
-          meter: selectedMeter,
-          correctedValue,
-        }),
-      });
-      const data = (await res.json()) as ApiResponse;
-      if (!res.ok || !data.ok || !data.submission) {
-        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
-      }
-
-      replaceSubmission(data.submission);
-      lastMeterSaveSignature.current =
-        options?.signature ||
-        `${imagePreview.submission.id}:${imagePreviewKey(imagePreview) || imagePreview.index}:${selectedMeter}:${correctedValue}`;
-      setMeterSaveState("saved");
-    } catch (nextError) {
-      setMeterSaveState("error");
-      setMeterSaveError(
-        String(nextError instanceof Error ? nextError.message : nextError)
-      );
-    }
-  }
+    },
+    [
+      adminEmail,
+      imagePreview,
+      meterDraftKey,
+      meterDraftValue,
+      meterSaveState,
+      replaceSubmission,
+    ]
+  );
 
   async function approveCheckinMeters(submission: Submission) {
     if (!submission.checkin || approvingCheckinId) return;
@@ -4309,7 +4335,7 @@ export default function AdminForms() {
         meterAutosaveTimer.current = null;
       }
     };
-  }, [imagePreview, meterDraftKey, meterDraftValue]);
+  }, [imagePreview, meterDraftKey, meterDraftValue, saveMeterCorrection]);
 
   React.useEffect(() => {
     if (meterSaveState !== "saved") return;
