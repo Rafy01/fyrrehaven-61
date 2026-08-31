@@ -613,6 +613,11 @@ export const de = {
       "mobileOnly": "– Diese Seite ist nur über ein Mobiltelefon zugänglich",
       "unknownError": "Unbekannter Fehler",
       "fallbackError": "Etwas ist schiefgelaufen.",
+      "meterLocationPrompt": {
+        "eyebrow": "Zählerguide",
+        "text": "Finden Sie die Zähler, bevor Sie die Werte eintragen. Wir empfehlen, auf die Upload-Schaltfläche zu tippen und jedes Foto direkt von dort aufzunehmen.",
+        "button": "Standorte anzeigen"
+      },
       "fields": {
         "name": {
           "label": "Name",
@@ -629,11 +634,12 @@ export const de = {
         },
         "confirmEmail": "E-Mail bestätigen",
         "elReading": "Stromzählerstand",
+        "elReadingDescription": "Verwenden Sie Blitz für das Foto des Stromzählers, damit die Zahlen gut lesbar sind.",
         "waterHouse": "Wasser (Haus)",
         "waterPool": "Wasser (Pool)",
         "meterImages": {
           "label": "Foto der Ablesung",
-          "description": "Bestätigen Sie Ihre Ablesung mit Fotos. Verwenden Sie beim Stromzähler den Blitz."
+          "description": "Sie können mehr als ein Foto hochladen. Bestätigen Sie jede Ablesung mit klaren Fotos und verwenden Sie beim Stromzähler den Blitz."
         },
         "comment": {
           "label": "Kommentar",
