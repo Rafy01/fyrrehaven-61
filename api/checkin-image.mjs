@@ -9,7 +9,7 @@ import {
 import { applySecurityHeaders, sendJson } from "./_lib/httpSecurity.mjs";
 
 const MAX_UPLOAD_FILE_SIZE =
-  Number(process.env.CHECKIN_MAX_UPLOAD_FILE_SIZE_MB || 4) * 1024 * 1024;
+  Number(process.env.CHECKIN_MAX_UPLOAD_FILE_SIZE_MB || 8) * 1024 * 1024;
 const ALLOWED_UPLOAD_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",

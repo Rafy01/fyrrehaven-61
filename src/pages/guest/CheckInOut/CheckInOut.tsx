@@ -12,9 +12,11 @@ import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import { UI_ICONS } from "../../../lib/icons";
 import styles from "./CheckInOut.module.css";
 
-const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 2.6 * 1024 * 1024;
+// Keep the client-side target aligned with the server defaults so a normal
+// 3-photo guest upload is allowed without being aggressively compressed away.
+const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 8 * 1024 * 1024;
 const MAX_CLIENT_IMAGE_SOURCE_BYTES = 40 * 1024 * 1024;
-const MAX_CHECKIN_IMAGE_UPLOAD_BYTES = 4 * 1024 * 1024;
+const MAX_CHECKIN_IMAGE_UPLOAD_BYTES = 8 * 1024 * 1024;
 const MAX_CHECKIN_IMAGE_FILES = 6;
 const CHECKIN_IMAGE_TARGET_DIMENSION = 1080;
 const CHECKIN_UPLOAD_TIMEOUT_MS = 45000;

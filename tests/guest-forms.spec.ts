@@ -51,7 +51,7 @@ test.describe('guest forms', () => {
     });
   });
 
-  test('check-in/out form uploads meter photos and sends a valid reading quickly', async ({ page }) => {
+  test('check-in/out form uploads three meter photos and sends a valid reading quickly', async ({ page }) => {
     const imageUploads: string[] = [];
     const readings: string[] = [];
 
@@ -104,6 +104,7 @@ test.describe('guest forms', () => {
     await page.setInputFiles('#meterImages', [
       'public/admin-test/electricity-meter.jpeg',
       'public/admin-test/water-house-meter.jpeg',
+      'public/admin-test/water-pool-meter.jpeg',
     ]);
     await page.getByLabel(/I consent/i).check();
 
@@ -114,7 +115,7 @@ test.describe('guest forms', () => {
       timeout: 8000,
     });
     expect(Date.now() - start).toBeLessThan(8000);
-    expect(imageUploads).toHaveLength(2);
+    expect(imageUploads).toHaveLength(3);
     expect(readings).toHaveLength(1);
     expect(readings[0]).toContain('preuploadedMeterImages');
   });
