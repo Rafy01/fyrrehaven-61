@@ -182,6 +182,38 @@ export default function Form({
       const uniqueSelectedFiles = uniqueFiles(allFiles, (file) => {
         duplicateSignatures.add(fileSignature(file));
       });
+
+      if (field?.type === "file" && field.maxFiles && uniqueSelectedFiles.length > field.maxFiles) {
+        const message = t("form.maxFilesReached", {
+          count: field.maxFiles,
+        });
+        setErrors((prev) => ({
+          ...prev,
+          [name]: message,
+        }));
+
+        const limitedFiles = uniqueSelectedFiles.slice(0, field.maxFiles);
+        const transfer = new DataTransfer();
+        limitedFiles.forEach((file) => transfer.items.add(file));
+        input.files = transfer.files;
+
+        nextValues = {
+          ...values,
+          [name]: transfer.files,
+        };
+        setValues(nextValues);
+        setFileNames({
+          ...fileNames,
+          [name]: Array.from(transfer.files).map(fileLabel),
+        });
+        setDuplicateFileMessages((prev) => ({
+          ...prev,
+          [name]: {},
+        }));
+        onValuesChange?.(nextValues);
+        return;
+      }
+
       const limitedFiles =
         field?.type === "file" && field.maxFiles
           ? uniqueSelectedFiles.slice(-field.maxFiles)

@@ -10,6 +10,7 @@ export const da = {
       "required": "Dette felt er påkrævet",
       "emailMismatch": "E-mail og bekræft e-mail skal være ens.",
       "fileAlreadyAdded": "Dette billede er allerede tilføjet. Fjern det først, hvis du vil vælge et andet billede.",
+      "maxFilesReached": "Du kan uploade op til {{count}} målerbilleder.",
       "moreFileIssues": "{{count}} problem mere kræver opmærksomhed."
     }
   },

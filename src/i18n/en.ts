@@ -10,6 +10,7 @@ export const en = {
       "required": "This field is required",
       "emailMismatch": "Email and confirm email must match.",
       "fileAlreadyAdded": "This photo is already added. Remove it first if you want to choose another photo.",
+      "maxFilesReached": "You can upload up to {{count}} meter photos.",
       "moreFileIssues": "{{count}} more issue needs attention."
     }
   },

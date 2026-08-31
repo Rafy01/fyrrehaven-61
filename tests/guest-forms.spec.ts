@@ -120,6 +120,37 @@ test.describe('guest forms', () => {
     expect(readings[0]).toContain('preuploadedMeterImages');
   });
 
+  test('check-in/out form shows a clear error when more than three meter photos are selected', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 1200 });
+
+    await page.route('**/api/form-draft', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, stored: true }),
+      });
+    });
+
+    await page.goto('/guest/en/check-inout');
+    await page.fill('#name', 'Playwright Guest');
+    await page.fill('#keycode', '1234');
+    await page.fill('#email', 'test+checkin@example.com');
+    await page.fill('#confirmEmail', 'test+checkin@example.com');
+    await page.selectOption('#checkType', 'checkin');
+    await page.fill('#elReading', '055540');
+    await page.fill('#waterHouse', '123,456');
+    await page.fill('#waterPool', '1234');
+
+    await page.setInputFiles('#meterImages', [
+      'public/admin-test/electricity-meter.jpeg',
+      'public/admin-test/water-house-meter.jpeg',
+      'public/admin-test/water-pool-meter.jpeg',
+      'public/area/fjellerup-strand.webp',
+    ]);
+
+    await expect(page.getByText('You can upload up to 3 meter photos.')).toBeVisible();
+  });
+
   test('check-in/out upload error is readable when the image API returns plain text', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 1200 });
 
