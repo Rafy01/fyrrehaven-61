@@ -636,6 +636,8 @@ export const de = {
         "elReading": "Stromzählerstand",
         "elReadingDescription": "Verwenden Sie Blitz für das Foto des Stromzählers, damit die Zahlen gut lesbar sind.",
         "waterHouse": "Wasser (Haus)",
+        "waterHouseExamplePrefix": "Beispiel:",
+        "waterHouseExampleSuffix": ". Die weißen Zahlen stehen vor dem Komma, die roten Zahlen nach dem Komma.",
         "waterPool": "Wasser (Pool)",
         "meterImages": {
           "label": "Foto der Ablesung",

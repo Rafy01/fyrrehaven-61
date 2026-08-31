@@ -636,6 +636,8 @@ export const da = {
         "elReading": "EL måler aflæsning",
         "elReadingDescription": "Brug blitz til billedet af elmåleren, så tallene er tydelige.",
         "waterHouse": "Vand (huset)",
+        "waterHouseExamplePrefix": "Eksempel:",
+        "waterHouseExampleSuffix": ". De hvide tal står før kommaet, og de røde tal står efter kommaet.",
         "waterPool": "Vand (pool)",
         "meterImages": {
           "label": "Billede af aflæsning",

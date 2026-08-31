@@ -636,6 +636,8 @@ export const en = {
         "elReading": "Electricity meter reading",
         "elReadingDescription": "Use flash for the electricity meter photo so the numbers are clearly visible.",
         "waterHouse": "Water (house)",
+        "waterHouseExamplePrefix": "Example:",
+        "waterHouseExampleSuffix": ". The white numbers are before the comma, and the red numbers are after the comma.",
         "waterPool": "Water (pool)",
         "meterImages": {
           "label": "Reading photo",

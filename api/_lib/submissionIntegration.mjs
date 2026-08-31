@@ -88,6 +88,7 @@ function bookingPayload(submission, selection) {
   return {
     id: cleanString(submission.id),
     type: "booking",
+    status: cleanString(submission.status),
     bookingNumber: cleanString(submission.bookingNumber),
     guest: guestPayload(submission, { phone: true, country: true }),
     dates: {
@@ -130,6 +131,7 @@ function extraServicesPayload(submission, extras) {
   return {
     id: cleanString(submission.id),
     type: "extra-services",
+    status: cleanString(submission.status),
     bookingNumber: cleanString(submission.bookingNumber),
     date: cleanString(extras.stayDate),
     totalDKK: cleanNumber(extras.totalDKK),
@@ -149,6 +151,7 @@ function checkinPayload(submission, checkin) {
   return {
     id: cleanString(submission.id),
     type: checkin.type === "checkout" ? "checkout" : "checkin",
+    status: cleanString(submission.status),
     bookingNumber: cleanString(submission.bookingNumber),
     dates: {
       checkInOrOut: cleanString(checkin.stayDate || checkin.submittedStayDate),
@@ -162,6 +165,58 @@ function checkinPayload(submission, checkin) {
   };
 }
 
+function draftPayload(submission, intent) {
+  return {
+    id: cleanString(submission.id),
+    type: "draft",
+    status: cleanString(submission.status) || "draft",
+    intent,
+    source: cleanString(submission.source),
+    bookingNumber: cleanString(submission.bookingNumber),
+    guest: guestPayload(submission, { phone: true, country: true }),
+    message: cleanString(submission.message),
+    dates: {
+      checkIn: cleanString(submission.selection?.start),
+      checkOut: cleanString(submission.selection?.endExclusive),
+      nights: cleanNumber(submission.selection?.nights),
+      stayDate: cleanString(submission.extras?.stayDate),
+      checkInOrOut: cleanString(
+        submission.checkin?.stayDate || submission.checkin?.submittedStayDate
+      ),
+    },
+    price: {
+      totalDKK:
+        cleanNumber(submission.selection?.totalAfterAirbnbDiscountDKK) ??
+        cleanNumber(submission.selection?.totalWithCleaningDKK) ??
+        cleanNumber(submission.extras?.totalDKK),
+    },
+    checkin: submission.checkin
+      ? {
+          type: cleanString(submission.checkin.type),
+          keycode: cleanString(submission.checkin.keycode),
+          meters: {
+            electricity: meterValue(submission.checkin.meterReadings, "electricity"),
+            waterHouse: meterValue(submission.checkin.meterReadings, "waterHouse"),
+            waterPool: meterValue(submission.checkin.meterReadings, "waterPool"),
+          },
+          attachmentCount: Array.isArray(submission.checkin.attachments)
+            ? submission.checkin.attachments.length
+            : 0,
+        }
+      : null,
+    formError: {
+      code: cleanString(submission.formErrorCode),
+      message: cleanString(submission.formErrorMessage),
+      lastAction: cleanString(submission.formLastAction),
+    },
+    timestamps: {
+      createdAtMs: cleanNumber(submission.createdAtMs),
+      updatedAtMs: cleanNumber(submission.updatedAtMs),
+      draftUpdatedAtMs: cleanNumber(submission.draftUpdatedAtMs),
+    },
+  };
+}
+
 export function publicSubmissionPayload(submission) {
   if (!submission || typeof submission !== "object") return null;
 
@@ -169,6 +224,9 @@ export function publicSubmissionPayload(submission) {
   const selection = submission.selection || null;
   const extras = submission.extras || null;
   const intent = cleanString(submission.intent) || "contact";
+  const status = cleanString(submission.status);
+
+  if (status === "draft") return draftPayload(submission, intent);
 
   if (intent === "booking" && selection) return bookingPayload(submission, selection);
   if (intent === "extra-services" && extras) return extraServicesPayload(submission, extras);

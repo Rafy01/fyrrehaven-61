@@ -787,20 +787,31 @@ export default function CheckInOut({
       placeholder: "12345",
     },
     {
-      type: "number",
+      type: "text",
       name: "waterHouse",
       label: tg("checkInOutPage.fields.waterHouse"),
+      after: (
+        <p className={styles.meterReadingHint}>
+          {tg("checkInOutPage.fields.waterHouseExamplePrefix")}{" "}
+          <span className={styles.meterWhiteDigits}>123</span>
+          <span aria-hidden="true">,</span>
+          <span className={styles.meterRedDigits}>456</span>
+          {tg("checkInOutPage.fields.waterHouseExampleSuffix")}
+        </p>
+      ),
+      inputMode: "decimal",
       required: true,
-      placeholder: "6789",
+      placeholder: "123,456",
     },
     ...(poolOpen
       ? [
           {
-            type: "number" as const,
+            type: "text" as const,
             name: "waterPool",
             label: tg("checkInOutPage.fields.waterPool"),
+            inputMode: "decimal" as const,
             required: true,
-            placeholder: "1122",
+            placeholder: "1234",
           },
         ]
       : []),
