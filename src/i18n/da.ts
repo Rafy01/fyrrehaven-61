@@ -650,7 +650,7 @@ export const da = {
         "consent": "Jeg giver samtykke til, at mine oplysninger må bruges til at behandle min henvendelse."
       },
       "submit": "Send aflæsning",
-      "sending": "Sender aflæsning...",
+      "sending": "Uploader billeder og sender aflæsningen. Det kan tage et øjeblik...",
       "success": "Tak! Din aflæsning er sendt.",
       "progress": {
         "compressing": "Klargør billeder",

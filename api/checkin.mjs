@@ -51,6 +51,11 @@ const cleanDraftId = (value) =>
     .replace(/[^a-zA-Z0-9_-]/g, "")
     .slice(0, 120);
 
+const checkinBookingDates = (checkType, submittedDate) => ({
+  bookingStartDate: checkType === "checkin" ? submittedDate : null,
+  bookingEndDate: checkType === "checkout" ? submittedDate : null,
+});
+
 const esc = (s = "") =>
   String(s)
     .replaceAll("&", "&amp;")
@@ -302,6 +307,9 @@ async function logCheckinSubmitError(db, fields, req, error, detail) {
   const clientDraftId = cleanDraftId(fields.clientDraftId);
   if (!db || !clientDraftId) return null;
 
+  const submittedStayDate = new Date().toISOString().slice(0, 10);
+  const type = String(fields.checkType || "").trim();
+
   return upsertFormSubmission(db, clientDraftId, {
     intent: "guest-checkin",
     lang: normalizeLang(fields.lang),
@@ -312,7 +320,10 @@ async function logCheckinSubmitError(db, fields, req, error, detail) {
       fields.consent === true ||
       String(fields.consent || "").toLowerCase() === "true",
     checkin: {
-      type: String(fields.checkType || "").trim(),
+      type,
+      stayDate: submittedStayDate,
+      submittedStayDate,
+      ...checkinBookingDates(type, submittedStayDate),
       keycode: String(fields.keycode || "").trim(),
       meterReadings: {
         electricity: String(fields.elReading || "").trim(),
@@ -640,6 +651,10 @@ export default async function handler(req, res) {
         });
         const typeLabel = t(uiLang, `checkin.type.${typeKey}Label`);
         const submittedStayDate = new Date().toISOString().slice(0, 10);
+        const bookingDates = checkinBookingDates(
+          String(checkType || ""),
+          submittedStayDate
+        );
         let storedAttachments = preuploadedAttachments.length
           ? preuploadedAttachments
           : files.map((file) => ({
@@ -661,6 +676,7 @@ export default async function handler(req, res) {
             typeLabel,
             stayDate: submittedStayDate,
             submittedStayDate,
+            ...bookingDates,
             keycode: String(keycode || "").trim(),
             meterReadings: {
               electricity: String(elReading || "").trim(),

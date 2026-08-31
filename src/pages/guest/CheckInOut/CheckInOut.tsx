@@ -231,7 +231,17 @@ function postFormData(
         status: xhr.status,
         json: async () => {
           if (!xhr.responseText) return {};
-          return JSON.parse(xhr.responseText);
+          try {
+            return JSON.parse(xhr.responseText);
+          } catch {
+            return {
+              ok: false,
+              error: "UNREADABLE_SERVER_RESPONSE",
+              detail: `The upload server returned an unreadable response${
+                xhr.status ? ` (HTTP ${xhr.status})` : ""
+              }. Please try again with screenshots of the meter photos.`,
+            };
+          }
         },
       });
     };
@@ -245,34 +255,34 @@ async function preuploadCheckinImages(
   values: Record<string, string | FileList | boolean>,
   clientDraftId: string,
   headers: Record<string, string>
-) {
-  const attachments: PreuploadedAttachment[] = [];
+): Promise<PreuploadedAttachment[]> {
+  return Promise.all(
+    files.map(async (file, index) => {
+      const formData = new FormData();
+      formData.set("website", String(values.website || ""));
+      formData.set("company", String(values.company || ""));
+      formData.set("faxNumber", String(values.faxNumber || ""));
+      formData.set("clientDraftId", clientDraftId);
+      formData.set("formStartedAt", String(values.formStartedAt || ""));
+      formData.set("fileIndex", String(index + 1));
+      formData.append("meterImage", file);
 
-  for (const [index, file] of files.entries()) {
-    const formData = new FormData();
-    formData.set("website", String(values.website || ""));
-    formData.set("company", String(values.company || ""));
-    formData.set("faxNumber", String(values.faxNumber || ""));
-    formData.set("clientDraftId", clientDraftId);
-    formData.set("formStartedAt", String(values.formStartedAt || ""));
-    formData.set("fileIndex", String(index + 1));
-    formData.append("meterImage", file);
+      const res = await postFormData(
+        "/api/checkin-image",
+        formData,
+        headers
+      );
 
-    const res = await postFormData(
-      "/api/checkin-image",
-      formData,
-      headers
-    );
+      const data = await res.json();
+      if (!res.ok || !data?.attachment) {
+        throw new Error(
+          String(data?.detail || data?.error || "IMAGE_UPLOAD_FAILED")
+        );
+      }
 
-    const data = await res.json();
-    if (!res.ok || !data?.attachment) {
-      throw new Error(String(data?.detail || data?.error || "IMAGE_UPLOAD_FAILED"));
-    }
-
-    attachments.push(data.attachment);
-  }
-
-  return attachments;
+      return data.attachment;
+    })
+  );
 }
 
 export default function CheckInOut({

@@ -650,7 +650,7 @@ export const de = {
         "consent": "Ich stimme zu, dass meine Angaben zur Bearbeitung meiner Anfrage verwendet werden dürfen."
       },
       "submit": "Ablesung senden",
-      "sending": "Ablesung wird gesendet...",
+      "sending": "Fotos werden hochgeladen und die Ablesung wird gesendet. Das kann einen Moment dauern...",
       "success": "Danke! Ihre Ablesung wurde gesendet.",
       "progress": {
         "compressing": "Fotos werden vorbereitet",

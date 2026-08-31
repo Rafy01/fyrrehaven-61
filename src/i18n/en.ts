@@ -650,7 +650,7 @@ export const en = {
         "consent": "I consent to my information being used to process my request."
       },
       "submit": "Submit reading",
-      "sending": "Submitting reading...",
+      "sending": "Uploading photos and sending the reading. This can take a moment...",
       "success": "Thanks! Your reading has been sent.",
       "progress": {
         "compressing": "Preparing photos",
