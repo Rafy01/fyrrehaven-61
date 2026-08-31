@@ -439,7 +439,7 @@ export default function ContactForm({
 
   function setValidationError(message: string, code: string) {
     setError(message);
-    if (!adminManual) {
+    if (!adminManual && code !== "MISSING_REQUIRED_FIELDS") {
       void saveFormDraft(draftPayload("validation_failed", message, code));
     }
   }
