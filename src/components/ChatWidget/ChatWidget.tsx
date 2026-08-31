@@ -161,51 +161,19 @@ export default function ChatWidget({ lang }: Props) {
           },
         ]);
       } else {
-        const page = typeof window !== "undefined" ? window.location.href : "";
-        // Kun Google Sheets: POST ukendt
-        try {
-          const res = await fetch("/api/chat-unknown", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ q, lang, page }),
-          });
-          const json = await res.json().catch(() => ({}));
-          const unknownId = json?.id || undefined;
-
-          // Svar + card
-          setMsgs((m) => [
-            ...m,
-            {
-              id: rid(),
-              role: "bot",
-              lang,
-              text: t(
-                "Det ved jeg ikke endnu — jeg giver beskeden videre, så vi kan lære det til næste gang.",
-                "I don’t know that yet — I’ll pass it along so we can learn it for next time."
-              ),
-            },
-            {
-              id: rid(),
-              role: "card",
-              lang,
-              meta: { unknownId, q },
-            },
-          ]);
-        } catch {
-          setMsgs((m) => [
-            ...m,
-            {
-              id: rid(),
-              role: "bot",
-              lang,
-              text: t(
-                "Det ved jeg ikke endnu — og jeg kunne ikke gemme dit spørgsmål. Prøv igen om lidt.",
-                "I don’t know that yet — and I couldn’t save your question. Please try again.",
-                "Das weiß ich noch nicht — und ich konnte Ihre Frage nicht speichern. Bitte versuchen Sie es später noch einmal."
-              ),
-            },
-          ]);
-        }
+        setMsgs((m) => [
+          ...m,
+          {
+            id: rid(),
+            role: "bot",
+            lang,
+            text: t(
+              "Det ved jeg ikke endnu. Kontakt os gerne, så hjælper vi dig videre.",
+              "I don’t know that yet. Please contact us and we’ll help you.",
+              "Das weiß ich noch nicht. Bitte kontaktieren Sie uns, dann helfen wir Ihnen weiter."
+            ),
+          },
+        ]);
       }
     } catch {
       setMsgs((m) => [
