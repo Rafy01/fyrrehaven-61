@@ -48,6 +48,13 @@ export type Field =
       label: string;
       description?: string;
       after?: React.ReactNode;
+      fileUpload?: {
+        name: string;
+        accept?: string;
+        maxFiles?: number;
+        multiple?: boolean;
+        buttonLabel?: string;
+      };
       required?: boolean;
       placeholder?: string;
       inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
@@ -166,71 +173,84 @@ export default function Form({
       setValues(nextValues);
     } else if (type === "file") {
       const input = e.target as HTMLInputElement;
+      const field = fields.find(
+        (item) =>
+          item.name === name ||
+          ("fileUpload" in item && item.fileUpload?.name === name)
+      ) as any;
+      const storageName =
+        field && "fileUpload" in field && field.fileUpload
+          ? field.fileUpload.name
+          : name;
       const selectedFiles = input.files ? Array.from(input.files) : [];
-      const field = fields.find((item) => item.name === name);
       const currentFiles =
-        field?.type === "file" &&
-        field.multiple &&
-        values[name] instanceof FileList
-          ? Array.from(values[name])
+        field &&
+        "fileUpload" in field &&
+        field.fileUpload &&
+        values[storageName] instanceof FileList
+          ? Array.from(values[storageName])
           : [];
       const allFiles =
-        field?.type === "file" && field.multiple
+        field && "fileUpload" in field && field.fileUpload
           ? [...currentFiles, ...selectedFiles]
           : selectedFiles;
+      const maxFiles =
+        field && "fileUpload" in field && field.fileUpload
+          ? field.fileUpload.maxFiles
+          : field?.type === "file"
+            ? field.maxFiles
+            : undefined;
+
       const duplicateSignatures = new Set<string>();
       const uniqueSelectedFiles = uniqueFiles(allFiles, (file) => {
         duplicateSignatures.add(fileSignature(file));
       });
 
-      if (field?.type === "file" && field.maxFiles && uniqueSelectedFiles.length > field.maxFiles) {
-        const message = t("form.maxFilesReached", {
-          count: field.maxFiles,
-        });
+      if (maxFiles && uniqueSelectedFiles.length > maxFiles) {
+        const message = t("form.maxFilesReached", { count: maxFiles });
         setErrors((prev) => ({
           ...prev,
-          [name]: message,
+          [field?.name || name]: message,
         }));
 
-        const limitedFiles = uniqueSelectedFiles.slice(0, field.maxFiles);
+        const limitedFiles = uniqueSelectedFiles.slice(0, maxFiles);
         const transfer = new DataTransfer();
         limitedFiles.forEach((file) => transfer.items.add(file));
         input.files = transfer.files;
 
         nextValues = {
           ...values,
-          [name]: transfer.files,
+          [storageName]: transfer.files,
         };
         setValues(nextValues);
         setFileNames({
           ...fileNames,
-          [name]: Array.from(transfer.files).map(fileLabel),
+          [storageName]: Array.from(transfer.files).map(fileLabel),
         });
         setDuplicateFileMessages((prev) => ({
           ...prev,
-          [name]: {},
+          [storageName]: {},
         }));
         onValuesChange?.(nextValues);
         return;
       }
 
-      const limitedFiles =
-        field?.type === "file" && field.maxFiles
-          ? uniqueSelectedFiles.slice(-field.maxFiles)
-          : uniqueSelectedFiles;
+      const limitedFiles = maxFiles
+        ? uniqueSelectedFiles.slice(-maxFiles)
+        : uniqueSelectedFiles;
       const transfer = new DataTransfer();
       limitedFiles.forEach((file) => transfer.items.add(file));
       input.files = transfer.files;
 
       nextValues = {
         ...values,
-        [name]: transfer.files,
+        [storageName]: transfer.files,
       };
       setValues(nextValues);
 
       setFileNames({
         ...fileNames,
-        [name]: Array.from(transfer.files).map(fileLabel),
+        [storageName]: Array.from(transfer.files).map(fileLabel),
       });
       setDuplicateFileMessages((prev) => {
         const nextForField: Record<string, string> = {};
@@ -241,7 +261,7 @@ export default function Form({
         });
         return {
           ...prev,
-          [name]: nextForField,
+          [storageName]: nextForField,
         };
       });
     } else {
@@ -302,13 +322,22 @@ export default function Form({
     const newErrors: Record<string, string> = {};
 
     for (const field of fields) {
+      const fileUploadFieldName =
+        "fileUpload" in field && field.fileUpload
+          ? field.fileUpload.name
+          : undefined;
+      const requiredValue =
+        values[field.name] === undefined || values[field.name] === "";
+      const requiredFileValue =
+        fileUploadFieldName !== undefined &&
+        (values[fileUploadFieldName] as FileList)?.length === 0;
+
       if (
         "required" in field &&
         field.required &&
-        (values[field.name] === undefined ||
-          values[field.name] === "" ||
-          (field.type === "file" &&
-            (values[field.name] as FileList)?.length === 0))
+        (requiredValue ||
+          (field.type === "file" && (values[field.name] as FileList)?.length === 0) ||
+          requiredFileValue)
       ) {
         newErrors[field.name] = t("form.required");
       }
@@ -380,13 +409,89 @@ export default function Form({
             field.type === "email" ||
             field.type === "tel" ||
             field.type === "number" ? (
-              <input
-                {...common}
-                type={field.type}
-                placeholder={field.placeholder}
-                inputMode={field.inputMode}
-                max={field.type === "number" ? field.max : undefined}
-              />
+              <>
+                <div className={styles.inputWrapper}>
+                  <input
+                    {...common}
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    inputMode={field.inputMode}
+                    max={field.type === "number" ? field.max : undefined}
+                    className={[
+                      styles.input,
+                      "fileUpload" in field && field.fileUpload
+                        ? styles.inputWithButton
+                        : ""
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  />
+                  {"fileUpload" in field && field.fileUpload && (
+                    <>
+                      <input
+                        type="file"
+                        id={`upload-${field.fileUpload.name}`}
+                        name={field.fileUpload.name}
+                        accept={field.fileUpload.accept}
+                        multiple={field.fileUpload.multiple}
+                        className={styles.hiddenFileInput}
+                        onChange={handleChange}
+                      />
+                      <button
+                        type="button"
+                        className={styles.uploadPhotoButtonInside}
+                        onClick={() =>
+                          document
+                            .getElementById(`upload-${field.fileUpload!.name}`)
+                            ?.click()
+                        }
+                        title={field.fileUpload.buttonLabel || "Upload photo"}
+                      >
+                        {field.fileUpload.buttonLabel || "Upload photo"}
+                      </button>
+                    </>
+                  )}
+                </div>
+                {"fileUpload" in field && field.fileUpload ? (
+                  () => {
+                    const fileList = values[field.fileUpload!.name];
+                    if (
+                      fileList instanceof FileList &&
+                      fileList.length > 0
+                    ) {
+                      return (
+                        <div className={styles.fileListInlineContainer}>
+                          <div className={styles.fileListInline}>
+                            {Array.from(fileList).map(
+                              (file: File, i: number) => (
+                                <div
+                                  key={`${file.name}-${i}`}
+                                  className={styles.fileItemInline}
+                                >
+                                  <span title={file.name}>
+                                    {fileLabel(file)}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className={styles.fileRemoveButton}
+                                    onClick={() =>
+                                      removeFile(field.fileUpload!.name, i)
+                                    }
+                                    aria-label={`Remove ${file.name}`}
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }
+                )() : null}
+              </>
             ) : field.type === "textarea" ? (
               <textarea
                 {...common}

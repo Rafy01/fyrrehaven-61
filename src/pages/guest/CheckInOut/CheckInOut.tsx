@@ -10,6 +10,11 @@ import { guestPathOf } from "../../../lib/routes";
 import type { Lang } from "../../../lib/lang";
 import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import { UI_ICONS } from "../../../lib/icons";
+import {
+  compressImageCore,
+  calculateTotalSize,
+  formatFileSize,
+} from "../../../lib/imageCompression";
 import styles from "./CheckInOut.module.css";
 
 // Keep the client-side target aligned with the server defaults so a normal
@@ -17,7 +22,7 @@ import styles from "./CheckInOut.module.css";
 const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 8 * 1024 * 1024;
 const MAX_CLIENT_IMAGE_SOURCE_BYTES = 40 * 1024 * 1024;
 const MAX_CHECKIN_IMAGE_UPLOAD_BYTES = 8 * 1024 * 1024;
-const MAX_CHECKIN_IMAGE_FILES = 3;
+
 const CHECKIN_IMAGE_TARGET_DIMENSION = 1080;
 const CHECKIN_UPLOAD_TIMEOUT_MS = 45000;
 const CHECKIN_IMAGE_COMPRESSION_STEPS = [
@@ -43,6 +48,25 @@ type PreparedImageEntry = {
   status?: "success" | "error";
   message?: string;
 };
+
+const METER_IMAGE_FIELD_NAMES = [
+  "meterImagesElectricity",
+  "meterImagesWaterHouse",
+  "meterImagesWaterPool",
+] as const;
+
+function collectMeterImageFiles(
+  values: Record<string, string | FileList | boolean>
+): File[] {
+  const files: File[] = [];
+  for (const fieldName of METER_IMAGE_FIELD_NAMES) {
+    const value = values[fieldName];
+    if (value instanceof FileList) {
+      files.push(...Array.from(value));
+    }
+  }
+  return files;
+}
 
 function isPoolOpen(today = new Date()) {
   const month = today.getMonth() + 1;
@@ -89,18 +113,8 @@ function checkinErrorMessage(
   }
 }
 
-function filesTotalSize(files: File[]) {
-  return files.reduce((total, file) => total + file.size, 0);
-}
-
-function formatBytes(bytes: number) {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
-  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
 function fileDisplayLabel(file: File) {
-  return `${file.name} (${formatBytes(file.size)})`;
+  return `${file.name} (${formatFileSize(file.size)})`;
 }
 
 function fileUploadStatus(file: File): "success" | "error" {
@@ -129,57 +143,28 @@ function canCompressImage(file: File) {
   );
 }
 
-function loadImage(file: File) {
-  return new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    image.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("Image could not be prepared for upload."));
-    };
-    image.src = objectUrl;
-  });
-}
-
 async function compressImageFile(
   file: File,
   maxDimension: number,
   quality: number
 ) {
-  if (
-    typeof document === "undefined" ||
-    !canCompressImage(file)
-  ) {
+  if (typeof document === "undefined" || !canCompressImage(file)) {
     return file;
   }
 
-  const image = await loadImage(file);
-  const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
-  const width = Math.max(1, Math.round(image.width * scale));
-  const height = Math.max(1, Math.round(image.height * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-
-  const context = canvas.getContext("2d");
-  if (!context) return file;
-  context.drawImage(image, 0, 0, width, height);
-
-  const blob = await new Promise<Blob | null>((resolve) => {
-    canvas.toBlob(resolve, "image/jpeg", quality);
-  });
-  if (!blob || blob.size >= file.size) return file;
-
-  const filename = file.name.replace(/\.(heic|heif|jpe?g|png|webp)$/i, ".jpg");
-  return new File([blob], filename, {
-    type: "image/jpeg",
-    lastModified: file.lastModified,
-  });
+  try {
+    const result = await compressImageCore(file, { maxDimension, quality });
+    if (result.success && result.file.size < file.size) {
+      console.log(
+        `[Compress] ${file.name}: ${formatFileSize(file.size)} → ${formatFileSize(result.file.size)} at quality ${quality}`
+      );
+      return result.file;
+    }
+    return file;
+  } catch (error) {
+    console.warn(`[Compress Error] ${file.name}:`, error);
+    return file;
+  }
 }
 
 async function prepareImageFiles(originalFiles: File[]) {
@@ -187,16 +172,33 @@ async function prepareImageFiles(originalFiles: File[]) {
 
   let currentFiles = originalFiles;
   for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
-    currentFiles = await Promise.all(
-      currentFiles.map((file) =>
-        compressImageFile(file, step.maxDimension, step.quality)
-      )
-    );
-    if (filesTotalSize(currentFiles) <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES) {
-      return currentFiles;
+    try {
+      currentFiles = await Promise.all(
+        currentFiles.map((file) =>
+          compressImageFile(file, step.maxDimension, step.quality)
+        )
+      );
+      const totalSize = calculateTotalSize(currentFiles);
+      console.log(
+        `[Compress Step] Quality ${step.quality}: Total ${formatFileSize(totalSize)}`
+      );
+      if (totalSize <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES) {
+        console.log(`✓ Target size achieved at quality ${step.quality}`);
+        return currentFiles;
+      }
+    } catch (error) {
+      console.error(
+        `[Compress Step Error] Quality ${step.quality}:`,
+        error
+      );
+      continue;
     }
   }
 
+  const finalSize = calculateTotalSize(currentFiles);
+  console.warn(
+    `⚠ Could not reach target size: ${formatFileSize(finalSize)} (target: ${formatFileSize(TARGET_CHECKIN_UPLOAD_TOTAL_BYTES)})`
+  );
   return currentFiles;
 }
 
@@ -256,6 +258,10 @@ async function preuploadCheckinImages(
   clientDraftId: string,
   headers: Record<string, string>
 ): Promise<PreuploadedAttachment[]> {
+  console.log(
+    `[Upload] Starting preupload of ${files.length} images, total: ${formatFileSize(calculateTotalSize(files))}`
+  );
+
   return Promise.all(
     files.map(async (file, index) => {
       const formData = new FormData();
@@ -267,6 +273,10 @@ async function preuploadCheckinImages(
       formData.set("fileIndex", String(index + 1));
       formData.append("meterImage", file);
 
+      console.log(
+        `[Upload] Image ${index + 1}/${files.length}: ${file.name} (${formatFileSize(file.size)})`
+      );
+
       const res = await postFormData(
         "/api/checkin-image",
         formData,
@@ -275,11 +285,18 @@ async function preuploadCheckinImages(
 
       const data = await res.json();
       if (!res.ok || !data?.attachment) {
-        throw new Error(
-          String(data?.detail || data?.error || "IMAGE_UPLOAD_FAILED")
+        const errorMsg = String(
+          data?.detail || data?.error || "IMAGE_UPLOAD_FAILED"
         );
+        console.error(
+          `[Upload Error] Image ${index + 1}: ${errorMsg} (HTTP ${res.status})`
+        );
+        throw new Error(errorMsg);
       }
 
+      console.log(
+        `[Upload Success] Image ${index + 1}: ${data.attachment.filename}`
+      );
       return data.attachment;
     })
   );
@@ -350,14 +367,11 @@ export default function CheckInOut({
       formErrorMessage = "",
       formErrorCode = ""
     ) => {
-      const files =
-        values.meterImages instanceof FileList
-          ? Array.from(values.meterImages).map((file) => ({
-              filename: file.name,
-              contentType: file.type,
-              sizeBytes: file.size,
-            }))
-          : [];
+      const files = collectMeterImageFiles(values).map((file) => ({
+        filename: file.name,
+        contentType: file.type,
+        sizeBytes: file.size,
+      }));
 
       return {
         clientDraftId: draftIdRef.current,
@@ -569,9 +583,12 @@ export default function CheckInOut({
   const handleValuesChange = useCallback(
     (values: Record<string, string | FileList | boolean>) => {
       setDraftValues(values);
-      const nextSignature = fileListSignature(values.meterImages);
+      const meterImages = collectMeterImageFiles(values);
+      const nextSignature = meterImages
+        .map(fileItemSignature)
+        .join("|");
       if (nextSignature === preparedMeterImagesRef.current?.signature) return;
-      const preparation = prepareSelectedImages(values.meterImages);
+      const preparation = prepareSelectedImages(meterImages);
       imagePreparationPromiseRef.current = preparation;
       void preparation.finally(() => {
         if (imagePreparationPromiseRef.current === preparation) {
@@ -603,15 +620,30 @@ export default function CheckInOut({
     setError(null);
 
     try {
+      console.log("[Submit] Starting form submission...");
+
       if (imagePreparationPromiseRef.current) {
+        console.log("[Submit] Waiting for image preparation...");
         await imagePreparationPromiseRef.current;
       }
 
-      const meterImagesSignature = fileListSignature(values.meterImages);
+      const meterFiles = collectMeterImageFiles(values);
+      console.log(
+        `[Submit] Meter images collected: ${meterFiles.length} files, ${formatFileSize(calculateTotalSize(meterFiles))}`
+      );
+
+      const meterImagesSignature = meterFiles
+        .map(fileItemSignature)
+        .join("|");
       const preparedMeterImages =
         preparedMeterImagesRef.current?.signature === meterImagesSignature
           ? preparedMeterImagesRef.current.files
-          : await prepareCheckinImages(values.meterImages);
+          : await prepareCheckinImages(meterFiles);
+
+      console.log(
+        `[Submit] After compression: ${preparedMeterImages.length} files, ${formatFileSize(calculateTotalSize(preparedMeterImages))}`
+      );
+
       if (
         !preparedMeterImages.length ||
         preparedMeterImages.some(
@@ -619,6 +651,7 @@ export default function CheckInOut({
         )
       ) {
         const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");
+        console.error("[Submit] Validation failed: files too large");
         void saveFormDraft(
           buildDraftPayload(
             values,
@@ -633,17 +666,22 @@ export default function CheckInOut({
 
       const requestHeaders = getRequestHeaders ? await getRequestHeaders() : {};
 
+      console.log("[Submit] Starting image preupload...");
       const preuploadedAttachments = await preuploadCheckinImages(
         preparedMeterImages,
         values,
         draftIdRef.current,
         requestHeaders
       );
+      console.log(
+        `[Submit] Preupload complete: ${preuploadedAttachments.length} images stored`
+      );
 
       const formData = new FormData();
 
       for (const key in values) {
         if (key === "confirmEmail") continue;
+        if (METER_IMAGE_FIELD_NAMES.includes(key as any)) continue;
 
         const value = values[key];
         if (value instanceof FileList) {
@@ -660,6 +698,7 @@ export default function CheckInOut({
         JSON.stringify(preuploadedAttachments)
       );
 
+      console.log("[Submit] Submitting form to /api/checkin...");
       const res = await postFormData(
         "/api/checkin",
         formData,
@@ -677,6 +716,7 @@ export default function CheckInOut({
             String(data?.detail || ""),
             tg
           );
+          console.error("[Submit] Server error:", { errorCode, detail: data?.detail });
         } catch {
           errorMessage = tg("checkInOutPage.errors.serverResponse");
         }
@@ -687,6 +727,7 @@ export default function CheckInOut({
         return;
       }
 
+      console.log("[Submit] ✓ Form submitted successfully!");
       setSuccess(true);
       setPreparedImageLabels([]);
       setPreparedImageStatuses([]);
@@ -696,7 +737,7 @@ export default function CheckInOut({
       draftIdRef.current = createFormDraftId("guest-checkin");
       preparedMeterImagesRef.current = null;
     } catch (err: any) {
-      console.error("Submit error:", err);
+      console.error("[Submit] Catch error:", err);
       const rawErrorMessage = String(err?.message || "").trim();
       const errorMessage =
         rawErrorMessage &&
@@ -795,6 +836,13 @@ export default function CheckInOut({
       description: tg("checkInOutPage.fields.elReadingDescription"),
       required: true,
       placeholder: "12345",
+      fileUpload: {
+        name: "meterImagesElectricity",
+        accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
+        maxFiles: 3,
+        multiple: true,
+        buttonLabel: "Upload photo",
+      },
     },
     {
       type: "text",
@@ -812,6 +860,13 @@ export default function CheckInOut({
       inputMode: "decimal",
       required: true,
       placeholder: "123,456",
+      fileUpload: {
+        name: "meterImagesWaterHouse",
+        accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
+        maxFiles: 3,
+        multiple: true,
+        buttonLabel: "Upload photo",
+      },
     },
     ...(poolOpen
       ? [
@@ -822,19 +877,16 @@ export default function CheckInOut({
             inputMode: "decimal" as const,
             required: true,
             placeholder: "1234",
+            fileUpload: {
+              name: "meterImagesWaterPool",
+              accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
+              maxFiles: 3,
+              multiple: true,
+              buttonLabel: "Upload photo",
+            },
           },
         ]
       : []),
-    {
-      type: "file",
-      name: "meterImages",
-      label: tg("checkInOutPage.fields.meterImages.label"),
-      required: true,
-      multiple: true,
-      maxFiles: MAX_CHECKIN_IMAGE_FILES,
-      accept: "image/jpeg,image/png,image/webp,image/heic,image/heif",
-      description: tg("checkInOutPage.fields.meterImages.description"),
-    },
     {
       type: "textarea",
       name: "comment",

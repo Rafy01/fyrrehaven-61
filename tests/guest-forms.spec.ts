@@ -99,11 +99,15 @@ test.describe('guest forms', () => {
     await page.fill('#confirmEmail', 'test+checkin@example.com');
     await page.selectOption('#checkType', 'checkin');
     await page.fill('#elReading', '055540');
-    await page.fill('#waterHouse', '123,456');
-    await page.fill('#waterPool', '1234');
-    await page.setInputFiles('#meterImages', [
+    await page.setInputFiles('#upload-meterImagesElectricity', [
       'public/admin-test/electricity-meter.jpeg',
+    ]);
+    await page.fill('#waterHouse', '123,456');
+    await page.setInputFiles('#upload-meterImagesWaterHouse', [
       'public/admin-test/water-house-meter.jpeg',
+    ]);
+    await page.fill('#waterPool', '1234');
+    await page.setInputFiles('#upload-meterImagesWaterPool', [
       'public/admin-test/water-pool-meter.jpeg',
     ]);
     await page.getByLabel(/I consent/i).check();
@@ -138,15 +142,14 @@ test.describe('guest forms', () => {
     await page.fill('#confirmEmail', 'test+checkin@example.com');
     await page.selectOption('#checkType', 'checkin');
     await page.fill('#elReading', '055540');
-    await page.fill('#waterHouse', '123,456');
-    await page.fill('#waterPool', '1234');
-
-    await page.setInputFiles('#meterImages', [
+    await page.setInputFiles('#upload-meterImagesElectricity', [
       'public/admin-test/electricity-meter.jpeg',
       'public/admin-test/water-house-meter.jpeg',
       'public/admin-test/water-pool-meter.jpeg',
       'public/area/fjellerup-strand.webp',
     ]);
+    await page.fill('#waterHouse', '123,456');
+    await page.fill('#waterPool', '1234');
 
     await expect(page.getByText('You can upload up to 3 meter photos.')).toBeVisible();
   });
