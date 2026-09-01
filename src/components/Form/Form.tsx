@@ -177,7 +177,7 @@ export default function Form({
         (item) =>
           item.name === name ||
           ("fileUpload" in item && item.fileUpload?.name === name)
-      ) as any;
+      ) as Field | undefined;
       const storageName =
         field && "fileUpload" in field && field.fileUpload
           ? field.fileUpload.name

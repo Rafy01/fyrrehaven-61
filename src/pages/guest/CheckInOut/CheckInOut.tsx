@@ -10,11 +10,7 @@ import { guestPathOf } from "../../../lib/routes";
 import type { Lang } from "../../../lib/lang";
 import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import { UI_ICONS } from "../../../lib/icons";
-import {
-  compressImageCore,
-  calculateTotalSize,
-  formatFileSize,
-} from "../../../lib/imageCompression";
+import imageCompression from "browser-image-compression";
 import styles from "./CheckInOut.module.css";
 
 // Keep the client-side target aligned with the server defaults so a normal
@@ -143,6 +139,16 @@ function canCompressImage(file: File) {
   );
 }
 
+function calculateTotalSize(files: File[]) {
+  return files.reduce((total, file) => total + file.size, 0);
+}
+
+function formatFileSize(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
 async function compressImageFile(
   file: File,
   maxDimension: number,
@@ -153,12 +159,21 @@ async function compressImageFile(
   }
 
   try {
-    const result = await compressImageCore(file, { maxDimension, quality });
-    if (result.success && result.file.size < file.size) {
+    const compressedFile = await imageCompression(file, {
+      maxSizeMB: MAX_CHECKIN_IMAGE_UPLOAD_BYTES / 1024 / 1024,
+      maxWidthOrHeight: maxDimension,
+      initialQuality: quality,
+      useWebWorker: true,
+      fileType: "image/jpeg",
+    });
+    if (compressedFile.size < file.size) {
       console.log(
-        `[Compress] ${file.name}: ${formatFileSize(file.size)} → ${formatFileSize(result.file.size)} at quality ${quality}`
+        `[Compress] ${file.name}: ${formatFileSize(file.size)} -> ${formatFileSize(compressedFile.size)} at quality ${quality}`
       );
-      return result.file;
+      return new File([compressedFile], file.name.replace(/\.(jpe?g|png|webp)$/i, ".jpg"), {
+        type: "image/jpeg",
+        lastModified: file.lastModified,
+      });
     }
     return file;
   } catch (error) {
@@ -202,8 +217,7 @@ async function prepareImageFiles(originalFiles: File[]) {
   return currentFiles;
 }
 
-async function prepareCheckinImages(value: unknown) {
-  if (!(value instanceof FileList)) return [];
+async function prepareCheckinImages(value: FileList | File[]) {
   return prepareImageFiles(Array.from(value));
 }
 
