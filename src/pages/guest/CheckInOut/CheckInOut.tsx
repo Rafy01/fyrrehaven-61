@@ -276,8 +276,9 @@ async function preuploadCheckinImages(
     `[Upload] Starting preupload of ${files.length} images, total: ${formatFileSize(calculateTotalSize(files))}`
   );
 
-  return Promise.all(
-    files.map(async (file, index) => {
+  const attachments: PreuploadedAttachment[] = [];
+
+  for (const [index, file] of files.entries()) {
       const formData = new FormData();
       formData.set("website", String(values.website || ""));
       formData.set("company", String(values.company || ""));
@@ -311,9 +312,10 @@ async function preuploadCheckinImages(
       console.log(
         `[Upload Success] Image ${index + 1}: ${data.attachment.filename}`
       );
-      return data.attachment;
-    })
-  );
+      attachments.push(data.attachment);
+  }
+
+  return attachments;
 }
 
 export default function CheckInOut({

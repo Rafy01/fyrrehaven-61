@@ -18,6 +18,22 @@ const ALLOWED_UPLOAD_MIME_TYPES = new Set([
   "image/heif",
 ]);
 const ALLOWED_UPLOAD_EXTENSIONS = /\.(jpe?g|png|webp|heic|heif)$/i;
+const STORAGE_UPLOAD_TIMEOUT_MS = 25_000;
+
+const withTimeout = (promise, timeoutMs, message) =>
+  new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error(message)), timeoutMs);
+    promise.then(
+      (value) => {
+        clearTimeout(timeout);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      }
+    );
+  });
 
 const cleanDraftId = (value) =>
   String(value || "")
@@ -141,47 +157,48 @@ export default async function handler(req, res) {
     });
 
     busboy.on("finish", async () => {
-      if (uploadError) {
+      try {
+        if (uploadError) {
         sendJson(res, uploadError.status, {
           ok: false,
           error: uploadError.error,
           detail: uploadError.detail,
         });
         return;
-      }
+        }
 
-      const humanValidation = validateHumanSignals(fields);
-      if (!humanValidation.ok) {
+        const humanValidation = validateHumanSignals(fields);
+        if (!humanValidation.ok) {
         sendJson(res, humanValidation.status, {
           ok: false,
           error: humanValidation.error,
           detail: humanValidation.detail,
         });
         return;
-      }
+        }
 
-      const clientDraftId = cleanDraftId(fields.clientDraftId);
-      if (!clientDraftId || !uploadedFile) {
+        const clientDraftId = cleanDraftId(fields.clientDraftId);
+        if (!clientDraftId || !uploadedFile) {
         sendJson(res, 400, {
           ok: false,
           error: "VALIDATION_ERROR",
           detail: "Image upload metadata is missing.",
         });
         return;
-      }
+        }
 
-      const bucket = await getStorageBucket();
-      if (!bucket) {
+        const bucket = await getStorageBucket();
+        if (!bucket) {
         sendJson(res, 500, {
           ok: false,
           error: "STORAGE_NOT_CONFIGURED",
           detail: "Image storage is not configured.",
         });
         return;
-      }
+        }
 
-      const fileIndex = String(fields.fileIndex || "1").padStart(2, "0");
-      const storagePath = [
+        const fileIndex = String(fields.fileIndex || "1").padStart(2, "0");
+        const storagePath = [
         "form-submissions",
         "preuploads",
         sanitizeStorageSegment(clientDraftId),
@@ -189,7 +206,7 @@ export default async function handler(req, res) {
         `${fileIndex}-${sanitizeStorageSegment(uploadedFile.filename)}`,
       ].join("/");
 
-      await bucket.file(storagePath).save(uploadedFile.content, {
+        await withTimeout(bucket.file(storagePath).save(uploadedFile.content, {
         resumable: false,
         metadata: {
           contentType: uploadedFile.contentType,
@@ -199,9 +216,9 @@ export default async function handler(req, res) {
             clientDraftId,
           },
         },
-      });
+        }), STORAGE_UPLOAD_TIMEOUT_MS, "Firebase Storage upload timed out.");
 
-      sendJson(res, 200, {
+        sendJson(res, 200, {
         ok: true,
         attachment: {
           fieldname: uploadedFile.fieldname,
@@ -210,7 +227,15 @@ export default async function handler(req, res) {
           sizeBytes: uploadedFile.content.length,
           storagePath,
         },
-      });
+        });
+      } catch (error) {
+        console.error("CHECKIN_IMAGE_STORAGE_ERROR", error);
+        sendJson(res, 502, {
+          ok: false,
+          error: "STORAGE_UPLOAD_FAILED",
+          detail: "The image storage service did not accept the upload.",
+        });
+      }
     });
 
     busboy.on("error", (error) => {
