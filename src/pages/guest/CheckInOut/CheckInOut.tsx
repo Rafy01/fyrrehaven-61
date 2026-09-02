@@ -16,7 +16,7 @@ import styles from "./CheckInOut.module.css";
 // Keep the client-side target aligned with the server defaults so a normal
 // 3-photo guest upload is allowed without being aggressively compressed away.
 const TARGET_CHECKIN_UPLOAD_TOTAL_BYTES = 8 * 1024 * 1024;
-const MAX_CLIENT_IMAGE_SOURCE_BYTES = 40 * 1024 * 1024;
+const MAX_CLIENT_IMAGE_SOURCE_BYTES = 100 * 1024 * 1024;
 const MAX_CHECKIN_IMAGE_UPLOAD_BYTES = 8 * 1024 * 1024;
 
 const CHECKIN_IMAGE_TARGET_DIMENSION = 1080;
@@ -177,11 +177,13 @@ async function compressImageFile(
 async function prepareImageFiles(originalFiles: File[]) {
   let currentFiles = originalFiles;
   for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
-    currentFiles = await Promise.all(
-      currentFiles.map((file) =>
-        compressImageFile(file, step.maxDimension, step.quality)
-      )
-    );
+    const compressedFiles: File[] = [];
+    for (const file of currentFiles) {
+      compressedFiles.push(
+        await compressImageFile(file, step.maxDimension, step.quality)
+      );
+    }
+    currentFiles = compressedFiles;
     if (calculateTotalSize(currentFiles) <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES) {
       return currentFiles;
     }
