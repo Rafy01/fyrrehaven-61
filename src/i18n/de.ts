@@ -10,6 +10,7 @@ export const de = {
       "required": "Dieses Feld ist erforderlich",
       "emailMismatch": "E-Mail und E-Mail-Bestätigung müssen übereinstimmen.",
       "fileAlreadyAdded": "Dieses Foto wurde bereits hinzugefügt. Entfernen Sie es zuerst, wenn Sie ein anderes Foto auswählen möchten.",
+      "maxFilesReached": "Sie können bis zu {{count}} Zählerfotos hochladen.",
       "moreFileIssues": "{{count}} weiteres Problem benötigt Aufmerksamkeit."
     }
   },

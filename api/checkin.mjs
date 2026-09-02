@@ -66,11 +66,13 @@ const esc = (s = "") =>
 const SHOULD_EXPOSE_INTERNAL_ERRORS =
   String(process.env.EXPOSE_INTERNAL_API_ERRORS || "").toLowerCase() ===
   "true";
+// Default limits are intentionally higher than the old 4 MB cap so a normal
+// 3-photo guest submission will not be rejected before upload validation.
 const MAX_UPLOAD_FILES = Number(process.env.CHECKIN_MAX_UPLOAD_FILES || 6);
 const MAX_UPLOAD_FILE_SIZE =
-  Number(process.env.CHECKIN_MAX_UPLOAD_FILE_SIZE_MB || 4) * 1024 * 1024;
+  Number(process.env.CHECKIN_MAX_UPLOAD_FILE_SIZE_MB || 8) * 1024 * 1024;
 const MAX_TOTAL_UPLOAD_SIZE =
-  Number(process.env.CHECKIN_MAX_TOTAL_UPLOAD_SIZE_MB || 4) * 1024 * 1024;
+  Number(process.env.CHECKIN_MAX_TOTAL_UPLOAD_SIZE_MB || 20) * 1024 * 1024;
 const ALLOWED_UPLOAD_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",

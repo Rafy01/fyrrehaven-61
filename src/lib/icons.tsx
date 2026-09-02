@@ -4,6 +4,7 @@ import {
   IoBedOutline,
   IoBusinessOutline,
   IoCarSportOutline,
+  IoCameraOutline,
   IoChatbubbleEllipses,
   IoChevronDown,
   IoChevronForward,
@@ -45,6 +46,7 @@ import {
 export type SiteIcon = IconType;
 
 export const UI_ICONS = {
+  Camera: IoCameraOutline,
   ChevronDown: IoChevronDown,
   ChevronForward: IoChevronForward,
   DarkMode: IoMoonOutline,

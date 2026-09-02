@@ -51,8 +51,7 @@ test.describe('guest forms', () => {
     });
   });
 
-  test('check-in/out form uploads meter photos and sends a valid reading quickly', async ({ page }) => {
-    const imageUploads: string[] = [];
+  test('check-in/out form uploads three meter photos and sends a valid reading quickly', async ({ page }) => {
     const readings: string[] = [];
 
     await page.setViewportSize({ width: 390, height: 1200 });
@@ -62,24 +61,6 @@ test.describe('guest forms', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ ok: true, stored: true }),
-      });
-    });
-
-    await page.route('**/api/checkin-image', async (route) => {
-      imageUploads.push(route.request().url());
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          ok: true,
-          attachment: {
-            fieldname: 'meterImages',
-            filename: `meter-${imageUploads.length}.jpg`,
-            contentType: 'image/jpeg',
-            sizeBytes: 1200,
-            storagePath: `checkin/test/meter-${imageUploads.length}.jpg`,
-          },
-        }),
       });
     });
 
@@ -99,11 +80,16 @@ test.describe('guest forms', () => {
     await page.fill('#confirmEmail', 'test+checkin@example.com');
     await page.selectOption('#checkType', 'checkin');
     await page.fill('#elReading', '055540');
-    await page.fill('#waterHouse', '123,456');
-    await page.fill('#waterPool', '1234');
-    await page.setInputFiles('#meterImages', [
+    await page.setInputFiles('#upload-meterImagesElectricity', [
       'public/admin-test/electricity-meter.jpeg',
+    ]);
+    await page.fill('#waterHouse', '123,456');
+    await page.setInputFiles('#upload-meterImagesWaterHouse', [
       'public/admin-test/water-house-meter.jpeg',
+    ]);
+    await page.fill('#waterPool', '1234');
+    await page.setInputFiles('#upload-meterImagesWaterPool', [
+      'public/admin-test/water-pool-meter.jpeg',
     ]);
     await page.getByLabel(/I consent/i).check();
 
@@ -114,9 +100,38 @@ test.describe('guest forms', () => {
       timeout: 8000,
     });
     expect(Date.now() - start).toBeLessThan(8000);
-    expect(imageUploads).toHaveLength(2);
     expect(readings).toHaveLength(1);
-    expect(readings[0]).toContain('preuploadedMeterImages');
+    expect(readings[0]).toContain('meterImages');
+  });
+
+  test('check-in/out form shows a clear error when more than three meter photos are selected', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 1200 });
+
+    await page.route('**/api/form-draft', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, stored: true }),
+      });
+    });
+
+    await page.goto('/guest/en/check-inout');
+    await page.fill('#name', 'Playwright Guest');
+    await page.fill('#keycode', '1234');
+    await page.fill('#email', 'test+checkin@example.com');
+    await page.fill('#confirmEmail', 'test+checkin@example.com');
+    await page.selectOption('#checkType', 'checkin');
+    await page.fill('#elReading', '055540');
+    await page.setInputFiles('#upload-meterImagesElectricity', [
+      'public/admin-test/electricity-meter.jpeg',
+      'public/admin-test/water-house-meter.jpeg',
+      'public/admin-test/water-pool-meter.jpeg',
+      'public/area/fjellerup-strand.webp',
+    ]);
+    await page.fill('#waterHouse', '123,456');
+    await page.fill('#waterPool', '1234');
+
+    await expect(page.getByText('You can upload up to 3 meter photos.')).toBeVisible();
   });
 
   test('check-in/out upload error is readable when the image API returns plain text', async ({ page }) => {
@@ -130,7 +145,7 @@ test.describe('guest forms', () => {
       });
     });
 
-    await page.route('**/api/checkin-image', async (route) => {
+    await page.route('**/api/checkin', async (route) => {
       await route.fulfill({
         status: 500,
         contentType: 'text/plain',
@@ -147,7 +162,7 @@ test.describe('guest forms', () => {
     await page.fill('#elReading', '055540');
     await page.fill('#waterHouse', '123,456');
     await page.fill('#waterPool', '1234');
-    await page.setInputFiles('#meterImages', 'public/admin-test/electricity-meter.jpeg');
+    await page.setInputFiles('#upload-meterImagesElectricity', 'public/admin-test/electricity-meter.jpeg');
     await page.getByLabel(/I consent/i).check();
     await page.click('button[type="submit"]');
 
