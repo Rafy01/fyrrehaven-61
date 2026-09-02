@@ -1877,39 +1877,79 @@
 
 .checkinApprovalPanel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
+  grid-template-columns: 220px auto;
+  grid-template-areas:
+    "copy copy"
+    "date action";
+  align-items: end;
+  justify-content: start;
+  column-gap: 56px;
+  row-gap: 12px;
   margin-top: 14px;
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in srgb, #1f9d57 32%, var(--gray-5));
-  background: color-mix(in srgb, #1f9d57 9%, transparent);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, #1f9d57 30%, var(--gray-6));
+  background: color-mix(in srgb, #1f9d57 7%, var(--gray-2));
 }
 
-.checkinApprovalPanel strong,
-.checkinApprovalPanel span {
-  display: block;
+.checkinApprovalCopy {
+  grid-area: copy;
+  min-width: 0;
 }
 
-.checkinApprovalPanel strong {
+.checkinApprovalCopy strong {
   color: var(--gray-12);
+  display: block;
+  font-size: 0.96rem;
+  letter-spacing: 0;
 }
 
-.checkinApprovalPanel span {
-  margin-top: 3px;
+.checkinStayDateField {
+  grid-area: date;
+  display: grid;
+  gap: 5px;
+  width: 220px;
+}
+
+.checkinStayDateField span {
+  margin: 0;
+  color: var(--gray-11);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.checkinStayDateField input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  border: 1px solid color-mix(in srgb, var(--gray-7) 85%, #1f9d57);
+  border-radius: 8px;
+  padding: 0 10px;
+  background: var(--gray-2);
+  color: var(--gray-12);
+  font: inherit;
+}
+
+.checkinStayDateField input:focus {
+  outline: 2px solid color-mix(in srgb, #1f9d57 48%, transparent);
+  outline-offset: 2px;
+}
+
+.checkinStayDateField small {
   color: var(--gray-10);
-  font-size: 0.88rem;
+  font-size: 0.72rem;
 }
 
 .checkinApprovalButton {
+  grid-area: action;
+  justify-self: start;
   appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 42px;
-  padding: 0 16px;
+  padding: 0 18px;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, #1f9d57 48%, var(--gray-6));
   background: color-mix(in srgb, #1f9d57 18%, var(--gray-2));
@@ -1935,6 +1975,26 @@
   margin: 0;
   color: #ff8a9e;
   font-size: 0.9rem;
+}
+
+@media (max-width: 520px) {
+  .checkinApprovalCopy,
+  .checkinStayDateField {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .checkinApprovalPanel {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "copy"
+      "date"
+      "action";
+  }
+
+  .checkinApprovalButton {
+    width: 100%;
+  }
 }
 
 .attachmentGrid {

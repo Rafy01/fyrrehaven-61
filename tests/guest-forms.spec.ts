@@ -101,7 +101,9 @@ test.describe('guest forms', () => {
     });
     expect(Date.now() - start).toBeLessThan(8000);
     expect(readings).toHaveLength(1);
-    expect(readings[0]).toContain('meterImages');
+    expect(readings[0]).toContain('name="electricity"');
+    expect(readings[0]).toContain('name="waterHouse"');
+    expect(readings[0]).toContain('name="waterPool"');
   });
 
   test('check-in/out form shows a clear error when more than three meter photos are selected', async ({ page }) => {

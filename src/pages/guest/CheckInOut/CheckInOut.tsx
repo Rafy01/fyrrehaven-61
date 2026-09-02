@@ -42,17 +42,29 @@ const METER_IMAGE_FIELD_NAMES = [
   "meterImagesWaterPool",
 ] as const;
 
+const METER_IMAGE_FIELD_TO_METER = {
+  meterImagesElectricity: "electricity",
+  meterImagesWaterHouse: "waterHouse",
+  meterImagesWaterPool: "waterPool",
+} as const;
+
+function collectMeterImageEntries(
+  values: Record<string, string | FileList | boolean>
+) {
+  return METER_IMAGE_FIELD_NAMES.flatMap((fieldName) => {
+    const value = values[fieldName];
+    if (!(value instanceof FileList)) return [];
+    return Array.from(value, (file) => ({
+      file,
+      meter: METER_IMAGE_FIELD_TO_METER[fieldName],
+    }));
+  });
+}
+
 function collectMeterImageFiles(
   values: Record<string, string | FileList | boolean>
 ): File[] {
-  const files: File[] = [];
-  for (const fieldName of METER_IMAGE_FIELD_NAMES) {
-    const value = values[fieldName];
-    if (value instanceof FileList) {
-      files.push(...Array.from(value));
-    }
-  }
-  return files;
+  return collectMeterImageEntries(values).map(({ file }) => file);
 }
 
 function isPoolOpen(today = new Date()) {
@@ -605,7 +617,8 @@ export default function CheckInOut({
         await imagePreparationPromiseRef.current;
       }
 
-      const meterFiles = collectMeterImageFiles(values);
+      const meterImageEntries = collectMeterImageEntries(values);
+      const meterFiles = meterImageEntries.map(({ file }) => file);
       console.log(
         `[Submit] Meter images collected: ${meterFiles.length} files, ${formatFileSize(calculateTotalSize(meterFiles))}`
       );
@@ -659,7 +672,9 @@ export default function CheckInOut({
         }
       }
       formData.set("clientDraftId", draftIdRef.current);
-      preparedMeterImages.forEach((file) => formData.append("meterImages", file));
+      preparedMeterImages.forEach((file, index) => {
+        formData.append(meterImageEntries[index]?.meter || "meterImages", file);
+      });
 
       console.log("[Submit] Submitting form and images to /api/checkin...");
       const res = await postFormData(

@@ -81,6 +81,12 @@ const ALLOWED_UPLOAD_MIME_TYPES = new Set([
   "image/heif",
 ]);
 const ALLOWED_UPLOAD_EXTENSIONS = /\.(jpe?g|png|webp|heic|heif)$/i;
+const METER_IMAGE_FIELDS = new Set([
+  "meterImages",
+  "electricity",
+  "waterHouse",
+  "waterPool",
+]);
 const READING_RE = /^\d{1,10}(?:[.,]\d{1,3})?$/;
 
 const sanitizeStorageSegment = (value) =>
@@ -408,6 +414,7 @@ export default async function handler(req, res) {
       const filename = String(info.filename || "").trim();
       const contentType = String(info.mimeType || "").toLowerCase();
       if (
+        !METER_IMAGE_FIELDS.has(name) ||
         !filename ||
         !ALLOWED_UPLOAD_EXTENSIONS.test(filename) ||
         !ALLOWED_UPLOAD_MIME_TYPES.has(contentType)
