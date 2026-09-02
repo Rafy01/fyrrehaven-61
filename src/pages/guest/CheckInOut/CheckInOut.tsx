@@ -10,8 +10,6 @@ import { guestPathOf } from "../../../lib/routes";
 import type { Lang } from "../../../lib/lang";
 import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import { UI_ICONS } from "../../../lib/icons";
-import imageCompression from "browser-image-compression";
-import compressionLibraryUrl from "browser-image-compression/dist/browser-image-compression.js?url";
 import styles from "./CheckInOut.module.css";
 
 // Keep the client-side target aligned with the server defaults so a normal
@@ -142,6 +140,36 @@ function formatFileSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function loadImageFromFile(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("The selected photo could not be read."));
+    };
+    image.src = objectUrl;
+  });
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) =>
+        blob
+          ? resolve(blob)
+          : reject(new Error("The selected photo could not be prepared.")),
+      "image/jpeg",
+      quality
+    );
+  });
+}
+
 async function compressImageFile(
   file: File,
   maxDimension: number,
@@ -152,24 +180,33 @@ async function compressImageFile(
   }
 
   try {
-    const compressedFile = await imageCompression(file, {
-      maxSizeMB: MAX_CHECKIN_IMAGE_UPLOAD_BYTES / 1024 / 1024,
-      maxWidthOrHeight: maxDimension,
-      initialQuality: quality,
-      useWebWorker: true,
-      libURL: compressionLibraryUrl,
-      fileType: "image/jpeg",
-    });
-    if (compressedFile.size >= file.size) return file;
+    const image = await loadImageFromFile(file);
+    const scale = Math.min(
+      1,
+      maxDimension / Math.max(image.naturalWidth, image.naturalHeight)
+    );
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext("2d", { alpha: false });
+    if (!context) throw new Error("The browser could not prepare the photo.");
+    context.drawImage(image, 0, 0, width, height);
+
+    const compressedBlob = await canvasToBlob(canvas, quality);
+    if (compressedBlob.size >= file.size) return file;
+    const compressedFile = new File(
+      [compressedBlob],
+      file.name.replace(/\.(jpe?g|png|webp)$/i, ".jpg"),
+      { type: "image/jpeg", lastModified: file.lastModified }
+    );
 
     console.log(
       `[Compress] ${file.name}: ${formatFileSize(file.size)} -> ${formatFileSize(compressedFile.size)} at quality ${quality}`
     );
-    return new File(
-      [compressedFile],
-      file.name.replace(/\.(jpe?g|png|webp)$/i, ".jpg"),
-      { type: "image/jpeg", lastModified: file.lastModified }
-    );
+    return compressedFile;
   } catch (error) {
     console.warn(`[Compress Error] ${file.name}:`, error);
     return file;
