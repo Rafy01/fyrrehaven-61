@@ -11,6 +11,7 @@ import type { Lang } from "../../../lib/lang";
 import { createFormDraftId, saveFormDraft } from "../../../lib/formDraftLog";
 import { UI_ICONS } from "../../../lib/icons";
 import imageCompression from "browser-image-compression";
+import compressionLibraryUrl from "browser-image-compression/dist/browser-image-compression.js?url";
 import styles from "./CheckInOut.module.css";
 
 // Keep the client-side target aligned with the server defaults so a normal
@@ -155,7 +156,8 @@ async function compressImageFile(
       maxSizeMB: MAX_CHECKIN_IMAGE_UPLOAD_BYTES / 1024 / 1024,
       maxWidthOrHeight: maxDimension,
       initialQuality: quality,
-      useWebWorker: false,
+      useWebWorker: true,
+      libURL: compressionLibraryUrl,
       fileType: "image/jpeg",
     });
     if (compressedFile.size >= file.size) return file;

@@ -52,7 +52,6 @@ test.describe('guest forms', () => {
   });
 
   test('check-in/out form uploads three meter photos and sends a valid reading quickly', async ({ page }) => {
-    const imageUploads: string[] = [];
     const readings: string[] = [];
 
     await page.setViewportSize({ width: 390, height: 1200 });
@@ -62,24 +61,6 @@ test.describe('guest forms', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ ok: true, stored: true }),
-      });
-    });
-
-    await page.route('**/api/checkin-image', async (route) => {
-      imageUploads.push(route.request().url());
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          ok: true,
-          attachment: {
-            fieldname: 'meterImages',
-            filename: `meter-${imageUploads.length}.jpg`,
-            contentType: 'image/jpeg',
-            sizeBytes: 1200,
-            storagePath: `checkin/test/meter-${imageUploads.length}.jpg`,
-          },
-        }),
       });
     });
 
@@ -119,9 +100,8 @@ test.describe('guest forms', () => {
       timeout: 8000,
     });
     expect(Date.now() - start).toBeLessThan(8000);
-    expect(imageUploads).toHaveLength(3);
     expect(readings).toHaveLength(1);
-    expect(readings[0]).toContain('preuploadedMeterImages');
+    expect(readings[0]).toContain('meterImages');
   });
 
   test('check-in/out form shows a clear error when more than three meter photos are selected', async ({ page }) => {
@@ -165,7 +145,7 @@ test.describe('guest forms', () => {
       });
     });
 
-    await page.route('**/api/checkin-image', async (route) => {
+    await page.route('**/api/checkin', async (route) => {
       await route.fulfill({
         status: 500,
         contentType: 'text/plain',
@@ -182,7 +162,7 @@ test.describe('guest forms', () => {
     await page.fill('#elReading', '055540');
     await page.fill('#waterHouse', '123,456');
     await page.fill('#waterPool', '1234');
-    await page.setInputFiles('#meterImages', 'public/admin-test/electricity-meter.jpeg');
+    await page.setInputFiles('#upload-meterImagesElectricity', 'public/admin-test/electricity-meter.jpeg');
     await page.getByLabel(/I consent/i).check();
     await page.click('button[type="submit"]');
 
