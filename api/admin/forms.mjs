@@ -20,6 +20,17 @@ const DASHBOARD_AUTH_DISABLED =
   process.env.DASHBOARD_AUTH_DISABLED === "true";
 const METER_FIELDS = new Set(["electricity", "waterHouse", "waterPool"]);
 
+function isValidIsoDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
 function attachmentStoragePath(attachment) {
   const rawPath =
     attachment?.storagePath ||
@@ -289,8 +300,15 @@ export default async function handler(req, res) {
       const action = String(req.body?.action || "").trim();
       const meter = String(req.body?.meter || "").trim();
       const correctedValue = String(req.body?.correctedValue || "").trim();
+      const stayDate = String(req.body?.stayDate || "").trim();
+      const attachmentIndex = Number(req.body?.attachmentIndex);
 
-      if (action !== "correct-meter" && action !== "approve-checkin-meters") {
+      if (
+        action !== "correct-meter" &&
+        action !== "approve-checkin-meters" &&
+        action !== "update-stay-date" &&
+        action !== "assign-meter-image"
+      ) {
         sendJson(res, 400, {
           ok: false,
           error: "UNKNOWN_PATCH_ACTION",
@@ -305,6 +323,130 @@ export default async function handler(req, res) {
           error: "SUBMISSION_ID_REQUIRED",
           detail: "Missing submission id.",
         });
+        return;
+      }
+
+      if (action === "assign-meter-image") {
+        if (!METER_FIELDS.has(meter) || !Number.isInteger(attachmentIndex)) {
+          sendJson(res, 400, {
+            ok: false,
+            error: "INVALID_IMAGE_ASSIGNMENT",
+            detail: "Choose a valid meter image assignment.",
+          });
+          return;
+        }
+
+        const found = await findSubmissionDoc(db, submissionId);
+        if (!found) {
+          sendJson(res, 404, {
+            ok: false,
+            error: "SUBMISSION_NOT_FOUND",
+            detail: "No stored submission matched that id.",
+          });
+          return;
+        }
+
+        const existing = { id: found.snapshot.id, ...found.snapshot.data() };
+        const checkin = existing.checkin || null;
+        const attachments = Array.isArray(checkin?.attachments)
+          ? checkin.attachments
+          : [];
+        if (!checkin || !attachments[attachmentIndex]) {
+          sendJson(res, 400, {
+            ok: false,
+            error: "IMAGE_NOT_FOUND",
+            detail: "The selected image is no longer available.",
+          });
+          return;
+        }
+
+        const updatedAtMs = Date.now();
+        const updatedCheckin = {
+          ...checkin,
+          attachments: attachments.map((attachment, index) =>
+            index === attachmentIndex
+              ? {
+                  ...attachment,
+                  fieldname: meter,
+                  meterAssignedAtMs: updatedAtMs,
+                  meterAssignedBy: adminEmail,
+                }
+              : attachment
+          ),
+        };
+        const updatedSubmission = {
+          ...existing,
+          checkin: updatedCheckin,
+          updatedAtMs,
+        };
+        await updateFormSubmission(found.docRef, {
+          checkin: updatedCheckin,
+          updatedAtMs,
+        });
+        const [submissionWithUrls] = await addAttachmentViewUrls(
+          [updatedSubmission],
+          db
+        );
+        sendJson(res, 200, { ok: true, submission: submissionWithUrls });
+        return;
+      }
+
+      if (action === "update-stay-date") {
+        if (!isValidIsoDate(stayDate)) {
+          sendJson(res, 400, {
+            ok: false,
+            error: "INVALID_STAY_DATE",
+            detail: "Choose a valid arrival or departure date.",
+          });
+          return;
+        }
+
+        const found = await findSubmissionDoc(db, submissionId);
+        if (!found) {
+          sendJson(res, 404, {
+            ok: false,
+            error: "SUBMISSION_NOT_FOUND",
+            detail: "No stored submission matched that id.",
+          });
+          return;
+        }
+
+        const existing = { id: found.snapshot.id, ...found.snapshot.data() };
+        const checkin = existing.checkin || null;
+        if (!checkin || !["checkin", "checkout"].includes(checkin.type)) {
+          sendJson(res, 400, {
+            ok: false,
+            error: "CHECKIN_SUBMISSION_REQUIRED",
+            detail: "Only check-in/out submissions have stay dates.",
+          });
+          return;
+        }
+
+        const dateField =
+          checkin.type === "checkout" ? "bookingEndDate" : "bookingStartDate";
+        const updatedAtMs = Date.now();
+        const updatedCheckin = {
+          ...checkin,
+          [dateField]: stayDate,
+          stayDate,
+          stayDateUpdatedAtMs: updatedAtMs,
+          stayDateUpdatedBy: adminEmail,
+        };
+        const updatedSubmission = {
+          ...existing,
+          checkin: updatedCheckin,
+          updatedAtMs,
+        };
+
+        await updateFormSubmission(found.docRef, {
+          checkin: updatedCheckin,
+          updatedAtMs,
+        });
+        const [submissionWithUrls] = await addAttachmentViewUrls(
+          [updatedSubmission],
+          db
+        );
+        sendJson(res, 200, { ok: true, submission: submissionWithUrls });
         return;
       }
 

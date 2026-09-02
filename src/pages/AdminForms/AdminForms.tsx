@@ -137,6 +137,10 @@ type Submission = {
     typeLabel?: string;
     stayDate?: string | null;
     submittedStayDate?: string | null;
+    bookingStartDate?: string | null;
+    bookingEndDate?: string | null;
+    stayDateUpdatedAtMs?: number | null;
+    stayDateUpdatedBy?: string | null;
     keycode?: string | null;
     meterReadings?: {
       electricity?: string | null;
@@ -147,6 +151,8 @@ type Submission = {
     meterApproval?: MeterApproval | null;
     attachments?: Array<{
       fieldname?: string;
+      meterAssignedAtMs?: number;
+      meterAssignedBy?: string;
       filename?: string;
       contentType?: string;
       sizeBytes?: number;
@@ -2016,6 +2022,12 @@ export default function AdminForms() {
   );
   const [checkinApprovalError, setCheckinApprovalError] =
     React.useState<string | null>(null);
+  const [savingStayDateId, setSavingStayDateId] = React.useState<string | null>(
+    null
+  );
+  const [stayDateSaveError, setStayDateSaveError] = React.useState<string | null>(
+    null
+  );
   const meterAutosaveTimer = React.useRef<number | null>(null);
   const lastMeterSaveSignature = React.useRef("");
   const activeImagePreviewKey = React.useRef("");
@@ -4350,19 +4362,38 @@ export default function AdminForms() {
     const approval = submission.checkin?.meterApproval || null;
     const isApproved = approval?.status === "approved" && approval.approvedAtMs;
     const isApproving = approvingCheckinId === submission.id;
+    const isCheckout = submission.checkin?.type === "checkout";
+    const dateField = isCheckout ? "bookingEndDate" : "bookingStartDate";
+    const stayDate =
+      submission.checkin?.[dateField] ||
+      submission.checkin?.stayDate ||
+      submission.checkin?.submittedStayDate ||
+      submissionCreatedPlainDate(submission) ||
+      "";
 
     return (
       <div className={styles.checkinApprovalPanel}>
-        <div>
+        <div className={styles.checkinApprovalCopy}>
           <strong>
             {isApproved ? "Meter readings approved" : "Approve meter readings"}
           </strong>
-          <span>
-            {isApproved
-              ? `Approved ${formatDateTime(approval.approvedAtMs || undefined)}`
-              : "Sends check-in/out numbers to the integration API after review."}
-          </span>
         </div>
+        <label className={styles.checkinStayDateField}>
+          <span>{isCheckout ? "Departure date" : "Arrival date"}</span>
+          <input
+            key={`${submission.id}:${stayDate}`}
+            type="date"
+            defaultValue={stayDate}
+            disabled={savingStayDateId === submission.id}
+            onBlur={(event) => {
+              const nextDate = event.target.value;
+              if (nextDate && nextDate !== stayDate) {
+                void saveCheckinStayDate(submission, nextDate);
+              }
+            }}
+          />
+          {savingStayDateId === submission.id ? <small>Saving...</small> : null}
+        </label>
         <button
           type="button"
           className={styles.checkinApprovalButton}
@@ -4375,8 +4406,125 @@ export default function AdminForms() {
         {checkinApprovalError ? (
           <p className={styles.checkinApprovalError}>{checkinApprovalError}</p>
         ) : null}
+        {stayDateSaveError ? (
+          <p className={styles.checkinApprovalError}>{stayDateSaveError}</p>
+        ) : null}
       </div>
     );
+  }
+
+  async function saveCheckinStayDate(submission: Submission, stayDate: string) {
+    if (!submission.checkin || !stayDate || savingStayDateId) return;
+    const dateField =
+      submission.checkin.type === "checkout" ? "bookingEndDate" : "bookingStartDate";
+    setSavingStayDateId(submission.id);
+    setStayDateSaveError(null);
+
+    try {
+      if (DASHBOARD_AUTH_DISABLED) {
+        replaceSubmission({
+          ...submission,
+          checkin: {
+            ...submission.checkin,
+            [dateField]: stayDate,
+            stayDate,
+            stayDateUpdatedAtMs: Date.now(),
+            stayDateUpdatedBy: adminEmail || "local@fyrrehaven-61.dk",
+          },
+        });
+        return;
+      }
+
+      const auth = getFirebaseAuth();
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken(true) : null;
+      const res = await fetch("/api/admin/forms", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ action: "update-stay-date", id: submission.id, stayDate }),
+      });
+      const data = (await res.json()) as ApiResponse;
+      if (!res.ok || !data.ok || !data.submission) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+      replaceSubmission(data.submission);
+    } catch (nextError) {
+      setStayDateSaveError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    } finally {
+      setSavingStayDateId(null);
+    }
+  }
+
+  async function saveMeterImageAssignment(
+    preview: ImagePreview,
+    meter: MeterKey
+  ) {
+    const { submission, index } = preview;
+    if (!submission.checkin) return;
+
+    const applyUpdatedSubmission = (updatedSubmission: Submission) => {
+      replaceSubmission(updatedSubmission);
+      setImagePreview((current) => {
+        if (!current || current.submission.id !== updatedSubmission.id) return current;
+        const attachment = updatedSubmission.checkin?.attachments?.[current.index];
+        return attachment
+          ? { ...current, submission: updatedSubmission, attachment }
+          : current;
+      });
+    };
+
+    setMeterSaveError(null);
+    try {
+      if (DASHBOARD_AUTH_DISABLED) {
+        applyUpdatedSubmission({
+          ...submission,
+          checkin: {
+            ...submission.checkin,
+            attachments: (submission.checkin.attachments || []).map(
+              (attachment, attachmentIndex) =>
+                attachmentIndex === index
+                  ? {
+                      ...attachment,
+                      fieldname: meter,
+                      meterAssignedAtMs: Date.now(),
+                      meterAssignedBy: adminEmail || "local@fyrrehaven-61.dk",
+                    }
+                  : attachment
+            ),
+          },
+        });
+        return;
+      }
+
+      const auth = getFirebaseAuth();
+      const token = auth?.currentUser ? await auth.currentUser.getIdToken(true) : null;
+      const res = await fetch("/api/admin/forms", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          action: "assign-meter-image",
+          id: submission.id,
+          meter,
+          attachmentIndex: index,
+        }),
+      });
+      const data = (await res.json()) as ApiResponse;
+      if (!res.ok || !data.ok || !data.submission) {
+        throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      }
+      applyUpdatedSubmission(data.submission);
+    } catch (nextError) {
+      setMeterSaveError(
+        String(nextError instanceof Error ? nextError.message : nextError)
+      );
+    }
   }
 
   function renderCheckinAttachments(submission: Submission) {
@@ -6846,6 +6994,7 @@ export default function AdminForms() {
                               );
                               setMeterSaveState("idle");
                               setMeterSaveError(null);
+                              void saveMeterImageAssignment(imagePreview, nextMeter);
                             }}
                           >
                             <option value="" disabled>
