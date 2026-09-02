@@ -133,7 +133,11 @@ function extraServicesPayload(submission, extras) {
     type: "extra-services",
     status: cleanString(submission.status),
     bookingNumber: cleanString(submission.bookingNumber),
+    guest: guestPayload(submission, { phone: true, country: true }),
     date: cleanString(extras.stayDate),
+    dates: {
+      checkIn: cleanString(extras.stayDate),
+    },
     totalDKK: cleanNumber(extras.totalDKK),
     items,
   };
