@@ -155,7 +155,7 @@ async function compressImageFile(
       maxSizeMB: MAX_CHECKIN_IMAGE_UPLOAD_BYTES / 1024 / 1024,
       maxWidthOrHeight: maxDimension,
       initialQuality: quality,
-      useWebWorker: true,
+      useWebWorker: false,
       fileType: "image/jpeg",
     });
     if (compressedFile.size >= file.size) return file;
