@@ -57,11 +57,16 @@ function consumerKey(value) {
 }
 
 export default async function handler(req, res) {
-  applySecurityHeaders(res);
-  res.setHeader("Allow", "GET, PATCH");
+  applySecurityHeaders(res, { cors: true });
+  res.setHeader("Allow", "GET, PATCH, OPTIONS");
+
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
 
   if (req.method !== "GET" && req.method !== "PATCH") {
-    sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });
+    sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" }, { cors: true });
     return;
   }
 
@@ -71,7 +76,7 @@ export default async function handler(req, res) {
       ok: false,
       error: auth.error,
       detail: auth.detail || null,
-    });
+    }, { cors: true });
     return;
   }
 
@@ -83,7 +88,7 @@ export default async function handler(req, res) {
       detail:
         getFirebaseAdminInitError() ||
         "Firebase server credentials are missing or invalid.",
-    });
+    }, { cors: true });
     return;
   }
 
@@ -98,7 +103,7 @@ export default async function handler(req, res) {
           ok: false,
           error: "SUBMISSION_ID_REQUIRED",
           detail: "Send id or ids to mark submissions as synced.",
-        });
+        }, { cors: true });
         return;
       }
 
@@ -121,7 +126,7 @@ export default async function handler(req, res) {
       sendJson(res, 200, {
         ok: true,
         results,
-      });
+      }, { cors: true });
       return;
     }
 
@@ -133,7 +138,7 @@ export default async function handler(req, res) {
           ok: false,
           error: "SUBMISSION_NOT_FOUND",
           detail: "No stored submission matched that id.",
-        });
+        }, { cors: true });
         return;
       }
 
@@ -147,14 +152,14 @@ export default async function handler(req, res) {
           error: "SUBMISSION_NOT_SHAREABLE",
           detail:
             "This submission is not available to the integration API or has not been approved yet.",
-        });
+        }, { cors: true });
         return;
       }
 
       sendJson(res, 200, {
         ok: true,
         submission,
-      });
+      }, { cors: true });
       return;
     }
 
@@ -173,12 +178,12 @@ export default async function handler(req, res) {
       ok: true,
       count: submissions.length,
       submissions,
-    });
+    }, { cors: true });
   } catch (error) {
     sendJson(res, 500, {
       ok: false,
       error: "SUBMISSION_INTEGRATION_FAILED",
       detail: String(error?.message || error),
-    });
+    }, { cors: true });
   }
 }
