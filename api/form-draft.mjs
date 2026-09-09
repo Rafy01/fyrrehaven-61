@@ -85,6 +85,7 @@ export default async function handler(req, res) {
     lang: normalizeLang(body.lang),
     name: cleanString(body.name, 180),
     email: normalizeEmail(body.email),
+    emails: [normalizeEmail(body.email)].filter(Boolean),
     phone: cleanString(body.phone, 80),
     country: cleanString(body.country, 120) || null,
     countryIso: cleanString(body.countryIso, 4) || null,

@@ -114,3 +114,21 @@ test('normalizes email casing without merging distinct guest addresses', () => {
       .toBe('guest@example.com');
   }
 });
+
+test('shares all unique guest emails on public submission payloads', () => {
+  const payload = publicSubmissionPayload({
+    id: 'extra-emails',
+    status: 'sent',
+    intent: 'extra-services',
+    email: ' Guest@Example.COM ',
+    emails: ['guest@example.com', 'Second@Example.com', 'SECOND@example.com'],
+    extras: {
+      stayDate: '2026-09-01',
+      totalDKK: 100,
+      items: [],
+    },
+  });
+
+  expect(payload?.guest.email).toBe('guest@example.com');
+  expect(payload?.guest.emails).toEqual(['guest@example.com', 'second@example.com']);
+});

@@ -65,6 +65,34 @@ function cleanNumber(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function collectEmails(...values) {
+  const out = [];
+  const seen = new Set();
+  const visit = (value) => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    if (value && typeof value === "object") {
+      visit(value.email);
+      visit(value.emails);
+      return;
+    }
+    String(value ?? "")
+      .split(/[,\s;]+/)
+      .map((email) => normalizeEmail(email))
+      .filter((email) => email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      .forEach((email) => {
+        if (seen.has(email)) return;
+        seen.add(email);
+        out.push(email);
+      });
+  };
+
+  values.forEach(visit);
+  return out;
+}
+
 function englishLabel(label, fallback) {
   if (typeof label === "string") return cleanString(label) || fallback;
   if (!label || typeof label !== "object") return fallback;
@@ -72,9 +100,17 @@ function englishLabel(label, fallback) {
 }
 
 function guestPayload(submission, options = {}) {
+  const emails = collectEmails(
+    submission.emails,
+    submission.email,
+    submission.confirmEmail,
+    submission.guest
+  );
+
   return {
     name: cleanString(submission.name),
-    email: normalizeEmail(submission.email) || null,
+    email: emails[0] || null,
+    emails,
     ...(options.phone ? { phone: cleanString(submission.phone) } : {}),
     ...(options.country
       ? {

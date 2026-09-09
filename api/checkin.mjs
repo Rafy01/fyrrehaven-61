@@ -283,6 +283,7 @@ function parsePreuploadedMeterImages(fields) {
   ].join("/");
 
   return parsed.map((attachment) => {
+    const fieldname = String(attachment?.fieldname || "meterImages").trim();
     const filename = String(attachment?.filename || "").trim();
     const contentType = String(attachment?.contentType || "").toLowerCase();
     const storagePath = String(attachment?.storagePath || "").trim();
@@ -290,6 +291,7 @@ function parsePreuploadedMeterImages(fields) {
 
     if (
       !clientDraftId ||
+      !METER_IMAGE_FIELDS.has(fieldname) ||
       !filename ||
       !ALLOWED_UPLOAD_EXTENSIONS.test(filename) ||
       !ALLOWED_UPLOAD_MIME_TYPES.has(contentType) ||
@@ -302,7 +304,7 @@ function parsePreuploadedMeterImages(fields) {
     }
 
     return {
-      fieldname: "meterImages",
+      fieldname,
       filename,
       contentType,
       sizeBytes,
@@ -323,6 +325,7 @@ async function logCheckinSubmitError(db, fields, req, error, detail) {
     lang: normalizeLang(fields.lang),
     name: String(fields.name || "").trim().slice(0, 180),
     email: normalizeEmail(fields.email),
+    emails: [normalizeEmail(fields.email)].filter(Boolean),
     message: String(fields.comment || "").trim().slice(0, 4000),
     consent:
       fields.consent === true ||
@@ -678,6 +681,7 @@ export default async function handler(req, res) {
           lang: uiLang,
           name: String(name).trim(),
           email: emailNormalized,
+          emails: [emailNormalized].filter(Boolean),
           message: String(comment || "").trim(),
           consent: consentAccepted,
           checkin: {
