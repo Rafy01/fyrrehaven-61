@@ -205,15 +205,13 @@ function formatMinNightsError(
 }
 
 /* ─── API → bookings ─── */
-function looksLikeBooking(ev: ApiEvent): boolean {
-  // Alt fra kalenderen tæller som reservation/blokering,
-  // undtagen "i dag" hvis det er den særlige samme-dags blokering.
+function looksLikeBooking(ev: ApiEvent, today: Date): boolean {
   const start = new Date(ev.start);
   const end = new Date(ev.end);
 
   const s = startOfDay(start);
   const e = startOfDay(end);
-  const today = startOfDay(new Date());
+  if (e <= today) return false;
 
   const isSingleDay = e.getTime() - s.getTime() === 24 * 3600 * 1000;
 
@@ -244,8 +242,9 @@ function toBooking(ev: ApiEvent): Booking {
 function normalizeBookingsFromApi(payload: ApiResponse): Booking[] {
   if (!("ok" in payload) || !payload.ok) return [];
   const bs: Booking[] = [];
+  const today = startOfDay(new Date());
   for (const ev of payload.events ?? []) {
-    if (!looksLikeBooking(ev)) continue;
+    if (!looksLikeBooking(ev, today)) continue;
     const b = toBooking(ev);
     if (b.endDay > b.startDay) bs.push(b);
   }
@@ -350,7 +349,6 @@ export default function AvailabilityCalendar({
   }, [gridStart, monthBase]);
 
   const [bookings, setBookings] = React.useState<Booking[] | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
 
   // --- Selection state ---
   const [sel, setSel] = React.useState<Selection | null>(null);
@@ -377,14 +375,15 @@ export default function AvailabilityCalendar({
   // Hent iCal KUN én gang pr. apiPath (også i StrictMode)
   React.useEffect(() => {
     let mounted = true;
-    setError(null);
     setBookings(null);
 
     loadIcal(apiPath).then(({ data, error }) => {
       if (!mounted) return;
-      const filtered = data.filter((b) => b.endDay >= today);
+      const filtered = data.filter((b) => b.endDay > today);
       setBookings(filtered);
-      if (error) setError(error);
+      if (error) {
+        console.warn("Availability calendar sync failed:", error);
+      }
     });
 
     return () => {
@@ -902,10 +901,6 @@ export default function AvailabilityCalendar({
         </div>
       )}
 
-      {!bookings && (
-        <div className={styles.loading}>{t("Henter…", "Loading…", "Lädt…")}</div>
-      )}
-      {error && <div className={styles.error}>{error}</div>}
     </div>
   );
 }

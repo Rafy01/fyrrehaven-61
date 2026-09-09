@@ -1,4 +1,9 @@
 import { applySecurityHeaders, sendJson } from "../_lib/httpSecurity.mjs";
+import {
+  buildCalendar,
+  currentAndFutureEvents,
+  parseEvents,
+} from "../_lib/icalUtils.mjs";
 
 const REQ_TIMEOUT_MS = 15000;
 
@@ -74,10 +79,22 @@ export default async function handler(req, res) {
     }
 
     const icsText = await upstream.text();
+    const events = currentAndFutureEvents(parseEvents(icsText)).map((event) => ({
+      uid: event.id,
+      start: event.start,
+      end: event.end,
+      summary: event.title || "Reserved",
+      description: event.description || "",
+    }));
+    const calendarText = buildCalendar({
+      name: "Fyrrehaven 61 Airbnb availability",
+      description: "Current and future Airbnb blocks only.",
+      events,
+    });
     applySecurityHeaders(res, { cors: true });
     res.setHeader("Content-Type", "text/calendar; charset=utf-8");
     res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300");
-    res.status(200).send(icsText);
+    res.status(200).send(calendarText);
   } catch (err) {
     clearTimeout(timeout);
     sendJson(

@@ -1,160 +1,110 @@
 // /api/ical.mjs
 // Henter en ICS-kalender (Airbnb eller webcal), parser VEVENTs og returnerer JSON.
+import {
+  buildCalendar,
+  currentAndFutureEvents,
+  filterByRange,
+  parseEvents,
+  startOfToday,
+} from "./_lib/icalUtils.mjs";
+import { getFirestoreDb } from "./_lib/firebaseAdmin.mjs";
+import { listFormSubmissions } from "./_lib/formSubmissions.mjs";
 
 const REQ_TIMEOUT_MS = 15000;
 
-/** Fold ICS-linjer (RFC5545: continuation lines begynder med space) */
-function unfoldIcs(icsText) {
-  const lines = icsText.split(/\r?\n/);
-  const out = [];
-  for (const line of lines) {
-    if (/^[ \t]/.test(line) && out.length) {
-      out[out.length - 1] += line.slice(1);
-    } else {
-      out.push(line);
-    }
-  }
-  return out;
+function validIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""));
 }
 
-/** Parse en ICS datoværdi til JS Date + allDay-flag */
-function parseIcsDate(val, tzid) {
-  // Eksempler:
-  // - All day: 20250905
-  // - Lokal tid: 20250905T140000
-  // - UTC: 20250905T140000Z
-  if (/^\d{8}$/.test(val)) {
-    const y = Number(val.slice(0, 4));
-    const m = Number(val.slice(4, 6)) - 1;
-    const d = Number(val.slice(6, 8));
-    return { date: new Date(y, m, d, 0, 0, 0), allDay: true };
+function submissionBookingDates(submission) {
+  const start = submission?.selection?.start;
+  const end = submission?.selection?.endExclusive;
+  if (validIsoDate(start) && validIsoDate(end) && end > start) {
+    return { start, end };
   }
-  const y = Number(val.slice(0, 4));
-  const m = Number(val.slice(4, 6)) - 1;
-  const d = Number(val.slice(6, 8));
-  const hh = Number(val.slice(9, 11) || "0");
-  const mm = Number(val.slice(11, 13) || "0");
-  const ss = Number(val.slice(13, 15) || "0");
-  const isUtc = val.endsWith("Z");
-
-  const date = isUtc
-    ? new Date(Date.UTC(y, m, d, hh, mm, ss))
-    : new Date(y, m, d, hh, mm, ss);
-
-  return { date, allDay: false, tzid: tzid || null };
+  return null;
 }
 
-/** Parse ICS til events (kun de vigtigste felter) */
-function parseEvents(icsText) {
-  const lines = unfoldIcs(icsText);
-  const events = [];
-  let cur = null;
-
-  for (const raw of lines) {
-    const line = raw.trim();
-    if (line === "BEGIN:VEVENT") {
-      cur = {};
-      continue;
-    }
-    if (line === "END:VEVENT") {
-      if (cur && cur.dtstart && cur.dtend) {
-        events.push(cur);
-      } else if (cur && cur.dtstart) {
-        // Nogle ICS har ikke DTEND for heldagsevents -> antag +1 dag
-        const dt = cur.dtstart;
-        if (dt.allDay) {
-          const end = new Date(dt.date.getTime());
-          end.setDate(end.getDate() + 1);
-          cur.dtend = { date: end, allDay: true };
-          events.push(cur);
-        }
-      }
-      cur = null;
-      continue;
-    }
-    if (!cur) continue;
-
-    // key;params:value
-    const m = line.match(/^([^:;]+)(?:;([^:]+))?:(.*)$/);
-    if (!m) continue;
-    const [, key, paramStr = "", value] = m;
-
-    const params = {};
-    if (paramStr) {
-      for (const chunk of paramStr.split(";")) {
-        const [pk, pv] = chunk.split("=");
-        if (pk && pv) params[pk.toUpperCase()] = pv;
-      }
-    }
-
-    switch (key.toUpperCase()) {
-      case "UID":
-        cur.uid = value;
-        break;
-      case "SUMMARY":
-        cur.summary = value;
-        break;
-      case "DESCRIPTION":
-        cur.description = value;
-        break;
-      case "LOCATION":
-        cur.location = value;
-        break;
-      case "DTSTART": {
-        const tzid = params.TZID || null;
-        cur.dtstart = parseIcsDate(value, tzid);
-        break;
-      }
-      case "DTEND": {
-        const tzid = params.TZID || null;
-        cur.dtend = parseIcsDate(value, tzid);
-        break;
-      }
-      case "STATUS":
-        cur.status = value; // Airbnb bruger sjældent STATUS, men skader ikke
-        break;
-      case "TRANSP":
-        cur.transp = value;
-        break;
-      default:
-        break;
-    }
-  }
-
-  // Map til “rene” objekter som din frontend forventer
-  return events.map((e) => ({
-    id: e.uid || `${e.summary || "event"}-${e.dtstart?.date?.toISOString()}`,
-    title: e.summary || "",
-    description: e.description || "",
-    location: e.location || "",
-    start: e.dtstart?.date?.toISOString() || null,
-    end: e.dtend?.date?.toISOString() || null,
-    allDay: !!e.dtstart?.allDay,
-    status: e.status || "",
-    transp: e.transp || "",
-  }));
+function bookingSummary(submission) {
+  const name = String(submission?.name || "Guest").trim() || "Guest";
+  const bookingNumber = String(submission?.bookingNumber || submission?.id || "")
+    .trim();
+  return bookingNumber ? `${name} #${bookingNumber}` : name;
 }
 
-/** Filtrér pr. dato-interval (ISO) */
-function filterByRange(events, startIso, endIso) {
-  if (!startIso && !endIso) return events;
-  const start = startIso
-    ? new Date(startIso).getTime()
-    : Number.NEGATIVE_INFINITY;
-  const end = endIso ? new Date(endIso).getTime() : Number.POSITIVE_INFINITY;
+function bookingDescription(submission) {
+  return [
+    submission?.email ? `Email: ${submission.email}` : "",
+    submission?.phone ? `Phone: ${submission.phone}` : "",
+    submission?.guests?.total ? `Guests: ${submission.guests.total}` : "",
+    submission?.stayPurpose ? `Purpose: ${submission.stayPurpose}` : "",
+  ]
+    .filter(Boolean)
+    .join("\\n");
+}
 
-  return events.filter((e) => {
-    const s = e.start ? new Date(e.start).getTime() : 0;
-    const t = e.end ? new Date(e.end).getTime() : s;
-    // Overlap?
-    return t > start && s < end;
+async function sendBookingsIcal(req, res) {
+  const requiredToken = String(process.env.BOOKINGS_ICAL_TOKEN || "").trim();
+  if (requiredToken && String(req.query?.token || "") !== requiredToken) {
+    res.status(401).json({
+      ok: false,
+      error: "UNAUTHORIZED",
+      detail: "The booking calendar token is missing or invalid.",
+    });
+    return;
+  }
+
+  const db = await getFirestoreDb();
+  if (!db) {
+    res.status(503).json({
+      ok: false,
+      error: "FIREBASE_ADMIN_NOT_CONFIGURED",
+      detail: "Firebase server credentials are missing or invalid.",
+    });
+    return;
+  }
+
+  const today = startOfToday().toISOString().slice(0, 10);
+  const submissions = await listFormSubmissions(db, 1000);
+  const events = submissions
+    .filter((submission) => {
+      const intent = String(submission?.intent || "").trim();
+      return intent === "booking" && submission?.status !== "draft";
+    })
+    .map((submission) => {
+      const dates = submissionBookingDates(submission);
+      if (!dates || dates.end <= today) return null;
+      return {
+        uid: `fyrrehaven-61-booking-${submission.id}`,
+        start: dates.start,
+        end: dates.end,
+        summary: bookingSummary(submission),
+        description: bookingDescription(submission),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => String(a.start).localeCompare(String(b.start)));
+
+  const calendar = buildCalendar({
+    name: "Fyrrehaven 61 bookings",
+    description: "Direct website bookings with guest names.",
+    events,
   });
+
+  res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+  res.setHeader("Cache-Control", "private, max-age=0");
+  res.status(200).send(calendar);
 }
 
 export default async function handler(req, res) {
   try {
     if (req.method !== "GET") {
       res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
+      return;
+    }
+
+    if (String(req.query?.feed || "").toLowerCase() === "bookings") {
+      await sendBookingsIcal(req, res);
       return;
     }
 
@@ -176,7 +126,8 @@ export default async function handler(req, res) {
     const r = await fetch(url, {
       method: "GET",
       headers: {
-        "User-Agent": "Fyrrehaven-61/1.0 (+https://fyrrehaven-61.dk)",
+        "User-Agent":
+          "Mozilla/5.0 (compatible; Fyrrehaven-61/1.0; +https://fyrrehaven-61.dk)",
         Accept: "text/calendar, text/plain, */*",
       },
       signal: ctrl.signal,
@@ -192,7 +143,7 @@ export default async function handler(req, res) {
     }
 
     const ics = await r.text();
-    const events = parseEvents(ics);
+    const events = currentAndFutureEvents(parseEvents(ics));
     const filtered = filterByRange(events, start, end);
 
     // Cache på edge i 15 min
