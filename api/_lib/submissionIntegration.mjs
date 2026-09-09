@@ -1,3 +1,4 @@
+import { normalizeEmail } from "./contactSecurity.mjs";
 import crypto from "node:crypto";
 import { updateFormSubmission } from "./formSubmissions.mjs";
 
@@ -73,7 +74,7 @@ function englishLabel(label, fallback) {
 function guestPayload(submission, options = {}) {
   return {
     name: cleanString(submission.name),
-    email: cleanString(submission.email),
+    email: normalizeEmail(submission.email) || null,
     ...(options.phone ? { phone: cleanString(submission.phone) } : {}),
     ...(options.country
       ? {
@@ -155,6 +156,7 @@ function checkinPayload(submission, checkin) {
   return {
     id: cleanString(submission.id),
     type: checkin.type === "checkout" ? "checkout" : "checkin",
+    guest: guestPayload(submission),
     status: cleanString(submission.status),
     bookingNumber: cleanString(submission.bookingNumber),
     dates: {

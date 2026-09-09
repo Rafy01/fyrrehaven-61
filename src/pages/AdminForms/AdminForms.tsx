@@ -4574,7 +4574,7 @@ export default function AdminForms() {
     const selectionTotal =
       bookingSource?.selection?.totalAfterAirbnbDiscountDKK ??
       bookingSource?.selection?.totalWithCleaningDKK;
-    const emails = uniqueSubmissionValues(groupItems, (submission) => submission.email);
+    const emails = uniqueSubmissionValues(groupItems, (submission) => normalizeEmail(submission.email));
     const phones = uniqueSubmissionValues(groupItems, (submission) => submission.phone);
 
     const contactItems = [

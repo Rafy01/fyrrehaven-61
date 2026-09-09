@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { normalizeEmail } from '../api/_lib/contactSecurity.mjs';
 import { publicSubmissionPayload } from '../api/_lib/submissionIntegration.mjs';
 
 test.describe('submission integration payloads', () => {
@@ -85,4 +86,31 @@ test.describe('submission integration payloads', () => {
       checkOut: '2026-09-07',
     });
   });
+});
+
+
+test('normalizes email casing without merging distinct guest addresses', () => {
+  expect(normalizeEmail('  Guest@Example.COM\u200B ')).toBe('guest@example.com');
+  const addresses = ['Guest@Example.COM', 'guest@example.com', 'Other@Example.com'];
+  for (const type of ['checkin', 'checkout']) {
+    const payloads = addresses.map((email, index) => publicSubmissionPayload({
+      id: `${type}-${index}`,
+      status: 'sent',
+      intent: 'guest-checkin',
+      bookingNumber: '71234',
+      email,
+      checkin: { type, meterApproval: { approvedAtMs: 1788210000000 } },
+    }));
+    expect(payloads.map((payload) => payload?.guest.email)).toEqual([
+      'guest@example.com', 'guest@example.com', 'other@example.com',
+    ]);
+  }
+  for (const submission of [
+    { status: 'draft', intent: 'guest-checkin' },
+    { status: 'sent', intent: 'booking', selection: {} },
+    { status: 'sent', intent: 'extra-services', extras: {} },
+  ]) {
+    expect(publicSubmissionPayload({ ...submission, email: ' Guest@Example.COM ' })?.guest.email)
+      .toBe('guest@example.com');
+  }
 });

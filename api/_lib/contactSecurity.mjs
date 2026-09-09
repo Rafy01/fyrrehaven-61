@@ -29,7 +29,8 @@ function isBlockedBotUserAgent(req) {
 export function normalizeEmail(value) {
   return String(value || "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .trim();
+    .trim()
+    .toLowerCase();
 }
 
 export function getRequesterIp(req) {
