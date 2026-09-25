@@ -272,10 +272,10 @@ async function loadIcal(apiPath: string): Promise<CacheEntry> {
             "Calendar availability could not be loaded right now."
           );
         }
-        const norm = normalizeBookingsFromApi(json);
-        if (norm.length === 0) {
-          return { data: [], error: "Ingen kalenderdata fundet." };
+        if (!json.ok) {
+          throw new Error(json.detail || json.error || "Calendar availability could not be loaded right now.");
         }
+        const norm = normalizeBookingsFromApi(json);
         return { data: norm, error: null };
       } catch (err: unknown) {
         return {

@@ -38,10 +38,11 @@ export default async function handler(req, res) {
 
   const hostname = target.hostname.toLowerCase();
   const isAirbnb =
-    hostname === "airbnb.com" ||
-    hostname === "airbnb.dk" ||
-    hostname.endsWith(".airbnb.com") ||
-    hostname.endsWith(".airbnb.dk");
+    target.protocol === "https:" &&
+    (hostname === "airbnb.com" ||
+      hostname === "airbnb.dk" ||
+      hostname.endsWith(".airbnb.com") ||
+      hostname.endsWith(".airbnb.dk"));
 
   if (!isAirbnb) {
     sendJson(

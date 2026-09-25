@@ -25,6 +25,7 @@ function createDevApiPlugin() {
   return {
     name: "fh61-dev-api-bridge",
     configureServer(server: import("vite").ViteDevServer) {
+      process.env.FH_LOCAL_DEV_API = "true";
       server.middlewares.use(async (req, res, next) => {
         if (!req.url) return next();
 

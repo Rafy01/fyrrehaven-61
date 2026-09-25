@@ -589,7 +589,7 @@ export default async function handler(req, res) {
         const manualGuestOnly =
           adminManualGuestOnly === true ||
           String(adminManualGuestOnly || "").toLowerCase() === "true";
-        const localDevelopment = process.env.NODE_ENV !== "production";
+        const localDevelopment = process.env.FH_LOCAL_DEV_API === "true";
         if (manualGuestOnly && !localDevelopment) {
           const adminCheck = await verifyAdminRequest(req);
           if (!adminCheck.ok) {

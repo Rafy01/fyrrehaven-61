@@ -41,7 +41,8 @@ type PreuploadedAttachment = {
   filename: string;
   contentType: string;
   sizeBytes: number;
-  storagePath: string;
+  storagePath?: string;
+  firestoreFileId?: string;
 };
 
 const METER_IMAGE_FIELD_NAMES = [
@@ -301,8 +302,9 @@ async function preuploadCheckinImages(
   clientDraftId: string,
   headers: Record<string, string>
 ): Promise<PreuploadedAttachment[] | null> {
+  const successfulUploads: PreuploadedAttachment[] = [];
   try {
-    return await Promise.all(
+    const uploads = await Promise.all(
       files.map(async (file, index) => {
         const formData = new FormData();
         formData.set("website", String(values.website || ""));
@@ -318,11 +320,25 @@ async function preuploadCheckinImages(
         if (!res.ok || !data?.attachment) {
           throw new Error(String(data?.detail || data?.error || "IMAGE_UPLOAD_FAILED"));
         }
-        return data.attachment as PreuploadedAttachment;
+        const attachment = data.attachment as PreuploadedAttachment;
+        successfulUploads.push(attachment);
+        return attachment;
       })
     );
+    return uploads;
   } catch (error) {
     console.warn("Check-in image preupload failed; falling back to direct submit.", error);
+    if (successfulUploads.length > 0) {
+      void fetch("/api/checkin-image", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          clientDraftId,
+          attachments: successfulUploads,
+        }),
+        keepalive: true,
+      }).catch(() => undefined);
+    }
     return null;
   }
 }

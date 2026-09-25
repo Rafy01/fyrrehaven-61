@@ -4,9 +4,11 @@ import { storeCheckinFilesInFirestore } from "./checkin.mjs";
 import {
   checkRateLimit,
   getRequesterIp,
+  validateContactHeaders,
   validateHumanSignals,
   validateMultipartHeaders,
 } from "./_lib/contactSecurity.mjs";
+import { FORM_SUBMISSION_FILES_COLLECTION } from "./_lib/formSubmissions.mjs";
 import { applySecurityHeaders, sendJson } from "./_lib/httpSecurity.mjs";
 
 const MAX_UPLOAD_FILE_SIZE =
@@ -51,7 +53,55 @@ const sanitizeStorageSegment = (value) =>
 
 export default async function handler(req, res) {
   applySecurityHeaders(res);
-  res.setHeader("Allow", "POST");
+  res.setHeader("Allow", "POST, DELETE");
+
+  if (req.method === "DELETE") {
+    const headerValidation = validateContactHeaders(req);
+    if (!headerValidation.ok) {
+      sendJson(res, headerValidation.status, {
+        ok: false,
+        error: headerValidation.error,
+        detail: headerValidation.detail,
+      });
+      return;
+    }
+
+    const body = req.body && typeof req.body === "object" ? req.body : {};
+    const clientDraftId = cleanDraftId(body.clientDraftId);
+    const attachments = Array.isArray(body.attachments) ? body.attachments : [];
+    const db = await getFirestoreDb();
+    const bucket = await getStorageBucket();
+    const allowedPrefix = `form-submissions/preuploads/${sanitizeStorageSegment(clientDraftId)}/checkin-images/`;
+
+    if (!clientDraftId || attachments.length > 6) {
+      sendJson(res, 400, { ok: false, error: "INVALID_CLEANUP_REQUEST" });
+      return;
+    }
+
+    await Promise.all(
+      attachments.map(async (attachment) => {
+        const firestoreFileId = String(attachment?.firestoreFileId || "").trim();
+        if (
+          db &&
+          firestoreFileId.startsWith(`${sanitizeStorageSegment(clientDraftId)}-`) &&
+          /^[a-zA-Z0-9._-]+$/.test(firestoreFileId)
+        ) {
+          const fileRef = db.collection(FORM_SUBMISSION_FILES_COLLECTION).doc(firestoreFileId);
+          const chunks = await fileRef.collection("chunks").get();
+          await Promise.all(chunks.docs.map((chunk) => chunk.ref.delete()));
+          await fileRef.delete();
+        }
+
+        const storagePath = String(attachment?.storagePath || "").trim();
+        if (bucket && storagePath.startsWith(allowedPrefix)) {
+          await bucket.file(storagePath).delete({ ignoreNotFound: true });
+        }
+      })
+    );
+
+    sendJson(res, 200, { ok: true });
+    return;
+  }
 
   if (req.method !== "POST") {
     sendJson(res, 405, { ok: false, error: "METHOD_NOT_ALLOWED" });

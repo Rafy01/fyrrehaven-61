@@ -153,7 +153,14 @@ export default async function handler(req, res) {
       if (req.query?.attachmentIndex != null) {
         const index = Number(req.query.attachmentIndex);
         const attachment = stored.checkin?.attachments?.[index];
-        if (stored.intent !== "guest-checkin" || !Number.isInteger(index) || index < 0 || !attachment) {
+        if (
+          stored.intent !== "guest-checkin" ||
+          (req.query?.includePending !== "1" &&
+            !stored.checkin?.meterApproval?.approvedAtMs) ||
+          !Number.isInteger(index) ||
+          index < 0 ||
+          !attachment
+        ) {
           sendJson(res, 404, { ok: false, error: "IMAGE_NOT_FOUND" }, { cors: true });
           return;
         }
