@@ -15,6 +15,7 @@ function createDevApiPlugin() {
     ["/api/contact", "/api/contact.mjs"],
     ["/api/checkin", "/api/checkin.mjs"],
     ["/api/admin/forms", "/api/admin/forms.mjs"],
+    ["/api/integrations/submissions", "/api/integrations/submissions.mjs"],
   ]);
 
   return {
@@ -28,6 +29,8 @@ function createDevApiPlugin() {
         if (!moduleId) return next();
 
         try {
+          (req as import("node:http").IncomingMessage & { query: Record<string, string> }).query =
+            Object.fromEntries(new URL(req.url, "http://localhost").searchParams);
           const rawBody =
             req.method && req.method !== "GET" && req.method !== "HEAD"
               ? await readRequestBody(req)

@@ -185,12 +185,22 @@ function meterValue(readings, meter) {
   return value == null ? null : cleanString(value);
 }
 
-function checkinPayload(submission, checkin) {
+function checkinPayload(submission, checkin, options = {}) {
   const approval = checkin.meterApproval || null;
-  if (!approval?.approvedAtMs) return null;
+  if (!approval?.approvedAtMs && !options.includePending) return null;
 
   return {
     id: cleanString(submission.id),
+    source: "website",
+    version: Number(submission.updatedAtMs || submission.createdAtMs || 0),
+    verificationStatus: approval?.approvedAtMs ? "verified" : "pending",
+    verifiedBy: cleanString(approval?.approvedBy),
+    images: (Array.isArray(checkin.attachments) ? checkin.attachments : []).map((_, index) =>
+      `website-attachment:${encodeURIComponent(submission.id)}:${index}`),
+    imageMeters: (Array.isArray(checkin.attachments) ? checkin.attachments : []).map((attachment) => cleanString(attachment.meter) || ""),
+    submittedMeters: Object.fromEntries(["electricity", "waterHouse", "waterPool"].map((meter) => [
+      meter, checkin.meterCorrections?.[meter]?.originalValue ?? meterValue(checkin.meterReadings, meter),
+    ])),
     type: checkin.type === "checkout" ? "checkout" : "checkin",
     guest: guestPayload(submission),
     status: cleanString(submission.status),
@@ -199,7 +209,7 @@ function checkinPayload(submission, checkin) {
       checkIn: cleanString(checkin.bookingStartDate),
       checkOut: cleanString(checkin.bookingEndDate),
       checkInOrOut: cleanString(checkin.stayDate || checkin.submittedStayDate),
-      approvedAtMs: cleanNumber(approval.approvedAtMs),
+      approvedAtMs: cleanNumber(approval?.approvedAtMs),
     },
     meters: {
       electricity: meterValue(checkin.meterReadings, "electricity"),
@@ -263,7 +273,7 @@ function draftPayload(submission, intent) {
   };
 }
 
-export function publicSubmissionPayload(submission) {
+export function publicSubmissionPayload(submission, options = {}) {
   if (!submission || typeof submission !== "object") return null;
 
   const checkin = submission.checkin || null;
@@ -276,7 +286,7 @@ export function publicSubmissionPayload(submission) {
 
   if (intent === "booking" && selection) return bookingPayload(submission, selection);
   if (intent === "extra-services" && extras) return extraServicesPayload(submission, extras);
-  if (intent === "guest-checkin" && checkin) return checkinPayload(submission, checkin);
+  if (intent === "guest-checkin" && checkin) return checkinPayload(submission, checkin, options);
   return null;
 }
 
