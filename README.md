@@ -20,6 +20,27 @@ If a secret has already been pushed, rotate/revoke it. Removing it from Git late
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Local development
+
+For the frontend only, run:
+
+```bash
+pnpm dev
+```
+
+To run the full app locally, including all Vercel API routes, copy `.env.example` to
+`.env.local`, fill in the Firebase, SMTP, and calendar values, then run:
+
+```bash
+pnpm install
+pnpm dev:full
+```
+
+Open the local URL printed by Vercel, normally `http://localhost:3000`.
+This uses the same configured Firebase, mail, and calendar services as the live app.
+It does not create a local copy of production data. Use Firebase emulators and a local
+SMTP server separately when you need an isolated offline environment.
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh

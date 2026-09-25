@@ -14,9 +14,13 @@ function createDevApiPlugin() {
   const routeModules = new Map([
     ["/api/contact", "/api/contact.mjs"],
     ["/api/checkin", "/api/checkin.mjs"],
+    ["/api/checkin-image", "/api/checkin-image.mjs"],
+    ["/api/form-draft", "/api/form-draft.mjs"],
+    ["/api/ical", "/api/ical.mjs"],
     ["/api/admin/forms", "/api/admin/forms.mjs"],
     ["/api/integrations/submissions", "/api/integrations/submissions.mjs"],
   ]);
+  const streamingRoutes = new Set(["/api/checkin", "/api/checkin-image"]);
 
   return {
     name: "fh61-dev-api-bridge",
@@ -32,11 +36,17 @@ function createDevApiPlugin() {
           (req as import("node:http").IncomingMessage & { query: Record<string, string> }).query =
             Object.fromEntries(new URL(req.url, "http://localhost").searchParams);
           const rawBody =
-            req.method && req.method !== "GET" && req.method !== "HEAD"
+            !streamingRoutes.has(pathname) &&
+            req.method &&
+            req.method !== "GET" &&
+            req.method !== "HEAD"
               ? await readRequestBody(req)
               : "";
 
-          if (rawBody) {
+          if (streamingRoutes.has(pathname)) {
+            (req as import("node:http").IncomingMessage & { body?: unknown }).body =
+              undefined;
+          } else if (rawBody) {
             const contentType = String(req.headers["content-type"] || "");
             if (contentType.includes("application/json")) {
               try {

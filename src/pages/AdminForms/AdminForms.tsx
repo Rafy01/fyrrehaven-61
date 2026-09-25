@@ -46,7 +46,6 @@ import { Theme } from "@radix-ui/themes";
 import { useNavigate, useParams } from "react-router-dom";
 
 import styles from "./AdminForms.module.css";
-import { localTestSubmissions } from "./localTestSubmissions";
 import ContactForm from "../../components/ContactForm";
 import ExtraServices from "../ExtraServices/ExtraServices";
 import CheckInOut from "../guest/CheckInOut/CheckInOut";
@@ -2101,27 +2100,14 @@ export default function AdminForms() {
       const apiSubmissions = [...(data.submissions || [])].sort(
         (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
       );
-      const nextSubmissions =
-        LOCAL_DASHBOARD_FALLBACK && apiSubmissions.length === 0
-          ? [...(localTestSubmissions as unknown as Submission[])]
-          : apiSubmissions;
-
-      setSubmissions(nextSubmissions);
+      setSubmissions(apiSubmissions);
       setAdminEmail(
         data.admin?.email ||
           auth?.currentUser?.email ||
           (DASHBOARD_AUTH_DISABLED ? "local@fyrrehaven-61.dk" : "")
       );
     } catch (nextError) {
-      if (LOCAL_DASHBOARD_FALLBACK) {
-        const fallbackSubmissions = [
-          ...(localTestSubmissions as unknown as Submission[]),
-        ];
-        setSubmissions(fallbackSubmissions);
-        setError(null);
-      } else {
-        setError(String(nextError instanceof Error ? nextError.message : nextError));
-      }
+      setError(String(nextError instanceof Error ? nextError.message : nextError));
     } finally {
       setHasLoadedSubmissions(true);
       setIsLoadingSubmissions(false);

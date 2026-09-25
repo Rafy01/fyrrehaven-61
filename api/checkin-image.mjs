@@ -1,5 +1,6 @@
 import Busboy from "busboy";
-import { getStorageBucket } from "./_lib/firebaseAdmin.mjs";
+import { getFirestoreDb, getStorageBucket } from "./_lib/firebaseAdmin.mjs";
+import { storeCheckinFilesInFirestore } from "./checkin.mjs";
 import {
   checkRateLimit,
   getRequesterIp,
@@ -189,11 +190,22 @@ export default async function handler(req, res) {
 
         const bucket = await getStorageBucket();
         if (!bucket) {
-        sendJson(res, 500, {
-          ok: false,
-          error: "STORAGE_NOT_CONFIGURED",
-          detail: "Image storage is not configured.",
-        });
+        const db = await getFirestoreDb();
+        const [attachment] = await storeCheckinFilesInFirestore(
+          db,
+          clientDraftId,
+          [uploadedFile],
+          "Firebase Storage is not configured; stored in Firestore."
+        );
+        if (!attachment?.firestoreFileId) {
+          sendJson(res, 500, {
+            ok: false,
+            error: "STORAGE_NOT_CONFIGURED",
+            detail: "Image storage is not configured.",
+          });
+          return;
+        }
+        sendJson(res, 200, { ok: true, attachment });
         return;
         }
 
