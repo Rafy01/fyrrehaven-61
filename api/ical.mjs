@@ -40,12 +40,12 @@ function bookingDescription(submission) {
     submission?.stayPurpose ? `Purpose: ${submission.stayPurpose}` : "",
   ]
     .filter(Boolean)
-    .join("\\n");
+    .join("\n");
 }
 
 async function sendBookingsIcal(req, res) {
   const requiredToken = String(process.env.BOOKINGS_ICAL_TOKEN || "").trim();
-  if (requiredToken && String(req.query?.token || "") !== requiredToken) {
+  if (!requiredToken || String(req.query?.token || "") !== requiredToken) {
     res.status(401).json({
       ok: false,
       error: "UNAUTHORIZED",
@@ -65,7 +65,7 @@ async function sendBookingsIcal(req, res) {
   }
 
   const today = startOfToday().toISOString().slice(0, 10);
-  const submissions = await listFormSubmissions(db, 1000);
+  const submissions = await listFormSubmissions(db, 1000, { throwOnError: true });
   const events = submissions
     .filter((submission) => {
       const intent = String(submission?.intent || "").trim();

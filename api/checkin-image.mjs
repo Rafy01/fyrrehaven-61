@@ -194,7 +194,10 @@ export default async function handler(req, res) {
         const [attachment] = await storeCheckinFilesInFirestore(
           db,
           clientDraftId,
-          [uploadedFile],
+          [{
+            ...uploadedFile,
+            storageIndex: Math.max(0, Number(fields.fileIndex || 1) - 1),
+          }],
           "Firebase Storage is not configured; stored in Firestore."
         );
         if (!attachment?.firestoreFileId) {

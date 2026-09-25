@@ -147,6 +147,8 @@ export function currentAndFutureEvents(events, today = startOfToday()) {
 }
 
 export function formatIcsDate(dateValue) {
+  const text = String(dateValue || "");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text.replace(/-/g, "");
   const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -157,6 +159,7 @@ export function formatIcsDate(dateValue) {
 export function escapeIcsText(value) {
   return String(value || "")
     .replace(/\\/g, "\\\\")
+    .replace(/\r\n?/g, "\n")
     .replace(/\n/g, "\\n")
     .replace(/,/g, "\\,")
     .replace(/;/g, "\\;");

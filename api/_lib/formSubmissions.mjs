@@ -110,22 +110,21 @@ export async function findFormSubmissionDoc(db, submissionId) {
   return null;
 }
 
-export async function listFormSubmissions(db, limit = 250) {
+export async function listFormSubmissions(db, limit = 250, options = {}) {
   if (!db) return [];
+  const { throwOnError = false } = options;
+
+  const readCollection = (collectionName) => {
+    const query = db
+      .collection(collectionName)
+      .orderBy("createdAtMs", "desc")
+      .limit(limit);
+    return throwOnError ? query.get() : query.get().catch(() => ({ docs: [] }));
+  };
 
   const [currentSnapshot, legacySnapshot] = await Promise.all([
-    db
-      .collection(FORM_SUBMISSIONS_COLLECTION)
-      .orderBy("createdAtMs", "desc")
-      .limit(limit)
-      .get()
-      .catch(() => ({ docs: [] })),
-    db
-      .collection(LEGACY_CONTACT_SUBMISSIONS_COLLECTION)
-      .orderBy("createdAtMs", "desc")
-      .limit(limit)
-      .get()
-      .catch(() => ({ docs: [] })),
+    readCollection(FORM_SUBMISSIONS_COLLECTION),
+    readCollection(LEGACY_CONTACT_SUBMISSIONS_COLLECTION),
   ]);
 
   const submissions = [

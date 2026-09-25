@@ -114,7 +114,7 @@ export async function storeCheckinFilesInFirestore(db, submissionId, files, fall
       try {
         const fileId = [
           sanitizeStorageSegment(submissionId),
-          String(index + 1).padStart(2, "0"),
+          String(Number.isInteger(file.storageIndex) ? file.storageIndex + 1 : index + 1).padStart(2, "0"),
           sanitizeStorageSegment(file.filename),
         ].join("-");
         const fileRef = db.collection(FORM_SUBMISSION_FILES_COLLECTION).doc(fileId);
@@ -589,9 +589,7 @@ export default async function handler(req, res) {
         const manualGuestOnly =
           adminManualGuestOnly === true ||
           String(adminManualGuestOnly || "").toLowerCase() === "true";
-        const localDevelopment =
-          process.env.NODE_ENV !== "production" ||
-          process.env.DASHBOARD_AUTH_DISABLED === "true";
+        const localDevelopment = process.env.NODE_ENV !== "production";
         if (manualGuestOnly && !localDevelopment) {
           const adminCheck = await verifyAdminRequest(req);
           if (!adminCheck.ok) {

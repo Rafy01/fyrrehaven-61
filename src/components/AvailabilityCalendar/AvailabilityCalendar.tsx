@@ -349,6 +349,7 @@ export default function AvailabilityCalendar({
   }, [gridStart, monthBase]);
 
   const [bookings, setBookings] = React.useState<Booking[] | null>(null);
+  const [calendarLoadError, setCalendarLoadError] = React.useState<string | null>(null);
 
   // --- Selection state ---
   const [sel, setSel] = React.useState<Selection | null>(null);
@@ -376,11 +377,13 @@ export default function AvailabilityCalendar({
   React.useEffect(() => {
     let mounted = true;
     setBookings(null);
+    setCalendarLoadError(null);
 
     loadIcal(apiPath).then(({ data, error }) => {
       if (!mounted) return;
       const filtered = data.filter((b) => b.endDay > today);
       setBookings(filtered);
+      setCalendarLoadError(error);
       if (error) {
         console.warn("Availability calendar sync failed:", error);
       }
@@ -737,7 +740,7 @@ export default function AvailabilityCalendar({
                   d <= startOfDay(sel.end);
 
                 // Klikbarhed
-                let canClick = selectionMode !== "none";
+                let canClick = selectionMode !== "none" && bookings !== null && !calendarLoadError;
                 if (disablePastSelection && d <= today) canClick = false;
 
                 if (selectionMode === "single") {
