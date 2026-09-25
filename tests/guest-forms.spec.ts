@@ -52,6 +52,7 @@ test.describe('guest forms', () => {
   });
 
   test('check-in/out form uploads three meter photos and sends a valid reading quickly', async ({ page }) => {
+    const imageUploads: string[] = [];
     const readings: string[] = [];
 
     await page.setViewportSize({ width: 390, height: 1200 });
@@ -64,12 +65,42 @@ test.describe('guest forms', () => {
       });
     });
 
+    await page.route('**/api/checkin-image', async (route) => {
+      const index = imageUploads.length + 1;
+      imageUploads.push(route.request().postData() || '');
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          attachment: {
+            fieldname: 'meterImages',
+            filename: `meter-${index}.jpg`,
+            contentType: 'image/jpeg',
+            sizeBytes: 1200,
+            storagePath: `form-submissions/preuploads/guest-checkin-test/checkin-images/${String(index).padStart(2, '0')}-meter-${index}.jpg`,
+          },
+        }),
+      });
+    });
+
     await page.route('**/api/checkin', async (route) => {
       readings.push(route.request().postData() || '');
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({ ok: true, mailStatus: 'sent' }),
+      });
+    });
+
+    await page.addInitScript(() => {
+      let sequence = 0;
+      const originalRandom = crypto.randomUUID?.bind(crypto);
+      Object.defineProperty(crypto, 'randomUUID', {
+        value: () => {
+          sequence += 1;
+          return sequence === 1 ? 'test' : originalRandom?.() || `fallback-${sequence}`;
+        },
       });
     });
 
@@ -100,10 +131,12 @@ test.describe('guest forms', () => {
       timeout: 8000,
     });
     expect(Date.now() - start).toBeLessThan(8000);
+    expect(imageUploads).toHaveLength(3);
     expect(readings).toHaveLength(1);
-    expect(readings[0]).toContain('name="electricity"');
-    expect(readings[0]).toContain('name="waterHouse"');
-    expect(readings[0]).toContain('name="waterPool"');
+    expect(readings[0]).toContain('name="preuploadedMeterImages"');
+    expect(readings[0]).toContain('"fieldname":"electricity"');
+    expect(readings[0]).toContain('"fieldname":"waterHouse"');
+    expect(readings[0]).toContain('"fieldname":"waterPool"');
   });
 
   test('check-in/out form shows a clear error when more than three meter photos are selected', async ({ page }) => {

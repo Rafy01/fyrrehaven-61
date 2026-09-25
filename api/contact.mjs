@@ -442,12 +442,14 @@ export default async function handler(req, res) {
     }
 
     const bookingNumber = randomBookingNumber(isBookingReq);
+    const submissionEmails = [replyEmail].filter(Boolean);
     const submissionRecord = {
       intent,
       bookingNumber,
       lang: uiLang,
       name: name?.trim?.() || "",
       email: replyEmail,
+      emails: submissionEmails,
       phone: phone || "",
       country: country || null,
       countryIso: countryIso || null,

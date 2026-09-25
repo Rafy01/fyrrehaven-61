@@ -36,6 +36,15 @@ type PreparedImageEntry = {
   message?: string;
 };
 
+type PreuploadedAttachment = {
+  fieldname: "meterImages";
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  storagePath?: string;
+  firestoreFileId?: string;
+};
+
 const METER_IMAGE_FIELD_NAMES = [
   "meterImagesElectricity",
   "meterImagesWaterHouse",
@@ -215,9 +224,6 @@ async function compressImageFile(
       { type: "image/jpeg", lastModified: file.lastModified }
     );
 
-    console.log(
-      `[Compress] ${file.name}: ${formatFileSize(file.size)} -> ${formatFileSize(compressedFile.size)} at quality ${quality}`
-    );
     return compressedFile;
   } catch (error) {
     console.warn(`[Compress Error] ${file.name}:`, error);
@@ -228,13 +234,11 @@ async function compressImageFile(
 async function prepareImageFiles(originalFiles: File[]) {
   let currentFiles = originalFiles;
   for (const step of CHECKIN_IMAGE_COMPRESSION_STEPS) {
-    const compressedFiles: File[] = [];
-    for (const file of currentFiles) {
-      compressedFiles.push(
-        await compressImageFile(file, step.maxDimension, step.quality)
-      );
-    }
-    currentFiles = compressedFiles;
+    currentFiles = await Promise.all(
+      currentFiles.map((file) =>
+        compressImageFile(file, step.maxDimension, step.quality)
+      )
+    );
     if (calculateTotalSize(currentFiles) <= TARGET_CHECKIN_UPLOAD_TOTAL_BYTES) {
       return currentFiles;
     }
@@ -290,6 +294,53 @@ function postFormData(
 
     xhr.send(body);
   });
+}
+
+async function preuploadCheckinImages(
+  files: File[],
+  values: Record<string, string | FileList | boolean>,
+  clientDraftId: string,
+  headers: Record<string, string>
+): Promise<PreuploadedAttachment[] | null> {
+  const successfulUploads: PreuploadedAttachment[] = [];
+  try {
+    const uploads = await Promise.all(
+      files.map(async (file, index) => {
+        const formData = new FormData();
+        formData.set("website", String(values.website || ""));
+        formData.set("company", String(values.company || ""));
+        formData.set("faxNumber", String(values.faxNumber || ""));
+        formData.set("clientDraftId", clientDraftId);
+        formData.set("formStartedAt", String(values.formStartedAt || ""));
+        formData.set("fileIndex", String(index + 1));
+        formData.append("meterImage", file);
+
+        const res = await postFormData("/api/checkin-image", formData, headers);
+        const data = await res.json();
+        if (!res.ok || !data?.attachment) {
+          throw new Error(String(data?.detail || data?.error || "IMAGE_UPLOAD_FAILED"));
+        }
+        const attachment = data.attachment as PreuploadedAttachment;
+        successfulUploads.push(attachment);
+        return attachment;
+      })
+    );
+    return uploads;
+  } catch (error) {
+    console.warn("Check-in image preupload failed; falling back to direct submit.", error);
+    if (successfulUploads.length > 0) {
+      void fetch("/api/checkin-image", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          clientDraftId,
+          attachments: successfulUploads,
+        }),
+        keepalive: true,
+      }).catch(() => undefined);
+    }
+    return null;
+  }
 }
 
 export default function CheckInOut({
@@ -610,18 +661,12 @@ export default function CheckInOut({
     setError(null);
 
     try {
-      console.log("[Submit] Starting form submission...");
-
       if (imagePreparationPromiseRef.current) {
-        console.log("[Submit] Waiting for image preparation...");
         await imagePreparationPromiseRef.current;
       }
 
       const meterImageEntries = collectMeterImageEntries(values);
       const meterFiles = meterImageEntries.map(({ file }) => file);
-      console.log(
-        `[Submit] Meter images collected: ${meterFiles.length} files, ${formatFileSize(calculateTotalSize(meterFiles))}`
-      );
 
       const meterImagesSignature = meterFiles
         .map(fileItemSignature)
@@ -631,10 +676,6 @@ export default function CheckInOut({
           ? preparedMeterImagesRef.current.files
           : await prepareCheckinImages(meterFiles);
 
-      console.log(
-        `[Submit] After compression: ${preparedMeterImages.length} files, ${formatFileSize(calculateTotalSize(preparedMeterImages))}`
-      );
-
       if (
         !preparedMeterImages.length ||
         preparedMeterImages.some(
@@ -642,7 +683,6 @@ export default function CheckInOut({
         )
       ) {
         const errorMessage = tg("checkInOutPage.errors.totalUploadTooLarge");
-        console.error("[Submit] Validation failed: files too large");
         void saveFormDraft(
           buildDraftPayload(
             values,
@@ -656,6 +696,12 @@ export default function CheckInOut({
       }
 
       const requestHeaders = getRequestHeaders ? await getRequestHeaders() : {};
+      const preuploadedAttachments = await preuploadCheckinImages(
+        preparedMeterImages,
+        values,
+        draftIdRef.current,
+        requestHeaders
+      );
       const formData = new FormData();
 
       for (const key in values) {
@@ -672,11 +718,23 @@ export default function CheckInOut({
         }
       }
       formData.set("clientDraftId", draftIdRef.current);
-      preparedMeterImages.forEach((file, index) => {
-        formData.append(meterImageEntries[index]?.meter || "meterImages", file);
-      });
+      if (preuploadedAttachments) {
+        const preuploadedWithMeterFields = preuploadedAttachments.map(
+          (attachment, index) => ({
+            ...attachment,
+            fieldname: meterImageEntries[index]?.meter || attachment.fieldname,
+          })
+        );
+        formData.set(
+          "preuploadedMeterImages",
+          JSON.stringify(preuploadedWithMeterFields)
+        );
+      } else {
+        preparedMeterImages.forEach((file, index) => {
+          formData.append(meterImageEntries[index]?.meter || "meterImages", file);
+        });
+      }
 
-      console.log("[Submit] Submitting form and images to /api/checkin...");
       const res = await postFormData(
         "/api/checkin",
         formData,
@@ -694,7 +752,6 @@ export default function CheckInOut({
             String(data?.detail || ""),
             tg
           );
-          console.error("[Submit] Server error:", { errorCode, detail: data?.detail });
         } catch {
           errorMessage = tg("checkInOutPage.errors.serverResponse");
         }
@@ -705,7 +762,6 @@ export default function CheckInOut({
         return;
       }
 
-      console.log("[Submit] ✓ Form submitted successfully!");
       setSuccess(true);
       setPreparedImageLabels([]);
       setPreparedImageStatuses([]);
@@ -715,7 +771,7 @@ export default function CheckInOut({
       draftIdRef.current = createFormDraftId("guest-checkin");
       preparedMeterImagesRef.current = null;
     } catch (err: any) {
-      console.error("[Submit] Catch error:", err);
+      console.error("Submit error:", err);
       const rawErrorMessage = String(err?.message || "").trim();
       const errorMessage =
         rawErrorMessage &&

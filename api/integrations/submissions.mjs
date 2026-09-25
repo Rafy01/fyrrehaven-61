@@ -1,3 +1,5 @@
+import { addAttachmentViewUrls } from "../_lib/submissionAttachments.mjs";
+import { verifyIntegrationMeters } from "../_lib/submissionMeterVerification.mjs";
 import { getFirestoreDb, getFirebaseAdminInitError } from "../_lib/firebaseAdmin.mjs";
 import {
   findFormSubmissionDoc,
@@ -93,6 +95,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (req.method === "PATCH" && req.body?.action === "verify-meters") {
+      const result = await verifyIntegrationMeters(db, req.body);
+      sendJson(res, result.status, result.body, { cors: true });
+      return;
+    }
     if (req.method === "PATCH") {
       const ids = uniqueIds(req.body?.ids || req.body?.id);
       const consumer = consumerKey(req.body?.consumer);
@@ -142,10 +149,29 @@ export default async function handler(req, res) {
         return;
       }
 
-      const submission = publicSubmissionPayload({
-        id: found.snapshot.id,
-        ...found.snapshot.data(),
-      });
+      const stored = { id: found.snapshot.id, ...found.snapshot.data() };
+      if (req.query?.attachmentIndex != null) {
+        const index = Number(req.query.attachmentIndex);
+        const attachment = stored.checkin?.attachments?.[index];
+        if (
+          stored.intent !== "guest-checkin" ||
+          (req.query?.includePending !== "1" &&
+            !stored.checkin?.meterApproval?.approvedAtMs) ||
+          !Number.isInteger(index) ||
+          index < 0 ||
+          !attachment
+        ) {
+          sendJson(res, 404, { ok: false, error: "IMAGE_NOT_FOUND" }, { cors: true });
+          return;
+        }
+        const [resolved] = await addAttachmentViewUrls([{ ...stored, checkin: { ...stored.checkin, attachments: [attachment] } }], db);
+        const image = resolved.checkin.attachments[0];
+        const imageUrl = image.viewUrl || image.dataUrl || image.downloadUrl || image.publicUrl || image.url || image.src;
+        res.setHeader("Cache-Control", "private, no-store");
+        sendJson(res, imageUrl ? 200 : 404, { ok: !!imageUrl, imageUrl: imageUrl || null, error: imageUrl ? null : "IMAGE_UNAVAILABLE" }, { cors: true });
+        return;
+      }
+      const submission = publicSubmissionPayload(stored, { includePending: req.query?.includePending === "1" });
       if (!submission) {
         sendJson(res, 404, {
           ok: false,
@@ -171,7 +197,7 @@ export default async function handler(req, res) {
       await listFormSubmissions(db, limit),
       req.query || {}
     )
-      .map(publicSubmissionPayload)
+      .map((submission) => publicSubmissionPayload(submission, { includePending: req.query?.includePending === "1" }))
       .filter(Boolean);
 
     sendJson(res, 200, {

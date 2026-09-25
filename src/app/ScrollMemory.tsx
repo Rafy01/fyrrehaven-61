@@ -1,36 +1,42 @@
 // src/app/ScrollMemory.tsx
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useLocation, useNavigationType } from "react-router-dom";
+
+const SCROLL_MEMORY_PREFIX = "fh61:scroll:";
+const SCROLL_MEMORY_TTL_MS = 30 * 60 * 1000;
+
+function memoryKey(pathname: string, search: string) {
+  return `${SCROLL_MEMORY_PREFIX}${pathname}${search}`;
+}
+
+function readSavedScroll(key: string) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(key) || "null");
+    if (
+      !saved ||
+      typeof saved !== "object" ||
+      Date.now() - Number(saved.updatedAtMs || 0) > SCROLL_MEMORY_TTL_MS
+    ) {
+      sessionStorage.removeItem(key);
+      return 0;
+    }
+    return Math.max(0, Number(saved.y || 0));
+  } catch {
+    sessionStorage.removeItem(key);
+    return 0;
+  }
+}
+
+function saveScroll(key: string) {
+  sessionStorage.setItem(
+    key,
+    JSON.stringify({ y: Math.max(0, window.scrollY), updatedAtMs: Date.now() })
+  );
+}
 
 export default function ScrollMemory() {
   const loc = useLocation();
   const navType = useNavigationType(); // "POP" | "PUSH" | "REPLACE"
-  const lastKeyboardActivation = useRef(0);
-
-  useEffect(() => {
-    const interactiveSelector =
-      'a[href], button, [role="button"], [role="link"], [role="menuitem"]';
-
-    const onPointerDown = () => {
-      lastKeyboardActivation.current = 0;
-    };
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      if (!(event.target instanceof Element)) return;
-      if (!event.target.closest(interactiveSelector)) return;
-
-      lastKeyboardActivation.current = Date.now();
-    };
-
-    window.addEventListener("pointerdown", onPointerDown, true);
-    window.addEventListener("keydown", onKeyDown, true);
-
-    return () => {
-      window.removeEventListener("pointerdown", onPointerDown, true);
-      window.removeEventListener("keydown", onKeyDown, true);
-    };
-  }, []);
 
   // Lad os selv styre scroll-restore
   useEffect(() => {
@@ -55,12 +61,11 @@ export default function ScrollMemory() {
   }, []);
 
   useLayoutEffect(() => {
-    const key = `fh61:scroll:${loc.pathname}${loc.search}`;
-    const savedY = parseInt(sessionStorage.getItem(key) || "0", 10);
-    const keyboardNavigation =
-      navType !== "POP" && Date.now() - lastKeyboardActivation.current < 1500;
-    const shouldRestore = navType === "POP" || keyboardNavigation;
-    const targetY = shouldRestore && Number.isFinite(savedY) ? savedY : 0;
+    const key = memoryKey(loc.pathname, loc.search);
+    if (loc.hash) return;
+
+    const shouldRestore = navType === "POP";
+    const targetY = shouldRestore ? readSavedScroll(key) : 0;
 
     const restoreInstantly = () => {
       document.documentElement.classList.add("scroll-restore-instant");
@@ -88,36 +93,35 @@ export default function ScrollMemory() {
     };
 
     requestAnimationFrame(tick);
-    lastKeyboardActivation.current = 0;
 
     return () => {
       cancelled = true;
-      sessionStorage.setItem(key, String(window.scrollY));
+      saveScroll(key);
       document.documentElement.classList.remove("scroll-restore-instant");
     };
-  }, [loc.pathname, loc.search, navType]);
+  }, [loc.hash, loc.pathname, loc.search, navType]);
 
   useEffect(() => {
-    const key = `fh61:scroll:${loc.pathname}${loc.search}`;
-    // Gem løbende position for denne rute
+    const key = memoryKey(loc.pathname, loc.search);
     let ticking = false;
-    const save = () => sessionStorage.setItem(key, String(window.scrollY));
+    const onPageHide = () => saveScroll(key);
     const onScroll = () => {
       if (!ticking) {
         ticking = true;
         requestAnimationFrame(() => {
-          save();
+          saveScroll(key);
           ticking = false;
         });
       }
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("pagehide", save);
+    window.addEventListener("pagehide", onPageHide);
 
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("pagehide", save);
+      window.removeEventListener("pagehide", onPageHide);
+      saveScroll(key);
     };
   }, [loc.pathname, loc.search]);
 

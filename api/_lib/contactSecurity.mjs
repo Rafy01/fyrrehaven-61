@@ -29,7 +29,8 @@ function isBlockedBotUserAgent(req) {
 export function normalizeEmail(value) {
   return String(value || "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .trim();
+    .trim()
+    .toLowerCase();
 }
 
 export function getRequesterIp(req) {
@@ -60,8 +61,13 @@ export function isOriginAllowed(req) {
       const url = new URL(origin);
       const hostname = url.hostname.toLowerCase();
       const isHttps = url.protocol === "https:";
+      const isLocalDevelopment =
+        (url.protocol === "http:" &&
+          (hostname === "localhost" || hostname === "127.0.0.1")) ||
+        (url.protocol === "https:" && hostname === "localhost");
 
       return (
+        isLocalDevelopment ||
         isHttps &&
         (hostname.endsWith(".fyrrehaven-61.dk") ||
           hostname === "fyrrehaven-61.vercel.app" ||

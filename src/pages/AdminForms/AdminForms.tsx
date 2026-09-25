@@ -46,7 +46,6 @@ import { Theme } from "@radix-ui/themes";
 import { useNavigate, useParams } from "react-router-dom";
 
 import styles from "./AdminForms.module.css";
-import { localTestSubmissions } from "./localTestSubmissions";
 import ContactForm from "../../components/ContactForm";
 import ExtraServices from "../ExtraServices/ExtraServices";
 import CheckInOut from "../guest/CheckInOut/CheckInOut";
@@ -2101,27 +2100,14 @@ export default function AdminForms() {
       const apiSubmissions = [...(data.submissions || [])].sort(
         (a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0)
       );
-      const nextSubmissions =
-        LOCAL_DASHBOARD_FALLBACK && apiSubmissions.length === 0
-          ? [...(localTestSubmissions as unknown as Submission[])]
-          : apiSubmissions;
-
-      setSubmissions(nextSubmissions);
+      setSubmissions(apiSubmissions);
       setAdminEmail(
         data.admin?.email ||
           auth?.currentUser?.email ||
           (DASHBOARD_AUTH_DISABLED ? "local@fyrrehaven-61.dk" : "")
       );
     } catch (nextError) {
-      if (LOCAL_DASHBOARD_FALLBACK) {
-        const fallbackSubmissions = [
-          ...(localTestSubmissions as unknown as Submission[]),
-        ];
-        setSubmissions(fallbackSubmissions);
-        setError(null);
-      } else {
-        setError(String(nextError instanceof Error ? nextError.message : nextError));
-      }
+      setError(String(nextError instanceof Error ? nextError.message : nextError));
     } finally {
       setHasLoadedSubmissions(true);
       setIsLoadingSubmissions(false);
@@ -3552,11 +3538,59 @@ export default function AdminForms() {
       const gap = 5;
       const columns = 3;
       const rows = 3;
+      const signatureHeight = 18;
+      const gold: [number, number, number] = [126, 119, 38];
       const cellWidth = (pageWidth - margin * 2 - gap * (columns - 1)) / columns;
-      const cellHeight = (pageHeight - margin * 2 - gap * (rows - 1)) / rows;
+      const cellHeight =
+        (pageHeight - margin * 2 - signatureHeight - gap * (rows - 1)) / rows;
+      const addPdfSignature = () => {
+        const pageNumber = pdf.getNumberOfPages();
+        const y = pageHeight - signatureHeight + 3;
+
+        pdf.setDrawColor(...gold);
+        pdf.setLineWidth(0.2);
+        pdf.line(margin, y - 3, pageWidth - margin, y - 3);
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        pdf.setTextColor(...gold);
+        pdf.text("Best regards,", margin, y);
+
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(10);
+        pdf.text("Fyrrehaven 61", margin, y + 5);
+
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(7);
+        pdf.textWithLink("kontakt@fyrrehaven-61.dk", margin + 44, y + 5, {
+          url: "mailto:kontakt@fyrrehaven-61.dk",
+        });
+        pdf.text("Fjellerup Strand", margin + 44, y + 9);
+        pdf.textWithLink("fyrrehaven-61.dk", margin + 44, y + 13, {
+          url: "https://fyrrehaven-61.dk",
+        });
+        pdf.textWithLink("Facebook", pageWidth - margin - 48, y + 5, {
+          url: "https://www.facebook.com/fyrrehaven61",
+        });
+        pdf.textWithLink("Instagram", pageWidth - margin - 48, y + 9, {
+          url: "https://www.instagram.com/fyrrehaven61/",
+        });
+        pdf.textWithLink("TikTok", pageWidth - margin - 48, y + 13, {
+          url: "https://www.tiktok.com/@fyrrehaven61",
+        });
+
+        pdf.setTextColor(120, 120, 120);
+        pdf.text(
+          `Generated ${new Date().toLocaleDateString("da-DK")} - page ${pageNumber}`,
+          pageWidth - margin,
+          y,
+          { align: "right" }
+        );
+      };
 
       for (let index = 0; index < printItems.length; index += 1) {
         if (index > 0 && index % (columns * rows) === 0) {
+          addPdfSignature();
           pdf.addPage();
         }
 
@@ -3575,6 +3609,7 @@ export default function AdminForms() {
         pdf.addImage(image, "PNG", imageX, imageY, imageWidth, imageHeight);
       }
 
+      addPdfSignature();
       pdf.save(qrFileName("pdf"));
       setQrPrintStatus(`PDF ready with ${printItems.length} QR code copies.`);
     } catch (nextError) {
@@ -4574,7 +4609,7 @@ export default function AdminForms() {
     const selectionTotal =
       bookingSource?.selection?.totalAfterAirbnbDiscountDKK ??
       bookingSource?.selection?.totalWithCleaningDKK;
-    const emails = uniqueSubmissionValues(groupItems, (submission) => submission.email);
+    const emails = uniqueSubmissionValues(groupItems, (submission) => normalizeEmail(submission.email));
     const phones = uniqueSubmissionValues(groupItems, (submission) => submission.phone);
 
     const contactItems = [

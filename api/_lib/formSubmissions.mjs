@@ -1,3 +1,4 @@
+import { normalizeEmail } from "./contactSecurity.mjs";
 import { getServerTimestamp } from "./firebaseAdmin.mjs";
 
 export const FORM_SUBMISSIONS_COLLECTION = "formSubmissions";
@@ -10,6 +11,7 @@ export async function createFormSubmission(db, record) {
   const docRef = db.collection(FORM_SUBMISSIONS_COLLECTION).doc();
   await docRef.set({
     ...record,
+    ...(record.email != null ? { email: normalizeEmail(record.email) } : {}),
     id: docRef.id,
     createdAt: getServerTimestamp(),
     updatedAt: getServerTimestamp(),
@@ -31,6 +33,7 @@ export async function upsertFormSubmission(db, submissionId, record) {
   await docRef.set(
     {
       ...record,
+      ...(record.email != null ? { email: normalizeEmail(record.email) } : {}),
       id: cleanId,
       createdAtMs: record.createdAtMs || snapshot.data()?.createdAtMs || Date.now(),
       createdAt: snapshot.exists ? snapshot.data()?.createdAt : getServerTimestamp(),
@@ -46,6 +49,7 @@ export async function updateFormSubmission(docRef, patch) {
   if (!docRef) return;
   await docRef.update({
     ...patch,
+    ...(patch.email != null ? { email: normalizeEmail(patch.email) } : {}),
     updatedAt: getServerTimestamp(),
   });
 }
@@ -106,28 +110,31 @@ export async function findFormSubmissionDoc(db, submissionId) {
   return null;
 }
 
-export async function listFormSubmissions(db, limit = 250) {
+export async function listFormSubmissions(db, limit = 250, options = {}) {
   if (!db) return [];
+  const { throwOnError = false } = options;
+
+  const readCollection = (collectionName) => {
+    const query = db
+      .collection(collectionName)
+      .orderBy("createdAtMs", "desc")
+      .limit(limit);
+    return throwOnError ? query.get() : query.get().catch(() => ({ docs: [] }));
+  };
 
   const [currentSnapshot, legacySnapshot] = await Promise.all([
-    db
-      .collection(FORM_SUBMISSIONS_COLLECTION)
-      .orderBy("createdAtMs", "desc")
-      .limit(limit)
-      .get()
-      .catch(() => ({ docs: [] })),
-    db
-      .collection(LEGACY_CONTACT_SUBMISSIONS_COLLECTION)
-      .orderBy("createdAtMs", "desc")
-      .limit(limit)
-      .get()
-      .catch(() => ({ docs: [] })),
+    readCollection(FORM_SUBMISSIONS_COLLECTION),
+    readCollection(LEGACY_CONTACT_SUBMISSIONS_COLLECTION),
   ]);
 
   const submissions = [
     ...currentSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
     ...legacySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
   ];
+
+  for (const submission of submissions) {
+    if (submission.email != null) submission.email = normalizeEmail(submission.email);
+  }
 
   submissions.sort((a, b) => Number(b.createdAtMs || 0) - Number(a.createdAtMs || 0));
 

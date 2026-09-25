@@ -49,6 +49,10 @@ Draft submissions are shared as `type: "draft"` when their status is `draft`,
 including partial guest, date, price, extra-service, and check-in/out data when
 available.
 
+Email addresses are trimmed and lowercased in all guest payloads, including approved
+check-in/out submissions. Each submission retains its own email address: different
+addresses on the same booking are all shared through their respective submissions.
+
 Response:
 
 ```json
@@ -151,12 +155,13 @@ Draft submissions return partial data:
 }
 ```
 
-Approved check-in/out submissions only return the booking link, approved date,
-and meter numbers:
+Approved check-in/out submissions return guest name and email, the booking link,
+approved date, and meter numbers:
 
 ```json
 {
   "id": "checkin123",
+  "guest": { "name": "Guest Name", "email": "guest@example.com" },
   "type": "checkin",
   "bookingNumber": "91234",
   "dates": {

@@ -98,7 +98,7 @@ const sanitizeStorageSegment = (value) =>
 
 const FIRESTORE_FILE_CHUNK_SIZE = 400_000;
 
-async function storeCheckinFilesInFirestore(db, submissionId, files, fallbackReason = "") {
+export async function storeCheckinFilesInFirestore(db, submissionId, files, fallbackReason = "") {
   if (!db || !submissionId || !files.length) {
     return files.map((file) => ({
       fieldname: file.fieldname,
@@ -114,7 +114,7 @@ async function storeCheckinFilesInFirestore(db, submissionId, files, fallbackRea
       try {
         const fileId = [
           sanitizeStorageSegment(submissionId),
-          String(index + 1).padStart(2, "0"),
+          String(Number.isInteger(file.storageIndex) ? file.storageIndex + 1 : index + 1).padStart(2, "0"),
           sanitizeStorageSegment(file.filename),
         ].join("-");
         const fileRef = db.collection(FORM_SUBMISSION_FILES_COLLECTION).doc(fileId);
@@ -250,6 +250,52 @@ async function uploadCheckinFiles(db, submissionId, files) {
   }
 }
 
+async function resolveEmailAttachments(db, bucket, files, storedAttachments) {
+  if (files.length > 0) {
+    return files.map((file) => ({
+      filename: file.filename,
+      content: file.content,
+      contentType: file.contentType,
+    }));
+  }
+
+  return Promise.all(
+    storedAttachments.map(async (attachment) => {
+      const fileId = String(attachment?.firestoreFileId || "").trim();
+      if (fileId && db) {
+        const fileRef = db.collection(FORM_SUBMISSION_FILES_COLLECTION).doc(fileId);
+        const [fileSnapshot, chunksSnapshot] = await Promise.all([
+          fileRef.get(),
+          fileRef.collection("chunks").orderBy("index", "asc").get(),
+        ]);
+        if (fileSnapshot.exists && !chunksSnapshot.empty) {
+          const base64 = chunksSnapshot.docs
+            .map((doc) => String(doc.data()?.data || ""))
+            .join("");
+          if (base64) {
+            return {
+              filename: attachment.filename,
+              content: Buffer.from(base64, "base64"),
+              contentType: attachment.contentType || fileSnapshot.data()?.contentType,
+            };
+          }
+        }
+      }
+
+      const storagePath = String(attachment?.storagePath || "").trim();
+      if (storagePath && bucket) {
+        return {
+          filename: attachment.filename,
+          content: await bucket.file(storagePath).download().then(([buffer]) => buffer),
+          contentType: attachment.contentType,
+        };
+      }
+
+      throw new Error(`CHECKIN_ATTACHMENT_UNAVAILABLE:${attachment?.filename || "file"}`);
+    })
+  );
+}
+
 function checkinImageUploadStatus(files, attachments) {
   if (!files.length && !attachments.length) return "none";
   if (attachments.some((attachment) => attachment.storagePath || attachment.firestoreFileId)) {
@@ -283,17 +329,24 @@ function parsePreuploadedMeterImages(fields) {
   ].join("/");
 
   return parsed.map((attachment) => {
+    const fieldname = String(attachment?.fieldname || "meterImages").trim();
     const filename = String(attachment?.filename || "").trim();
     const contentType = String(attachment?.contentType || "").toLowerCase();
     const storagePath = String(attachment?.storagePath || "").trim();
+    const firestoreFileId = String(attachment?.firestoreFileId || "").trim();
     const sizeBytes = Number(attachment?.sizeBytes || 0);
+    const validStoragePath = storagePath.startsWith(`${allowedPrefix}/`);
+    const validFirestoreFileId =
+      firestoreFileId.startsWith(`${sanitizeStorageSegment(clientDraftId)}-`) &&
+      /^[a-zA-Z0-9._-]+$/.test(firestoreFileId);
 
     if (
       !clientDraftId ||
+      !METER_IMAGE_FIELDS.has(fieldname) ||
       !filename ||
       !ALLOWED_UPLOAD_EXTENSIONS.test(filename) ||
       !ALLOWED_UPLOAD_MIME_TYPES.has(contentType) ||
-      !storagePath.startsWith(`${allowedPrefix}/`) ||
+      (!validStoragePath && !validFirestoreFileId) ||
       !Number.isFinite(sizeBytes) ||
       sizeBytes <= 0 ||
       sizeBytes > MAX_UPLOAD_FILE_SIZE
@@ -302,11 +355,11 @@ function parsePreuploadedMeterImages(fields) {
     }
 
     return {
-      fieldname: "meterImages",
+      fieldname,
       filename,
       contentType,
       sizeBytes,
-      storagePath,
+      ...(validStoragePath ? { storagePath } : { firestoreFileId }),
     };
   });
 }
@@ -323,6 +376,7 @@ async function logCheckinSubmitError(db, fields, req, error, detail) {
     lang: normalizeLang(fields.lang),
     name: String(fields.name || "").trim().slice(0, 180),
     email: normalizeEmail(fields.email),
+    emails: [normalizeEmail(fields.email)].filter(Boolean),
     message: String(fields.comment || "").trim().slice(0, 4000),
     consent:
       fields.consent === true ||
@@ -535,7 +589,8 @@ export default async function handler(req, res) {
         const manualGuestOnly =
           adminManualGuestOnly === true ||
           String(adminManualGuestOnly || "").toLowerCase() === "true";
-        if (manualGuestOnly) {
+        const localDevelopment = process.env.FH_LOCAL_DEV_API === "true";
+        if (manualGuestOnly && !localDevelopment) {
           const adminCheck = await verifyAdminRequest(req);
           if (!adminCheck.ok) {
             sendJson(res, adminCheck.status, {
@@ -678,6 +733,7 @@ export default async function handler(req, res) {
           lang: uiLang,
           name: String(name).trim(),
           email: emailNormalized,
+          emails: [emailNormalized].filter(Boolean),
           message: String(comment || "").trim(),
           consent: consentAccepted,
           checkin: {
@@ -819,6 +875,13 @@ ${t(uiLang, "checkin.fields.consent")}: ${yesNo(Boolean(consent), uiLang)}
 ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
       `;
 
+        const emailAttachments = await resolveEmailAttachments(
+          db,
+          await getStorageBucket(),
+          files,
+          storedAttachments
+        );
+
         await transporter.sendMail({
           from,
           to: manualGuestOnly ? emailNormalized : to,
@@ -826,11 +889,7 @@ ${t(uiLang, "checkin.fields.comment")}: ${comment || "—"}
           html,
           text,
           replyTo: manualGuestOnly ? to : undefined,
-          attachments: files.map((file) => ({
-            filename: file.filename,
-            content: file.content,
-            contentType: file.contentType,
-          })),
+          attachments: emailAttachments,
         });
 
         if (submissionRef) {
